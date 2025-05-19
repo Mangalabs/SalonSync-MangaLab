@@ -1,3 +1,7 @@
+![Node.js](https://img.shields.io/badge/NestJS-API-red?logo=nestjs&style=flat-square)
+![React](https://img.shields.io/badge/React-Frontend-blue?logo=react&style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+
 # 💈 Projetinho - Sistema para Barbearias e Salões
 
 Sistema fullstack para gestão de barbearias e salões de beleza, com funcionalidades como agendamento, controle de caixa, gestão de profissionais, controle de estoque e fidelização de clientes.
