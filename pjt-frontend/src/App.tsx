@@ -6,6 +6,7 @@ import Dashboard from "@/components/pages/Dashboard";
 import Professionals from "@/components/pages/Professionals";
 import { PrivateRoute } from "@/lib/PrivateRoute";
 import { DashboardLayout } from "./components/layout/DashBoardLayout";
+import Services from "./components/pages/Services";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="professionals" element={<Professionals />} />
+          <Route path="services" element={<Services />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -136,9 +136,7 @@ exports.Prisma.ProfessionalScalarFieldEnum = {
 exports.Prisma.ServiceScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description',
-  price: 'price',
-  durationMin: 'durationMin'
+  price: 'price'
 };
 
 exports.Prisma.SortOrder = {
@@ -149,11 +147,6 @@ exports.Prisma.SortOrder = {
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
-};
-
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
 };
 
 

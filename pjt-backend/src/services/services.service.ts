@@ -6,11 +6,13 @@ import { Service } from '@/generated/client';
 export class ServicesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(): Promise<Service[]> {
-    return this.prisma.service.findMany({ include: { professionals: true } });
+  async findAll() {
+    return this.prisma.service.findMany({
+      include: { professionals: true },
+    });
   }
 
-  async findOne(id: string): Promise<Service> {
+  async findOne(id: string) {
     const service = await this.prisma.service.findUnique({
       where: { id },
       include: { professionals: true },
@@ -19,20 +21,15 @@ export class ServicesService {
     return service;
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-    price: number;
-    durationMin: number;
-  }): Promise<Service> {
+  async create(data: { name: string; price: number }) {
     return this.prisma.service.create({ data });
   }
 
-  async update(id: string, data: Partial<Service>): Promise<Service> {
+  async update(id: string, data: { name?: string; price?: number }) {
     return this.prisma.service.update({ where: { id }, data });
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string) {
     await this.prisma.service.delete({ where: { id } });
   }
 }

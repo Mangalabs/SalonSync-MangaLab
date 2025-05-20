@@ -1,140 +1,79 @@
-# 📘 Documentação Técnica do Projeto Fullstack
+# 📘 progresso.md - Projeto "Projetinho"
 
-## 🛠️ Stack Utilizada
-
-### Frontend
-
-* **React + TypeScript**
-* **Tailwind CSS v4** (com @tailwindcss/vite plugin)
-* **ShadCN UI**
-* **Vite**
-* **React Router DOM** (para rotas)
-* **React Query**
-
-### Backend
-
-* **Node.js com NestJS**
-* **Prisma ORM**
-* **PostgreSQL**
-* **JWT para autenticação**
-* **@nestjs/config** para variáveis de ambiente
+Registro técnico de desenvolvimento e decisões do sistema de gestão para barbearias e salões de beleza.
 
 ---
 
-## 📂 Estrutura de Pastas
+## 📅 Etapas concluídas
 
-```
-meu-projeto/
-├── backend/        ← API NestJS + Prisma
-│   ├── src/
-│   │   ├── auth/
-│   │   ├── dashboard/
-│   │   ├── professionals/
-│   │   ├── prisma/
-│   │   └── main.ts
-│   └── prisma/
-│       ├── schema.prisma
-│       └── generated/
-│           └── client/
-├── frontend/       ← Interface React com Tailwind e ShadCN
-│   ├── components/
-│   │   ├── custom/
-│   │   │   ├── ProfessionalForm.tsx
-│   │   │   └── ProfessionalTable.tsx
-│   │   └── layout/
-│   │       ├── Sidebar.tsx
-│   │       └── DashboardLayout.tsx
-│   ├── lib/
-│   │   └── PrivateRoute.tsx
-│   ├── pages/
-│   │   ├── Home.tsx
-│   │   ├── Login.tsx
-│   │   ├── Register.tsx
-│   │   ├── Dashboard.tsx
-│   │   └── Professionals.tsx
-│   ├── App.tsx
-│   └── main.tsx
-```
+### ✅ Autenticação
 
----
+* Rota de login e registro criadas no backend
+* JWT implementado
+* Validação com Zod no frontend
+* Redirecionamento após login
+* Token salvo no `localStorage`
 
-## ✅ Funcionalidades já implementadas
+### ✅ Estrutura de layout
 
-### 🔐 Autenticação
+* Sidebar criada com navegação protegida
+* Rotas estruturadas com React Router DOM
+* Dashboard inicial criado
 
-* Cadastro e login de usuários com email/senha
-* Proteção de rotas usando `PrivateRoute`
-* Token JWT armazenado no `localStorage`
+### ✅ Módulo de Profissionais
 
-### 📊 Dashboard (admin)
+* Tabela com listagem via React Query
+* Cadastro de novos profissionais
+* Backend com módulo e service dedicado
+* Associação de profissionais a serviços prevista
 
-* Estrutura de layout com Sidebar fixa
-* Remoção do Header: logout integrado à Sidebar
-* Sidebar visível apenas em rotas protegidas
+### ✅ Módulo de Serviços
 
-### 👥 Profissionais
+* Listagem de serviços via React Query
+* Cadastro com nome e preço
+* Campos `description` e `durationMin` removidos do schema
+* Padronização de chamadas com `axios` (baseURL definida)
+* `ServiceForm` e `ServiceTable` isolados como componentes
 
-* CRUD de profissionais no backend
-* Tela de listagem no frontend com React Query
-* Formulário modal de criação com validação (Zod + RHF)
-* Requisições para `/api/professionals`
-* Exibição dinâmica dos dados
+### ✅ Sidebar com botão de logout
+
+* Botão "Sair" posicionado corretamente na parte inferior
+* Evita scroll extra com uso de `flex-grow` e `overflow-y-auto`
+* Corrigido comportamento de conteúdo ultrapassando altura da tela
 
 ---
 
-## 🧭 Direcionamento do Projeto
+## 🔄 Alterações técnicas
 
-O sistema será voltado para **barbearias e salões de beleza**, com foco em resolver problemas reais de gestão e atendimento. A seguir, os principais módulos:
-
-### 1. Agendamento com Fidelidade e Cashback
-
-### 2. Controle Financeiro / Caixa Diário
-
-### 3. Gestão de Comissão de Profissionais
-
-### 4. Controle de Estoque com Alerta
-
-### 5. Fila Virtual
-
-### 6. Catálogo Interativo de Cortes + Portfólio
-
-### 7. Painel Administrativo
-
-### Futuro:
-
-* App mobile
-* Integração com WhatsApp API
+* Atualização do `schema.prisma` (remoção de campos obsoletos)
+* `prisma generate` com output manual em `prisma/generated/client`
+* Remoção de tipagem explícita com `Service` para evitar conflito
+* Correção de acessibilidade em modais (`DialogDescription`)
 
 ---
 
-## 🎯 MVP Inicial sugerido
+## 🔜 Próximas etapas
 
-* Cadastro/login de usuários
-* Agendamento simples com horários e profissionais
-* Dashboard com caixa básico
-* Cadastro de serviços
-* Comissão básica por serviço
+### 🧩 Módulo de Atendimentos (próximo foco)
 
----
+* Registro de atendimento: seleção de profissional e serviço
+* Geração de valor a pagar
+* Base para cálculo de comissão
 
-## 🔄 Próximos Passos
+### 🧩 Clientes
 
-* Tela de associação de serviços a profissionais (multi-select)
-* Implementar cadastro de clientes
-* Tela de agendamentos com calendário/lista
+* Cadastro e listagem básica de clientes
 
 ---
 
-## 🧠 Observações Técnicas
+## 🔧 Observações e práticas adotadas
 
-* Prisma Client gerado em `prisma/generated/client` e importado via caminho relativo
-* Prefixo global da API: `/api`
-* Todos os endpoints seguem estrutura REST (`/api/professionals`, `/api/auth/login`, etc.)
-* Sidebar encapsulada em layout protegido (`DashboardLayout`)
-* Frontend usa aliases absolutos com `@/`
-* React Query utilizado para cache, loading e reatividade de dados
+* Imports absolutos com alias `@/`
+* Separação de UI (`components/ui`) e lógicas (`components/custom`)
+* Validação com Zod + RHF
+* Controle de sessão com token JWT
 
 ---
 
-Este documento será mantido atualizado conforme novas etapas forem concluídas.
+Documento atualizado em tempo real conforme evolução do projeto ✂️
 
