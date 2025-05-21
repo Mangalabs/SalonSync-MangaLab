@@ -3,32 +3,27 @@ import {
   CalendarCheck,
   Users,
   ClipboardList,
+  User,
   Warehouse,
   BarChart2,
   Settings,
   LogOut,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
-  { to: "/dashboard/appointments", icon: CalendarCheck, label: "Agendamentos" },
+  { to: "/dashboard/appointments", icon: CalendarCheck, label: "Atendimentos" },
   { to: "/dashboard/professionals", icon: Users, label: "Profissionais" },
   { to: "/dashboard/services", icon: ClipboardList, label: "Serviços" },
+  { to: "/dashboard/clients", icon: User, label: "Clientes" },
   { to: "/dashboard/inventory", icon: Warehouse, label: "Estoque" },
   { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios" },
   { to: "/dashboard/settings", icon: Settings, label: "Configurações" },
 ];
 
 export function Sidebar() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
-
   return (
     <aside className="w-64 min-h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6">
       <h2 className="text-xl font-bold mb-6">Painel</h2>
@@ -50,10 +45,21 @@ export function Sidebar() {
         ))}
       </div>
 
+      <div className="mt-6 px-2">
+        <NavLink to="/dashboard/appointments?new=true">
+          <Button className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100">
+            Novo Atendimento
+          </Button>
+        </NavLink>
+      </div>
+
       <Button
         variant="ghost"
-        onClick={handleLogout}
-        className="mt-4 flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 justify-start"
+        onClick={() => {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        }}
+        className="mt-6 flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 justify-start"
       >
         <LogOut size={18} />
         Sair

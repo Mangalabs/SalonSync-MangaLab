@@ -7,6 +7,8 @@ import Professionals from "@/components/pages/Professionals";
 import { PrivateRoute } from "@/lib/PrivateRoute";
 import { DashboardLayout } from "./components/layout/DashBoardLayout";
 import Services from "./components/pages/Services";
+import Clients from "./components/pages/Clients";
+import Appointments from "./components/pages/Appointments";
 
 export default function App() {
   return (
@@ -27,7 +29,11 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="professionals" element={<Professionals />} />
           <Route path="services" element={<Services />} />
+          <Route path="clients" element={<Clients />} />
+          <Route path="appointments" element={<Appointments />} />
         </Route>
+
+        <Route path="*" element={<Home />} />
       </Routes>
     </BrowserRouter>
   );

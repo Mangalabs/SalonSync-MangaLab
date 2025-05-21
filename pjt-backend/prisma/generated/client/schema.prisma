@@ -28,3 +28,12 @@ model Service {
   price         Decimal
   professionals Professional[] @relation("ProfessionalServices")
 }
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

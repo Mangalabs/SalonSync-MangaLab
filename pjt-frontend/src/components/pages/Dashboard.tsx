@@ -1,6 +1,6 @@
 export default function Dashboard() {
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="p-6">
       <h1 className="text-2xl font-bold text-[#FF5D73]">
         Bem-vindo ao Dashboard!
       </h1>

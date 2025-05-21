@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../prisma/generated/client"
 }
 
 datasource db {
@@ -15,16 +14,48 @@ model User {
 }
 
 model Professional {
-  id        String    @id @default(uuid())
-  name      String
-  role      String
-  active    Boolean   @default(true)
-  services  Service[] @relation("ProfessionalServices")
+  id           String        @id @default(uuid())
+  name         String
+  role         String
+  active       Boolean       @default(true)
+  services     Service[]     @relation("ProfessionalServices")
+  appointments Appointment[]
 }
 
 model Service {
-  id             String         @id @default(uuid())
-  name           String
-  price          Decimal
-  professionals  Professional[] @relation("ProfessionalServices")
+  id                  String               @id @default(uuid())
+  name                String
+  price               Decimal              @db.Decimal(10, 2)
+  professionals       Professional[]       @relation("ProfessionalServices")
+  appointmentServices AppointmentService[]
+}
+
+model Client {
+  id           String        @id @default(uuid())
+  name         String
+  phone        String?
+  email        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Appointment {
+  id                  String               @id @default(uuid())
+  professional        Professional         @relation(fields: [professionalId], references: [id])
+  professionalId      String
+  client              Client               @relation(fields: [clientId], references: [id])
+  clientId            String
+  appointmentServices AppointmentService[]
+  total               Decimal              @db.Decimal(10, 2)
+  createdAt           DateTime             @default(now())
+}
+
+model AppointmentService {
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId String
+  service       Service     @relation(fields: [serviceId], references: [id])
+  serviceId     String
+
+  @@id([appointmentId, serviceId])
 }
