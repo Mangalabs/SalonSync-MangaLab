@@ -94,7 +94,10 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
   // --- Mutation para criar atendimento ---
   const { mutate } = useMutation<void, Error, FormData>({
     mutationFn: async (data) => {
-      await axios.post("/api/appointments", data);
+      await axios.post("/api/appointments", {
+        ...data,
+        scheduledAt: new Date().toISOString(), // Atendimento realizado agora
+      });
     },
     onSuccess: () => {
       // <— Aqui usamos objeto para queryKey

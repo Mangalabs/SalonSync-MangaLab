@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { SchedulingPanel } from "@/components/custom/SchedulingPanel";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
@@ -25,7 +26,7 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <aside className="w-64 min-h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6">
+    <aside className="w-64 h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6 fixed left-0 top-0">
       <h2 className="text-xl font-bold mb-6">Painel</h2>
 
       <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
@@ -45,12 +46,15 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="mt-6 px-2">
+      <div className="mt-6">
         <NavLink to="/dashboard/appointments?new=true">
           <Button className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100">
             Novo Atendimento
           </Button>
         </NavLink>
+        <div className="mt-6">
+          <SchedulingPanel />
+        </div>
       </div>
 
       <Button

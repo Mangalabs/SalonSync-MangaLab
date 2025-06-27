@@ -48,6 +48,7 @@ model Appointment {
   clientId            String
   appointmentServices AppointmentService[]
   total               Decimal              @db.Decimal(10, 2)
+  scheduledAt         DateTime
   createdAt           DateTime             @default(now())
 }
 

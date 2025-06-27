@@ -10,7 +10,19 @@ export class AppointmentsService {
     professionalId: string;
     clientId: string;
     serviceIds: string[];
+    scheduledAt: Date;
   }): Promise<Appointment> {
+    // Verificar conflito de horário
+    const existingAppointment = await this.prisma.appointment.findFirst({
+      where: {
+        professionalId: data.professionalId,
+        scheduledAt: data.scheduledAt,
+      },
+    });
+    if (existingAppointment) {
+      throw new Error('Já existe um agendamento neste horário');
+    }
+
     const services = await this.prisma.service.findMany({
       where: { id: { in: data.serviceIds } },
       select: { price: true },
@@ -25,6 +37,7 @@ export class AppointmentsService {
         professionalId: data.professionalId,
         clientId: data.clientId,
         total,
+        scheduledAt: data.scheduledAt,
         appointmentServices: {
           create: data.serviceIds.map((serviceId) => ({ serviceId })),
         },
@@ -61,5 +74,48 @@ export class AppointmentsService {
     });
     if (!appt) throw new NotFoundException('Atendimento não encontrado');
     return appt;
+  }
+
+  async getAvailableSlots(professionalId: string, date: string): Promise<string[]> {
+    const startDate = new Date(date + 'T00:00:00Z');
+    const endDate = new Date(date + 'T23:59:59Z');
+    
+    const existingAppointments = await this.prisma.appointment.findMany({
+      where: {
+        professionalId,
+        scheduledAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: { scheduledAt: true },
+    });
+
+    const workingHours = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+    const bookedTimes = existingAppointments.map(apt => 
+      apt.scheduledAt.toISOString().substring(11, 16)
+    );
+
+    return workingHours.filter(time => !bookedTimes.includes(time));
+  }
+
+  async getAppointmentsByDate(date: string): Promise<Appointment[]> {
+    const startDate = new Date(date + 'T00:00:00Z');
+    const endDate = new Date(date + 'T23:59:59Z');
+
+    return this.prisma.appointment.findMany({
+      where: {
+        scheduledAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        professional: true,
+        client: true,
+        appointmentServices: { include: { service: true } },
+      },
+      orderBy: { scheduledAt: 'asc' },
+    });
   }
 }
