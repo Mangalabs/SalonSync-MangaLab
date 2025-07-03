@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Professional } from '@/generated/client';
 
@@ -28,6 +28,19 @@ export class ProfessionalsService {
   }
 
   async remove(id: string): Promise<void> {
+    const professional = await this.prisma.professional.findUnique({ where: { id } });
+    if (!professional) {
+      throw new NotFoundException('Profissional não encontrado');
+    }
+    
+    const appointmentsCount = await this.prisma.appointment.count({
+      where: { professionalId: id }
+    });
+    
+    if (appointmentsCount > 0) {
+      throw new BadRequestException('Não é possível excluir profissional com agendamentos');
+    }
+    
     await this.prisma.professional.delete({ where: { id } });
   }
 

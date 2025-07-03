@@ -49,7 +49,14 @@ model Appointment {
   appointmentServices AppointmentService[]
   total               Decimal              @db.Decimal(10, 2)
   scheduledAt         DateTime
+  status              AppointmentStatus    @default(SCHEDULED)
   createdAt           DateTime             @default(now())
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
 
 model AppointmentService {

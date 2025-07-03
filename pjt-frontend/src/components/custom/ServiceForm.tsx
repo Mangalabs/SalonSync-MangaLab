@@ -13,7 +13,15 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export function ServiceForm({ onSuccess }: { onSuccess: () => void }) {
+export function ServiceForm({ 
+  onSuccess, 
+  initialData 
+}: { 
+  onSuccess: () => void;
+  initialData?: { id: string; name: string; price: string } | null;
+}) {
+  const isEditing = !!initialData;
+  
   const {
     register,
     handleSubmit,
@@ -21,12 +29,21 @@ export function ServiceForm({ onSuccess }: { onSuccess: () => void }) {
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: initialData ? {
+      name: initialData.name,
+      price: Number(initialData.price)
+    } : undefined
   });
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => api.post("/services", data),
+    mutationFn: (data: FormData) => {
+      if (isEditing) {
+        return api.patch(`/services/${initialData.id}`, data);
+      }
+      return api.post("/services", data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       reset();
@@ -60,7 +77,7 @@ export function ServiceForm({ onSuccess }: { onSuccess: () => void }) {
         disabled={isSubmitting}
         className="w-full bg-[#FF5D73] text-white"
       >
-        {isSubmitting ? "Salvando..." : "Salvar"}
+        {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
       </Button>
     </form>
   );

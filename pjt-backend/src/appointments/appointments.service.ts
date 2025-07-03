@@ -11,6 +11,7 @@ export class AppointmentsService {
     clientId: string;
     serviceIds: string[];
     scheduledAt: Date;
+    status?: string;
   }): Promise<Appointment> {
     // Verificar conflito de horário
     const existingAppointment = await this.prisma.appointment.findFirst({
@@ -38,6 +39,7 @@ export class AppointmentsService {
         clientId: data.clientId,
         total,
         scheduledAt: data.scheduledAt,
+        status: (data.status as any) || 'SCHEDULED',
         appointmentServices: {
           create: data.serviceIds.map((serviceId) => ({ serviceId })),
         },
@@ -117,5 +119,50 @@ export class AppointmentsService {
       },
       orderBy: { scheduledAt: 'asc' },
     });
+  }
+
+  async remove(id: string): Promise<void> {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
+    
+    // Excluir primeiro os serviços do agendamento
+    await this.prisma.appointmentService.deleteMany({
+      where: { appointmentId: id }
+    });
+    
+    // Depois excluir o agendamento
+    await this.prisma.appointment.delete({ where: { id } });
+  }
+
+  async confirmAppointment(id: string): Promise<Appointment> {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
+    
+    return this.prisma.appointment.update({
+      where: { id },
+      data: { status: 'COMPLETED' },
+      include: {
+        professional: true,
+        client: true,
+        appointmentServices: { include: { service: true } },
+      },
+    });
+  }
+
+  async cancelAppointment(id: string): Promise<void> {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
+    
+    // Cancelar = excluir o agendamento
+    await this.prisma.appointmentService.deleteMany({
+      where: { appointmentId: id }
+    });
+    await this.prisma.appointment.delete({ where: { id } });
   }
 }

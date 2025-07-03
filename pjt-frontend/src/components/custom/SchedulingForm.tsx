@@ -83,12 +83,13 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
 
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
-      const scheduledAt = `${data.date}T${data.time}:00.000Z`;
+      const scheduledAt = `${data.date}T${data.time}:00`;
       await axios.post("/api/appointments", {
         professionalId: data.professionalId,
         clientId: data.clientId,
         serviceIds: data.serviceIds,
         scheduledAt,
+        status: 'SCHEDULED' // Agendamento futuro
       });
     },
     onSuccess: () => {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from '@prisma/client';
@@ -12,10 +12,11 @@ export class AppointmentsController {
   @Post()
   @ApiOperation({ summary: 'Criar novo agendamento' })
   @ApiResponse({ status: 201, description: 'Agendamento criado com sucesso' })
-  create(@Body() body: CreateAppointmentDto): Promise<Appointment> {
+  create(@Body() body: CreateAppointmentDto & { status?: string }): Promise<Appointment> {
     return this.apptService.create({
       ...body,
       scheduledAt: new Date(body.scheduledAt),
+      status: (body.status as any) || 'SCHEDULED', // Padrão: agendamento
     });
   }
 
@@ -49,5 +50,27 @@ export class AppointmentsController {
   @ApiResponse({ status: 404, description: 'Agendamento não encontrado' })
   findOne(@Param('id') id: string): Promise<Appointment> {
     return this.apptService.findOne(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Remover agendamento' })
+  @ApiResponse({ status: 200, description: 'Agendamento removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Agendamento não encontrado' })
+  remove(@Param('id') id: string): Promise<void> {
+    return this.apptService.remove(id);
+  }
+
+  @Post(':id/confirm')
+  @ApiOperation({ summary: 'Confirmar agendamento como realizado' })
+  @ApiResponse({ status: 200, description: 'Agendamento confirmado com sucesso' })
+  confirmAppointment(@Param('id') id: string): Promise<Appointment> {
+    return this.apptService.confirmAppointment(id);
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancelar agendamento' })
+  @ApiResponse({ status: 200, description: 'Agendamento cancelado com sucesso' })
+  cancelAppointment(@Param('id') id: string): Promise<void> {
+    return this.apptService.cancelAppointment(id);
   }
 }

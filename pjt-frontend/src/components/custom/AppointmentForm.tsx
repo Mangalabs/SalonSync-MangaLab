@@ -1,4 +1,3 @@
-// src/components/custom/AppointmentForm.tsx
 import { useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
@@ -18,7 +17,6 @@ import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// --- Validação com Zod ---
 const schema = z.object({
   professionalId: z.string().min(1, "Selecione um profissional"),
   clientId: z.string().min(1, "Selecione um cliente"),
@@ -29,7 +27,6 @@ type FormData = z.infer<typeof schema>;
 export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
 
-  // react-hook-form + Zod
   const {
     control,
     handleSubmit,
@@ -40,7 +37,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
     defaultValues: { professionalId: "", clientId: "", serviceIds: [] },
   });
 
-  // --- Consultas de lookup ---
   const { data: professionals = [] } = useQuery<
     { id: string; name: string }[],
     Error
@@ -63,7 +59,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
     },
   });
 
-  // --- Garante price:number via select ---
   const { data: services = [] } = useQuery<
     { id: string; name: string; price: number }[],
     Error
@@ -81,7 +76,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
       })),
   });
 
-  // --- Cálculo do total ---
   const total = useMemo(() => {
     const selected = getValues("serviceIds");
     return (
@@ -91,16 +85,15 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
     );
   }, [getValues, services]);
 
-  // --- Mutation para criar atendimento ---
   const { mutate } = useMutation<void, Error, FormData>({
     mutationFn: async (data) => {
       await axios.post("/api/appointments", {
         ...data,
-        scheduledAt: new Date().toISOString(), // Atendimento realizado agora
+        scheduledAt: new Date().toISOString(),
+        status: 'COMPLETED'
       });
     },
     onSuccess: () => {
-      // <— Aqui usamos objeto para queryKey
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       onSuccess();
     },
@@ -108,7 +101,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit((data) => mutate(data))} className="space-y-4">
-      {/* Profissional */}
       <div>
         <Label>Profissional</Label>
         <Controller
@@ -138,7 +130,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
         )}
       </div>
 
-      {/* Cliente */}
       <div className="flex justify-between items-center">
         <Label>Cliente</Label>
         <NavLink
@@ -172,7 +163,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
         <p className="text-sm text-red-500">{errors.clientId.message}</p>
       )}
 
-      {/* Serviços */}
       <div>
         <Label>Serviços</Label>
         <Controller
@@ -203,7 +193,6 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
         )}
       </div>
 
-      {/* Total & Botão */}
       <div className="font-semibold">Total: R$ {total.toFixed(2)}</div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Salvando..." : "Finalizar"}

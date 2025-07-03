@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SchedulingPanel } from "@/components/custom/SchedulingPanel";
+import { AppointmentForm } from "@/components/custom/AppointmentForm";
+import { useState } from "react";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
@@ -25,6 +28,8 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+
   return (
     <aside className="w-64 h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6 fixed left-0 top-0">
       <h2 className="text-xl font-bold mb-6">Painel</h2>
@@ -47,15 +52,25 @@ export function Sidebar() {
       </div>
 
       <div className="mt-6">
-        <NavLink to="/dashboard/appointments?new=true">
-          <Button className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100">
-            Novo Atendimento
-          </Button>
-        </NavLink>
+        <Button 
+          onClick={() => setShowAppointmentForm(true)}
+          className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100"
+        >
+          Novo Atendimento
+        </Button>
         <div className="mt-6">
           <SchedulingPanel />
         </div>
       </div>
+
+      <Dialog open={showAppointmentForm} onOpenChange={setShowAppointmentForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Atendimento</DialogTitle>
+          </DialogHeader>
+          <AppointmentForm onSuccess={() => setShowAppointmentForm(false)} />
+        </DialogContent>
+      </Dialog>
 
       <Button
         variant="ghost"

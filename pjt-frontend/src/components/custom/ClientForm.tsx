@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 const clientSchema = z.object({
@@ -14,7 +15,16 @@ const clientSchema = z.object({
 
 type ClientFormData = z.infer<typeof clientSchema>;
 
-export function ClientForm({ onSuccess }: { onSuccess: () => void }) {
+export function ClientForm({ 
+  onSuccess, 
+  initialData 
+}: { 
+  onSuccess: () => void;
+  initialData?: { id: string; name: string; phone?: string; email?: string } | null;
+}) {
+  const isEditing = !!initialData;
+  const queryClient = useQueryClient();
+  
   const {
     register,
     handleSubmit,
@@ -22,16 +32,30 @@ export function ClientForm({ onSuccess }: { onSuccess: () => void }) {
     formState: { errors, isSubmitting },
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
+    defaultValues: initialData ? {
+      name: initialData.name,
+      phone: initialData.phone || '',
+      email: initialData.email || ''
+    } : undefined
   });
 
-  const onSubmit = async (data: ClientFormData) => {
-    await axios.post("/api/clients", data);
-    reset();
-    onSuccess();
-  };
+  const mutation = useMutation({
+    mutationFn: async (data: ClientFormData) => {
+      if (isEditing) {
+        return axios.patch(`/api/clients/${initialData.id}`, data);
+      } else {
+        return axios.post("/api/clients", data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      reset();
+      onSuccess();
+    },
+  });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
       <div>
         <Label htmlFor="name">Nome</Label>
         <Input id="name" {...register("name")} />
@@ -50,8 +74,8 @@ export function ClientForm({ onSuccess }: { onSuccess: () => void }) {
           <p className="text-sm text-red-500">{errors.email.message}</p>
         )}
       </div>
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Salvar"}
+      <Button type="submit" disabled={mutation.isPending}>
+        {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
       </Button>
     </form>
   );

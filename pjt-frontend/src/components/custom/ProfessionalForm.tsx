@@ -12,23 +12,41 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export function ProfessionalForm({ onSuccess }: { onSuccess: () => void }) {
+export function ProfessionalForm({ 
+  onSuccess, 
+  initialData 
+}: { 
+  onSuccess: () => void;
+  initialData?: { id: string; name: string; role: string } | null;
+}) {
   const queryClient = useQueryClient();
+  const isEditing = !!initialData;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({ 
+    resolver: zodResolver(schema),
+    defaultValues: initialData ? {
+      name: initialData.name,
+      role: initialData.role
+    } : undefined
+  });
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const res = await fetch("http://localhost:3000/api/professionals", {
-        method: "POST",
+      const url = isEditing 
+        ? `http://localhost:3000/api/professionals/${initialData.id}`
+        : "http://localhost:3000/api/professionals";
+      const method = isEditing ? "PATCH" : "POST";
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Erro ao criar profissional");
+      if (!res.ok) throw new Error(`Erro ao ${isEditing ? 'atualizar' : 'criar'} profissional`);
       return res.json();
     },
     onSuccess: () => {
@@ -59,7 +77,7 @@ export function ProfessionalForm({ onSuccess }: { onSuccess: () => void }) {
         disabled={isSubmitting}
         className="w-full bg-[#FF5D73] text-white"
       >
-        {isSubmitting ? "Salvando..." : "Salvar"}
+        {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
       </Button>
     </form>
   );
