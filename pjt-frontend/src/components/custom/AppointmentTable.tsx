@@ -85,33 +85,28 @@ export function AppointmentTable() {
     [rawData]
   );
 
-  // Filtrar atendimentos realizados (COMPLETED ou sem status para compatibilidade)
   const completedAppointments = data.filter(
     apt => !apt.status || apt.status === 'COMPLETED'
   );
 
-  // Aplicar todos os filtros
+
   const filteredAppointments = useMemo(() => {
     let filtered = completedAppointments;
 
-    // Filtro por profissional
     if (selectedProfessional !== "all") {
       filtered = filtered.filter(apt => apt.professional.name === selectedProfessional);
     }
 
-    // Filtro por cliente
     if (selectedClient !== "all") {
       filtered = filtered.filter(apt => apt.client.name === selectedClient);
     }
 
-    // Filtro por serviço
     if (selectedService !== "all") {
       filtered = filtered.filter(apt => 
         apt.appointmentServices.some(as => as.service.name === selectedService)
       );
     }
 
-    // Filtro por data
     if (dateFilter) {
       filtered = filtered.filter(apt => 
         apt.scheduledAt.split('T')[0] === dateFilter
@@ -121,7 +116,7 @@ export function AppointmentTable() {
     return filtered;
   }, [completedAppointments, selectedProfessional, selectedClient, selectedService, dateFilter]);
 
-  // Agrupar por profissional e mês
+
   const groupedData = useMemo(() => {
     return filteredAppointments.reduce((acc, apt) => {
       const professionalName = apt.professional.name;

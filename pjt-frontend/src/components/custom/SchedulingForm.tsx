@@ -89,7 +89,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
         clientId: data.clientId,
         serviceIds: data.serviceIds,
         scheduledAt,
-        status: 'SCHEDULED' // Agendamento futuro
+        status: 'SCHEDULED'
       });
     },
     onSuccess: () => {
