@@ -9,7 +9,8 @@ import {
 import { Trash2, Edit } from "lucide-react";
 import { ProfessionalForm } from "./ProfessionalForm";
 import { useState } from "react";
-import axios from "axios";
+import axios from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 type Professional = {
   id: string;
@@ -20,13 +21,17 @@ type Professional = {
 export function ProfessionalTable() {
   const queryClient = useQueryClient();
   const [editingProfessional, setEditingProfessional] = useState<any>(null);
+  const { activeBranch } = useBranch();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["professionals"],
+    queryKey: ["professionals", activeBranch?.id],
     queryFn: async () => {
+      console.log('🔍 Fetching professionals for branch:', activeBranch?.id);
       const res = await axios.get("/api/professionals");
+      console.log('🔍 Professionals received:', res.data);
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const deleteProfessional = useMutation({

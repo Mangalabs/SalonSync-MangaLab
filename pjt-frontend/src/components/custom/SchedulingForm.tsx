@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { Clock } from "lucide-react";
+import { useBranch } from "@/contexts/BranchContext";
 
 const schema = z.object({
   professionalId: z.string().min(1, "Selecione um profissional"),
@@ -28,6 +29,7 @@ type FormData = z.infer<typeof schema>;
 
 export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
+  const { activeBranch } = useBranch();
 
   const { control, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,23 +47,25 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const watchedServices = watch("serviceIds");
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals"],
+    queryKey: ["professionals", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/professionals");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/clients");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: services = [] } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/services");
       return res.data.map((s: any) => ({
@@ -69,6 +73,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
         price: Number(s.price),
       }));
     },
+    enabled: !!activeBranch,
   });
 
   const { data: availableSlots = [] } = useQuery({

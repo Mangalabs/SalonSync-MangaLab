@@ -4,11 +4,13 @@ import Login from "@/components/pages/Login";
 import Register from "@/components/pages/Register";
 import Dashboard from "@/components/pages/Dashboard";
 import Professionals from "@/components/pages/Professionals";
+import Settings from "@/components/pages/Settings";
 import { PrivateRoute } from "@/lib/PrivateRoute";
 import { DashboardLayout } from "./components/layout/DashBoardLayout";
 import Services from "./components/pages/Services";
 import Clients from "./components/pages/Clients";
 import Appointments from "./components/pages/Appointments";
+import { BranchProvider } from "@/contexts/BranchContext";
 
 export default function App() {
   return (
@@ -22,7 +24,9 @@ export default function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <DashboardLayout />
+              <BranchProvider>
+                <DashboardLayout />
+              </BranchProvider>
             </PrivateRoute>
           }
         >
@@ -31,6 +35,7 @@ export default function App() {
           <Route path="services" element={<Services />} />
           <Route path="clients" element={<Clients />} />
           <Route path="appointments" element={<Appointments />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         <Route path="*" element={<Home />} />

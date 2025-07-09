@@ -12,6 +12,8 @@ export class AppointmentsService {
     serviceIds: string[];
     scheduledAt: Date;
     status?: string;
+    userId?: string;
+    branchId?: string;
   }): Promise<Appointment> {
     // Verificar conflito de horário
     const existingAppointment = await this.prisma.appointment.findFirst({
@@ -33,10 +35,31 @@ export class AppointmentsService {
     }
     const total = services.reduce((sum, s) => sum + Number(s.price), 0);
 
+    let branchId: string;
+    
+    if (data.branchId && data.userId) {
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: data.branchId, ownerId: data.userId }
+      });
+      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
+      branchId = data.branchId;
+    } else if (data.userId) {
+      const userBranch = await this.prisma.branch.findFirst({
+        where: { ownerId: data.userId }
+      });
+      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
+      branchId = userBranch.id;
+    } else {
+      const firstBranch = await this.prisma.branch.findFirst();
+      if (!firstBranch) throw new Error('Nenhuma filial encontrada');
+      branchId = firstBranch.id;
+    }
+
     return this.prisma.appointment.create({
       data: {
         professionalId: data.professionalId,
         clientId: data.clientId,
+        branchId,
         total,
         scheduledAt: data.scheduledAt,
         status: (data.status as any) || 'SCHEDULED',
@@ -54,7 +77,37 @@ export class AppointmentsService {
     });
   }
 
-  findAll(): Promise<Appointment[]> {
+  async findAll(userId?: string, branchId?: string): Promise<Appointment[]> {
+    if (branchId) {
+      return this.prisma.appointment.findMany({
+        where: { branchId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          professional: true,
+          client: true,
+          appointmentServices: { include: { service: true } },
+        },
+      });
+    }
+    
+    if (userId) {
+      const userBranches = await this.prisma.branch.findMany({
+        where: { ownerId: userId },
+        select: { id: true }
+      });
+      const branchIds = userBranches.map(b => b.id);
+      
+      return this.prisma.appointment.findMany({
+        where: { branchId: { in: branchIds } },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          professional: true,
+          client: true,
+          appointmentServices: { include: { service: true } },
+        },
+      });
+    }
+    
     return this.prisma.appointment.findMany({
       orderBy: { createdAt: 'desc' },
       include: {

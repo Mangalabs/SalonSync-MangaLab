@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, DollarSign, X, Check } from "lucide-react";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface Appointment {
   id: string;
@@ -18,13 +19,15 @@ interface Appointment {
 
 export function SchedulingCalendar() {
   const queryClient = useQueryClient();
+  const { activeBranch } = useBranch();
 
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
-    queryKey: ["appointments"],
+    queryKey: ["appointments", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/appointments");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const cancelAppointment = useMutation({
@@ -59,10 +62,76 @@ export function SchedulingCalendar() {
     );
   });
 
+  const todayRevenue = todayCompletedAppointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+  const monthlyRevenue = appointments
+    .filter(apt => {
+      const today = new Date();
+      const aptDate = new Date(apt.scheduledAt);
+      return apt.status === "COMPLETED" && 
+             aptDate.getMonth() === today.getMonth() && 
+             aptDate.getFullYear() === today.getFullYear();
+    })
+    .reduce((sum, apt) => sum + Number(apt.total), 0);
+
+  const professionalStats = appointments
+    .filter(apt => apt.status === "COMPLETED")
+    .reduce((acc, apt) => {
+      const name = apt.professional.name;
+      if (!acc[name]) acc[name] = { count: 0, revenue: 0 };
+      acc[name].count++;
+      acc[name].revenue += Number(apt.total);
+      return acc;
+    }, {} as Record<string, { count: number; revenue: number }>);
+
+  const topProfessional = Object.entries(professionalStats)
+    .sort(([,a], [,b]) => b.count - a.count)[0];
+
   if (isLoading) return <div>Carregando agendamentos...</div>;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Hoje</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ {todayRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {todayCompletedAppointments.length} atendimentos hoje
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ {monthlyRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Top Profissional</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{topProfessional?.[0] || "N/A"}</div>
+            <p className="text-xs text-muted-foreground">
+              {topProfessional?.[1]?.count || 0} atendimentos realizados
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -211,6 +280,7 @@ export function SchedulingCalendar() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

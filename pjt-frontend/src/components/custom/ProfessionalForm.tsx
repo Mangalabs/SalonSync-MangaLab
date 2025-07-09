@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "@/lib/axios";
 
 const schema = z.object({
   name: z.string().min(2, "Informe o nome"),
@@ -36,22 +37,23 @@ export function ProfessionalForm({
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const url = isEditing 
-        ? `http://localhost:3000/api/professionals/${initialData.id}`
-        : "http://localhost:3000/api/professionals";
-      const method = isEditing ? "PATCH" : "POST";
+      console.log('🚀 ProfessionalForm mutation:', { data, isEditing });
       
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error(`Erro ao ${isEditing ? 'atualizar' : 'criar'} profissional`);
-      return res.json();
+      if (isEditing) {
+        const res = await axios.patch(`/api/professionals/${initialData.id}`, data);
+        return res.data;
+      } else {
+        const res = await axios.post('/api/professionals', data);
+        return res.data;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('✅ Professional mutation success:', result);
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       onSuccess();
+    },
+    onError: (error) => {
+      console.log('❌ Professional mutation error:', error);
     },
   });
 

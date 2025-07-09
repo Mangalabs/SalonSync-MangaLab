@@ -14,8 +14,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NavLink } from "react-router-dom";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBranch } from "@/contexts/BranchContext";
 
 const schema = z.object({
   professionalId: z.string().min(1, "Selecione um profissional"),
@@ -26,6 +27,7 @@ type FormData = z.infer<typeof schema>;
 
 export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
+  const { activeBranch } = useBranch();
 
   const {
     control,
@@ -41,29 +43,31 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
     { id: string; name: string }[],
     Error
   >({
-    queryKey: ["professionals"],
+    queryKey: ["professionals", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/professionals");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: clients = [] } = useQuery<
     { id: string; name: string }[],
     Error
   >({
-    queryKey: ["clients"],
+    queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/clients");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: services = [] } = useQuery<
     { id: string; name: string; price: number }[],
     Error
   >({
-    queryKey: ["services"],
+    queryKey: ["services", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/services");
       return res.data as any[];
@@ -74,6 +78,7 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
         name: s.name,
         price: Number(s.price),
       })),
+    enabled: !!activeBranch,
   });
 
   const total = useMemo(() => {

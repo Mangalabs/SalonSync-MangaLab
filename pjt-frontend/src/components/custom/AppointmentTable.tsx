@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, User, Calendar, DollarSign, ChevronDown, ChevronRight, Filter } from "lucide-react";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface RawAppointment {
   id: string;
@@ -24,37 +25,42 @@ export function AppointmentTable() {
   const [selectedService, setSelectedService] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const { activeBranch } = useBranch();
   
   const { data: rawData = [], isLoading } = useQuery<RawAppointment[]>({
-    queryKey: ["appointments"],
+    queryKey: ["appointments", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/appointments");
       return Array.isArray(res.data) ? res.data : [];
     },
+    enabled: !!activeBranch,
   });
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals"],
+    queryKey: ["professionals", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/professionals");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/clients");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const { data: services = [] } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/services");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const deleteAppointment = useMutation({

@@ -5,7 +5,27 @@ import { PrismaService } from '@/prisma/prisma.service';
 export class ServicesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(userId?: string, branchId?: string) {
+    if (branchId) {
+      return this.prisma.service.findMany({
+        where: { branchId },
+        include: { professionals: true },
+      });
+    }
+    
+    if (userId) {
+      const userBranches = await this.prisma.branch.findMany({
+        where: { ownerId: userId },
+        select: { id: true }
+      });
+      const branchIds = userBranches.map(b => b.id);
+      
+      return this.prisma.service.findMany({
+        where: { branchId: { in: branchIds } },
+        include: { professionals: true },
+      });
+    }
+    
     return this.prisma.service.findMany({
       include: { professionals: true },
     });
@@ -20,8 +40,30 @@ export class ServicesService {
     return service;
   }
 
-  async create(data: { name: string; price: number }) {
-    return this.prisma.service.create({ data });
+  async create(data: { name: string; price: number }, userId?: string, targetBranchId?: string) {
+    let branchId: string;
+    
+    if (targetBranchId && userId) {
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: targetBranchId, ownerId: userId }
+      });
+      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
+      branchId = targetBranchId;
+    } else if (userId) {
+      const userBranch = await this.prisma.branch.findFirst({
+        where: { ownerId: userId }
+      });
+      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
+      branchId = userBranch.id;
+    } else {
+      const firstBranch = await this.prisma.branch.findFirst();
+      if (!firstBranch) throw new Error('Nenhuma filial encontrada');
+      branchId = firstBranch.id;
+    }
+    
+    return this.prisma.service.create({ 
+      data: { ...data, branchId } 
+    });
   }
 
   async update(id: string, data: { name?: string; price?: number }) {

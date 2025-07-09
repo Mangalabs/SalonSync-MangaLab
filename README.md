@@ -210,4 +210,3 @@ Após executar `npm run seed` no backend:
 
 ---
 
-**Desenvolvido com ❤️ para facilitar a gestão de barbearias e salões** ✂️

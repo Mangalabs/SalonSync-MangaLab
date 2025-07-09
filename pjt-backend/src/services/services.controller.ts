@@ -6,6 +6,7 @@ import {
   Post,
   Patch,
   Delete,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
@@ -20,8 +21,22 @@ export class ServicesController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os serviços' })
   @ApiResponse({ status: 200, description: 'Lista de serviços' })
-  findAll() {
-    return this.service.findAll();
+  findAll(
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+      } catch (error) {}
+    }
+    
+    return this.service.findAll(userId, branchId);
   }
 
   @Get(':id')
@@ -35,8 +50,23 @@ export class ServicesController {
   @Post()
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
-  create(@Body() body: CreateServiceDto) {
-    return this.service.create(body);
+  create(
+    @Body() body: CreateServiceDto,
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+      } catch (error) {}
+    }
+    
+    return this.service.create(body, userId, branchId);
   }
 
   @Patch(':id')

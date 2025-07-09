@@ -9,7 +9,8 @@ import {
 import { Trash2, Edit } from "lucide-react";
 import { ClientForm } from "./ClientForm";
 import { useState } from "react";
-import axios from "axios";
+import axios from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface Client {
   id: string;
@@ -21,13 +22,15 @@ interface Client {
 export function ClientTable() {
   const queryClient = useQueryClient();
   const [editingClient, setEditingClient] = useState<any>(null);
+  const { activeBranch } = useBranch();
 
   const { data, isLoading } = useQuery<Client[]>({
-    queryKey: ["clients"],
+    queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/clients");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const deleteClient = useMutation({

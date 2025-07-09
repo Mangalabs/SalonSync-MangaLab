@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Delete, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from '@prisma/client';
@@ -12,19 +12,50 @@ export class AppointmentsController {
   @Post()
   @ApiOperation({ summary: 'Criar novo agendamento' })
   @ApiResponse({ status: 201, description: 'Agendamento criado com sucesso' })
-  create(@Body() body: CreateAppointmentDto & { status?: string }): Promise<Appointment> {
+  create(
+    @Body() body: CreateAppointmentDto & { status?: string },
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ): Promise<Appointment> {
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+      } catch (error) {}
+    }
+    
     return this.apptService.create({
       ...body,
       scheduledAt: new Date(body.scheduledAt),
-      status: (body.status as any) || 'SCHEDULED', // Padrão: agendamento
+      status: (body.status as any) || 'SCHEDULED',
+      userId,
+      branchId,
     });
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar todos os agendamentos' })
   @ApiResponse({ status: 200, description: 'Lista de agendamentos' })
-  findAll(): Promise<Appointment[]> {
-    return this.apptService.findAll();
+  findAll(
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ): Promise<Appointment[]> {
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+      } catch (error) {}
+    }
+    
+    return this.apptService.findAll(userId, branchId);
   }
 
   @Get('available-slots/:professionalId/:date')

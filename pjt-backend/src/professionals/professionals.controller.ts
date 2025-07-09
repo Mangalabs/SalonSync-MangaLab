@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProfessionalsService } from './professionals.service';
@@ -21,8 +22,24 @@ export class ProfessionalsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os profissionais' })
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
-  findAll() {
-    return this.service.findAll();
+  async findAll(
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+      } catch (error) {
+        // Token inválido
+      }
+    }
+    
+    return this.service.findAll(userId, branchId);
   }
 
   @Get(':id')
@@ -36,8 +53,34 @@ export class ProfessionalsController {
   @Post()
   @ApiOperation({ summary: 'Criar novo profissional' })
   @ApiResponse({ status: 201, description: 'Profissional criado com sucesso' })
-  create(@Body() body: CreateProfessionalDto) {
-    return this.service.create(body);
+  create(
+    @Body() body: CreateProfessionalDto,
+    @Headers('authorization') auth?: string,
+    @Headers('x-branch-id') branchId?: string
+  ) {
+    console.log('🔍 Professional Create Request:', {
+      body,
+      hasAuth: !!auth,
+      branchId,
+      headers: { auth: auth?.substring(0, 20) + '...', branchId }
+    });
+    
+    const token = auth?.replace('Bearer ', '');
+    let userId: string | undefined;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        userId = decoded.sub;
+        console.log('✅ Token decoded, userId:', userId);
+      } catch (error) {
+        console.log('❌ Token decode error:', error.message);
+      }
+    }
+    
+    console.log('🚀 Calling service.create with:', { body, userId, branchId });
+    return this.service.create(body, userId, branchId);
   }
 
   @Patch(':id')

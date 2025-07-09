@@ -9,18 +9,21 @@ import {
 import { Trash2, Edit } from "lucide-react";
 import { ServiceForm } from "./ServiceForm";
 import { useState } from "react";
-import axios from "axios";
+import axios from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 export function ServiceTable() {
   const queryClient = useQueryClient();
   const [editingService, setEditingService] = useState<any>(null);
+  const { activeBranch } = useBranch();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/services");
       return res.data;
     },
+    enabled: !!activeBranch,
   });
 
   const deleteService = useMutation({

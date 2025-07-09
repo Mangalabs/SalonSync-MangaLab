@@ -6,7 +6,28 @@ import { Professional } from '@/generated/client';
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(): Promise<Professional[]> {
+  async findAll(userId?: string, branchId?: string): Promise<Professional[]> {
+    // Se temos branchId específico, filtrar apenas por ele
+    if (branchId) {
+      return this.prisma.professional.findMany({
+        where: { branchId }
+      });
+    }
+    
+    // Se temos userId, buscar todas as filiais do usuário
+    if (userId) {
+      const userBranches = await this.prisma.branch.findMany({
+        where: { ownerId: userId },
+        select: { id: true }
+      });
+      const branchIds = userBranches.map(b => b.id);
+      
+      return this.prisma.professional.findMany({
+        where: { branchId: { in: branchIds } }
+      });
+    }
+    
+    // Fallback: retornar todos
     return this.prisma.professional.findMany();
   }
 
@@ -19,8 +40,42 @@ export class ProfessionalsService {
     return professional;
   }
 
-  async create(data: { name: string; role: string }): Promise<Professional> {
-    return this.prisma.professional.create({ data });
+  async create(data: { name: string; role: string }, userId?: string, targetBranchId?: string): Promise<Professional> {
+    console.log('🔍 Professional Service Create:', { data, userId, targetBranchId });
+    
+    let branchId: string;
+    
+    if (targetBranchId && userId) {
+      console.log('🔍 Looking for specific branch:', targetBranchId, 'for user:', userId);
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: targetBranchId, ownerId: userId }
+      });
+      console.log('🔍 Branch found:', branch);
+      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
+      branchId = targetBranchId;
+    } else if (userId) {
+      console.log('🔍 Looking for user branch for userId:', userId);
+      const userBranch = await this.prisma.branch.findFirst({
+        where: { ownerId: userId }
+      });
+      console.log('🔍 User branch found:', userBranch);
+      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
+      branchId = userBranch.id;
+    } else {
+      console.log('🔍 Looking for any branch (fallback)');
+      const firstBranch = await this.prisma.branch.findFirst();
+      console.log('🔍 First branch found:', firstBranch);
+      if (!firstBranch) throw new Error('Nenhuma filial encontrada');
+      branchId = firstBranch.id;
+    }
+    
+    console.log('🚀 Creating professional with branchId:', branchId);
+    const result = await this.prisma.professional.create({ 
+      data: { ...data, branchId } 
+    });
+    console.log('✅ Professional created:', result);
+    
+    return result;
   }
 
   async update(id: string, data: Partial<Professional>): Promise<Professional> {

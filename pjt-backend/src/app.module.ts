@@ -9,12 +9,14 @@ import { ProfessionalsModule } from './professionals/professionals.module';
 import { ServicesModule } from './services/services.module';
 import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
+    BranchesModule,
     ProfessionalsModule,
     DashboardModule,
     ServicesModule,

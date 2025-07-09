@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import axios from "@/lib/axios";
 
 const schema = z.object({
   name: z.string().min(2, "Nome obrigatório"),
@@ -38,16 +38,22 @@ export function ServiceForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => {
+    mutationFn: async (data: FormData) => {
       if (isEditing) {
-        return api.patch(`/services/${initialData.id}`, data);
+        const res = await axios.patch(`/api/services/${initialData.id}`, data);
+        return res.data;
+      } else {
+        const res = await axios.post('/api/services', data);
+        return res.data;
       }
-      return api.post("/services", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       reset();
       onSuccess();
+    },
+    onError: (error) => {
+      console.log('❌ Service mutation error:', error);
     },
   });
 

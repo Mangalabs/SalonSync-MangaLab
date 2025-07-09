@@ -12,6 +12,19 @@ async function main() {
     create: {
       email: 'admin@teste.com',
       password: hashedPassword,
+      name: 'Administrador',
+      businessName: 'Salão Teste',
+    },
+  });
+
+  // Criar filial
+  const branch = await prisma.branch.upsert({
+    where: { id: 'branch-1' },
+    update: {},
+    create: {
+      id: 'branch-1',
+      name: 'Matriz',
+      ownerId: user.id,
     },
   });
 
@@ -23,6 +36,7 @@ async function main() {
       id: 'prof-1',
       name: 'João Silva',
       role: 'Barbeiro',
+      branchId: branch.id,
     },
   });
 
@@ -33,6 +47,7 @@ async function main() {
       id: 'prof-2',
       name: 'Maria Santos',
       role: 'Cabeleireira',
+      branchId: branch.id,
     },
   });
 
@@ -44,6 +59,7 @@ async function main() {
       id: 'serv-1',
       name: 'Corte Masculino',
       price: 25.00,
+      branchId: branch.id,
     },
   });
 
@@ -54,6 +70,7 @@ async function main() {
       id: 'serv-2',
       name: 'Barba',
       price: 15.00,
+      branchId: branch.id,
     },
   });
 
@@ -64,6 +81,7 @@ async function main() {
       id: 'serv-3',
       name: 'Corte Feminino',
       price: 35.00,
+      branchId: branch.id,
     },
   });
 
@@ -76,6 +94,7 @@ async function main() {
       name: 'Pedro Oliveira',
       phone: '(11) 99999-1111',
       email: 'pedro@email.com',
+      branchId: branch.id,
     },
   });
 
@@ -87,6 +106,7 @@ async function main() {
       name: 'Ana Costa',
       phone: '(11) 99999-2222',
       email: 'ana@email.com',
+      branchId: branch.id,
     },
   });
 
