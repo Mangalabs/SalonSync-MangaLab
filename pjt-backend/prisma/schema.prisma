@@ -33,6 +33,8 @@ model Branch {
   services      Service[]
   clients       Client[]
   appointments  Appointment[]
+  products      Product[]
+  stockMovements StockMovement[]
   
   createdAt   DateTime @default(now())
 }
@@ -98,4 +100,48 @@ model AppointmentService {
   serviceId     String
 
   @@id([appointmentId, serviceId])
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  sku           String?
+  description   String?
+  category      String
+  brand         String?
+  barcode       String?         @unique
+  costPrice     Decimal         @db.Decimal(10, 2)
+  salePrice     Decimal?        @db.Decimal(10, 2)
+  currentStock  Int             @default(0)
+  minStock      Int             @default(0)
+  maxStock      Int?
+  unit          String          @default("un") // un, kg, l, ml, etc
+  isActive      Boolean         @default(true)
+  branchId      String
+  branch        Branch          @relation(fields: [branchId], references: [id])
+  stockMovements StockMovement[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model StockMovement {
+  id          String            @id @default(uuid())
+  productId   String
+  product     Product           @relation(fields: [productId], references: [id])
+  branchId    String
+  branch      Branch            @relation(fields: [branchId], references: [id])
+  type        StockMovementType
+  quantity    Int
+  unitCost    Decimal?          @db.Decimal(10, 2)
+  totalCost   Decimal?          @db.Decimal(10, 2)
+  reason      String?
+  reference   String?           // Nota fiscal, pedido, etc
+  createdAt   DateTime          @default(now())
+}
+
+enum StockMovementType {
+  IN          // Entrada
+  OUT         // Saída
+  ADJUSTMENT  // Ajuste
+  LOSS        // Perda
 }

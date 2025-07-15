@@ -13,31 +13,65 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { NavLink } from "react-router-dom";
 import axios from "@/lib/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBranch } from "@/contexts/BranchContext";
+import { toast } from "sonner";
 
-const schema = z.object({
+const immediateSchema = z.object({
   professionalId: z.string().min(1, "Selecione um profissional"),
   clientId: z.string().min(1, "Selecione um cliente"),
   serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
 });
-type FormData = z.infer<typeof schema>;
 
-export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
+const scheduledSchema = z.object({
+  professionalId: z.string().min(1, "Selecione um profissional"),
+  clientId: z.string().min(1, "Selecione um cliente"),
+  serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
+  scheduledDate: z.string().min(1, "Data é obrigatória"),
+  scheduledTime: z.string().min(1, "Horário é obrigatório"),
+});
+
+type ImmediateFormData = z.infer<typeof immediateSchema>;
+type ScheduledFormData = z.infer<typeof scheduledSchema>;
+
+export function AppointmentForm({ 
+  onSuccess, 
+  mode = "immediate" 
+}: { 
+  onSuccess: () => void;
+  mode?: "immediate" | "scheduled";
+}) {
   const queryClient = useQueryClient();
   const { activeBranch } = useBranch();
 
+  const isScheduled = mode === "scheduled";
+  
   const {
     control,
     handleSubmit,
     getValues,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { professionalId: "", clientId: "", serviceIds: [] },
+  } = useForm({
+    resolver: zodResolver(isScheduled ? scheduledSchema : immediateSchema),
+    defaultValues: isScheduled ? {
+      professionalId: "", 
+      clientId: "", 
+      serviceIds: [],
+      scheduledDate: "",
+      scheduledTime: ""
+    } : {
+      professionalId: "", 
+      clientId: "", 
+      serviceIds: []
+    },
   });
+  
+  const selectedProfessional = watch("professionalId");
+  const selectedDate = isScheduled ? watch("scheduledDate") : undefined;
 
   const { data: professionals = [] } = useQuery<
     { id: string; name: string }[],
@@ -80,6 +114,15 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
       })),
     enabled: !!activeBranch,
   });
+  
+  const { data: availableSlots = [] } = useQuery({
+    queryKey: ["available-slots", selectedProfessional, selectedDate],
+    queryFn: async () => {
+      const res = await axios.get(`/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`);
+      return res.data;
+    },
+    enabled: isScheduled && !!selectedProfessional && !!selectedDate,
+  });
 
   const total = useMemo(() => {
     const selected = getValues("serviceIds");
@@ -90,17 +133,42 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
     );
   }, [getValues, services]);
 
-  const { mutate } = useMutation<void, Error, FormData>({
-    mutationFn: async (data) => {
-      await axios.post("/api/appointments", {
-        ...data,
-        scheduledAt: new Date().toISOString(),
-        status: 'COMPLETED'
-      });
+  const { mutate } = useMutation({
+    mutationFn: async (data: any) => {
+      console.log('Form data:', data);
+      console.log('Is scheduled:', isScheduled);
+      
+      let scheduledAt: string;
+      let status: string;
+      
+      if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
+        scheduledAt = new Date(`${data.scheduledDate}T${data.scheduledTime}`).toISOString();
+        status = "SCHEDULED";
+      } else {
+        scheduledAt = new Date().toISOString();
+        status = "COMPLETED";
+      }
+      
+      const payload = {
+        clientId: data.clientId,
+        professionalId: data.professionalId,
+        serviceIds: data.serviceIds,
+        scheduledAt,
+        status
+      };
+      
+      console.log('Payload:', payload);
+      
+      await axios.post("/api/appointments", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      toast.success(isScheduled ? "Agendamento criado com sucesso!" : "Atendimento registrado com sucesso!");
       onSuccess();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || `Erro ao ${isScheduled ? 'criar agendamento' : 'registrar atendimento'}`);
+    
     },
   });
 
@@ -198,9 +266,63 @@ export function AppointmentForm({ onSuccess }: { onSuccess: () => void }) {
         )}
       </div>
 
+      {isScheduled && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="scheduledDate">Data</Label>
+            <Controller
+              name="scheduledDate"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="scheduledDate"
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  {...field}
+                />
+              )}
+            />
+            {isScheduled && (errors as any).scheduledDate && (
+              <p className="text-sm text-red-500">{(errors as any).scheduledDate.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="scheduledTime">Horário</Label>
+            <Controller
+              name="scheduledTime"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um horário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSlots.length > 0 ? (
+                      availableSlots.map((time: string) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        {selectedProfessional && selectedDate ? "Nenhum horário disponível" : "Selecione profissional e data"}
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {isScheduled && (errors as any).scheduledTime && (
+              <p className="text-sm text-red-500">{(errors as any).scheduledTime.message}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="font-semibold">Total: R$ {total.toFixed(2)}</div>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Finalizar"}
+        {isSubmitting ? "Salvando..." : (isScheduled ? "Agendar" : "Finalizar")}
       </Button>
     </form>
   );

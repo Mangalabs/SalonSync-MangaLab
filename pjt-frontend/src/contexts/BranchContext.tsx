@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from '@/lib/axios';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "@/lib/axios";
 
 interface Branch {
   id: string;
@@ -31,47 +37,50 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    console.log('🔍 BranchContext useEffect:', { 
-      branchesLength: branches.length, 
+    console.log("🔍 BranchContext useEffect:", {
+      branchesLength: branches.length,
       activeBranch: activeBranch?.name,
-      savedBranchId: localStorage.getItem('activeBranchId')
+      savedBranchId: localStorage.getItem("activeBranchId"),
     });
-    
+
     if (branches.length > 0 && !activeBranch) {
-      const savedBranchId = localStorage.getItem('activeBranchId');
+      const savedBranchId = localStorage.getItem("activeBranchId");
       const savedBranch = branches.find((b: Branch) => b.id === savedBranchId);
       const selectedBranch = savedBranch || branches[0];
-      
-      console.log('✅ Setting active branch:', selectedBranch);
+
+      console.log("✅ Setting active branch:", selectedBranch);
       setActiveBranchState(selectedBranch);
-      
+
       if (!savedBranchId) {
-        localStorage.setItem('activeBranchId', selectedBranch.id);
+        localStorage.setItem("activeBranchId", selectedBranch.id);
       }
     }
   }, [branches, activeBranch]);
 
   const setActiveBranch = (branch: Branch) => {
-    console.log('🔄 Changing active branch to:', branch);
+    console.log("🔄 Changing active branch to:", branch);
     setActiveBranchState(branch);
-    localStorage.setItem('activeBranchId', branch.id);
-    
-    // Invalidar todas as queries para recarregar dados da nova filial
-    queryClient.invalidateQueries({ queryKey: ['professionals'] });
-    queryClient.invalidateQueries({ queryKey: ['services'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-    queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    
-    console.log('✅ Branch changed and queries invalidated');
+    localStorage.setItem("activeBranchId", branch.id);
+
+    queryClient.invalidateQueries({ queryKey: ["professionals"] });
+    queryClient.invalidateQueries({ queryKey: ["services"] });
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+    queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
+
+    console.log("✅ Branch changed and queries invalidated");
   };
 
   return (
-    <BranchContext.Provider value={{
-      activeBranch,
-      branches,
-      setActiveBranch,
-      isLoading
-    }}>
+    <BranchContext.Provider
+      value={{
+        activeBranch,
+        branches,
+        setActiveBranch,
+        isLoading,
+      }}
+    >
       {children}
     </BranchContext.Provider>
   );
@@ -80,7 +89,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 export function useBranch() {
   const context = useContext(BranchContext);
   if (context === undefined) {
-    throw new Error('useBranch must be used within a BranchProvider');
+    throw new Error("useBranch must be used within a BranchProvider");
   }
   return context;
 }

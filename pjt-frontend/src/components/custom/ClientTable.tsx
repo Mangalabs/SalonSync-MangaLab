@@ -6,6 +6,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Edit } from "lucide-react";
 import { ClientForm } from "./ClientForm";
 import { useState } from "react";
@@ -21,10 +31,11 @@ interface Client {
 
 export function ClientTable() {
   const queryClient = useQueryClient();
-  const [editingClient, setEditingClient] = useState<any>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const { activeBranch } = useBranch();
 
-  const { data, isLoading } = useQuery<Client[]>({
+  const { data, isLoading, error } = useQuery<Client[]>({
     queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get("/api/clients");
@@ -38,14 +49,18 @@ export function ClientTable() {
       await axios.delete(`/api/clients/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients", activeBranch?.id] });
+      setDeletingClientId(null);
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || "Erro ao excluir cliente");
+      setDeletingClientId(null);
     },
   });
 
   if (isLoading) return <p className="p-4">Carregando...</p>;
+  if (error) return <p className="p-4 text-red-500">Erro ao carregar clientes</p>;
+  if (!data?.length) return <p className="p-4 text-gray-500">Nenhum cliente encontrado</p>;
 
   return (
     <div>
@@ -73,7 +88,7 @@ export function ClientTable() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => deleteClient.mutate(client.id)}
+                  onClick={() => setDeletingClientId(client.id)}
                   disabled={deleteClient.isPending}
                 >
                   <Trash2 size={14} />
@@ -98,6 +113,29 @@ export function ClientTable() {
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deletingClientId}
+        onOpenChange={() => setDeletingClientId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingClientId && deleteClient.mutate(deletingClientId)}
+              disabled={deleteClient.isPending}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

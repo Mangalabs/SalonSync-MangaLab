@@ -9,11 +9,14 @@ import { PrivateRoute } from "@/lib/PrivateRoute";
 import { DashboardLayout } from "./components/layout/DashBoardLayout";
 import Services from "./components/pages/Services";
 import Clients from "./components/pages/Clients";
-import Appointments from "./components/pages/Appointments";
+import Scheduling from "./components/pages/Scheduling";
+import Inventory from "./components/pages/Inventory";
 import { BranchProvider } from "@/contexts/BranchContext";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function App() {
   return (
+    <>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -34,12 +37,15 @@ export default function App() {
           <Route path="professionals" element={<Professionals />} />
           <Route path="services" element={<Services />} />
           <Route path="clients" element={<Clients />} />
-          <Route path="appointments" element={<Appointments />} />
+          <Route path="scheduling" element={<Scheduling />} />
+          <Route path="inventory" element={<Inventory />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 
         <Route path="*" element={<Home />} />
       </Routes>
     </BrowserRouter>
+    <Toaster />
+    </>
   );
 }

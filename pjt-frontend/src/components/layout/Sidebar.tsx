@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SchedulingPanel } from "@/components/custom/SchedulingPanel";
+
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ import { useBranch } from "@/contexts/BranchContext";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
-  { to: "/dashboard/appointments", icon: CalendarCheck, label: "Atendimentos" },
+  { to: "/dashboard/scheduling", icon: CalendarCheck, label: "Agendamentos" },
   { to: "/dashboard/professionals", icon: Users, label: "Profissionais" },
   { to: "/dashboard/services", icon: ClipboardList, label: "Serviços" },
   { to: "/dashboard/clients", icon: User, label: "Clientes" },
@@ -35,7 +35,8 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+  const [showScheduledForm, setShowScheduledForm] = useState(false);
+  const [showImmediateForm, setShowImmediateForm] = useState(false);
   const { activeBranch, branches, setActiveBranch } = useBranch();
 
   const { data: user } = useQuery({
@@ -67,26 +68,41 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-3">
         <Button 
-          onClick={() => setShowAppointmentForm(true)}
+          onClick={() => setShowScheduledForm(true)}
           className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100"
+        >
+          Novo Agendamento
+        </Button>
+        <Button 
+          onClick={() => setShowImmediateForm(true)}
+          className="w-full bg-[#10b981] text-white hover:bg-[#059669]"
         >
           Novo Atendimento
         </Button>
-        <div className="mt-6">
-          <SchedulingPanel />
-        </div>
+
       </div>
 
-      <Dialog open={showAppointmentForm} onOpenChange={setShowAppointmentForm}>
+      <Dialog open={showScheduledForm} onOpenChange={setShowScheduledForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Agendamento</DialogTitle>
+          </DialogHeader>
+          <AppointmentForm mode="scheduled" onSuccess={() => setShowScheduledForm(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImmediateForm} onOpenChange={setShowImmediateForm}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Novo Atendimento</DialogTitle>
           </DialogHeader>
-          <AppointmentForm onSuccess={() => setShowAppointmentForm(false)} />
+          <AppointmentForm mode="immediate" onSuccess={() => setShowImmediateForm(false)} />
         </DialogContent>
       </Dialog>
+
+
 
       <div className="mt-6 space-y-4">
         {branches.length > 1 && (
