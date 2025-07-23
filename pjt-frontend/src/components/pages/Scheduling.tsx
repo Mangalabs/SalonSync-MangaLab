@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +14,17 @@ import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { AppointmentTable } from "@/components/custom/AppointmentTable";
 
 export default function Scheduling() {
+  const [searchParams] = useSearchParams();
   const [scheduledOpen, setScheduledOpen] = useState(false);
   const [immediateOpen, setImmediateOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("scheduled");
+  
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "scheduled" || tab === "completed") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
     <div className="space-y-6">
@@ -52,7 +62,7 @@ export default function Scheduling() {
         </div>
       </div>
 
-      <Tabs defaultValue="scheduled">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="scheduled">Agendados</TabsTrigger>
           <TabsTrigger value="completed">Realizados</TabsTrigger>

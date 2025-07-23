@@ -8,11 +8,13 @@ import {
   Patch,
   ParseUUIDPipe,
   Headers,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProfessionalsService } from './professionals.service';
 import { CreateProfessionalDto } from './dto/create-professional.dto';
 import { UpdateProfessionalDto } from './dto/update-professional.dto';
+import { CommissionQueryDto } from './dto/commission-query.dto';
 
 @ApiTags('professionals')
 @Controller('professionals')
@@ -97,5 +99,17 @@ export class ProfessionalsController {
   @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Get(':id/commission')
+  @ApiOperation({ summary: 'Calcular comissões do profissional' })
+  @ApiResponse({ status: 200, description: 'Comissões calculadas com sucesso' })
+  @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
+  calculateCommission(
+    @Param('id') id: string,
+    @Query() query: CommissionQueryDto
+  ) {
+    console.log('Recebendo requisição de comissão:', { id, query });
+    return this.service.calculateCommission(id, query);
   }
 }

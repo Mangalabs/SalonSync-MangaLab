@@ -9,6 +9,15 @@ import axios from "@/lib/axios";
 const schema = z.object({
   name: z.string().min(2, "Informe o nome"),
   role: z.string().min(2, "Informe a função"),
+  commissionRate: z.union([
+    z.string(),
+    z.number()
+  ]).transform(val => typeof val === 'string' ? parseFloat(val) : val)
+    .refine(val => !isNaN(val) && val >= 0 && val <= 100, {
+      message: "Comissão deve ser entre 0 e 100%"
+    })
+    .optional()
+    .default(0)
 });
 
 type FormData = z.infer<typeof schema>;
@@ -18,7 +27,7 @@ export function ProfessionalForm({
   initialData 
 }: { 
   onSuccess: () => void;
-  initialData?: { id: string; name: string; role: string } | null;
+  initialData?: { id: string; name: string; role: string; commissionRate?: number } | null;
 }) {
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
@@ -31,8 +40,11 @@ export function ProfessionalForm({
     resolver: zodResolver(schema),
     defaultValues: initialData ? {
       name: initialData.name,
-      role: initialData.role
-    } : undefined
+      role: initialData.role,
+      commissionRate: initialData.commissionRate || 0
+    } : {
+      commissionRate: 0
+    }
   });
 
   const mutation = useMutation({
@@ -72,6 +84,22 @@ export function ProfessionalForm({
         <Input placeholder="Função (ex: Barbeiro)" {...register("role")} />
         {errors.role && (
           <p className="text-sm text-red-500">{errors.role.message}</p>
+        )}
+      </div>
+      <div>
+        <div className="flex items-center">
+          <Input 
+            type="number" 
+            min="0" 
+            max="100" 
+            step="0.1"
+            placeholder="Comissão (%)" 
+            {...register("commissionRate")} 
+          />
+          <span className="ml-2">%</span>
+        </div>
+        {errors.commissionRate && (
+          <p className="text-sm text-red-500">{errors.commissionRate.message}</p>
         )}
       </div>
       <Button

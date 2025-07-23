@@ -40,14 +40,15 @@ model Branch {
 }
 
 model Professional {
-  id           String        @id @default(uuid())
-  name         String
-  role         String
-  active       Boolean       @default(true)
-  branchId     String
-  branch       Branch        @relation(fields: [branchId], references: [id])
-  services     Service[]     @relation("ProfessionalServices")
-  appointments Appointment[]
+  id               String        @id @default(uuid())
+  name             String
+  role             String
+  active           Boolean       @default(true)
+  commissionRate   Decimal       @default(0) @db.Decimal(5, 2)
+  branchId         String
+  branch           Branch        @relation(fields: [branchId], references: [id])
+  services         Service[]     @relation("ProfessionalServices")
+  appointments     Appointment[]
 }
 
 model Service {

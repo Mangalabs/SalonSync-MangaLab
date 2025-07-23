@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Professional } from '@/generated/client';
+import { CommissionQueryDto } from './dto/commission-query.dto';
 
 @Injectable()
 export class ProfessionalsService {
@@ -129,5 +130,107 @@ export class ProfessionalsService {
         },
       },
     });
+  }
+
+  async calculateCommission(id: string, query: CommissionQueryDto) {
+    const professional = await this.findOne(id);
+    
+    // Definir período de cálculo
+    let startDate: Date, endDate: Date;
+    
+    if (query.startDate && query.endDate) {
+      // Garantir que as datas estão no formato correto
+      startDate = new Date(query.startDate + 'T00:00:00');
+      endDate = new Date(query.endDate + 'T23:59:59');
+    } else {
+      // Padrão: mês atual
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Primeiro dia do mês
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59); // Último dia do mês
+    }
+    
+    console.log('Calculando comissões para:', {
+      professional: professional.name,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+    
+    // Buscar atendimentos concluídos no período
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        professionalId: id,
+        status: 'COMPLETED',
+        scheduledAt: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      include: {
+        appointmentServices: {
+          include: {
+            service: true
+          }
+        }
+      }
+    });
+    
+    console.log(`Encontrados ${appointments.length} atendimentos no período:`, {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      appointments: appointments.map(apt => ({
+        id: apt.id,
+        scheduledAt: apt.scheduledAt,
+        status: apt.status,
+        total: apt.total
+      }))
+    });
+    
+    // Calcular comissão
+    const commissionRate = Number(professional['commissionRate'] || 0) / 100;
+    
+    // Agrupar por dia
+    const dailyCommissions = appointments.reduce((acc, appointment) => {
+      const date = appointment.scheduledAt.toISOString().split('T')[0];
+      const total = Number(appointment.total);
+      const commission = total * commissionRate;
+      
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          appointments: 0,
+          revenue: 0,
+          commission: 0
+        };
+      }
+      
+      acc[date].appointments += 1;
+      acc[date].revenue += total;
+      acc[date].commission += commission;
+      
+      return acc;
+    }, {} as Record<string, { date: string; appointments: number; revenue: number; commission: number }>);
+    
+    // Calcular totais
+    const totalAppointments = appointments.length;
+    const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+    const totalCommission = totalRevenue * commissionRate;
+    
+    return {
+      professional: {
+        id: professional.id,
+        name: professional.name,
+        commissionRate: Number(professional['commissionRate'] || 0)
+      },
+      period: {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
+      },
+      summary: {
+        totalAppointments,
+        totalRevenue,
+        totalCommission
+      },
+      dailyCommissions: Object.values(dailyCommissions).sort((a, b) => a.date.localeCompare(b.date))
+    };
   }
 }

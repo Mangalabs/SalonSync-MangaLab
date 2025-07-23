@@ -1,4 +1,5 @@
 import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
+import { ProfessionalCommissionSummary } from "@/components/custom/ProfessionalCommissionSummary";
 
 export default function Dashboard() {
   return (

@@ -10,12 +10,26 @@ import {
   LogOut,
   Building2,
   ChevronDown,
+  ChevronRight,
+  Calendar,
+  CheckSquare,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { useState } from "react";
@@ -25,7 +39,6 @@ import { useBranch } from "@/contexts/BranchContext";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
-  { to: "/dashboard/scheduling", icon: CalendarCheck, label: "Agendamentos" },
   { to: "/dashboard/professionals", icon: Users, label: "Profissionais" },
   { to: "/dashboard/services", icon: ClipboardList, label: "Serviços" },
   { to: "/dashboard/clients", icon: User, label: "Clientes" },
@@ -37,6 +50,7 @@ const navItems = [
 export function Sidebar() {
   const [showScheduledForm, setShowScheduledForm] = useState(false);
   const [showImmediateForm, setShowImmediateForm] = useState(false);
+  const [showSchedulingMenu, setShowSchedulingMenu] = useState(false);
   const { activeBranch, branches, setActiveBranch } = useBranch();
 
   const { data: user } = useQuery({
@@ -52,7 +66,68 @@ export function Sidebar() {
       <h2 className="text-xl font-bold mb-6">Painel</h2>
 
       <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {/* Dashboard link */}
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              isActive ? "bg-white/20 font-semibold" : ""
+            }`
+          }
+        >
+          <Home size={18} />
+          Dashboard
+        </NavLink>
+
+        {/* Histórico dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSchedulingMenu(!showSchedulingMenu)}
+            className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              showSchedulingMenu ? "bg-white/20" : ""
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <CalendarCheck size={18} />
+              <span>Histórico</span>
+            </div>
+            {showSchedulingMenu ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+
+          {showSchedulingMenu && (
+            <div className="ml-6 mt-1 space-y-1">
+              <NavLink
+                to="/dashboard/scheduling?tab=scheduled"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+                    isActive ? "bg-white/20 font-semibold" : ""
+                  }`
+                }
+              >
+                <Calendar size={16} />
+                <span>Agendamentos</span>
+              </NavLink>
+              <NavLink
+                to="/dashboard/scheduling?tab=completed"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+                    isActive ? "bg-white/20 font-semibold" : ""
+                  }`
+                }
+              >
+                <CheckSquare size={16} />
+                <span>Atendimentos</span>
+              </NavLink>
+            </div>
+          )}
+        </div>
+
+        {/* Other nav items */}
+        {navItems.filter(item => item.to !== "/dashboard").map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
@@ -69,19 +144,18 @@ export function Sidebar() {
       </div>
 
       <div className="mt-6 space-y-3">
-        <Button 
+        <Button
           onClick={() => setShowScheduledForm(true)}
           className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100"
         >
           Novo Agendamento
         </Button>
-        <Button 
+        <Button
           onClick={() => setShowImmediateForm(true)}
           className="w-full bg-[#10b981] text-white hover:bg-[#059669]"
         >
           Novo Atendimento
         </Button>
-
       </div>
 
       <Dialog open={showScheduledForm} onOpenChange={setShowScheduledForm}>
@@ -89,7 +163,10 @@ export function Sidebar() {
           <DialogHeader>
             <DialogTitle>Novo Agendamento</DialogTitle>
           </DialogHeader>
-          <AppointmentForm mode="scheduled" onSuccess={() => setShowScheduledForm(false)} />
+          <AppointmentForm
+            mode="scheduled"
+            onSuccess={() => setShowScheduledForm(false)}
+          />
         </DialogContent>
       </Dialog>
 
@@ -98,20 +175,23 @@ export function Sidebar() {
           <DialogHeader>
             <DialogTitle>Novo Atendimento</DialogTitle>
           </DialogHeader>
-          <AppointmentForm mode="immediate" onSuccess={() => setShowImmediateForm(false)} />
+          <AppointmentForm
+            mode="immediate"
+            onSuccess={() => setShowImmediateForm(false)}
+          />
         </DialogContent>
       </Dialog>
-
-
 
       <div className="mt-6 space-y-4">
         {branches.length > 1 && (
           <div className="px-3">
-            <label className="text-xs text-white/70 mb-2 block">Filial Ativa</label>
+            <label className="text-xs text-white/70 mb-2 block">
+              Filial Ativa
+            </label>
             <Select
               value={activeBranch?.id || ""}
               onValueChange={(value) => {
-                const branch = branches.find(b => b.id === value);
+                const branch = branches.find((b) => b.id === value);
                 if (branch) setActiveBranch(branch);
               }}
             >
@@ -128,7 +208,7 @@ export function Sidebar() {
             </Select>
           </div>
         )}
-        
+
         <NavLink
           to="/dashboard/settings"
           className={({ isActive }) =>
@@ -139,7 +219,9 @@ export function Sidebar() {
         >
           <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-white/20 text-white">
-              {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+              {user?.name?.charAt(0).toUpperCase() ||
+                user?.email?.charAt(0).toUpperCase() ||
+                "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -155,7 +237,7 @@ export function Sidebar() {
             </div>
           </div>
         </NavLink>
-        
+
         <Button
           variant="ghost"
           onClick={() => {
