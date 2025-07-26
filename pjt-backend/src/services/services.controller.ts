@@ -51,10 +51,14 @@ export class ServicesController {
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
   create(
-    @Body() body: CreateServiceDto,
+    @Body() body: any,
     @Headers('authorization') auth?: string,
     @Headers('x-branch-id') branchId?: string
   ) {
+    console.log('Service create - Received body:', body); // Debug log
+    console.log('Service create - Body type:', typeof body); // Debug log
+    console.log('Service create - Body keys:', Object.keys(body)); // Debug log
+    
     const token = auth?.replace('Bearer ', '');
     let userId: string | undefined;
     
@@ -63,7 +67,10 @@ export class ServicesController {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
         userId = decoded.sub;
-      } catch (error) {}
+        console.log('Service create - User ID decoded:', userId); // Debug log
+      } catch (error) {
+        console.error('Service create - JWT decode error:', error); // Debug log
+      }
     }
     
     return this.service.create(body, userId, branchId);

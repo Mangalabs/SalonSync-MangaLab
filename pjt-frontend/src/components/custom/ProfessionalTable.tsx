@@ -18,6 +18,9 @@ type Professional = {
   name: string;
   role: string;
   commissionRate?: number;
+  branch?: {
+    name: string;
+  };
 };
 
 export function ProfessionalTable() {
@@ -60,6 +63,7 @@ export function ProfessionalTable() {
               <tr className="text-left border-b">
                 <th className="py-2">Nome</th>
                 <th className="py-2">Função</th>
+                <th className="py-2">Filial</th>
                 <th className="py-2">Comissão</th>
                 <th className="py-2">Ações</th>
               </tr>
@@ -73,6 +77,7 @@ export function ProfessionalTable() {
                 >
                   <td className="py-2">{prof.name}</td>
                   <td className="py-2">{prof.role}</td>
+                  <td className="py-2">{prof.branch?.name || 'N/A'}</td>
                   <td className="py-2">{prof.commissionRate || 0}%</td>
                   <td className="py-2">
                     <div className="flex gap-2">

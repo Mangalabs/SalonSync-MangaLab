@@ -14,16 +14,45 @@ export class ServicesService {
     }
     
     if (userId) {
-      const userBranches = await this.prisma.branch.findMany({
-        where: { ownerId: userId },
-        select: { id: true }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, name: true }
       });
-      const branchIds = userBranches.map(b => b.id);
       
-      return this.prisma.service.findMany({
-        where: { branchId: { in: branchIds } },
-        include: { professionals: true },
-      });
+      if (!user) {
+        return [];
+      }
+      
+      if (user.role === 'ADMIN') {
+        const userBranches = await this.prisma.branch.findMany({
+          where: { ownerId: userId },
+          select: { id: true }
+        });
+        const branchIds = userBranches.map(b => b.id);
+        
+        return this.prisma.service.findMany({
+          where: { branchId: { in: branchIds } },
+          include: { professionals: true },
+        });
+      } else {
+        if (!user.name) {
+          return [];
+        }
+        
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          select: { branchId: true }
+        });
+        
+        if (!professional) {
+          return [];
+        }
+        
+        return this.prisma.service.findMany({
+          where: { branchId: professional.branchId },
+          include: { professionals: true },
+        });
+      }
     }
     
     return this.prisma.service.findMany({
@@ -41,28 +70,69 @@ export class ServicesService {
   }
 
   async create(data: { name: string; price: number }, userId?: string, targetBranchId?: string) {
+    console.log('Service create - Received data:', data); // Debug log
+    console.log('Service create - UserId:', userId); // Debug log
+    console.log('Service create - TargetBranchId:', targetBranchId); // Debug log
+    
     let branchId: string;
     
-    if (targetBranchId && userId) {
-      const branch = await this.prisma.branch.findFirst({
-        where: { id: targetBranchId, ownerId: userId }
+    if (targetBranchId) {
+      const branch = await this.prisma.branch.findUnique({
+        where: { id: targetBranchId }
       });
-      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
+      if (!branch) {
+        throw new BadRequestException('Filial não encontrada');
+      }
       branchId = targetBranchId;
     } else if (userId) {
-      const userBranch = await this.prisma.branch.findFirst({
-        where: { ownerId: userId }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, name: true }
       });
-      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
-      branchId = userBranch.id;
+      
+      if (!user) {
+        throw new BadRequestException('Usuário não encontrado');
+      }
+      
+      if (user.role === 'ADMIN') {
+        const userBranches = await this.prisma.branch.findMany({
+          where: { ownerId: userId }
+        });
+        
+        if (userBranches.length === 0) {
+          throw new BadRequestException('Nenhuma filial encontrada para este usuário.');
+        }
+        branchId = userBranches[0].id;
+      } else {
+        if (!user.name) {
+          throw new BadRequestException('Nome do usuário não encontrado');
+        }
+        
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          select: { branchId: true }
+        });
+        
+        if (!professional) {
+          throw new BadRequestException('Profissional não encontrado no sistema.');
+        }
+        
+        branchId = professional.branchId;
+      }
     } else {
       const firstBranch = await this.prisma.branch.findFirst();
-      if (!firstBranch) throw new Error('Nenhuma filial encontrada');
+      if (!firstBranch) {
+        throw new BadRequestException('Nenhuma filial encontrada no sistema');
+      }
       branchId = firstBranch.id;
     }
     
     return this.prisma.service.create({ 
-      data: { ...data, branchId } 
+      data: { 
+        name: data.name,
+        price: data.price,
+        branchId 
+      } 
     });
   }
 

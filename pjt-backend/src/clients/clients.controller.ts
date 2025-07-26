@@ -15,6 +15,7 @@ export class ClientsController {
     @Headers('authorization') auth?: string,
     @Headers('x-branch-id') branchId?: string
   ) {
+    console.log('FindAll controller called'); // Debug log
     const token = auth?.replace('Bearer ', '');
     let userId: string | undefined;
     
@@ -23,7 +24,10 @@ export class ClientsController {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
         userId = decoded.sub;
-      } catch (error) {}
+        console.log('FindAll - User ID decoded:', userId); // Debug log
+      } catch (error) {
+        console.error('FindAll - JWT decode error:', error); // Debug log
+      }
     }
     
     return this.clientsService.findAll(userId, branchId);
@@ -33,19 +37,29 @@ export class ClientsController {
   @ApiOperation({ summary: 'Criar novo cliente' })
   @ApiResponse({ status: 201, description: 'Cliente criado com sucesso' })
   create(
-    @Body() body: CreateClientDto,
+    @Body() body: any,
     @Headers('authorization') auth?: string,
     @Headers('x-branch-id') branchId?: string
   ) {
+    console.log('Received body in controller:', body); // Debug log
+    console.log('Body type:', typeof body); // Debug log
+    console.log('Body keys:', Object.keys(body)); // Debug log
+    
     const token = auth?.replace('Bearer ', '');
     let userId: string | undefined;
     
     if (token) {
       try {
         const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
+        const secret = process.env.JWT_SECRET || 'secret';
+        const decoded = jwt.verify(token, secret) as { sub: string };
         userId = decoded.sub;
-      } catch (error) {}
+        console.log('User ID decoded:', userId); // Debug log
+      } catch (error) {
+        console.error('JWT decode error:', error); // Debug log
+      }
+    } else {
+      console.log('No token provided'); // Debug log
     }
     
     return this.clientsService.create(body, userId, branchId);

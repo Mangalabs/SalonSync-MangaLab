@@ -37,24 +37,75 @@ export class AppointmentsService {
 
     let branchId: string;
     
-    if (data.branchId && data.userId) {
-      const branch = await this.prisma.branch.findFirst({
-        where: { id: data.branchId, ownerId: data.userId }
+    if (data.branchId) {
+      const branch = await this.prisma.branch.findUnique({
+        where: { id: data.branchId }
       });
-      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
+      if (!branch) {
+        throw new Error('Filial não encontrada');
+      }
       branchId = data.branchId;
     } else if (data.userId) {
-      const userBranch = await this.prisma.branch.findFirst({
-        where: { ownerId: data.userId }
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { role: true, name: true }
       });
-      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
-      branchId = userBranch.id;
+      
+      if (!user) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      if (user.role === 'ADMIN') {
+        const userBranches = await this.prisma.branch.findMany({
+          where: { ownerId: data.userId }
+        });
+        
+        if (userBranches.length === 0) {
+          throw new Error('Nenhuma filial encontrada para este usuário.');
+        }
+        branchId = userBranches[0].id;
+      } else {
+        if (!user.name) {
+          throw new Error('Nome do usuário não encontrado');
+        }
+        
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          select: { branchId: true }
+        });
+        
+        if (!professional) {
+          throw new Error('Profissional não encontrado no sistema.');
+        }
+        
+        branchId = professional.branchId;
+      }
     } else {
       const firstBranch = await this.prisma.branch.findFirst();
       if (!firstBranch) throw new Error('Nenhuma filial encontrada');
       branchId = firstBranch.id;
     }
 
+    console.log('Creating appointment with data:', {
+      professionalId: data.professionalId,
+      clientId: data.clientId,
+      branchId,
+      total,
+      scheduledAt: data.scheduledAt,
+      status: data.status || 'SCHEDULED'
+    }); // Debug log
+    
+    // Verificar se o profissional existe
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: data.professionalId }
+    });
+    
+    if (!professional) {
+      throw new Error(`Profissional com ID ${data.professionalId} não encontrado`);
+    }
+    
+    console.log('Professional found:', professional); // Debug log
+    
     return this.prisma.appointment.create({
       data: {
         professionalId: data.professionalId,
@@ -91,21 +142,55 @@ export class AppointmentsService {
     }
     
     if (userId) {
-      const userBranches = await this.prisma.branch.findMany({
-        where: { ownerId: userId },
-        select: { id: true }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, name: true }
       });
-      const branchIds = userBranches.map(b => b.id);
       
-      return this.prisma.appointment.findMany({
-        where: { branchId: { in: branchIds } },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          professional: true,
-          client: true,
-          appointmentServices: { include: { service: true } },
-        },
-      });
+      if (!user) {
+        return [];
+      }
+      
+      if (user.role === 'ADMIN') {
+        const userBranches = await this.prisma.branch.findMany({
+          where: { ownerId: userId },
+          select: { id: true }
+        });
+        const branchIds = userBranches.map(b => b.id);
+        
+        return this.prisma.appointment.findMany({
+          where: { branchId: { in: branchIds } },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            professional: true,
+            client: true,
+            appointmentServices: { include: { service: true } },
+          },
+        });
+      } else {
+        if (!user.name) {
+          return [];
+        }
+        
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          select: { branchId: true }
+        });
+        
+        if (!professional) {
+          return [];
+        }
+        
+        return this.prisma.appointment.findMany({
+          where: { branchId: professional.branchId },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            professional: true,
+            client: true,
+            appointmentServices: { include: { service: true } },
+          },
+        });
+      }
     }
     
     return this.prisma.appointment.findMany({

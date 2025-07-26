@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, User } from "lucide-react";
 
@@ -25,6 +26,7 @@ interface CommissionSummary {
 
 export function ProfessionalCommissionSummary() {
   const { activeBranch } = useBranch();
+  const { user, isAdmin } = useUser();
   const today = new Date().toISOString().split('T')[0];
   
   // Buscar todos os profissionais
@@ -37,19 +39,20 @@ export function ProfessionalCommissionSummary() {
     enabled: !!activeBranch,
   });
 
-  // Buscar comissões do dia para cada profissional
+  // Buscar comissões do dia para cada profissional ou apenas do usuário logado
   const { data: commissions = [], isLoading: loadingCommissions } = useQuery<CommissionSummary[]>({
-    queryKey: ["daily-commissions", today, activeBranch?.id],
+    queryKey: ["daily-commissions", today, activeBranch?.id, user?.id],
     queryFn: async () => {
-      // Buscar comissões para cada profissional
-      const promises = professionals.map(async (prof) => {
+      // Se não for admin, buscar apenas do profissional logado
+      const profsToQuery = isAdmin ? professionals : professionals.filter(p => p.name === user?.name);
+      
+      const promises = profsToQuery.map(async (prof) => {
         try {
           const res = await axios.get(
             `/api/professionals/${prof.id}/commission?startDate=${today}&endDate=${today}`
           );
           return res.data;
         } catch (error) {
-          // Se houver erro, retornar objeto vazio com valores zerados
           return {
             professional: {
               id: prof.id,
@@ -101,7 +104,9 @@ export function ProfessionalCommissionSummary() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Comissões Hoje</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          {isAdmin ? "Comissões Hoje" : "Minha Comissão"}
+        </CardTitle>
         <DollarSign className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -111,12 +116,16 @@ export function ProfessionalCommissionSummary() {
         <div className="flex items-center gap-1 mt-1">
           <User className="h-3 w-3 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            {topCommission ? (
-              <>
-                <span className="font-medium">{topCommission.professional.name}</span>: R$ {topCommission.summary.totalCommission.toFixed(2)}
-              </>
+            {isAdmin ? (
+              topCommission ? (
+                <>
+                  <span className="font-medium">{topCommission.professional.name}</span>: R$ {topCommission.summary.totalCommission.toFixed(2)}
+                </>
+              ) : (
+                "Nenhuma comissão hoje"
+              )
             ) : (
-              "Nenhuma comissão hoje"
+              `${commissions.length > 0 ? commissions[0].summary.totalAppointments : 0} atendimentos hoje`
             )}
           </p>
         </div>

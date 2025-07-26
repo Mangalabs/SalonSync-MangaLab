@@ -1,6 +1,5 @@
 import {
   Home,
-  CalendarCheck,
   Users,
   ClipboardList,
   User,
@@ -8,11 +7,10 @@ import {
   BarChart2,
   Settings,
   LogOut,
-  Building2,
-  ChevronDown,
-  ChevronRight,
   Calendar,
   CheckSquare,
+  Shield,
+  UserCheck,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -33,40 +30,40 @@ import {
 
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 
-const navItems = [
-  { to: "/dashboard", icon: Home, label: "Dashboard" },
-  { to: "/dashboard/professionals", icon: Users, label: "Profissionais" },
-  { to: "/dashboard/services", icon: ClipboardList, label: "Serviços" },
-  { to: "/dashboard/clients", icon: User, label: "Clientes" },
-  { to: "/dashboard/inventory", icon: Warehouse, label: "Estoque" },
-  { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios" },
-  { to: "/dashboard/settings", icon: Settings, label: "Configurações" },
-];
+const getNavItems = (userRole: string) => {
+  const baseItems = [
+    { to: "/dashboard", icon: Home, label: "Dashboard", roles: ["ADMIN", "PROFESSIONAL"] },
+    { to: "/dashboard/clients", icon: User, label: "Clientes", roles: ["ADMIN", "PROFESSIONAL"] },
+    { to: "/dashboard/services", icon: ClipboardList, label: "Serviços", roles: ["ADMIN", "PROFESSIONAL"] },
+    { to: "/dashboard/inventory", icon: Warehouse, label: "Estoque", roles: ["ADMIN", "PROFESSIONAL"] },
+  ];
+  
+  const adminItems = [
+    { to: "/dashboard/professionals", icon: Users, label: "Profissionais", roles: ["ADMIN"] },
+    { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios", roles: ["ADMIN"] },
+    { to: "/dashboard/settings", icon: Settings, label: "Configurações", roles: ["ADMIN", "PROFESSIONAL"] },
+  ];
+  
+  const allItems = [...baseItems, ...adminItems];
+  return allItems.filter(item => item.roles.includes(userRole));
+};
 
 export function Sidebar() {
   const [showScheduledForm, setShowScheduledForm] = useState(false);
   const [showImmediateForm, setShowImmediateForm] = useState(false);
-  const [showSchedulingMenu, setShowSchedulingMenu] = useState(false);
   const { activeBranch, branches, setActiveBranch } = useBranch();
-
-  const { data: user } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: async () => {
-      const res = await axios.get("/api/auth/profile");
-      return res.data;
-    },
-  });
+  const { user, logout, isAdmin } = useUser();
+  
+  const navItems = getNavItems(user?.role || "ADMIN");
 
   return (
     <aside className="w-64 h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6 fixed left-0 top-0">
       <h2 className="text-xl font-bold mb-6">Painel</h2>
 
       <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
-        {/* Dashboard link */}
         <NavLink
           to="/dashboard"
           className={({ isActive }) =>
@@ -79,54 +76,30 @@ export function Sidebar() {
           Dashboard
         </NavLink>
 
-        {/* Histórico dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowSchedulingMenu(!showSchedulingMenu)}
-            className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-              showSchedulingMenu ? "bg-white/20" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <CalendarCheck size={18} />
-              <span>Histórico</span>
-            </div>
-            {showSchedulingMenu ? (
-              <ChevronDown size={16} />
-            ) : (
-              <ChevronRight size={16} />
-            )}
-          </button>
+        <NavLink
+          to="/dashboard/appointments"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              isActive ? "bg-white/20 font-semibold" : ""
+            }`
+          }
+        >
+          <Calendar size={18} />
+          Agendamentos
+        </NavLink>
 
-          {showSchedulingMenu && (
-            <div className="ml-6 mt-1 space-y-1">
-              <NavLink
-                to="/dashboard/scheduling?tab=scheduled"
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                    isActive ? "bg-white/20 font-semibold" : ""
-                  }`
-                }
-              >
-                <Calendar size={16} />
-                <span>Agendamentos</span>
-              </NavLink>
-              <NavLink
-                to="/dashboard/scheduling?tab=completed"
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                    isActive ? "bg-white/20 font-semibold" : ""
-                  }`
-                }
-              >
-                <CheckSquare size={16} />
-                <span>Atendimentos</span>
-              </NavLink>
-            </div>
-          )}
-        </div>
+        <NavLink
+          to="/dashboard/treatments"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              isActive ? "bg-white/20 font-semibold" : ""
+            }`
+          }
+        >
+          <CheckSquare size={18} />
+          Atendimentos
+        </NavLink>
 
-        {/* Other nav items */}
         {navItems.filter(item => item.to !== "/dashboard").map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -143,17 +116,19 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-2">
         <Button
           onClick={() => setShowScheduledForm(true)}
-          className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100"
+          className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100 text-sm py-2"
         >
+          <Calendar className="h-4 w-4 mr-2" />
           Novo Agendamento
         </Button>
         <Button
           onClick={() => setShowImmediateForm(true)}
-          className="w-full bg-[#10b981] text-white hover:bg-[#059669]"
+          className="w-full bg-[#10b981] text-white hover:bg-[#059669] text-sm py-2"
         >
+          <CheckSquare className="h-4 w-4 mr-2" />
           Novo Atendimento
         </Button>
       </div>
@@ -182,10 +157,10 @@ export function Sidebar() {
         </DialogContent>
       </Dialog>
 
-      <div className="mt-6 space-y-4">
-        {branches.length > 1 && (
-          <div className="px-3">
-            <label className="text-xs text-white/70 mb-2 block">
+      <div className="mt-4 space-y-3 border-t border-white/20 pt-4">
+        {isAdmin && branches.length > 1 && (
+          <div>
+            <label className="text-xs text-white/70 mb-1 block">
               Filial Ativa
             </label>
             <Select
@@ -195,7 +170,7 @@ export function Sidebar() {
                 if (branch) setActiveBranch(branch);
               }}
             >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+              <SelectTrigger className="bg-white/10 border-white/20 text-white text-sm h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -212,41 +187,34 @@ export function Sidebar() {
         <NavLink
           to="/dashboard/settings"
           className={({ isActive }) =>
-            `flex items-center gap-3 p-3 rounded-lg transition hover:bg-white/10 ${
+            `flex items-center gap-3 p-2 rounded-lg transition hover:bg-white/10 ${
               isActive ? "bg-white/20" : "bg-white/5"
             }`
           }
         >
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-white/20 text-white">
-              {user?.name?.charAt(0).toUpperCase() ||
-                user?.email?.charAt(0).toUpperCase() ||
-                "U"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+            {isAdmin ? (
+              <Shield className="h-4 w-4 text-white" />
+            ) : (
+              <UserCheck className="h-4 w-4 text-white" />
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
               {user?.name || user?.email || "Usuário"}
             </p>
             <p className="text-xs text-white/60 truncate">
-              {user?.businessName || "Negócio"}
+              {isAdmin ? "Administrador" : "Profissional"}
             </p>
-            <div className="flex items-center gap-1 text-xs text-white/70">
-              <Building2 className="h-3 w-3" />
-              <span>{activeBranch?.name || "Carregando..."}</span>
-            </div>
           </div>
         </NavLink>
 
         <Button
           variant="ghost"
-          onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-          }}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 justify-start"
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-2 py-2 text-sm text-white hover:bg-white/10 justify-start rounded-lg"
         >
-          <LogOut size={18} />
+          <LogOut size={16} />
           Sair
         </Button>
       </div>

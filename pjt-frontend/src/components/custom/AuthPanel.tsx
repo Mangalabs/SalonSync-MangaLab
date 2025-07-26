@@ -17,13 +17,6 @@ export function AuthPanel() {
         >
           Login
         </Button>
-        <Button
-          variant="outline"
-          className="border-[#FF5D73] text-[#FF5D73] hover:bg-[#ffe4e8] w-full"
-          onClick={() => navigate("/register")}
-        >
-          Registrar
-        </Button>
       </div>
     </div>
   );

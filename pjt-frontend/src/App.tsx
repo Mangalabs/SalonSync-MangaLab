@@ -10,42 +10,69 @@ import { DashboardLayout } from "./components/layout/DashBoardLayout";
 import Services from "./components/pages/Services";
 import Clients from "./components/pages/Clients";
 import Scheduling from "./components/pages/Scheduling";
+import Appointments from "./components/pages/Appointments";
+import Treatments from "./components/pages/Treatments";
 import Inventory from "./components/pages/Inventory";
 import { BranchProvider } from "@/contexts/BranchContext";
+import { UserProvider } from "@/contexts/UserContext";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function App() {
   return (
     <>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <BranchProvider>
-                <DashboardLayout />
-              </BranchProvider>
-            </PrivateRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="professionals" element={<Professionals />} />
-          <Route path="services" element={<Services />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="scheduling" element={<Scheduling />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <BranchProvider>
+                  <DashboardLayout />
+                </BranchProvider>
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="professionals" element={
+              <RoleGuard allowedRoles={["ADMIN"]}>
+                <Professionals />
+              </RoleGuard>
+            } />
+            <Route path="services" element={
+              <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                <Services />
+              </RoleGuard>
+            } />
+            <Route path="clients" element={
+              <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                <Clients />
+              </RoleGuard>
+            } />
+            <Route path="scheduling" element={<Scheduling />} />
+            <Route path="appointments" element={<Appointments />} />
+            <Route path="treatments" element={<Treatments />} />
+            <Route path="inventory" element={
+              <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                <Inventory />
+              </RoleGuard>
+            } />
+            <Route path="settings" element={
+              <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                <Settings />
+              </RoleGuard>
+            } />
+          </Route>
 
-        <Route path="*" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
-    <Toaster />
+          <Route path="*" element={<Home />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+    </UserProvider>
     </>
   );
 }

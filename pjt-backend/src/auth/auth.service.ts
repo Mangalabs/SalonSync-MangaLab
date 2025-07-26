@@ -25,43 +25,7 @@ export class AuthService {
     return { token };
   }
 
-  async register(data: {
-    email: string;
-    password: string;
-    name: string;
-    businessName: string;
-    branches: { name: string }[];
-  }) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (existingUser) {
-      throw new ConflictException('Este e-mail já está em uso');
-    }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        name: data.name,
-        businessName: data.businessName,
-      },
-    });
-
-    for (const branch of data.branches) {
-      await this.prisma.branch.create({
-        data: {
-          name: branch.name || 'Matriz',
-          ownerId: user.id,
-        },
-      });
-    }
-
-    const token = this.generateToken(user.id);
-    return { token };
-  }
 
   async getProfile(token: string) {
     if (!token) {
@@ -79,12 +43,30 @@ export class AuthService {
           name: true, 
           businessName: true, 
           phone: true, 
-          avatar: true 
+          avatar: true,
+          role: true 
         },
       });
       
       if (!user) {
         throw new UnauthorizedException('Usuário não encontrado');
+      }
+      
+      // Se for PROFESSIONAL, buscar dados da filial
+      if (user.role === 'PROFESSIONAL' && user.name) {
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          include: {
+            branch: {
+              select: { name: true }
+            }
+          }
+        });
+        
+        return {
+          ...user,
+          branchName: professional?.branch?.name
+        };
       }
       
       return user;
@@ -106,23 +88,142 @@ export class AuthService {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
       
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { role: true }
+      });
+      
+      // Se for PROFESSIONAL, permitir apenas atualizar telefone
+      const updateData = currentUser?.role === 'PROFESSIONAL' 
+        ? { phone: data.phone }
+        : data;
+      
       const user = await this.prisma.user.update({
         where: { id: decoded.sub },
-        data,
+        data: updateData,
         select: { 
           id: true, 
           email: true, 
           name: true, 
           businessName: true, 
           phone: true, 
-          avatar: true 
+          avatar: true,
+          role: true 
         },
       });
+      
+      // Se for PROFESSIONAL, buscar dados da filial
+      if (user.role === 'PROFESSIONAL' && user.name) {
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          include: {
+            branch: {
+              select: { name: true }
+            }
+          }
+        });
+        
+        return {
+          ...user,
+          branchName: professional?.branch?.name
+        };
+      }
       
       return user;
     } catch (error) {
       throw new UnauthorizedException('Token inválido');
     }
+  }
+
+  async createEmployee(data: {
+    email: string;
+    password: string;
+    name: string;
+    role: string;
+    branchId: string;
+  }) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Este e-mail já está em uso');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        name: data.name,
+        role: data.role,
+      },
+    });
+
+    // Verificar se a filial existe e pertence ao usuário correto
+    const branch = await this.prisma.branch.findUnique({
+      where: { id: data.branchId }
+    });
+    
+    if (!branch) {
+      throw new ConflictException('Filial não encontrada');
+    }
+
+    // Criar Professional automaticamente
+    await this.prisma.professional.create({
+      data: {
+        name: data.name,
+        role: 'Profissional',
+        branchId: data.branchId,
+        commissionRate: 10 // Taxa padrão de 10%
+      }
+    });
+
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
+  }
+
+  async createAdmin(data: {
+    email: string;
+    password: string;
+    name: string;
+    businessName: string;
+    branchName?: string;
+  }) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Este e-mail já está em uso');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        name: data.name,
+        businessName: data.businessName,
+        role: 'ADMIN',
+        isSuperAdmin: false,
+      },
+    });
+
+    // Criar filial padrão
+    await this.prisma.branch.create({
+      data: {
+        name: data.branchName || 'Matriz',
+        ownerId: user.id,
+      },
+    });
+
+    return { 
+      id: user.id, 
+      email: user.email, 
+      name: user.name, 
+      businessName: user.businessName,
+      role: user.role 
+    };
   }
 
   private generateToken(userId: string): string {

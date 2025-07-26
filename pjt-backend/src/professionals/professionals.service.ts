@@ -8,28 +8,70 @@ export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(userId?: string, branchId?: string): Promise<Professional[]> {
-    // Se temos branchId específico, filtrar apenas por ele
     if (branchId) {
       return this.prisma.professional.findMany({
-        where: { branchId }
+        where: { branchId },
+        include: {
+          branch: {
+            select: { name: true }
+          }
+        }
       });
     }
     
-    // Se temos userId, buscar todas as filiais do usuário
     if (userId) {
-      const userBranches = await this.prisma.branch.findMany({
-        where: { ownerId: userId },
-        select: { id: true }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, name: true }
       });
-      const branchIds = userBranches.map(b => b.id);
       
-      return this.prisma.professional.findMany({
-        where: { branchId: { in: branchIds } }
-      });
+      if (!user) {
+        return [];
+      }
+      
+      if (user.role === 'ADMIN') {
+        // Admin: buscar profissionais de todas suas filiais
+        const userBranches = await this.prisma.branch.findMany({
+          where: { ownerId: userId },
+          select: { id: true }
+        });
+        const branchIds = userBranches.map(b => b.id);
+        
+        return this.prisma.professional.findMany({
+          where: { branchId: { in: branchIds } },
+          include: {
+            branch: {
+              select: { name: true }
+            }
+          }
+        });
+      } else {
+        // Professional: buscar profissionais da sua filial
+        if (!user.name) {
+          return [];
+        }
+        
+        const professional = await this.prisma.professional.findFirst({
+          where: { name: user.name },
+          select: { branchId: true }
+        });
+        
+        if (!professional) {
+          return [];
+        }
+        
+        return this.prisma.professional.findMany({
+          where: { branchId: professional.branchId },
+          include: {
+            branch: {
+              select: { name: true }
+            }
+          }
+        });
+      }
     }
     
-    // Fallback: retornar todos
-    return this.prisma.professional.findMany();
+    return [];
   }
 
   async findOne(id: string): Promise<Professional> {

@@ -87,8 +87,19 @@ export function RegisterForm() {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Criar Conta</h2>
-        <p className="text-gray-600 mt-2">Configure seu negócio</p>
+        <h2 className="text-2xl font-bold text-[#FF5D73]">Registrar Empresa</h2>
+        <p className="text-gray-600 mt-2">Crie sua conta de administrador</p>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-4">
+          <p className="text-sm text-yellow-800">
+            ⚠️ <strong>Atenção:</strong> Este registro é apenas para proprietários de empresas.
+            Funcionários devem ser criados pelo administrador após o login.
+          </p>
+        </div>
+        <div className="mt-4 text-center">
+          <a href="/login" className="text-sm text-[#FF5D73] hover:underline">
+            Já tem conta? Faça login aqui
+          </a>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

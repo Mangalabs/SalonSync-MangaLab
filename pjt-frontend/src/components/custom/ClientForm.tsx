@@ -41,13 +41,15 @@ export function ClientForm({
 
   const mutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
+      console.log('Sending data to backend:', data); // Debug log
       if (isEditing) {
         return axios.patch(`/api/clients/${initialData.id}`, data);
       } else {
         return axios.post("/api/clients", data);
       }
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Client created successfully in frontend:', response.data); // Debug log
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       reset();
       onSuccess();

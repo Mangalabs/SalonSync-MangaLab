@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, DollarSign, X, Check } from "lucide-react";
+import { Calendar, Clock, User, DollarSign, X, Check, CheckSquare } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { ProfessionalCommissionSummary } from "./ProfessionalCommissionSummary";
 
@@ -18,7 +18,21 @@ interface Appointment {
   total: string;
 }
 
-export function SchedulingCalendar() {
+interface SchedulingCalendarProps {
+  mode?: 'scheduled' | 'completed';
+  searchTerm?: string;
+  statusFilter?: string;
+  dateFilter?: string;
+  professionalFilter?: string;
+}
+
+export function SchedulingCalendar({ 
+  mode, 
+  searchTerm = "", 
+  statusFilter = "all", 
+  dateFilter = "all", 
+  professionalFilter = "all" 
+}: SchedulingCalendarProps) {
   const queryClient = useQueryClient();
   const { activeBranch } = useBranch();
 
@@ -49,12 +63,73 @@ export function SchedulingCalendar() {
     },
   });
 
-  const allScheduledAppointments = appointments
-    .filter((apt) => apt.status === "SCHEDULED")
-    .sort(
-      (a, b) =>
-        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-    );
+  // Filtrar por modo
+  let filteredAppointments = mode === 'completed' 
+    ? appointments.filter((apt) => apt.status === "COMPLETED")
+    : appointments.filter((apt) => apt.status === "SCHEDULED");
+
+  // Aplicar filtros apenas quando mode está definido
+  if (mode) {
+    // Filtro de busca
+    if (searchTerm) {
+      filteredAppointments = filteredAppointments.filter((apt) =>
+        apt.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        apt.professional.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro de status (apenas para agendamentos)
+    if (mode === 'scheduled' && statusFilter !== 'all') {
+      const now = new Date();
+      if (statusFilter === 'overdue') {
+        filteredAppointments = filteredAppointments.filter((apt) => 
+          new Date(apt.scheduledAt) < now
+        );
+      }
+    }
+
+    // Filtro de data
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      filteredAppointments = filteredAppointments.filter((apt) => {
+        const aptDate = new Date(apt.scheduledAt);
+        
+        switch (dateFilter) {
+          case 'today':
+            return aptDate.toDateString() === today.toDateString();
+          case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            return aptDate >= weekStart && aptDate <= weekEnd;
+          case 'month':
+            return aptDate.getMonth() === today.getMonth() && 
+                   aptDate.getFullYear() === today.getFullYear();
+          case 'last-month':
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+            return aptDate >= lastMonth && aptDate <= lastMonthEnd;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filtro de profissional
+    if (professionalFilter !== 'all') {
+      filteredAppointments = filteredAppointments.filter((apt) =>
+        apt.professional.name === professionalFilter
+      );
+    }
+  }
+    
+  const sortedAppointments = filteredAppointments.sort(
+    (a, b) =>
+      new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+  );
 
   const todayCompletedAppointments = appointments.filter((apt) => {
     const today = new Date().toISOString().split("T")[0];
@@ -79,22 +154,122 @@ export function SchedulingCalendar() {
     })
     .reduce((sum, apt) => sum + Number(apt.total), 0);
 
-  const professionalStats = appointments
-    .filter((apt) => apt.status === "COMPLETED")
-    .reduce((acc, apt) => {
-      const name = apt.professional.name;
-      if (!acc[name]) acc[name] = { count: 0, revenue: 0 };
-      acc[name].count++;
-      acc[name].revenue += Number(apt.total);
-      return acc;
-    }, {} as Record<string, { count: number; revenue: number }>);
+  if (isLoading) return <div>Carregando...</div>;
 
-  const topProfessional = Object.entries(professionalStats).sort(
-    ([, a], [, b]) => b.count - a.count
-  )[0];
+  // Se mode está definido, mostrar apenas a lista
+  if (mode) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            {mode === 'completed' ? 'Atendimentos Realizados' : 'Agendamentos'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sortedAppointments.length === 0 ? (
+            <p className="text-muted-foreground">
+              {mode === 'completed' ? 'Nenhum atendimento realizado' : 'Nenhum agendamento'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {sortedAppointments.map((apt) => {
+                const aptDate = new Date(apt.scheduledAt);
+                const now = new Date();
+                const isPast = aptDate <= now;
+                const isCompleted = apt.status === 'COMPLETED';
 
-  if (isLoading) return <div>Carregando agendamentos...</div>;
+                return (
+                  <div
+                    key={apt.id}
+                    className={`border rounded-lg p-4 ${
+                      isCompleted ? "bg-green-50 border-green-200" : 
+                      isPast ? "bg-yellow-50 border-yellow-200" : "bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">
+                          {aptDate.toLocaleDateString("pt-BR")} às{" "}
+                          {aptDate.toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-semibold">
+                          R$ {Number(apt.total).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">{apt.client.name}</span>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground mb-2">
+                      <strong>Profissional:</strong> {apt.professional.name}
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground mb-3">
+                      <strong>Serviços:</strong> {apt.appointmentServices
+                        .map((as) => as.service.name)
+                        .join(", ")}
+                    </div>
 
+                    {mode === 'scheduled' && !isCompleted && (
+                      <div className="flex gap-2">
+                        {isPast ? (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => confirmAppointment.mutate(apt.id)}
+                              disabled={confirmAppointment.isPending}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                            >
+                              <Check size={14} className="mr-1" />
+                              Confirmar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => cancelAppointment.mutate(apt.id)}
+                              disabled={cancelAppointment.isPending}
+                              className="flex-1"
+                            >
+                              <X size={14} className="mr-1" />
+                              Não Compareceu
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => cancelAppointment.mutate(apt.id)}
+                            disabled={cancelAppointment.isPending}
+                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <X size={14} className="mr-1" />
+                            Cancelar Agendamento
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Dashboard completo (modo original)
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -145,11 +320,11 @@ export function SchedulingCalendar() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {allScheduledAppointments.length === 0 ? (
+            {appointments.filter(apt => apt.status === "SCHEDULED").length === 0 ? (
               <p className="text-muted-foreground">Nenhum agendamento</p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {allScheduledAppointments.map((apt) => {
+                {appointments.filter(apt => apt.status === "SCHEDULED").map((apt) => {
                   const aptDate = new Date(apt.scheduledAt);
                   const now = new Date();
                   const isPast = aptDate <= now;
@@ -237,56 +412,47 @@ export function SchedulingCalendar() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Atendimentos do Dia
+              <CheckSquare className="h-5 w-5" />
+              Atendimentos Hoje
             </CardTitle>
           </CardHeader>
           <CardContent>
             {todayCompletedAppointments.length === 0 ? (
-              <p className="text-muted-foreground">
-                Nenhum atendimento realizado hoje
-              </p>
+              <p className="text-muted-foreground">Nenhum atendimento hoje</p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {todayCompletedAppointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="border rounded-lg p-3 bg-green-50"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span className="font-medium">
-                          {new Date(apt.scheduledAt).toLocaleTimeString(
-                            "pt-BR",
-                            {
+                {todayCompletedAppointments.map((apt) => {
+                  const aptDate = new Date(apt.scheduledAt);
+
+                  return (
+                    <div key={apt.id} className="border rounded-lg p-3 bg-green-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <CheckSquare className="h-4 w-4 text-green-600" />
+                          <span className="font-medium">
+                            {aptDate.toLocaleTimeString("pt-BR", {
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
-                          )}
-                        </span>
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="font-semibold">
+                            R$ {Number(apt.total).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span className="font-semibold">
-                          R$ {Number(apt.total).toFixed(2)}
-                        </span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4" />
+                        <span>{apt.client.name}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {apt.professional.name}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4" />
-                      <span>{apt.client.name}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-1">
-                      {apt.professional.name}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {apt.appointmentServices
-                        .map((as) => as.service.name)
-                        .join(", ")}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

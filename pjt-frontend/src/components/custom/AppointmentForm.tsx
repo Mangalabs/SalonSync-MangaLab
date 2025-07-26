@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,21 +18,26 @@ import { NavLink } from "react-router-dom";
 import axios from "@/lib/axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 
-const immediateSchema = z.object({
-  professionalId: z.string().min(1, "Selecione um profissional"),
-  clientId: z.string().min(1, "Selecione um cliente"),
-  serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
-});
-
-const scheduledSchema = z.object({
-  professionalId: z.string().min(1, "Selecione um profissional"),
-  clientId: z.string().min(1, "Selecione um cliente"),
-  serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
-  scheduledDate: z.string().min(1, "Data é obrigatória"),
-  scheduledTime: z.string().min(1, "Horário é obrigatório"),
-});
+const createSchema = (isProfessional: boolean, isScheduled: boolean) => {
+  const baseSchema = {
+    professionalId: isProfessional ? z.string().optional() : z.string().min(1, "Selecione um profissional"),
+    clientId: z.string().min(1, "Selecione um cliente"),
+    serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
+  };
+  
+  if (isScheduled) {
+    return z.object({
+      ...baseSchema,
+      scheduledDate: z.string().min(1, "Data é obrigatória"),
+      scheduledTime: z.string().min(1, "Horário é obrigatório"),
+    });
+  }
+  
+  return z.object(baseSchema);
+};
 
 type ImmediateFormData = z.infer<typeof immediateSchema>;
 type ScheduledFormData = z.infer<typeof scheduledSchema>;
@@ -46,6 +51,7 @@ export function AppointmentForm({
 }) {
   const queryClient = useQueryClient();
   const { activeBranch } = useBranch();
+  const { user, isProfessional } = useUser();
 
   const isScheduled = mode === "scheduled";
   
@@ -54,9 +60,10 @@ export function AppointmentForm({
     handleSubmit,
     getValues,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(isScheduled ? scheduledSchema : immediateSchema),
+    resolver: zodResolver(createSchema(isProfessional, isScheduled)),
     defaultValues: isScheduled ? {
       professionalId: "", 
       clientId: "", 
@@ -84,6 +91,29 @@ export function AppointmentForm({
     },
     enabled: !!activeBranch,
   });
+  
+  // Auto-selecionar profissional se for funcionário
+  const currentProfessionalId = useMemo(() => {
+    console.log('useMemo debug:', {
+      isProfessional,
+      userName: user?.name,
+      professionalsLength: professionals.length,
+      professionals: professionals.map(p => ({ id: p.id, name: p.name }))
+    }); // Debug log
+    
+    if (isProfessional && user?.name && professionals.length > 0) {
+      const currentProfessional = professionals.find(p => p.name === user.name);
+      console.log('Found professional:', currentProfessional); // Debug log
+      return currentProfessional?.id || "";
+    }
+    return "";
+  }, [isProfessional, user?.name, professionals]);
+  
+  useEffect(() => {
+    if (currentProfessionalId) {
+      setValue('professionalId', currentProfessionalId);
+    }
+  }, [currentProfessionalId, setValue]);
 
   const { data: clients = [] } = useQuery<
     { id: string; name: string }[],
@@ -149,15 +179,33 @@ export function AppointmentForm({
         status = "COMPLETED";
       }
       
+      let finalProfessionalId = isProfessional ? currentProfessionalId : data.professionalId;
+      
+      // Fallback: se for funcionário e não tiver ID, buscar diretamente
+      if (isProfessional && !finalProfessionalId && user?.name) {
+        const professional = professionals.find(p => p.name === user.name);
+        finalProfessionalId = professional?.id || '';
+        console.log('Fallback professional found:', professional); // Debug log
+      }
+      
+      console.log('Debug info:', {
+        isProfessional,
+        currentProfessionalId,
+        dataProfessionalId: data.professionalId,
+        finalProfessionalId,
+        userName: user?.name,
+        professionalsCount: professionals.length
+      }); // Debug log
+      
       const payload = {
         clientId: data.clientId,
-        professionalId: data.professionalId,
+        professionalId: finalProfessionalId,
         serviceIds: data.serviceIds,
         scheduledAt,
         status
       };
       
-      console.log('Payload:', payload);
+      console.log('Final payload:', payload);
       
       await axios.post("/api/appointments", payload);
     },
@@ -180,20 +228,31 @@ export function AppointmentForm({
           name="professionalId"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {professionals.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            isProfessional ? (
+              <>
+                <Input 
+                  value={user?.name || ""} 
+                  disabled 
+                  className="bg-gray-50" 
+                />
+                <input type="hidden" {...field} />
+              </>
+            ) : (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {professionals.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )
           )}
         />
         {errors.professionalId && (

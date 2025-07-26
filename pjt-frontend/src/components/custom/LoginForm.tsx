@@ -3,8 +3,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Shield, User } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Informe um e-mail válido"),
@@ -41,37 +43,69 @@ export function LoginForm() {
       }
 
       localStorage.setItem("token", result.token);
-      navigate("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err) {
       setErro("Erro de conexão com o servidor");
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-5 w-full max-w-sm mx-auto"
-    >
-      <div>
-        <Input placeholder="E-mail" type="email" {...register("email")} />
-        {errors.email && (
-          <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
-        )}
-      </div>
-      <div>
-        <Input placeholder="Senha" type="password" {...register("password")} />
-        {errors.password && (
-          <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
-        )}
-      </div>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
-      <Button
-        type="submit"
-        className="w-full bg-[#FF5D73] text-white"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Entrando..." : "Entrar"}
-      </Button>
-    </form>
+    <div className="w-full max-w-md mx-auto space-y-6">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-[#FF5D73]">
+            Entrar no Sistema
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Input placeholder="E-mail" type="email" {...register("email")} />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
+            </div>
+            <div>
+              <Input placeholder="Senha" type="password" {...register("password")} />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+              )}
+            </div>
+            {erro && <p className="text-sm text-red-600">{erro}</p>}
+            <Button
+              type="submit"
+              className="w-full bg-[#FF5D73] text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+          
+
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tipos de Usuário</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3 text-sm">
+            <Shield className="h-4 w-4 text-blue-500" />
+            <div>
+              <div className="font-medium">Administrador</div>
+              <div className="text-gray-500">Acesso completo ao sistema</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <User className="h-4 w-4 text-green-500" />
+            <div>
+              <div className="font-medium">Profissional</div>
+              <div className="text-gray-500">Dashboard, agendamentos e comissões</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
