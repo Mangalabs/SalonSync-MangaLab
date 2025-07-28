@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Patch, Headers } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Patch, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
+import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 
 @ApiTags('clients')
 @Controller('clients')
@@ -11,58 +12,33 @@ export class ClientsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os clientes' })
   @ApiResponse({ status: 200, description: 'Lista de clientes' })
-  findAll(
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
-  ) {
-    console.log('FindAll controller called'); // Debug log
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
-        userId = decoded.sub;
-        console.log('FindAll - User ID decoded:', userId); // Debug log
-      } catch (error) {
-        console.error('FindAll - JWT decode error:', error); // Debug log
-      }
-    }
-    
-    return this.clientsService.findAll(userId, branchId);
+  findAll(@Req() req: AuthenticatedRequest) {
+    return this.clientsService.findAll({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar novo cliente' })
   @ApiResponse({ status: 201, description: 'Cliente criado com sucesso' })
   create(
-    @Body() body: any,
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
+    @Body() body: CreateClientDto,
+    @Req() req: AuthenticatedRequest
   ) {
-    console.log('Received body in controller:', body); // Debug log
-    console.log('Body type:', typeof body); // Debug log
-    console.log('Body keys:', Object.keys(body)); // Debug log
+    console.log('ClientsController - Received body:', body);
+    console.log('ClientsController - User context:', {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
     
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const secret = process.env.JWT_SECRET || 'secret';
-        const decoded = jwt.verify(token, secret) as { sub: string };
-        userId = decoded.sub;
-        console.log('User ID decoded:', userId); // Debug log
-      } catch (error) {
-        console.error('JWT decode error:', error); // Debug log
-      }
-    } else {
-      console.log('No token provided'); // Debug log
-    }
-    
-    return this.clientsService.create(body, userId, branchId);
+    return this.clientsService.create(body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 
   @Patch(':id')

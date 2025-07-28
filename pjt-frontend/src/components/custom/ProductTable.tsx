@@ -85,10 +85,9 @@ export function ProductTable() {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Nome</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">SKU</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Preço</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Custo</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Produto</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Categoria</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Marca</th>
               <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Estoque</th>
               <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Ações</th>
             </tr>
@@ -98,21 +97,19 @@ export function ProductTable() {
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <div className="font-medium">{product.name}</div>
-                  {product.description && (
-                    <div className="text-sm text-gray-500 truncate max-w-xs">
-                      {product.description}
-                    </div>
-                  )}
+                  <div className="text-xs text-gray-500">{product.unit}</div>
                 </td>
-                <td className="px-4 py-3 text-sm">{product.sku || "-"}</td>
+                <td className="px-4 py-3 text-sm">{product.category || "-"}</td>
+                <td className="px-4 py-3 text-sm">{product.brand || "-"}</td>
                 <td className="px-4 py-3 text-right">
-                  R$ {Number(product.salePrice).toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  R$ {Number(product.costPrice).toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                  {product.currentStock} {product.unit}
+                  <span className={`font-medium ${
+                    product.currentStock <= (product.minStock || 0) 
+                      ? 'text-red-600' 
+                      : 'text-gray-900'
+                  }`}>
+                    {product.currentStock}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-1">{product.unit}</span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">

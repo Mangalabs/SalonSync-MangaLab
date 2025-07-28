@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -12,6 +12,9 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { BranchesModule } from './branches/branches.module';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { FinancialModule } from './financial/financial.module';
+import { AuthMiddleware } from './common/middleware/auth.middleware';
+import { BaseDataService } from './common/services/base-data.service';
 
 @Module({
   imports: [
@@ -26,8 +29,19 @@ import { InventoryModule } from './inventory/inventory.module';
     AppointmentsModule,
     ProductsModule,
     InventoryModule,
+    FinancialModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, BaseDataService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'auth/register', method: RequestMethod.POST }
+      )
+      .forRoutes('*');
+  }
+}

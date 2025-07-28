@@ -367,7 +367,7 @@ export function SchedulingCalendar({
                           .join(", ")}
                       </div>
 
-                      {isPast ? (
+                      {!isAdmin && isPast && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -389,7 +389,8 @@ export function SchedulingCalendar({
                             Não Compareceu
                           </Button>
                         </div>
-                      ) : (
+                      )}
+                      {!isAdmin && !isPast && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -400,6 +401,11 @@ export function SchedulingCalendar({
                           <X size={14} className="mr-1" />
                           Cancelar Agendamento
                         </Button>
+                      )}
+                      {isAdmin && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Status: {isPast ? "Aguardando confirmação" : "Agendado"}
+                        </div>
                       )}
                     </div>
                   );

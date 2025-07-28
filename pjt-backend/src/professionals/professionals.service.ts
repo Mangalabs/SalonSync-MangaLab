@@ -1,124 +1,47 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Professional } from '@/generated/client';
-import { CommissionQueryDto } from './dto/commission-query.dto';
+import { BaseDataService, UserContext } from '@/common/services/base-data.service';
 
 @Injectable()
-export class ProfessionalsService {
-  constructor(private prisma: PrismaService) {}
+export class ProfessionalsService extends BaseDataService {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
-  async findAll(userId?: string, branchId?: string): Promise<Professional[]> {
-    if (branchId) {
-      return this.prisma.professional.findMany({
-        where: { branchId },
-        include: {
-          branch: {
-            select: { name: true }
-          }
-        }
-      });
-    }
+  async findAll(user: UserContext): Promise<Professional[]> {
+    const branchIds = await this.getUserBranchIds(user);
     
-    if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true, name: true }
-      });
-      
-      if (!user) {
-        return [];
-      }
-      
-      if (user.role === 'ADMIN') {
-        // Admin: buscar profissionais de todas suas filiais
-        const userBranches = await this.prisma.branch.findMany({
-          where: { ownerId: userId },
-          select: { id: true }
-        });
-        const branchIds = userBranches.map(b => b.id);
-        
-        return this.prisma.professional.findMany({
-          where: { branchId: { in: branchIds } },
-          include: {
-            branch: {
-              select: { name: true }
-            }
-          }
-        });
-      } else {
-        // Professional: buscar profissionais da sua filial
-        if (!user.name) {
-          return [];
+    return this.prisma.professional.findMany({
+      where: { branchId: { in: branchIds } },
+      include: {
+        branch: {
+          select: { name: true }
         }
-        
-        const professional = await this.prisma.professional.findFirst({
-          where: { name: user.name },
-          select: { branchId: true }
-        });
-        
-        if (!professional) {
-          return [];
-        }
-        
-        return this.prisma.professional.findMany({
-          where: { branchId: professional.branchId },
-          include: {
-            branch: {
-              select: { name: true }
-            }
-          }
-        });
       }
-    }
-    
-    return [];
+    });
   }
 
   async findOne(id: string): Promise<Professional> {
     const professional = await this.prisma.professional.findUnique({
       where: { id },
+      include: {
+        branch: {
+          select: { id: true, name: true }
+        }
+      }
     });
     if (!professional)
       throw new NotFoundException('Profissional não encontrado');
     return professional;
   }
 
-  async create(data: { name: string; role: string }, userId?: string, targetBranchId?: string): Promise<Professional> {
-    console.log('🔍 Professional Service Create:', { data, userId, targetBranchId });
+  async create(data: { name: string; role: string }, user: UserContext, targetBranchId?: string): Promise<Professional> {
+    const branchId = await this.getTargetBranchId(user, targetBranchId);
     
-    let branchId: string;
-    
-    if (targetBranchId && userId) {
-      console.log('🔍 Looking for specific branch:', targetBranchId, 'for user:', userId);
-      const branch = await this.prisma.branch.findFirst({
-        where: { id: targetBranchId, ownerId: userId }
-      });
-      console.log('🔍 Branch found:', branch);
-      if (!branch) throw new Error('Filial não encontrada ou não pertence ao usuário');
-      branchId = targetBranchId;
-    } else if (userId) {
-      console.log('🔍 Looking for user branch for userId:', userId);
-      const userBranch = await this.prisma.branch.findFirst({
-        where: { ownerId: userId }
-      });
-      console.log('🔍 User branch found:', userBranch);
-      if (!userBranch) throw new Error('Nenhuma filial encontrada para este usuário');
-      branchId = userBranch.id;
-    } else {
-      console.log('🔍 Looking for any branch (fallback)');
-      const firstBranch = await this.prisma.branch.findFirst();
-      console.log('🔍 First branch found:', firstBranch);
-      if (!firstBranch) throw new Error('Nenhuma filial encontrada');
-      branchId = firstBranch.id;
-    }
-    
-    console.log('🚀 Creating professional with branchId:', branchId);
-    const result = await this.prisma.professional.create({ 
+    return this.prisma.professional.create({ 
       data: { ...data, branchId } 
     });
-    console.log('✅ Professional created:', result);
-    
-    return result;
   }
 
   async update(id: string, data: Partial<Professional>): Promise<Professional> {
@@ -142,65 +65,32 @@ export class ProfessionalsService {
     await this.prisma.professional.delete({ where: { id } });
   }
 
-  async addServiceToProfessional(professionalId: string, serviceId: string) {
-    return this.prisma.professional.update({
-      where: { id: professionalId },
-      data: {
-        services: {
-          connect: { id: serviceId },
-        },
-      },
-    });
-  }
-
-  async getServicesByProfessional(professionalId: string) {
-    return this.prisma.professional.findUnique({
-      where: { id: professionalId },
-      include: { services: true },
-    });
-  }
-
-  async removeServiceFromProfessional(
-    professionalId: string,
-    serviceId: string,
-  ) {
-    return this.prisma.professional.update({
-      where: { id: professionalId },
-      data: {
-        services: {
-          disconnect: { id: serviceId },
-        },
-      },
-    });
-  }
-
-  async calculateCommission(id: string, query: CommissionQueryDto) {
+  async calculateCommission(id: string, query: { startDate?: string; endDate?: string }, user?: UserContext) {
     const professional = await this.findOne(id);
     
-    // Definir período de cálculo
+    // Se for funcionário, verificar se está vendo comissão da sua filial
+    if (user && user.role === 'PROFESSIONAL') {
+      // Verificar se o profissional pertence à mesma filial do usuário
+      if (user.branchId && (professional as any).branchId !== user.branchId) {
+        throw new Error('Acesso negado: você só pode ver comissões da sua filial');
+      }
+    }
+    
     let startDate: Date, endDate: Date;
     
     if (query.startDate && query.endDate) {
-      // Garantir que as datas estão no formato correto
       startDate = new Date(query.startDate + 'T00:00:00');
       endDate = new Date(query.endDate + 'T23:59:59');
     } else {
-      // Padrão: mês atual
       const now = new Date();
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Primeiro dia do mês
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59); // Último dia do mês
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
     }
     
-    console.log('Calculando comissões para:', {
-      professional: professional.name,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-    
-    // Buscar atendimentos concluídos no período
     const appointments = await this.prisma.appointment.findMany({
       where: {
         professionalId: id,
+        branchId: (professional as any).branchId,
         status: 'COMPLETED',
         scheduledAt: {
           gte: startDate,
@@ -216,21 +106,8 @@ export class ProfessionalsService {
       }
     });
     
-    console.log(`Encontrados ${appointments.length} atendimentos no período:`, {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      appointments: appointments.map(apt => ({
-        id: apt.id,
-        scheduledAt: apt.scheduledAt,
-        status: apt.status,
-        total: apt.total
-      }))
-    });
+    const commissionRate = Number((professional as any).commissionRate || 0) / 100;
     
-    // Calcular comissão
-    const commissionRate = Number(professional['commissionRate'] || 0) / 100;
-    
-    // Agrupar por dia
     const dailyCommissions = appointments.reduce((acc, appointment) => {
       const date = appointment.scheduledAt.toISOString().split('T')[0];
       const total = Number(appointment.total);
@@ -252,7 +129,6 @@ export class ProfessionalsService {
       return acc;
     }, {} as Record<string, { date: string; appointments: number; revenue: number; commission: number }>);
     
-    // Calcular totais
     const totalAppointments = appointments.length;
     const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
     const totalCommission = totalRevenue * commissionRate;
@@ -261,7 +137,7 @@ export class ProfessionalsService {
       professional: {
         id: professional.id,
         name: professional.name,
-        commissionRate: Number(professional['commissionRate'] || 0)
+        commissionRate: Number((professional as any).commissionRate || 0)
       },
       period: {
         startDate: startDate.toISOString().split('T')[0],

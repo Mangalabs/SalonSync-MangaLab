@@ -60,6 +60,7 @@ async function main() {
       name: 'Corte Masculino',
       price: 25.00,
       branchId: branch.id,
+      ownerId: user.id,
     },
   });
 
@@ -71,6 +72,7 @@ async function main() {
       name: 'Barba',
       price: 15.00,
       branchId: branch.id,
+      ownerId: user.id,
     },
   });
 
@@ -82,6 +84,7 @@ async function main() {
       name: 'Corte Feminino',
       price: 35.00,
       branchId: branch.id,
+      ownerId: user.id,
     },
   });
 

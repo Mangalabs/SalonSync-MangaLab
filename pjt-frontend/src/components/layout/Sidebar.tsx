@@ -11,6 +11,7 @@ import {
   CheckSquare,
   Shield,
   UserCheck,
+  DollarSign,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const getNavItems = (userRole: string) => {
   
   const adminItems = [
     { to: "/dashboard/professionals", icon: Users, label: "Profissionais", roles: ["ADMIN"] },
+    { to: "/dashboard/financial", icon: DollarSign, label: "Financeiro", roles: ["ADMIN"] },
     { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios", roles: ["ADMIN"] },
     { to: "/dashboard/settings", icon: Settings, label: "Configurações", roles: ["ADMIN", "PROFESSIONAL"] },
   ];
@@ -76,29 +78,33 @@ export function Sidebar() {
           Dashboard
         </NavLink>
 
-        <NavLink
-          to="/dashboard/appointments"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-              isActive ? "bg-white/20 font-semibold" : ""
-            }`
-          }
-        >
-          <Calendar size={18} />
-          Agendamentos
-        </NavLink>
+        {!isAdmin && (
+          <>
+            <NavLink
+              to="/dashboard/appointments"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+                  isActive ? "bg-white/20 font-semibold" : ""
+                }`
+              }
+            >
+              <Calendar size={18} />
+              Agendamentos
+            </NavLink>
 
-        <NavLink
-          to="/dashboard/treatments"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-              isActive ? "bg-white/20 font-semibold" : ""
-            }`
-          }
-        >
-          <CheckSquare size={18} />
-          Atendimentos
-        </NavLink>
+            <NavLink
+              to="/dashboard/treatments"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+                  isActive ? "bg-white/20 font-semibold" : ""
+                }`
+              }
+            >
+              <CheckSquare size={18} />
+              Atendimentos
+            </NavLink>
+          </>
+        )}
 
         {navItems.filter(item => item.to !== "/dashboard").map(({ to, icon: Icon, label }) => (
           <NavLink
@@ -116,22 +122,24 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="mt-6 space-y-2">
-        <Button
-          onClick={() => setShowScheduledForm(true)}
-          className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100 text-sm py-2"
-        >
-          <Calendar className="h-4 w-4 mr-2" />
-          Novo Agendamento
-        </Button>
-        <Button
-          onClick={() => setShowImmediateForm(true)}
-          className="w-full bg-[#10b981] text-white hover:bg-[#059669] text-sm py-2"
-        >
-          <CheckSquare className="h-4 w-4 mr-2" />
-          Novo Atendimento
-        </Button>
-      </div>
+      {!isAdmin && (
+        <div className="mt-6 space-y-2">
+          <Button
+            onClick={() => setShowScheduledForm(true)}
+            className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100 text-sm py-2"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Novo Agendamento
+          </Button>
+          <Button
+            onClick={() => setShowImmediateForm(true)}
+            className="w-full bg-[#10b981] text-white hover:bg-[#059669] text-sm py-2"
+          >
+            <CheckSquare className="h-4 w-4 mr-2" />
+            Novo Atendimento
+          </Button>
+        </div>
+      )}
 
       <Dialog open={showScheduledForm} onOpenChange={setShowScheduledForm}>
         <DialogContent>

@@ -13,9 +13,8 @@ async function bootstrap() {
   // Add global validation pipe with transform enabled
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-      whitelist: true,
+      transform: false,
+      whitelist: false,
     }),
   );
 

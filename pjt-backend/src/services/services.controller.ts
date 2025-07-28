@@ -6,12 +6,13 @@ import {
   Post,
   Patch,
   Delete,
-  Headers,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 
 @ApiTags('services')
 @Controller('services')
@@ -21,22 +22,12 @@ export class ServicesController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os serviços' })
   @ApiResponse({ status: 200, description: 'Lista de serviços' })
-  findAll(
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
-  ) {
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
-        userId = decoded.sub;
-      } catch (error) {}
-    }
-    
-    return this.service.findAll(userId, branchId);
+  findAll(@Req() req: AuthenticatedRequest) {
+    return this.service.findAll({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 
   @Get(':id')
@@ -51,29 +42,14 @@ export class ServicesController {
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
   create(
-    @Body() body: any,
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
+    @Body() body: CreateServiceDto,
+    @Req() req: AuthenticatedRequest
   ) {
-    console.log('Service create - Received body:', body); // Debug log
-    console.log('Service create - Body type:', typeof body); // Debug log
-    console.log('Service create - Body keys:', Object.keys(body)); // Debug log
-    
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
-        userId = decoded.sub;
-        console.log('Service create - User ID decoded:', userId); // Debug log
-      } catch (error) {
-        console.error('Service create - JWT decode error:', error); // Debug log
-      }
-    }
-    
-    return this.service.create(body, userId, branchId);
+    return this.service.create(body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 
   @Patch(':id')

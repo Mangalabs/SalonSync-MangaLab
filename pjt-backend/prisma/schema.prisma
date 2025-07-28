@@ -18,6 +18,7 @@ model User {
   role        String @default("ADMIN")
   isSuperAdmin Boolean @default(false)
   branches    Branch[]
+  services    Service[]
   createdAt   DateTime @default(now())
 }
 
@@ -37,6 +38,8 @@ model Branch {
   appointments  Appointment[]
   products      Product[]
   stockMovements StockMovement[]
+  expenseCategories ExpenseCategory[]
+  financialTransactions FinancialTransaction[]
   
   createdAt   DateTime @default(now())
 }
@@ -57,8 +60,10 @@ model Service {
   id                  String               @id @default(uuid())
   name                String
   price               Decimal              @db.Decimal(10, 2)
-  branchId            String
-  branch              Branch               @relation(fields: [branchId], references: [id])
+  branchId            String?
+  branch              Branch?              @relation(fields: [branchId], references: [id])
+  ownerId             String               // Dono do serviço
+  owner               User                 @relation(fields: [ownerId], references: [id])
   professionals       Professional[]       @relation("ProfessionalServices")
   appointmentServices AppointmentService[]
 }
@@ -147,4 +152,45 @@ enum StockMovementType {
   OUT         // Saída
   ADJUSTMENT  // Ajuste
   LOSS        // Perda
+}
+
+model ExpenseCategory {
+  id          String                 @id @default(uuid())
+  name        String
+  type        FinancialTransactionType
+  color       String                 @default("#6B7280")
+  description String?
+  branchId    String
+  branch      Branch                 @relation(fields: [branchId], references: [id])
+  transactions FinancialTransaction[]
+  createdAt   DateTime               @default(now())
+}
+
+model FinancialTransaction {
+  id            String                 @id @default(uuid())
+  description   String
+  amount        Decimal                @db.Decimal(10, 2)
+  type          FinancialTransactionType
+  categoryId    String
+  category      ExpenseCategory        @relation(fields: [categoryId], references: [id])
+  paymentMethod PaymentMethod          @default(CASH)
+  reference     String?                // Número da nota, comprovante, etc
+  date          DateTime               @default(now())
+  branchId      String
+  branch        Branch                 @relation(fields: [branchId], references: [id])
+  createdAt     DateTime               @default(now())
+}
+
+enum FinancialTransactionType {
+  INCOME      // Receita
+  EXPENSE     // Despesa
+  INVESTMENT  // Investimento
+}
+
+enum PaymentMethod {
+  CASH        // Dinheiro
+  CARD        // Cartão
+  PIX         // PIX
+  TRANSFER    // Transferência
+  OTHER       // Outros
 }

@@ -13,6 +13,8 @@ import Scheduling from "./components/pages/Scheduling";
 import Appointments from "./components/pages/Appointments";
 import Treatments from "./components/pages/Treatments";
 import Inventory from "./components/pages/Inventory";
+import Reports from "./pages/Reports";
+import Financial from "./pages/Financial";
 import { BranchProvider } from "@/contexts/BranchContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -59,6 +61,16 @@ export default function App() {
             <Route path="inventory" element={
               <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
                 <Inventory />
+              </RoleGuard>
+            } />
+            <Route path="reports" element={
+              <RoleGuard allowedRoles={["ADMIN"]}>
+                <Reports />
+              </RoleGuard>
+            } />
+            <Route path="financial" element={
+              <RoleGuard allowedRoles={["ADMIN"]}>
+                <Financial />
               </RoleGuard>
             } />
             <Route path="settings" element={

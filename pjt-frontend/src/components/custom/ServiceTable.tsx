@@ -49,6 +49,7 @@ export function ServiceTable() {
             <tr className="text-left border-b">
               <th className="py-2">Nome</th>
               <th className="py-2">Preço</th>
+              <th className="py-2">Escopo</th>
               <th className="py-2">Ações</th>
             </tr>
           </thead>
@@ -57,6 +58,13 @@ export function ServiceTable() {
               <tr key={service.id} className="border-t">
                 <td className="py-2">{service.name}</td>
                 <td className="py-2">R$ {Number(service.price).toFixed(2)}</td>
+                <td className="py-2">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {service.branchId ? 'Filial' : 'Global'}
+                  </span>
+                </td>
                 <td className="py-2">
                   <div className="flex gap-2">
                     <Button

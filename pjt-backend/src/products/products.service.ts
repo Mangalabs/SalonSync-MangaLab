@@ -11,31 +11,16 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto, branchId: string): Promise<Product> {
     try {
-      // Map DTO fields to match Prisma schema
       const productData: Prisma.ProductCreateInput = {
         name: createProductDto.name,
-        sku: createProductDto.sku,
-        description: createProductDto.description,
-        category: createProductDto.category || 'Geral',
+        category: createProductDto.category,
         brand: createProductDto.brand,
-        costPrice: typeof createProductDto.costPrice === 'string' 
-          ? parseFloat(createProductDto.costPrice) 
-          : createProductDto.costPrice,
-        salePrice: typeof createProductDto.salePrice === 'string' 
-          ? parseFloat(createProductDto.salePrice) 
-          : createProductDto.salePrice,
-        currentStock: typeof createProductDto.currentStock === 'string' 
-          ? parseInt(createProductDto.currentStock, 10) 
-          : createProductDto.currentStock || 0,
-        minStock: typeof createProductDto.minStock === 'string' 
-          ? parseInt(createProductDto.minStock, 10) 
-          : createProductDto.minStock || 0,
-        maxStock: createProductDto.maxStock !== undefined 
-          ? (typeof createProductDto.maxStock === 'string' 
-            ? parseInt(createProductDto.maxStock, 10) 
-            : createProductDto.maxStock) 
-          : undefined,
         unit: createProductDto.unit || 'un',
+        // Valores padrão para campos obrigatórios
+        costPrice: 0,
+        salePrice: 0,
+        currentStock: 0,
+        minStock: 0,
         branch: { connect: { id: branchId } }
       };
       

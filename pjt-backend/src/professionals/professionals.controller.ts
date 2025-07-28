@@ -1,20 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Patch,
-  ParseUUIDPipe,
-  Headers,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Patch, Req, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProfessionalsService } from './professionals.service';
 import { CreateProfessionalDto } from './dto/create-professional.dto';
 import { UpdateProfessionalDto } from './dto/update-professional.dto';
-import { CommissionQueryDto } from './dto/commission-query.dto';
+import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 
 @ApiTags('professionals')
 @Controller('professionals')
@@ -24,31 +13,19 @@ export class ProfessionalsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os profissionais' })
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
-  async findAll(
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
-  ) {
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
-        userId = decoded.sub;
-      } catch (error) {
-        // Token inválido
-      }
-    }
-    
-    return this.service.findAll(userId, branchId);
+  findAll(@Req() req: AuthenticatedRequest) {
+    return this.service.findAll({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar profissional por ID' })
   @ApiResponse({ status: 200, description: 'Profissional encontrado' })
   @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
-  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+  findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
@@ -57,32 +34,13 @@ export class ProfessionalsController {
   @ApiResponse({ status: 201, description: 'Profissional criado com sucesso' })
   create(
     @Body() body: CreateProfessionalDto,
-    @Headers('authorization') auth?: string,
-    @Headers('x-branch-id') branchId?: string
+    @Req() req: AuthenticatedRequest
   ) {
-    console.log('🔍 Professional Create Request:', {
-      body,
-      hasAuth: !!auth,
-      branchId,
-      headers: { auth: auth?.substring(0, 20) + '...', branchId }
+    return this.service.create(body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
     });
-    
-    const token = auth?.replace('Bearer ', '');
-    let userId: string | undefined;
-    
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { sub: string };
-        userId = decoded.sub;
-        console.log('✅ Token decoded, userId:', userId);
-      } catch (error) {
-        console.log('❌ Token decode error:', error.message);
-      }
-    }
-    
-    console.log('🚀 Calling service.create with:', { body, userId, branchId });
-    return this.service.create(body, userId, branchId);
   }
 
   @Patch(':id')
@@ -102,14 +60,22 @@ export class ProfessionalsController {
   }
 
   @Get(':id/commission')
-  @ApiOperation({ summary: 'Calcular comissões do profissional' })
-  @ApiResponse({ status: 200, description: 'Comissões calculadas com sucesso' })
-  @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
+  @ApiOperation({ summary: 'Calcular comissão do profissional' })
+  @ApiResponse({ status: 200, description: 'Comissão calculada com sucesso' })
   calculateCommission(
     @Param('id') id: string,
-    @Query() query: CommissionQueryDto
+    @Query() query: { startDate?: string; endDate?: string },
+    @Req() req: AuthenticatedRequest
   ) {
-    console.log('Recebendo requisição de comissão:', { id, query });
-    return this.service.calculateCommission(id, query);
+    // Admin pode ver qualquer comissão, funcionário apenas a própria
+    if (req.user.role !== 'ADMIN') {
+      // Verificar se o funcionário está tentando ver sua própria comissão
+      // Isso será validado no service
+    }
+    return this.service.calculateCommission(id, query, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId
+    });
   }
 }

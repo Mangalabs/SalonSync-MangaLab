@@ -1,63 +1,40 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { BaseDataService, UserContext } from '@/common/services/base-data.service';
 
 @Injectable()
-export class ServicesService {
-  constructor(private prisma: PrismaService) {}
+export class ServicesService extends BaseDataService {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
-  async findAll(userId?: string, branchId?: string) {
-    if (branchId) {
+  async findAll(user: UserContext) {
+    const branchIds = await this.getUserBranchIds(user);
+    
+    if (user.role === 'ADMIN') {
       return this.prisma.service.findMany({
-        where: { branchId },
+        where: {
+          ownerId: user.id
+        },
         include: { professionals: true },
       });
-    }
-    
-    if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true, name: true }
+    } else {
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: { in: branchIds } },
+        select: { ownerId: true }
       });
       
-      if (!user) {
+      if (!branch) {
         return [];
       }
       
-      if (user.role === 'ADMIN') {
-        const userBranches = await this.prisma.branch.findMany({
-          where: { ownerId: userId },
-          select: { id: true }
-        });
-        const branchIds = userBranches.map(b => b.id);
-        
-        return this.prisma.service.findMany({
-          where: { branchId: { in: branchIds } },
-          include: { professionals: true },
-        });
-      } else {
-        if (!user.name) {
-          return [];
-        }
-        
-        const professional = await this.prisma.professional.findFirst({
-          where: { name: user.name },
-          select: { branchId: true }
-        });
-        
-        if (!professional) {
-          return [];
-        }
-        
-        return this.prisma.service.findMany({
-          where: { branchId: professional.branchId },
-          include: { professionals: true },
-        });
-      }
+      return this.prisma.service.findMany({
+        where: {
+          ownerId: branch.ownerId
+        },
+        include: { professionals: true },
+      });
     }
-    
-    return this.prisma.service.findMany({
-      include: { professionals: true },
-    });
   }
 
   async findOne(id: string) {
@@ -69,71 +46,40 @@ export class ServicesService {
     return service;
   }
 
-  async create(data: { name: string; price: number }, userId?: string, targetBranchId?: string) {
-    console.log('Service create - Received data:', data); // Debug log
-    console.log('Service create - UserId:', userId); // Debug log
-    console.log('Service create - TargetBranchId:', targetBranchId); // Debug log
-    
-    let branchId: string;
-    
-    if (targetBranchId) {
-      const branch = await this.prisma.branch.findUnique({
-        where: { id: targetBranchId }
+  async create(data: { name: string; price: number }, user: UserContext, targetBranchId?: string) {
+    if (user.role === 'ADMIN') {
+      // Admin cria serviços globais
+      return this.prisma.service.create({ 
+        data: { 
+          name: data.name,
+          price: data.price,
+          branchId: null, // Global para todas as filiais do admin
+          ownerId: user.id
+        } 
       });
-      if (!branch) {
-        throw new BadRequestException('Filial não encontrada');
-      }
-      branchId = targetBranchId;
-    } else if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true, name: true }
-      });
-      
-      if (!user) {
-        throw new BadRequestException('Usuário não encontrado');
-      }
-      
-      if (user.role === 'ADMIN') {
-        const userBranches = await this.prisma.branch.findMany({
-          where: { ownerId: userId }
-        });
-        
-        if (userBranches.length === 0) {
-          throw new BadRequestException('Nenhuma filial encontrada para este usuário.');
-        }
-        branchId = userBranches[0].id;
-      } else {
-        if (!user.name) {
-          throw new BadRequestException('Nome do usuário não encontrado');
-        }
-        
-        const professional = await this.prisma.professional.findFirst({
-          where: { name: user.name },
-          select: { branchId: true }
-        });
-        
-        if (!professional) {
-          throw new BadRequestException('Profissional não encontrado no sistema.');
-        }
-        
-        branchId = professional.branchId;
-      }
     } else {
-      const firstBranch = await this.prisma.branch.findFirst();
-      if (!firstBranch) {
-        throw new BadRequestException('Nenhuma filial encontrada no sistema');
+      // Funcionário cria serviços específicos da filial
+      const branchId = await this.getTargetBranchId(user, targetBranchId);
+      
+      // Buscar o dono da filial
+      const branch = await this.prisma.branch.findUnique({
+        where: { id: branchId },
+        select: { ownerId: true }
+      });
+      
+      if (!branch) {
+        throw new Error('Filial não encontrada');
       }
-      branchId = firstBranch.id;
+      
+      return this.prisma.service.create({ 
+        data: { 
+          name: data.name,
+          price: data.price,
+          branchId,
+          ownerId: branch.ownerId // Serviço pertence ao dono da filial
+        } 
+      });
     }
-    
-    return this.prisma.service.create({ 
-      data: { 
-        name: data.name,
-        price: data.price,
-        branchId 
-      } 
-    });
   }
 
   async update(id: string, data: { name?: string; price?: number }) {
