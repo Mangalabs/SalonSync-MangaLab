@@ -14,21 +14,21 @@ export class BranchesService {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       // Buscar usuário para verificar role
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
-        select: { role: true, name: true }
+        select: { role: true, name: true },
       });
-      
+
       if (!user) {
         throw new UnauthorizedException('Usuário não encontrado');
       }
-      
+
       if (user.role === 'ADMIN') {
         // Admin: retornar suas filiais
         return this.prisma.branch.findMany({
@@ -40,16 +40,16 @@ export class BranchesService {
         if (!user.name) {
           return [];
         }
-        
+
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
           include: {
             branch: {
-              select: { id: true, name: true, address: true, phone: true }
-            }
-          }
+              select: { id: true, name: true, address: true, phone: true },
+            },
+          },
         });
-        
+
         return professional?.branch ? [professional.branch] : [];
       }
     } catch (error) {
@@ -57,23 +57,26 @@ export class BranchesService {
     }
   }
 
-  async create(data: {
-    name: string;
-    address?: string;
-    phone?: string;
-  }, token: string) {
+  async create(
+    data: {
+      name: string;
+      address?: string;
+      phone?: string;
+    },
+    token: string,
+  ) {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       return this.prisma.branch.create({
         data: {
           ...data,
-          ownerId: decoded.sub
+          ownerId: decoded.sub,
         },
         select: { id: true, name: true, address: true, phone: true },
       });
@@ -82,23 +85,27 @@ export class BranchesService {
     }
   }
 
-  async update(id: string, data: {
-    name?: string;
-    address?: string;
-    phone?: string;
-  }, token: string) {
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      address?: string;
+      phone?: string;
+    },
+    token: string,
+  ) {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       return this.prisma.branch.update({
-        where: { 
+        where: {
           id,
-          ownerId: decoded.sub
+          ownerId: decoded.sub,
         },
         data,
         select: { id: true, name: true, address: true, phone: true },
@@ -112,16 +119,16 @@ export class BranchesService {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       await this.prisma.branch.delete({
-        where: { 
+        where: {
           id,
-          ownerId: decoded.sub
-        }
+          ownerId: decoded.sub,
+        },
       });
     } catch (error) {
       throw new UnauthorizedException('Token inválido');

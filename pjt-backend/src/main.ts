@@ -20,7 +20,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('API de Agendamentos')
-    .setDescription('API para gerenciamento de agendamentos, profissionais, clientes e serviços')
+    .setDescription(
+      'API para gerenciamento de agendamentos, profissionais, clientes e serviços',
+    )
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);

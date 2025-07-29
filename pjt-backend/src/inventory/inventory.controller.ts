@@ -9,7 +9,9 @@ export class InventoryController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get('movements')
-  getMovements(@Headers('x-branch-id') branchId: string): Promise<StockMovement[]> {
+  getMovements(
+    @Headers('x-branch-id') branchId: string,
+  ): Promise<StockMovement[]> {
     return this.productsService.getStockMovements(branchId);
   }
 }

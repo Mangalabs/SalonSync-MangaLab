@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -20,7 +24,7 @@ export class AuthMiddleware implements NestMiddleware {
   async use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
-      
+
       if (!token) {
         throw new UnauthorizedException('Token não fornecido');
       }
@@ -35,8 +39,8 @@ export class AuthMiddleware implements NestMiddleware {
           id: true,
           email: true,
           name: true,
-          role: true
-        }
+          role: true,
+        },
       });
 
       if (!user) {
@@ -48,7 +52,7 @@ export class AuthMiddleware implements NestMiddleware {
       if (user.role === 'PROFESSIONAL' && user.name) {
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
-          select: { branchId: true }
+          select: { branchId: true },
         });
         branchId = professional?.branchId;
       }
@@ -59,7 +63,7 @@ export class AuthMiddleware implements NestMiddleware {
         email: user.email,
         name: user.name || '',
         role: user.role as 'ADMIN' | 'PROFESSIONAL',
-        branchId
+        branchId,
       };
 
       next();

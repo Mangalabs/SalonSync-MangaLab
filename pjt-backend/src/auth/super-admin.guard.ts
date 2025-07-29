@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
@@ -21,10 +27,10 @@ export class SuperAdminGuard implements CanActivate {
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
-        select: { id: true, isSuperAdmin: true, role: true }
+        select: { id: true, isSuperAdmin: true, role: true },
       });
 
       if (!user || !user.isSuperAdmin) {

@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BaseDataService, UserContext } from '../common/services/base-data.service';
-import { CreateTransactionDto, TransactionType } from './dto/create-transaction.dto';
+import {
+  BaseDataService,
+  UserContext,
+} from '../common/services/base-data.service';
+import {
+  CreateTransactionDto,
+  TransactionType,
+} from './dto/create-transaction.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
 @Injectable()
@@ -11,36 +17,44 @@ export class FinancialService extends BaseDataService {
   }
 
   // Categorias
-  async createCategory(data: CreateCategoryDto, user: UserContext, targetBranchId?: string) {
+  async createCategory(
+    data: CreateCategoryDto,
+    user: UserContext,
+    targetBranchId?: string,
+  ) {
     const branchId = await this.getTargetBranchId(user, targetBranchId);
-    
+
     return this.prisma.expenseCategory.create({
       data: {
         name: data.name,
         type: data.type,
         color: data.color || '#6B7280',
         description: data.description,
-        branchId
-      }
+        branchId,
+      },
     });
   }
 
   async getCategories(user: UserContext, type?: TransactionType) {
     const branchIds = await this.getUserBranchIds(user);
-    
+
     return this.prisma.expenseCategory.findMany({
       where: {
         branchId: { in: branchIds },
-        ...(type && { type })
+        ...(type && { type }),
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
   }
 
   // Transações
-  async createTransaction(data: CreateTransactionDto, user: UserContext, targetBranchId?: string) {
+  async createTransaction(
+    data: CreateTransactionDto,
+    user: UserContext,
+    targetBranchId?: string,
+  ) {
     const branchId = await this.getTargetBranchId(user, targetBranchId);
-    
+
     return this.prisma.financialTransaction.create({
       data: {
         description: data.description,
@@ -50,24 +64,27 @@ export class FinancialService extends BaseDataService {
         paymentMethod: data.paymentMethod || 'CASH',
         reference: data.reference,
         date: data.date ? new Date(data.date) : new Date(),
-        branchId
+        branchId,
       },
       include: {
-        category: true
-      }
+        category: true,
+      },
     });
   }
 
-  async getTransactions(user: UserContext, filters?: {
-    type?: TransactionType;
-    categoryId?: string;
-    startDate?: string;
-    endDate?: string;
-  }) {
+  async getTransactions(
+    user: UserContext,
+    filters?: {
+      type?: TransactionType;
+      categoryId?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+  ) {
     const branchIds = await this.getUserBranchIds(user);
-    
+
     const where: any = {
-      branchId: { in: branchIds }
+      branchId: { in: branchIds },
     };
 
     if (filters?.type) where.type = filters.type;
@@ -81,15 +98,19 @@ export class FinancialService extends BaseDataService {
     return this.prisma.financialTransaction.findMany({
       where,
       include: {
-        category: true
+        category: true,
       },
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'desc' },
     });
   }
 
-  async getFinancialSummary(user: UserContext, startDate?: string, endDate?: string) {
+  async getFinancialSummary(
+    user: UserContext,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const branchIds = await this.getUserBranchIds(user);
-    
+
     const dateFilter: any = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
@@ -97,11 +118,11 @@ export class FinancialService extends BaseDataService {
     const transactions = await this.prisma.financialTransaction.findMany({
       where: {
         branchId: { in: branchIds },
-        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter })
+        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
       },
       include: {
-        category: true
-      }
+        category: true,
+      },
     });
 
     // Receitas de atendimentos
@@ -109,36 +130,41 @@ export class FinancialService extends BaseDataService {
       where: {
         branchId: { in: branchIds },
         status: 'COMPLETED',
-        ...(Object.keys(dateFilter).length > 0 && { scheduledAt: dateFilter })
-      }
+        ...(Object.keys(dateFilter).length > 0 && { scheduledAt: dateFilter }),
+      },
     });
 
-    const appointmentRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+    const appointmentRevenue = appointments.reduce(
+      (sum, apt) => sum + Number(apt.total),
+      0,
+    );
 
     const summary = {
-      totalIncome: transactions
-        .filter(t => t.type === 'INCOME')
-        .reduce((sum, t) => sum + Number(t.amount), 0) + appointmentRevenue,
+      totalIncome:
+        transactions
+          .filter((t) => t.type === 'INCOME')
+          .reduce((sum, t) => sum + Number(t.amount), 0) + appointmentRevenue,
       totalExpenses: transactions
-        .filter(t => t.type === 'EXPENSE')
+        .filter((t) => t.type === 'EXPENSE')
         .reduce((sum, t) => sum + Number(t.amount), 0),
       totalInvestments: transactions
-        .filter(t => t.type === 'INVESTMENT')
+        .filter((t) => t.type === 'INVESTMENT')
         .reduce((sum, t) => sum + Number(t.amount), 0),
       appointmentRevenue,
-      netProfit: 0
+      netProfit: 0,
     };
 
-    summary.netProfit = summary.totalIncome - summary.totalExpenses - summary.totalInvestments;
+    summary.netProfit =
+      summary.totalIncome - summary.totalExpenses - summary.totalInvestments;
 
     return summary;
   }
 
   async deleteTransaction(id: string, user: UserContext) {
     const branchIds = await this.getUserBranchIds(user);
-    
+
     const transaction = await this.prisma.financialTransaction.findFirst({
-      where: { id, branchId: { in: branchIds } }
+      where: { id, branchId: { in: branchIds } },
     });
 
     if (!transaction) {
@@ -146,7 +172,7 @@ export class FinancialService extends BaseDataService {
     }
 
     return this.prisma.financialTransaction.delete({
-      where: { id }
+      where: { id },
     });
   }
 }

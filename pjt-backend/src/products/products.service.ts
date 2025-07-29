@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -9,7 +13,10 @@ import { Product, StockMovement, Prisma } from '@prisma/client';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createProductDto: CreateProductDto, branchId: string): Promise<Product> {
+  async create(
+    createProductDto: CreateProductDto,
+    branchId: string,
+  ): Promise<Product> {
     try {
       const productData: Prisma.ProductCreateInput = {
         name: createProductDto.name,
@@ -21,13 +28,13 @@ export class ProductsService {
         salePrice: 0,
         currentStock: 0,
         minStock: 0,
-        branch: { connect: { id: branchId } }
+        branch: { connect: { id: branchId } },
       };
-      
+
       console.log('Creating product with data:', productData);
-      
+
       return this.prisma.product.create({
-        data: productData
+        data: productData,
       });
     } catch (error) {
       console.error('Error creating product:', error);
@@ -54,51 +61,66 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto, branchId: string): Promise<Product> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    branchId: string,
+  ): Promise<Product> {
     await this.findOne(id, branchId);
-    
+
     console.log('Update product DTO:', updateProductDto);
-    
+
     // Map DTO fields to match Prisma schema
     const updateData: Prisma.ProductUpdateInput = {};
-    
-    if (updateProductDto.name !== undefined) updateData.name = updateProductDto.name;
-    if (updateProductDto.sku !== undefined) updateData.sku = updateProductDto.sku;
-    if (updateProductDto.description !== undefined) updateData.description = updateProductDto.description;
-    if (updateProductDto.category !== undefined) updateData.category = updateProductDto.category;
-    if (updateProductDto.brand !== undefined) updateData.brand = updateProductDto.brand;
-    
+
+    if (updateProductDto.name !== undefined)
+      updateData.name = updateProductDto.name;
+    if (updateProductDto.sku !== undefined)
+      updateData.sku = updateProductDto.sku;
+    if (updateProductDto.description !== undefined)
+      updateData.description = updateProductDto.description;
+    if (updateProductDto.category !== undefined)
+      updateData.category = updateProductDto.category;
+    if (updateProductDto.brand !== undefined)
+      updateData.brand = updateProductDto.brand;
+
     if (updateProductDto.costPrice !== undefined) {
-      updateData.costPrice = typeof updateProductDto.costPrice === 'string' 
-        ? parseFloat(updateProductDto.costPrice) 
-        : updateProductDto.costPrice;
+      updateData.costPrice =
+        typeof updateProductDto.costPrice === 'string'
+          ? parseFloat(updateProductDto.costPrice)
+          : updateProductDto.costPrice;
     }
-    
+
     if (updateProductDto.salePrice !== undefined) {
-      updateData.salePrice = typeof updateProductDto.salePrice === 'string' 
-        ? parseFloat(updateProductDto.salePrice) 
-        : updateProductDto.salePrice;
+      updateData.salePrice =
+        typeof updateProductDto.salePrice === 'string'
+          ? parseFloat(updateProductDto.salePrice)
+          : updateProductDto.salePrice;
     }
-    
+
     if (updateProductDto.currentStock !== undefined) {
-      updateData.currentStock = typeof updateProductDto.currentStock === 'string' 
-        ? parseInt(updateProductDto.currentStock, 10) 
-        : updateProductDto.currentStock;
+      updateData.currentStock =
+        typeof updateProductDto.currentStock === 'string'
+          ? parseInt(updateProductDto.currentStock, 10)
+          : updateProductDto.currentStock;
     }
-    
+
     if (updateProductDto.minStock !== undefined) {
-      updateData.minStock = typeof updateProductDto.minStock === 'string' 
-        ? parseInt(updateProductDto.minStock, 10) 
-        : updateProductDto.minStock;
+      updateData.minStock =
+        typeof updateProductDto.minStock === 'string'
+          ? parseInt(updateProductDto.minStock, 10)
+          : updateProductDto.minStock;
     }
-    
+
     if (updateProductDto.maxStock !== undefined) {
-      updateData.maxStock = typeof updateProductDto.maxStock === 'string' 
-        ? parseInt(updateProductDto.maxStock, 10) 
-        : updateProductDto.maxStock;
+      updateData.maxStock =
+        typeof updateProductDto.maxStock === 'string'
+          ? parseInt(updateProductDto.maxStock, 10)
+          : updateProductDto.maxStock;
     }
-    
-    if (updateProductDto.unit !== undefined) updateData.unit = updateProductDto.unit;
+
+    if (updateProductDto.unit !== undefined)
+      updateData.unit = updateProductDto.unit;
 
     console.log('Update data to be sent to Prisma:', updateData);
 
@@ -106,9 +128,9 @@ export class ProductsService {
       where: { id },
       data: updateData,
     });
-    
+
     console.log('Updated product result:', updatedProduct);
-    
+
     return updatedProduct;
   }
 
@@ -122,7 +144,7 @@ export class ProductsService {
 
     if (movementsCount > 0) {
       throw new BadRequestException(
-        'Cannot delete product with stock movements. Consider deactivating it instead.'
+        'Cannot delete product with stock movements. Consider deactivating it instead.',
       );
     }
 
@@ -143,10 +165,10 @@ export class ProductsService {
 
     // Calculate new stock level
     let newStock = product.currentStock;
-    
+
     // Convert enum from DTO to Prisma enum
     let movementType: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
-    
+
     switch (type) {
       case StockMovementType.IN:
         movementType = 'IN';
@@ -156,7 +178,7 @@ export class ProductsService {
         movementType = 'OUT';
         if (product.currentStock < quantity) {
           throw new BadRequestException(
-            `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`
+            `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`,
           );
         }
         newStock -= quantity;
@@ -165,7 +187,7 @@ export class ProductsService {
         movementType = 'LOSS';
         if (product.currentStock < quantity) {
           throw new BadRequestException(
-            `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`
+            `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`,
           );
         }
         newStock -= quantity;

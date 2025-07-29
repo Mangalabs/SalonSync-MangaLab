@@ -71,9 +71,9 @@ export class ProductsController {
       id,
       adjustStockDto,
       branchId,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
-    
+
     return this.productsService.adjustStock(
       id,
       adjustStockDto,

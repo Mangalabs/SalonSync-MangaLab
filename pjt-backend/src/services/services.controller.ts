@@ -26,7 +26,7 @@ export class ServicesController {
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
@@ -41,14 +41,11 @@ export class ServicesController {
   @Post()
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
-  create(
-    @Body() body: CreateServiceDto,
-    @Req() req: AuthenticatedRequest
-  ) {
+  create(@Body() body: CreateServiceDto, @Req() req: AuthenticatedRequest) {
     return this.service.create(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
