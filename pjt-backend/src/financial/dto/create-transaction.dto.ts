@@ -1,9 +1,16 @@
-import { IsNotEmpty, IsString, IsNumber, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export enum TransactionType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
-  INVESTMENT = 'INVESTMENT'
+  INVESTMENT = 'INVESTMENT',
 }
 
 export enum PaymentMethod {
@@ -11,7 +18,7 @@ export enum PaymentMethod {
   CARD = 'CARD',
   PIX = 'PIX',
   TRANSFER = 'TRANSFER',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 export class CreateTransactionDto {

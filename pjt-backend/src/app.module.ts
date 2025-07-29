@@ -40,7 +40,7 @@ export class AppModule {
       .apply(AuthMiddleware)
       .exclude(
         { path: 'auth/login', method: RequestMethod.POST },
-        { path: 'auth/register', method: RequestMethod.POST }
+        { path: 'auth/register', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

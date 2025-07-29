@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Patch, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Patch,
+  Req,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -16,28 +25,25 @@ export class ClientsController {
     return this.clientsService.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar novo cliente' })
   @ApiResponse({ status: 201, description: 'Cliente criado com sucesso' })
-  create(
-    @Body() body: CreateClientDto,
-    @Req() req: AuthenticatedRequest
-  ) {
+  create(@Body() body: CreateClientDto, @Req() req: AuthenticatedRequest) {
     console.log('ClientsController - Received body:', body);
     console.log('ClientsController - User context:', {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
-    
+
     return this.clientsService.create(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 

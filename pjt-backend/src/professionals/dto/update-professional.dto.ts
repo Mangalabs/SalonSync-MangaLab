@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsNumber, IsOptional, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  Min,
+  Max,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateProfessionalDto {
@@ -23,6 +30,8 @@ export class UpdateProfessionalDto {
   @IsNumber()
   @Min(0)
   @Max(100)
-  @Transform(({ value }) => typeof value === 'string' ? parseFloat(value) : value)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   commissionRate?: number;
 }

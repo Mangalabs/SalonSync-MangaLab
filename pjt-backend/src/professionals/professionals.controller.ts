@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Patch, Req, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Patch,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProfessionalsService } from './professionals.service';
 import { CreateProfessionalDto } from './dto/create-professional.dto';
@@ -17,7 +27,7 @@ export class ProfessionalsController {
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
@@ -34,18 +44,21 @@ export class ProfessionalsController {
   @ApiResponse({ status: 201, description: 'Profissional criado com sucesso' })
   create(
     @Body() body: CreateProfessionalDto,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.service.create(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar profissional' })
-  @ApiResponse({ status: 200, description: 'Profissional atualizado com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profissional atualizado com sucesso',
+  })
   @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
   update(@Param('id') id: string, @Body() body: UpdateProfessionalDto) {
     return this.service.update(id, body);
@@ -53,7 +66,10 @@ export class ProfessionalsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover profissional' })
-  @ApiResponse({ status: 200, description: 'Profissional removido com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profissional removido com sucesso',
+  })
   @ApiResponse({ status: 404, description: 'Profissional não encontrado' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
@@ -65,7 +81,7 @@ export class ProfessionalsController {
   calculateCommission(
     @Param('id') id: string,
     @Query() query: { startDate?: string; endDate?: string },
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ) {
     // Admin pode ver qualquer comissão, funcionário apenas a própria
     if (req.user.role !== 'ADMIN') {
@@ -75,7 +91,7 @@ export class ProfessionalsController {
     return this.service.calculateCommission(id, query, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 }

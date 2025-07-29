@@ -36,10 +36,10 @@ export class AppointmentsService {
     const total = services.reduce((sum, s) => sum + Number(s.price), 0);
 
     let branchId: string;
-    
+
     if (data.branchId) {
       const branch = await this.prisma.branch.findUnique({
-        where: { id: data.branchId }
+        where: { id: data.branchId },
       });
       if (!branch) {
         throw new Error('Filial não encontrada');
@@ -48,18 +48,18 @@ export class AppointmentsService {
     } else if (data.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: data.userId },
-        select: { role: true, name: true }
+        select: { role: true, name: true },
       });
-      
+
       if (!user) {
         throw new Error('Usuário não encontrado');
       }
-      
+
       if (user.role === 'ADMIN') {
         const userBranches = await this.prisma.branch.findMany({
-          where: { ownerId: data.userId }
+          where: { ownerId: data.userId },
         });
-        
+
         if (userBranches.length === 0) {
           throw new Error('Nenhuma filial encontrada para este usuário.');
         }
@@ -68,16 +68,16 @@ export class AppointmentsService {
         if (!user.name) {
           throw new Error('Nome do usuário não encontrado');
         }
-        
+
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
-          select: { branchId: true }
+          select: { branchId: true },
         });
-        
+
         if (!professional) {
           throw new Error('Profissional não encontrado no sistema.');
         }
-        
+
         branchId = professional.branchId;
       }
     } else {
@@ -92,20 +92,22 @@ export class AppointmentsService {
       branchId,
       total,
       scheduledAt: data.scheduledAt,
-      status: data.status || 'SCHEDULED'
+      status: data.status || 'SCHEDULED',
     }); // Debug log
-    
+
     // Verificar se o profissional existe
     const professional = await this.prisma.professional.findUnique({
-      where: { id: data.professionalId }
+      where: { id: data.professionalId },
     });
-    
+
     if (!professional) {
-      throw new Error(`Profissional com ID ${data.professionalId} não encontrado`);
+      throw new Error(
+        `Profissional com ID ${data.professionalId} não encontrado`,
+      );
     }
-    
+
     console.log('Professional found:', professional); // Debug log
-    
+
     return this.prisma.appointment.create({
       data: {
         professionalId: data.professionalId,
@@ -140,24 +142,24 @@ export class AppointmentsService {
         },
       });
     }
-    
+
     if (userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true, name: true }
+        select: { role: true, name: true },
       });
-      
+
       if (!user) {
         return [];
       }
-      
+
       if (user.role === 'ADMIN') {
         const userBranches = await this.prisma.branch.findMany({
           where: { ownerId: userId },
-          select: { id: true }
+          select: { id: true },
         });
-        const branchIds = userBranches.map(b => b.id);
-        
+        const branchIds = userBranches.map((b) => b.id);
+
         return this.prisma.appointment.findMany({
           where: { branchId: { in: branchIds } },
           orderBy: { createdAt: 'desc' },
@@ -171,16 +173,16 @@ export class AppointmentsService {
         if (!user.name) {
           return [];
         }
-        
+
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
-          select: { branchId: true }
+          select: { branchId: true },
         });
-        
+
         if (!professional) {
           return [];
         }
-        
+
         return this.prisma.appointment.findMany({
           where: { branchId: professional.branchId },
           orderBy: { createdAt: 'desc' },
@@ -192,7 +194,7 @@ export class AppointmentsService {
         });
       }
     }
-    
+
     return this.prisma.appointment.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -216,10 +218,13 @@ export class AppointmentsService {
     return appt;
   }
 
-  async getAvailableSlots(professionalId: string, date: string): Promise<string[]> {
+  async getAvailableSlots(
+    professionalId: string,
+    date: string,
+  ): Promise<string[]> {
     const startDate = new Date(date + 'T00:00:00Z');
     const endDate = new Date(date + 'T23:59:59Z');
-    
+
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
         professionalId,
@@ -231,12 +236,20 @@ export class AppointmentsService {
       select: { scheduledAt: true },
     });
 
-    const workingHours = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
-    const bookedTimes = existingAppointments.map(apt => 
-      apt.scheduledAt.toISOString().substring(11, 16)
+    const workingHours = [
+      '09:00',
+      '10:00',
+      '11:00',
+      '14:00',
+      '15:00',
+      '16:00',
+      '17:00',
+    ];
+    const bookedTimes = existingAppointments.map((apt) =>
+      apt.scheduledAt.toISOString().substring(11, 16),
     );
 
-    return workingHours.filter(time => !bookedTimes.includes(time));
+    return workingHours.filter((time) => !bookedTimes.includes(time));
   }
 
   async getAppointmentsByDate(date: string): Promise<Appointment[]> {
@@ -260,26 +273,30 @@ export class AppointmentsService {
   }
 
   async remove(id: string): Promise<void> {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
     if (!appointment) {
       throw new NotFoundException('Agendamento não encontrado');
     }
-    
+
     // Excluir primeiro os serviços do agendamento
     await this.prisma.appointmentService.deleteMany({
-      where: { appointmentId: id }
+      where: { appointmentId: id },
     });
-    
+
     // Depois excluir o agendamento
     await this.prisma.appointment.delete({ where: { id } });
   }
 
   async confirmAppointment(id: string): Promise<Appointment> {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
     if (!appointment) {
       throw new NotFoundException('Agendamento não encontrado');
     }
-    
+
     return this.prisma.appointment.update({
       where: { id },
       data: { status: 'COMPLETED' },
@@ -292,14 +309,16 @@ export class AppointmentsService {
   }
 
   async cancelAppointment(id: string): Promise<void> {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
     if (!appointment) {
       throw new NotFoundException('Agendamento não encontrado');
     }
-    
+
     // Cancelar = excluir o agendamento
     await this.prisma.appointmentService.deleteMany({
-      where: { appointmentId: id }
+      where: { appointmentId: id },
     });
     await this.prisma.appointment.delete({ where: { id } });
   }

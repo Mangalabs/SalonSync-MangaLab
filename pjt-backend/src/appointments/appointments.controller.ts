@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Delete, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Delete,
+  Req,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from '@prisma/client';
@@ -15,17 +23,20 @@ export class AppointmentsController {
   @ApiResponse({ status: 201, description: 'Agendamento criado com sucesso' })
   create(
     @Body() body: CreateAppointmentDto & { status?: string },
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ): Promise<Appointment> {
-    return this.apptService.create({
-      ...body,
-      scheduledAt: new Date(body.scheduledAt),
-      status: (body.status as any) || 'SCHEDULED',
-    }, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId
-    });
+    return this.apptService.create(
+      {
+        ...body,
+        scheduledAt: new Date(body.scheduledAt),
+        status: (body.status as any) || 'SCHEDULED',
+      },
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+    );
   }
 
   @Get()
@@ -35,7 +46,7 @@ export class AppointmentsController {
     return this.apptService.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId
+      branchId: req.user.branchId,
     });
   }
 
@@ -67,14 +78,20 @@ export class AppointmentsController {
 
   @Post(':id/confirm')
   @ApiOperation({ summary: 'Confirmar agendamento como realizado' })
-  @ApiResponse({ status: 200, description: 'Agendamento confirmado com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamento confirmado com sucesso',
+  })
   confirmAppointment(@Param('id') id: string): Promise<Appointment> {
     return this.apptService.confirmAppointment(id);
   }
 
   @Post(':id/cancel')
   @ApiOperation({ summary: 'Cancelar agendamento' })
-  @ApiResponse({ status: 200, description: 'Agendamento cancelado com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamento cancelado com sucesso',
+  })
   cancelAppointment(@Param('id') id: string): Promise<void> {
     return this.apptService.cancelAppointment(id);
   }

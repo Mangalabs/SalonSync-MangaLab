@@ -25,110 +25,110 @@ export class AuthService {
     return { token };
   }
 
-
-
   async getProfile(token: string) {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
-        select: { 
-          id: true, 
-          email: true, 
-          name: true, 
-          businessName: true, 
-          phone: true, 
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          businessName: true,
+          phone: true,
           avatar: true,
-          role: true 
+          role: true,
         },
       });
-      
+
       if (!user) {
         throw new UnauthorizedException('Usuário não encontrado');
       }
-      
+
       // Se for PROFESSIONAL, buscar dados da filial
       if (user.role === 'PROFESSIONAL' && user.name) {
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
           include: {
             branch: {
-              select: { name: true }
-            }
-          }
+              select: { name: true },
+            },
+          },
         });
-        
+
         return {
           ...user,
-          branchName: professional?.branch?.name
+          branchName: professional?.branch?.name,
         };
       }
-      
+
       return user;
     } catch (error) {
       throw new UnauthorizedException('Token inválido');
     }
   }
 
-  async updateProfile(token: string, data: {
-    name?: string;
-    businessName?: string;
-    phone?: string;
-  }) {
+  async updateProfile(
+    token: string,
+    data: {
+      name?: string;
+      businessName?: string;
+      phone?: string;
+    },
+  ) {
     if (!token) {
       throw new UnauthorizedException('Token não fornecido');
     }
-    
+
     try {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
-      
+
       const currentUser = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
-        select: { role: true }
+        select: { role: true },
       });
-      
+
       // Se for PROFESSIONAL, permitir apenas atualizar telefone
-      const updateData = currentUser?.role === 'PROFESSIONAL' 
-        ? { phone: data.phone }
-        : data;
-      
+      const updateData =
+        currentUser?.role === 'PROFESSIONAL' ? { phone: data.phone } : data;
+
       const user = await this.prisma.user.update({
         where: { id: decoded.sub },
         data: updateData,
-        select: { 
-          id: true, 
-          email: true, 
-          name: true, 
-          businessName: true, 
-          phone: true, 
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          businessName: true,
+          phone: true,
           avatar: true,
-          role: true 
+          role: true,
         },
       });
-      
+
       // Se for PROFESSIONAL, buscar dados da filial
       if (user.role === 'PROFESSIONAL' && user.name) {
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
           include: {
             branch: {
-              select: { name: true }
-            }
-          }
+              select: { name: true },
+            },
+          },
         });
-        
+
         return {
           ...user,
-          branchName: professional?.branch?.name
+          branchName: professional?.branch?.name,
         };
       }
-      
+
       return user;
     } catch (error) {
       throw new UnauthorizedException('Token inválido');
@@ -162,9 +162,9 @@ export class AuthService {
 
     // Verificar se a filial existe e pertence ao usuário correto
     const branch = await this.prisma.branch.findUnique({
-      where: { id: data.branchId }
+      where: { id: data.branchId },
     });
-    
+
     if (!branch) {
       throw new ConflictException('Filial não encontrada');
     }
@@ -175,8 +175,8 @@ export class AuthService {
         name: data.name,
         role: 'Profissional',
         branchId: data.branchId,
-        commissionRate: 10 // Taxa padrão de 10%
-      }
+        commissionRate: 10, // Taxa padrão de 10%
+      },
     });
 
     return { id: user.id, email: user.email, name: user.name, role: user.role };
@@ -217,12 +217,12 @@ export class AuthService {
       },
     });
 
-    return { 
-      id: user.id, 
-      email: user.email, 
-      name: user.name, 
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
       businessName: user.businessName,
-      role: user.role 
+      role: user.role,
     };
   }
 

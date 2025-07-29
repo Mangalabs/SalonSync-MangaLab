@@ -1,4 +1,13 @@
-import { Controller, Get, Headers, Patch, Param, Body, Post, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Headers,
+  Patch,
+  Param,
+  Body,
+  Post,
+  Delete,
+} from '@nestjs/common';
 import { BranchesService } from './branches.service';
 
 @Controller('branches')
@@ -13,12 +22,13 @@ export class BranchesController {
 
   @Post()
   create(
-    @Body() body: {
+    @Body()
+    body: {
       name: string;
       address?: string;
       phone?: string;
     },
-    @Headers('authorization') auth: string
+    @Headers('authorization') auth: string,
   ) {
     const token = auth?.replace('Bearer ', '');
     return this.branchesService.create(body, token);
@@ -27,22 +37,20 @@ export class BranchesController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() body: {
+    @Body()
+    body: {
       name?: string;
       address?: string;
       phone?: string;
     },
-    @Headers('authorization') auth: string
+    @Headers('authorization') auth: string,
   ) {
     const token = auth?.replace('Bearer ', '');
     return this.branchesService.update(id, body, token);
   }
 
   @Delete(':id')
-  delete(
-    @Param('id') id: string,
-    @Headers('authorization') auth: string
-  ) {
+  delete(@Param('id') id: string, @Headers('authorization') auth: string) {
     const token = auth?.replace('Bearer ', '');
     return this.branchesService.delete(id, token);
   }

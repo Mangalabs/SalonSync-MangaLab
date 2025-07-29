@@ -19,9 +19,9 @@ export class BaseDataService {
       // Admin: todas suas filiais
       const branches = await this.prisma.branch.findMany({
         where: { ownerId: user.id },
-        select: { id: true }
+        select: { id: true },
       });
-      return branches.map(b => b.id);
+      return branches.map((b) => b.id);
     } else {
       // Professional: apenas sua filial
       return user.branchId ? [user.branchId] : [];
@@ -31,7 +31,10 @@ export class BaseDataService {
   /**
    * Determina a filial para criação de dados
    */
-  async getTargetBranchId(user: UserContext, targetBranchId?: string): Promise<string> {
+  async getTargetBranchId(
+    user: UserContext,
+    targetBranchId?: string,
+  ): Promise<string> {
     if (targetBranchId) {
       // Verificar se o usuário tem acesso à filial especificada
       const allowedBranchIds = await this.getUserBranchIds(user);
@@ -44,7 +47,7 @@ export class BaseDataService {
     if (user.role === 'ADMIN') {
       // Admin: usar primeira filial
       const branch = await this.prisma.branch.findFirst({
-        where: { ownerId: user.id }
+        where: { ownerId: user.id },
       });
       if (!branch) {
         throw new Error('Nenhuma filial encontrada para este usuário');
