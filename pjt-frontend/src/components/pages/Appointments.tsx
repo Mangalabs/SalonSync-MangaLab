@@ -23,11 +23,11 @@ export default function Appointments() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Agendamentos</h1>
-          <p className="text-muted-foreground">Gerencie seus agendamentos futuros</p>
+          <p className="text-[#737373]">Gerencie seus agendamentos futuros</p>
         </div>
         <Button 
           onClick={() => setShowForm(true)}
-          className="bg-[#FF5D73] text-white"
+          className=""
         >
           + Novo Agendamento
         </Button>

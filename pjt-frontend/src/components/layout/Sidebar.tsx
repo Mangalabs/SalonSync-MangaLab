@@ -62,8 +62,8 @@ export function Sidebar() {
   const navItems = getNavItems(user?.role || "ADMIN");
 
   return (
-    <aside className="w-64 h-screen bg-[#FF5D73] text-white flex flex-col px-4 py-6 fixed left-0 top-0">
-      <h2 className="text-xl font-bold mb-6">Painel</h2>
+    <aside className="w-64 md:w-64 h-screen bg-[#1A1A1A] text-white flex flex-col px-4 py-6 fixed left-0 top-0 z-50 transform md:transform-none transition-transform duration-300">
+      <h2 className="text-xl font-bold mb-6 text-[#D4AF37]">SalonSync</h2>
 
       <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
         <NavLink
@@ -126,17 +126,19 @@ export function Sidebar() {
         <div className="mt-6 space-y-2">
           <Button
             onClick={() => setShowScheduledForm(true)}
-            className="w-full bg-white text-[#FF5D73] border border-white hover:bg-gray-100 text-sm py-2"
+            className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-sm py-2"
           >
             <Calendar className="h-4 w-4 mr-2" />
-            Novo Agendamento
+            <span className="hidden sm:inline">Novo Agendamento</span>
+            <span className="sm:hidden">Agendar</span>
           </Button>
           <Button
             onClick={() => setShowImmediateForm(true)}
-            className="w-full bg-[#10b981] text-white hover:bg-[#059669] text-sm py-2"
+            className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-sm py-2"
           >
             <CheckSquare className="h-4 w-4 mr-2" />
-            Novo Atendimento
+            <span className="hidden sm:inline">Novo Atendimento</span>
+            <span className="sm:hidden">Atender</span>
           </Button>
         </div>
       )}
@@ -178,7 +180,7 @@ export function Sidebar() {
                 if (branch) setActiveBranch(branch);
               }}
             >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white text-sm h-8">
+              <SelectTrigger className="bg-primary/20 border-[#D4AF37]/20 text-primary-foreground text-sm h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -206,7 +206,7 @@ export function AppointmentTable({
         </div>
 
         {filteredAppointments.length === 0 ? (
-          <div className="border rounded-lg p-6 text-center text-muted-foreground">
+          <div className="border rounded-lg p-6 text-center text-[#737373]">
             Nenhum agendamento futuro encontrado.
           </div>
         ) : (
@@ -325,7 +325,7 @@ export function AppointmentTable({
       </div>
 
       {Object.keys(groupedData).length === 0 ? (
-        <div className="border rounded-lg p-6 text-center text-muted-foreground">
+        <div className="border rounded-lg p-6 text-center text-[#737373]">
           {dateFilter ||
           selectedProfessional !== "all" ||
           selectedClient !== "all" ||
@@ -358,7 +358,7 @@ export function AppointmentTable({
                         <div className="flex items-center gap-3">
                           <Calendar className="h-4 w-4" />
                           <span className="font-medium">{monthData.name}</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-[#737373]">
                             ({monthData.appointments.length} atendimentos)
                           </span>
                         </div>

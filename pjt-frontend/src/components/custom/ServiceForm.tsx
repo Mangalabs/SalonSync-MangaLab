@@ -81,7 +81,7 @@ export function ServiceForm({
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-[#FF5D73] text-white"
+        className="w-full bg-primary text-white"
       >
         {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
       </Button>

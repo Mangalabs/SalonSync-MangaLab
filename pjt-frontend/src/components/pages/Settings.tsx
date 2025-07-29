@@ -68,7 +68,7 @@ export default function Settings() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">
+        <p className="text-[#737373]">
           {isAdmin ? "Gerencie seu perfil, filiais e funcionários" : "Gerencie seus dados pessoais"}
         </p>
       </div>
@@ -153,7 +153,7 @@ export default function Settings() {
                     <Camera className="h-4 w-4" />
                     Alterar Foto
                   </Button>
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-sm text-[#737373] text-center">
                     Funcionalidade em desenvolvimento<br/>
                     Em breve você poderá alterar sua foto
                   </p>

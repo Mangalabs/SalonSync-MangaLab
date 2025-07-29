@@ -39,12 +39,12 @@ export default function Financial() {
         <TabsContent value="income" className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-[#D4AF37]" />
               Receitas
             </h2>
             <Button 
               onClick={() => handleNewTransaction("INCOME")}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
             >
               + Nova Receita
             </Button>

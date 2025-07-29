@@ -22,7 +22,7 @@ export function DashboardLayout() {
   return (
     <div className="flex">
       <Sidebar />
-      <main className="flex-1 p-6 bg-gray-50 min-h-screen ml-64">
+      <main className="flex-1 p-4 md:p-6 bg-[#F5F5F0] min-h-screen ml-64">
         <Outlet />
       </main>
     </div>

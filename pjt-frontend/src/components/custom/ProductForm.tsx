@@ -105,7 +105,7 @@ export function ProductForm({
       <div>
         <Label htmlFor="unit">Unidade</Label>
         <Input id="unit" {...register("unit")} placeholder="un, ml, g, kg, l" />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-[#737373] mt-1">
           Como o produto é medido (unidade, mililitros, gramas, etc.)
         </p>
       </div>

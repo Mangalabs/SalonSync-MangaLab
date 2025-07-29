@@ -364,7 +364,7 @@ export function AppointmentForm({
                         </SelectItem>
                       ))
                     ) : (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      <div className="px-2 py-1.5 text-sm text-[#737373]">
                         {selectedProfessional && selectedDate ? "Nenhum horário disponível" : "Selecione profissional e data"}
                       </div>
                     )}

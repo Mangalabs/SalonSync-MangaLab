@@ -75,7 +75,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
 
   const getTypeColor = () => {
     switch (type) {
-      case "INCOME": return "text-green-600";
+      case "INCOME": return "text-[#D4AF37]";
       case "EXPENSE": return "text-red-600";
       case "INVESTMENT": return "text-blue-600";
     }

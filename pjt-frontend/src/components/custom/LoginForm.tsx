@@ -53,9 +53,10 @@ export function LoginForm() {
     <div className="w-full max-w-md mx-auto space-y-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-[#FF5D73]">
-            Entrar no Sistema
+          <CardTitle className="text-2xl font-bold text-[#1A1A1A]">
+            SalonSync
           </CardTitle>
+          <p className="text-[#737373] mt-2">Entrar no Sistema</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -74,7 +75,7 @@ export function LoginForm() {
             {erro && <p className="text-sm text-red-600">{erro}</p>}
             <Button
               type="submit"
-              className="w-full bg-[#FF5D73] text-white"
+              className="w-full"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Entrando..." : "Entrar"}
@@ -91,17 +92,17 @@ export function LoginForm() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3 text-sm">
-            <Shield className="h-4 w-4 text-blue-500" />
+            <Shield className="h-4 w-4 text-[#D4AF37]" />
             <div>
               <div className="font-medium">Administrador</div>
-              <div className="text-gray-500">Acesso completo ao sistema</div>
+              <div className="text-[#737373]">Acesso completo ao sistema</div>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <User className="h-4 w-4 text-green-500" />
+            <User className="h-4 w-4 text-[#8B4513]" />
             <div>
               <div className="font-medium">Profissional</div>
-              <div className="text-gray-500">Dashboard, agendamentos e comissões</div>
+              <div className="text-[#737373]">Dashboard, agendamentos e comissões</div>
             </div>
           </div>
         </CardContent>

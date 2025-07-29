@@ -11,11 +11,13 @@ import { ServiceForm } from "./ServiceForm";
 import { useState } from "react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 
 export function ServiceTable() {
   const queryClient = useQueryClient();
   const [editingService, setEditingService] = useState<any>(null);
   const { activeBranch } = useBranch();
+  const { isAdmin } = useUser();
 
   const { data, isLoading } = useQuery({
     queryKey: ["services", activeBranch?.id],
@@ -43,44 +45,48 @@ export function ServiceTable() {
 
   return (
     <div>
-      <div className="border rounded-md p-4 bg-white">
-        <table className="w-full text-sm">
+      <div className="border rounded-md p-2 md:p-4 bg-white overflow-x-auto">
+        <table className="w-full text-xs md:text-sm min-w-full">
           <thead>
             <tr className="text-left border-b">
-              <th className="py-2">Nome</th>
-              <th className="py-2">Preço</th>
-              <th className="py-2">Escopo</th>
-              <th className="py-2">Ações</th>
+              <th className="py-2 text-left">Nome</th>
+              <th className="py-2 text-right">Preço</th>
+              {isAdmin && <th className="py-2 text-center mobile-hidden">Escopo</th>}
+              <th className="py-2 text-center">Ações</th>
             </tr>
           </thead>
           <tbody>
             {data.map((service: any) => (
               <tr key={service.id} className="border-t">
-                <td className="py-2">{service.name}</td>
-                <td className="py-2">R$ {Number(service.price).toFixed(2)}</td>
+                <td className="py-2 font-medium">{service.name}</td>
+                <td className="py-2 text-right font-semibold">R$ {Number(service.price).toFixed(2)}</td>
+                {isAdmin && (
+                  <td className="py-2 text-center mobile-hidden">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {service.branchId ? 'Filial' : 'Global'}
+                    </span>
+                  </td>
+                )}
                 <td className="py-2">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {service.branchId ? 'Filial' : 'Global'}
-                  </span>
-                </td>
-                <td className="py-2">
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2 justify-center">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setEditingService(service)}
+                      className="p-2"
                     >
-                      <Edit size={14} />
+                      <Edit size={12} className="md:w-4 md:h-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteService.mutate(service.id)}
                       disabled={deleteService.isPending}
+                      className="p-2"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={12} className="md:w-4 md:h-4" />
                     </Button>
                   </div>
                 </td>

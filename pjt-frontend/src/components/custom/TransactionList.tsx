@@ -60,7 +60,7 @@ export function TransactionList({ type }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
+        <CardContent className="p-6 text-center text-[#737373]">
           Nenhuma transação encontrada
         </CardContent>
       </Card>
@@ -81,7 +81,7 @@ export function TransactionList({ type }: TransactionListProps) {
                   </Badge>
                 </div>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm text-[#737373]">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {new Date(transaction.date).toLocaleDateString("pt-BR")}
@@ -100,7 +100,7 @@ export function TransactionList({ type }: TransactionListProps) {
               
               <div className="flex items-center gap-3">
                 <div className={`text-lg font-semibold ${
-                  type === "INCOME" ? "text-green-600" : 
+                  type === "INCOME" ? "text-[#D4AF37]" : 
                   type === "EXPENSE" ? "text-red-600" : "text-blue-600"
                 }`}>
                   R$ {Number(transaction.amount).toFixed(2)}

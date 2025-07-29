@@ -18,10 +18,10 @@ export default function Inventory() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Estoque</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">Estoque</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#10b981] text-white">+ Novo produto</Button>
+            <Button>+ Novo produto</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
