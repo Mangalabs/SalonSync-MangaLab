@@ -87,16 +87,17 @@ export function RegisterForm() {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-[#FF5D73]">Registrar Empresa</h2>
-        <p className="text-gray-600 mt-2">Crie sua conta de administrador</p>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-4">
-          <p className="text-sm text-yellow-800">
+        <h2 className="text-2xl font-bold text-[#1A1A1A]">SalonSync</h2>
+        <h3 className="text-lg font-medium text-[#D4AF37]">Registrar Empresa</h3>
+        <p className="text-[#737373] mt-2">Crie sua conta de administrador</p>
+        <div className="bg-[#F0F0EB] border border-border rounded-md p-3 mt-4">
+          <p className="text-sm text-[#737373]">
             ⚠️ <strong>Atenção:</strong> Este registro é apenas para proprietários de empresas.
             Funcionários devem ser criados pelo administrador após o login.
           </p>
         </div>
         <div className="mt-4 text-center">
-          <a href="/login" className="text-sm text-[#FF5D73] hover:underline">
+          <a href="/login" className="text-sm text-[#D4AF37] hover:underline">
             Já tem conta? Faça login aqui
           </a>
         </div>
@@ -104,7 +105,7 @@ export function RegisterForm() {
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Dados Pessoais</h3>
+          <h3 className="font-semibold text-[#2C2C2C]">Dados Pessoais</h3>
           
           <div>
             <Input placeholder="Seu nome completo" {...register("name")} />
@@ -122,7 +123,7 @@ export function RegisterForm() {
         </div>
         
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Seu Negócio</h3>
+          <h3 className="font-semibold text-[#2C2C2C]">Seu Negócio</h3>
           
           <div>
             <Input placeholder="Nome do seu negócio" {...register("businessName")} />
@@ -133,7 +134,7 @@ export function RegisterForm() {
           
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Filiais</label>
+              <label className="text-sm font-medium text-[#2C2C2C]">Filiais</label>
               <Button
                 type="button"
                 variant="outline"
@@ -176,7 +177,7 @@ export function RegisterForm() {
         </div>
         
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Segurança</h3>
+          <h3 className="font-semibold text-[#2C2C2C]">Segurança</h3>
           
           <div>
             <Input placeholder="Senha" type="password" {...register("password")} />
@@ -203,7 +204,7 @@ export function RegisterForm() {
         
         <Button
           type="submit"
-          className="w-full bg-[#FF5D73] text-white"
+          className="w-full"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Criando conta..." : "Criar Conta"}

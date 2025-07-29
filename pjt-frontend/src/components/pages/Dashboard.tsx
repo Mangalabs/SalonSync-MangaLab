@@ -3,8 +3,8 @@ import { ProfessionalCommissionSummary } from "@/components/custom/ProfessionalC
 
 export default function Dashboard() {
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-[#FF5D73]">
+    <div className="p-4 md:p-6 space-y-6">
+      <h1 className="text-2xl font-bold text-[#1A1A1A]">
         Dashboard
       </h1>
       <SchedulingCalendar />

@@ -21,7 +21,15 @@ export class ServicesService extends BaseDataService {
     if (user.role === 'ADMIN') {
       return this.prisma.service.findMany({
         where: {
-          ownerId: user.id,
+          AND: [
+            { ownerId: user.id },
+            {
+              OR: [
+                { branchId: null }, // Serviços globais
+                { branchId: { in: branchIds } }, // Serviços das filiais
+              ],
+            },
+          ],
         },
         include: { professionals: true },
       });
@@ -37,7 +45,15 @@ export class ServicesService extends BaseDataService {
 
       return this.prisma.service.findMany({
         where: {
-          ownerId: branch.ownerId,
+          AND: [
+            { ownerId: branch.ownerId },
+            {
+              OR: [
+                { branchId: null }, // Serviços globais do dono
+                { branchId: { in: branchIds } }, // Apenas serviços da filial do funcionário
+              ],
+            },
+          ],
         },
         include: { professionals: true },
       });

@@ -17,10 +17,10 @@ export default function Services() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Serviços</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">Serviços</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#FF5D73] text-white">+ Novo serviço</Button>
+            <Button>+ Novo serviço</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

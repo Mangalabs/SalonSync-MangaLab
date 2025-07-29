@@ -154,7 +154,7 @@ export default function Reports() {
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-input bg-[#F5F5F0] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             )}
@@ -241,13 +241,13 @@ export default function Reports() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-[#D4AF37]">
                   R$ {financialData.totalIncome?.toFixed(2) || "0,00"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   Atendimentos: R$ {financialData.appointmentRevenue?.toFixed(2) || "0,00"}
                 </p>
               </CardContent>
@@ -262,7 +262,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold text-red-600">
                   R$ {financialData.totalExpenses?.toFixed(2) || "0,00"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   Gastos operacionais
                 </p>
               </CardContent>
@@ -277,7 +277,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold text-blue-600">
                   R$ {financialData.totalInvestments?.toFixed(2) || "0,00"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   Melhorias e equipamentos
                 </p>
               </CardContent>
@@ -287,16 +287,16 @@ export default function Reports() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
                 <DollarSign className={`h-4 w-4 ${
-                  (financialData.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+                  (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                 }`} />
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold ${
-                  (financialData.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+                  (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                 }`}>
                   R$ {financialData.netProfit?.toFixed(2) || "0,00"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   Receitas - Despesas - Investimentos
                 </p>
               </CardContent>
@@ -313,13 +313,13 @@ export default function Reports() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
-                <User className="h-4 w-4 text-muted-foreground" />
+                <User className="h-4 w-4 text-[#737373]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-[#1A1A1A]">
                   {commissionData.summary.totalAppointments}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   No período selecionado
                 </p>
               </CardContent>
@@ -328,13 +328,13 @@ export default function Reports() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Receita Gerada</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="h-4 w-4 text-[#737373]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-[#1A1A1A]">
                   R$ {commissionData.summary.totalRevenue.toFixed(2)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   Receita bruta do profissional
                 </p>
               </CardContent>
@@ -343,13 +343,13 @@ export default function Reports() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Comissão</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <TrendingUp className="h-4 w-4 text-[#737373]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-[#1A1A1A]">
                   R$ {commissionData.summary.totalCommission.toFixed(2)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#737373]">
                   {commissionData.professional.commissionRate}% de comissão
                 </p>
               </CardContent>
@@ -375,7 +375,7 @@ export default function Reports() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Margem de Lucro</span>
                     <span className={`font-medium ${
-                      (financialData.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+                      (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                     }`}>
                       {financialData.totalIncome ? 
                         ((financialData.netProfit / financialData.totalIncome) * 100).toFixed(1) 
@@ -457,7 +457,7 @@ export default function Reports() {
                     <div className="font-medium">
                       {new Date(day.date).toLocaleDateString("pt-BR")}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-[#737373]">
                       {day.appointments} atendimento(s)
                     </div>
                   </div>
@@ -465,7 +465,7 @@ export default function Reports() {
                     <div className="font-semibold">
                       R$ {day.commission.toFixed(2)}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-[#737373]">
                       de R$ {day.revenue.toFixed(2)}
                     </div>
                   </div>

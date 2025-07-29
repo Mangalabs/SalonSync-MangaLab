@@ -74,13 +74,13 @@ export function FinancialSummary() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#D4AF37]">
               R$ {summary?.totalIncome?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#737373]">
               Atendimentos: R$ {summary?.appointmentRevenue?.toFixed(2) || "0,00"}
             </p>
           </CardContent>
@@ -95,7 +95,7 @@ export function FinancialSummary() {
             <div className="text-2xl font-bold text-red-600">
               R$ {summary?.totalExpenses?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#737373]">
               Gastos operacionais
             </p>
           </CardContent>
@@ -110,7 +110,7 @@ export function FinancialSummary() {
             <div className="text-2xl font-bold text-blue-600">
               R$ {summary?.totalInvestments?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#737373]">
               Melhorias e equipamentos
             </p>
           </CardContent>
@@ -120,16 +120,16 @@ export function FinancialSummary() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
             <DollarSign className={`h-4 w-4 ${
-              (summary?.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+              (summary?.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
             }`} />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              (summary?.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+              (summary?.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
             }`}>
               R$ {summary?.netProfit?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#737373]">
               Receitas - Despesas - Investimentos
             </p>
           </CardContent>
@@ -146,7 +146,7 @@ export function FinancialSummary() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Receitas</span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-[#D4AF37]">
                   {summary?.totalIncome ? 
                     ((summary.totalIncome / (summary.totalIncome + summary.totalExpenses + summary.totalInvestments)) * 100).toFixed(1) 
                     : "0"}%
@@ -183,7 +183,7 @@ export function FinancialSummary() {
               <div className="flex items-center justify-between">
                 <span className="text-sm">Margem de Lucro</span>
                 <span className={`font-medium ${
-                  (summary?.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+                  (summary?.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                 }`}>
                   {summary?.totalIncome ? 
                     ((summary.netProfit / summary.totalIncome) * 100).toFixed(1) 

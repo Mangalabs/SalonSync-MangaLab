@@ -16,10 +16,10 @@ export default function Clients() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Clientes</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">Clientes</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#10b981] text-white">+ Novo cliente</Button>
+            <Button>+ Novo cliente</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

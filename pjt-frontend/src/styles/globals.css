@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#F5F5F0] text-[#2C2C2C];
+  }
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .mobile-padding {
+    @apply px-4 py-2;
+  }
+
+  .mobile-text {
+    @apply text-sm;
+  }
+
+  .mobile-grid {
+    @apply grid-cols-1;
+  }
+
+  .mobile-hidden {
+    @apply hidden;
+  }
+}

@@ -29,11 +29,11 @@ export default function Scheduling() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Agendamentos</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">Agendamentos</h1>
         <div className="flex gap-2">
           <Dialog open={scheduledOpen} onOpenChange={setScheduledOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#3b82f6] text-white">+ Agendar</Button>
+              <Button className="">+ Agendar</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -47,7 +47,7 @@ export default function Scheduling() {
           </Dialog>
           <Dialog open={immediateOpen} onOpenChange={setImmediateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#10b981] text-white">+ Atendimento</Button>
+              <Button className="">+ Atendimento</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

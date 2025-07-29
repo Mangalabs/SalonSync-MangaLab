@@ -170,7 +170,7 @@ export default function Reports() {
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-input bg-[#F5F5F0] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             )}
@@ -220,36 +220,36 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-[#D4AF37]">
                     R$ {reportData.financial.totalIncome?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Receitas</div>
+                  <div className="text-sm text-[#737373]">Receitas</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-red-600">
                     R$ {reportData.financial.totalExpenses?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Despesas</div>
+                  <div className="text-sm text-[#737373]">Despesas</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-blue-600">
                     R$ {reportData.financial.totalInvestments?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Investimentos</div>
+                  <div className="text-sm text-[#737373]">Investimentos</div>
                 </div>
                 <div>
                   <div className={`text-2xl font-bold ${
-                    (reportData.financial.netProfit || 0) >= 0 ? "text-green-600" : "text-red-600"
+                    (reportData.financial.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                   }`}>
                     R$ {reportData.financial.netProfit?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Lucro Líquido</div>
+                  <div className="text-sm text-[#737373]">Lucro Líquido</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-purple-600">
                     R$ {reportData.financial.appointmentRevenue?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Atendimentos</div>
+                  <div className="text-sm text-[#737373]">Atendimentos</div>
                 </div>
               </div>
             </CardContent>
@@ -281,7 +281,7 @@ export default function Reports() {
                         <tr key={item.professional.id} className="border-b">
                           <td className="p-2 font-medium">{item.professional.name}</td>
                           {selectedBranch === 'all' && (
-                            <td className="p-2 text-sm text-muted-foreground">
+                            <td className="p-2 text-sm text-[#737373]">
                               {professionalBranch?.name || 'N/A'}
                             </td>
                           )}

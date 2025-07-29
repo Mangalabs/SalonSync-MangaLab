@@ -1,135 +1,166 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar } from "lucide-react";
+import { DollarSign, Calendar, TrendingUp, BarChart3 } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
+import axios from "@/lib/axios";
 
-interface CommissionSummary {
-  professional: {
-    id: string;
-    name: string;
-    commissionRate: number;
-  };
-  period: {
-    startDate: string;
-    endDate: string;
-  };
-  summary: {
-    totalAppointments: number;
-    totalRevenue: number;
-    totalCommission: number;
-  };
-}
+export function ProfessionalCommissionCard() {
+  const { user } = useUser();
 
-export function ProfessionalCommissionCard({ professionalId }: { professionalId: string }) {
-  // Obter comissões do dia atual
-  const today = new Date().toISOString().split('T')[0];
-  const { data: todayCommission, isLoading: loadingToday } = useQuery<CommissionSummary>({
-    queryKey: ["commission-today", professionalId, today],
+  // Buscar dados do profissional baseado no usuário logado
+  const { data: professional } = useQuery({
+    queryKey: ["current-professional"],
     queryFn: async () => {
-      const res = await axios.get(`/api/professionals/${professionalId}/commission?startDate=${today}&endDate=${today}`);
-      return res.data;
+      const res = await axios.get("/api/professionals");
+      return res.data.find((prof: any) => prof.name === user?.name) || res.data[0];
     },
-    enabled: !!professionalId,
+    enabled: !!user && user.role === 'PROFESSIONAL'
   });
 
-  // Obter comissões do mês atual
-  const { data: monthCommission, isLoading: loadingMonth } = useQuery<CommissionSummary>({
-    queryKey: ["commission-month", professionalId],
+  // Comissão mensal
+  const { data: monthlyCommission } = useQuery({
+    queryKey: ["monthly-commission", professional?.id],
     queryFn: async () => {
-      const res = await axios.get(`/api/professionals/${professionalId}/commission`);
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      const res = await axios.get(`/api/professionals/${professional.id}/commission?startDate=${startDate}&endDate=${endDate}`);
       return res.data;
     },
-    enabled: !!professionalId,
+    enabled: !!professional
   });
 
-  if (loadingToday || loadingMonth) {
+  // Comissão diária (hoje)
+  const { data: dailyCommission } = useQuery({
+    queryKey: ["daily-commission", professional?.id],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const res = await axios.get(`/api/professionals/${professional.id}/commission?startDate=${today}&endDate=${today}`);
+      return res.data;
+    },
+    enabled: !!professional
+  });
+
+  if (!professional) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Comissões</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">Carregando comissões...</div>
+        <CardContent className="p-6">
+          <p className="text-[#737373]">Carregando dados...</p>
         </CardContent>
       </Card>
     );
   }
-
-  if (!monthCommission) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Comissões</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">Sem dados de comissão disponíveis</div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // Se não tiver dados do dia, criar um objeto vazio com valores zerados
-  const todayData = todayCommission || {
-    professional: monthCommission.professional,
-    period: { startDate: today, endDate: today },
-    summary: { totalAppointments: 0, totalRevenue: 0, totalCommission: 0 },
-    dailyCommissions: []
-  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Comissões ({monthCommission.professional.commissionRate}%)
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="border rounded-md p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              <h3 className="font-medium">Hoje</h3>
+    <div className="space-y-4 md:space-y-6">
+      {/* Cards de Comissão */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Comissão Mensal</CardTitle>
+            <DollarSign className="h-4 w-4 text-[#D4AF37]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
+              R$ {monthlyCommission?.summary?.totalCommission?.toFixed(2) || "0,00"}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div>
-                <div className="text-gray-500">Atendimentos</div>
-                <div className="font-medium">{todayData.summary.totalAppointments}</div>
+            <p className="text-xs text-[#737373]">
+              {monthlyCommission?.summary?.totalAppointments || 0} atendimentos este mês
+            </p>
+            <div className="mt-2 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-[#737373]">Receita gerada:</span>
+                <span>R$ {monthlyCommission?.summary?.totalRevenue?.toFixed(2) || "0,00"}</span>
               </div>
-              <div>
-                <div className="text-gray-500">Receita</div>
-                <div className="font-medium">R$ {todayData.summary.totalRevenue.toFixed(2)}</div>
-              </div>
-              <div>
-                <div className="text-gray-500">Comissão</div>
-                <div className="font-medium text-green-600">R$ {todayData.summary.totalCommission.toFixed(2)}</div>
+              <div className="flex justify-between">
+                <span className="text-[#737373]">Taxa:</span>
+                <span>{monthlyCommission?.professional?.commissionRate || 0}%</span>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="border rounded-md p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-purple-500" />
-              <h3 className="font-medium">Este Mês</h3>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Comissão Hoje</CardTitle>
+            <Calendar className="h-4 w-4 text-[#D4AF37]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
+              R$ {dailyCommission?.summary?.totalCommission?.toFixed(2) || "0,00"}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div>
-                <div className="text-gray-500">Atendimentos</div>
-                <div className="font-medium">{monthCommission.summary.totalAppointments}</div>
+            <p className="text-xs text-[#737373]">
+              {dailyCommission?.summary?.totalAppointments || 0} atendimentos hoje
+            </p>
+            <div className="mt-2 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-[#737373]">Receita gerada:</span>
+                <span>R$ {dailyCommission?.summary?.totalRevenue?.toFixed(2) || "0,00"}</span>
               </div>
-              <div>
-                <div className="text-gray-500">Receita</div>
-                <div className="font-medium">R$ {monthCommission.summary.totalRevenue.toFixed(2)}</div>
-              </div>
-              <div>
-                <div className="text-gray-500">Comissão</div>
-                <div className="font-medium text-green-600">R$ {monthCommission.summary.totalCommission.toFixed(2)}</div>
+              <div className="flex justify-between">
+                <span className="text-[#737373]">Média/atendimento:</span>
+                <span>
+                  R$ {dailyCommission?.summary?.totalAppointments > 0 
+                    ? (dailyCommission.summary.totalRevenue / dailyCommission.summary.totalAppointments).toFixed(2)
+                    : "0,00"
+                  }
+                </span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfico de Performance Semanal */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Performance dos Últimos 7 Dias
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {monthlyCommission?.dailyCommissions?.slice(-7).map((day: any) => {
+              const date = new Date(day.date);
+              const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+              const dayNumber = date.getDate();
+              const maxCommission = Math.max(...(monthlyCommission?.dailyCommissions || []).map((d: any) => d.commission));
+              const percentage = maxCommission > 0 ? (day.commission / maxCommission) * 100 : 0;
+              
+              return (
+                <div key={day.date} className="flex items-center gap-2 md:gap-3">
+                  <div className="w-10 md:w-12 text-xs md:text-sm text-[#737373]">
+                    {dayName} {dayNumber}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <div className="w-14 md:w-16 text-xs md:text-sm font-medium text-right">
+                        R$ {day.commission.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-[#737373] mt-1">
+                      {day.appointments} atendimento(s)
+                    </div>
+                  </div>
+                </div>
+              );
+            }) || (
+              <p className="text-[#737373] text-center py-4">
+                Nenhum dado disponível
+              </p>
+            )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

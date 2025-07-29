@@ -11,12 +11,12 @@ export function Header() {
   };
 
   return (
-    <header className="w-full bg-[#FF5D73] text-white px-4 py-3 flex justify-between items-center">
-      <h1 className="font-bold text-lg">Minha Aplicação</h1>
+    <header className="w-full bg-[#1A1A1A] text-white px-4 py-3 flex justify-between items-center shadow-md">
+      <h1 className="font-bold text-lg md:text-xl text-[#D4AF37]">SalonSync</h1>
       {isAuthenticated() && (
         <Button
           variant="outline"
-          className="text-[#FF5D73] bg-white hover:bg-pink-100"
+          className="text-[#1A1A1A] bg-[#D4AF37] hover:bg-[#B8941F] border-[#D4AF37] text-sm md:text-base"
           onClick={handleLogout}
         >
           Sair

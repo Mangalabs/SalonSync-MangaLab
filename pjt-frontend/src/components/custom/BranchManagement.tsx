@@ -115,7 +115,7 @@ export function BranchManagement() {
           </span>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleNew} className="bg-[#FF5D73] text-white">
+              <Button onClick={handleNew} className="">
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Filial
               </Button>

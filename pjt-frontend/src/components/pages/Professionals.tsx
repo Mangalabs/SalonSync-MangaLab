@@ -17,7 +17,7 @@ export default function Professionals() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Profissionais</h1>
+          <h1 className="text-2xl font-bold text-[#1A1A1A]">Profissionais</h1>
           <p className="text-gray-600 text-sm mt-1">
             Para adicionar novos profissionais, acesse <strong>Configurações → Funcionários</strong>
           </p>

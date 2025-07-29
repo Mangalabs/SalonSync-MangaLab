@@ -23,11 +23,11 @@ export default function Treatments() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Atendimentos</h1>
-          <p className="text-muted-foreground">Histórico de atendimentos realizados</p>
+          <p className="text-[#737373]">Histórico de atendimentos realizados</p>
         </div>
         <Button 
           onClick={() => setShowForm(true)}
-          className="bg-[#10b981] text-white hover:bg-[#059669]"
+          className="bg-accent text-[#8B4513]-foreground hover:bg-accent/90"
         >
           + Novo Atendimento
         </Button>
@@ -71,7 +71,7 @@ export default function Treatments() {
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-green-600">-</div>
+          <div className="text-2xl font-bold text-[#D4AF37]">-</div>
           <div className="text-sm text-gray-600">Total de Atendimentos</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">

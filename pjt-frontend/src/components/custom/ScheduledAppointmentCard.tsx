@@ -119,7 +119,7 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
                 size="sm"
                 onClick={() => confirmMutation.mutate()}
                 disabled={confirmMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Confirmar

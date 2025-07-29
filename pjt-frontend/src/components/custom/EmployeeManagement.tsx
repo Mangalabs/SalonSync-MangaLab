@@ -78,7 +78,7 @@ export function EmployeeManagement() {
           <span>Gerenciar Funcionários</span>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#FF5D73] text-white">
+              <Button className="">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Novo Funcionário
               </Button>
