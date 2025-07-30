@@ -4,17 +4,25 @@ import { DollarSign, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import axios from "@/lib/axios";
 
-export function ProfessionalCommissionCard() {
+interface ProfessionalCommissionCardProps {
+  professionalId?: string;
+}
+
+export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommissionCardProps) {
   const { user } = useUser();
 
-  // Buscar dados do profissional baseado no usuário logado
+  // Buscar dados do profissional baseado no usuário logado ou ID fornecido
   const { data: professional } = useQuery({
-    queryKey: ["current-professional"],
+    queryKey: ["professional", professionalId || user?.id],
     queryFn: async () => {
+      if (professionalId) {
+        const res = await axios.get(`/api/professionals/${professionalId}`);
+        return res.data;
+      }
       const res = await axios.get("/api/professionals");
       return res.data.find((prof: any) => prof.name === user?.name) || res.data[0];
     },
-    enabled: !!user && user.role === 'PROFESSIONAL'
+    enabled: !!(professionalId || (user && user.role === 'PROFESSIONAL'))
   });
 
   // Comissão mensal

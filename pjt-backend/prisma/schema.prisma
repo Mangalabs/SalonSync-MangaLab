@@ -32,6 +32,7 @@ model Branch {
   ownerId     String
   owner       User   @relation(fields: [ownerId], references: [id])
   
+  roles         Role[]
   professionals Professional[]
   services      Service[]
   clients       Client[]
@@ -44,12 +45,25 @@ model Branch {
   createdAt   DateTime @default(now())
 }
 
+model Role {
+  id             String         @id @default(uuid())
+  title          String
+  commissionRate Decimal        @default(0) @db.Decimal(5, 2)
+  branchId       String
+  branch         Branch         @relation(fields: [branchId], references: [id])
+  professionals  Professional[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
 model Professional {
   id               String        @id @default(uuid())
   name             String
   role             String
   active           Boolean       @default(true)
   commissionRate   Decimal       @default(0) @db.Decimal(5, 2)
+  roleId           String?
+  customRole       Role?         @relation(fields: [roleId], references: [id])
   branchId         String
   branch           Branch        @relation(fields: [branchId], references: [id])
   services         Service[]     @relation("ProfessionalServices")

@@ -4,38 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Calendar } from "lucide-react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
 
-type PeriodType = 'month' | 'year';
-
 export default function Reports() {
-  const [periodType, setPeriodType] = useState<PeriodType>('month');
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [startDate, setStartDate] = useState<string>(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const { branches } = useBranch();
 
-  const getDateRange = () => {
-    if (periodType === 'month') {
-      const [year, month] = selectedMonth.split('-');
-      const startDate = `${year}-${month}-01`;
-      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      const endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
-      return { startDate, endDate };
-    } else {
-      return {
-        startDate: `${selectedYear}-01-01`,
-        endDate: `${selectedYear}-12-31`
-      };
-    }
+  const formatPeriodLabel = () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
   };
 
   const { data: reportData, isLoading, refetch } = useQuery({
-    queryKey: ["consolidated-report", periodType, selectedMonth, selectedYear],
+    queryKey: ["consolidated-report", startDate, endDate, selectedBranch],
     queryFn: async () => {
-      const { startDate, endDate } = getDateRange();
       
       // Buscar dados financeiros
       const financialRes = await axios.get(`/api/financial/summary?startDate=${startDate}&endDate=${endDate}`);
@@ -66,12 +53,9 @@ export default function Reports() {
         professionals: commissionsData.filter(item => item.commission),
         branchName: branch?.name || 'Filial Selecionada',
         period: {
-          type: periodType,
           startDate,
           endDate,
-          label: periodType === 'month' 
-            ? new Date(selectedMonth + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-            : selectedYear
+          label: formatPeriodLabel()
         }
       };
     },
@@ -110,7 +94,7 @@ export default function Reports() {
     const a = document.createElement('a');
     a.href = url;
     const branchSlug = reportData.branchName.toLowerCase().replace(/\s+/g, '-');
-    a.download = `relatorio-${branchSlug}-${reportData.period.type}-${reportData.period.startDate}.json`;
+    a.download = `relatorio-${branchSlug}-${reportData.period.startDate}-${reportData.period.endDate}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -131,7 +115,7 @@ export default function Reports() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="branch">Filial</Label>
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
@@ -150,51 +134,26 @@ export default function Reports() {
             </div>
 
             <div>
-              <Label htmlFor="period">Período</Label>
-              <Select value={periodType} onValueChange={(value: PeriodType) => setPeriodType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="month">Mensal</SelectItem>
-                  <SelectItem value="year">Anual</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="startDate">Data Inicial</Label>
+              <input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
 
-            {periodType === 'month' && (
-              <div>
-                <Label htmlFor="month">Mês/Ano</Label>
-                <input
-                  id="month"
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-[#F5F5F0] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-            )}
-
-            {periodType === 'year' && (
-              <div>
-                <Label htmlFor="year">Ano</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - i;
-                      return (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <Label htmlFor="endDate">Data Final</Label>
+              <input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
 
             <div className="flex items-end gap-2">
               <Button onClick={handleGenerateReport} disabled={isLoading} className="flex-1">

@@ -47,6 +47,8 @@ export class AuthController {
       password: string;
       name: string;
       role: string;
+      roleId?: string;
+      commissionRate?: number;
       branchId: string;
     },
   ) {

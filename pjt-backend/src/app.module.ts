@@ -13,6 +13,7 @@ import { BranchesModule } from './branches/branches.module';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { FinancialModule } from './financial/financial.module';
+import { RolesModule } from './roles/roles.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
 
@@ -22,6 +23,7 @@ import { BaseDataService } from './common/services/base-data.service';
     PrismaModule,
     AuthModule,
     BranchesModule,
+    RolesModule,
     ProfessionalsModule,
     DashboardModule,
     ServicesModule,
