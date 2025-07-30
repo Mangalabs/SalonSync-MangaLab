@@ -27,6 +27,9 @@ export default function Reports() {
       // Buscar dados financeiros
       const financialRes = await axios.get(`/api/financial/summary?startDate=${startDate}&endDate=${endDate}`);
       
+      // Buscar movimentações de estoque
+      const stockRes = await axios.get(`/api/inventory/movements?startDate=${startDate}&endDate=${endDate}`);
+      
       // Buscar profissionais
       const professionalsRes = await axios.get('/api/professionals');
       
@@ -44,12 +47,28 @@ export default function Reports() {
       
       const commissionsData = await Promise.all(commissionsPromises);
       
+      // Processar movimentações de estoque
+      const stockMovements = stockRes.data || [];
+      const stockSummary = {
+        totalPurchases: stockMovements
+          .filter((m: any) => m.type === 'IN')
+          .reduce((sum: number, m: any) => sum + (m.quantity * Number(m.unitCost)), 0),
+        totalSales: stockMovements
+          .filter((m: any) => m.type === 'OUT')
+          .reduce((sum: number, m: any) => sum + (m.quantity * Number(m.unitCost)), 0),
+        totalMovements: stockMovements.length
+      };
+      
       const branch = selectedBranch === 'all' 
         ? { name: 'Todas as Filiais' }
         : branches.find(b => b.id === selectedBranch);
       
       return {
         financial: financialRes.data,
+        stock: {
+          movements: stockMovements,
+          summary: stockSummary
+        },
         professionals: commissionsData.filter(item => item.commission),
         branchName: branch?.name || 'Filial Selecionada',
         period: {
@@ -79,6 +98,11 @@ export default function Reports() {
         investimentos: reportData.financial.totalInvestments,
         lucroLiquido: reportData.financial.netProfit,
         receitaAtendimentos: reportData.financial.appointmentRevenue
+      },
+      movimentacaoEstoque: {
+        totalCompras: reportData.stock.summary.totalPurchases,
+        totalVendas: reportData.stock.summary.totalSales,
+        totalMovimentacoes: reportData.stock.summary.totalMovements
       },
       profissionais: reportData.professionals.map((item: any) => ({
         nome: item.professional.name,
@@ -211,6 +235,86 @@ export default function Reports() {
                   <div className="text-sm text-[#737373]">Atendimentos</div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Movimentação de Estoque</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+                <div>
+                  <div className="text-2xl font-bold text-red-600">
+                    R$ {reportData.stock.summary.totalPurchases?.toFixed(2) || "0,00"}
+                  </div>
+                  <div className="text-sm text-[#737373]">Compras</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-[#D4AF37]">
+                    R$ {reportData.stock.summary.totalSales?.toFixed(2) || "0,00"}
+                  </div>
+                  <div className="text-sm text-[#737373]">Vendas</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {reportData.stock.summary.totalMovements || 0}
+                  </div>
+                  <div className="text-sm text-[#737373]">Movimentações</div>
+                </div>
+              </div>
+              
+              {reportData.stock.movements.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Data</th>
+                        <th className="text-left p-2">Produto</th>
+                        <th className="text-center p-2">Tipo</th>
+                        <th className="text-right p-2">Qtd</th>
+                        <th className="text-right p-2">Valor Unit.</th>
+                        <th className="text-right p-2">Total</th>
+                        <th className="text-left p-2">Motivo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.stock.movements.slice(0, 10).map((movement: any) => (
+                        <tr key={movement.id} className="border-b">
+                          <td className="p-2 text-sm">
+                            {new Date(movement.createdAt).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="p-2 font-medium">{movement.product.name}</td>
+                          <td className="p-2 text-center">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              movement.type === 'IN' 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {movement.type === 'IN' ? 'Entrada' : 'Saída'}
+                            </span>
+                          </td>
+                          <td className="p-2 text-right">{movement.quantity}</td>
+                          <td className="p-2 text-right">R$ {Number(movement.unitCost).toFixed(2)}</td>
+                          <td className="p-2 text-right font-medium">
+                            R$ {(movement.quantity * Number(movement.unitCost)).toFixed(2)}
+                          </td>
+                          <td className="p-2 text-sm text-[#737373]">
+                            {movement.reason.length > 30 
+                              ? `${movement.reason.substring(0, 30)}...` 
+                              : movement.reason}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {reportData.stock.movements.length > 10 && (
+                    <p className="text-sm text-[#737373] mt-2 text-center">
+                      Mostrando 10 de {reportData.stock.movements.length} movimentações
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
