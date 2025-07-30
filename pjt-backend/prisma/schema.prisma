@@ -19,6 +19,7 @@ model User {
   isSuperAdmin Boolean @default(false)
   branches    Branch[]
   services    Service[]
+  stockMovements StockMovement[]
   createdAt   DateTime @default(now())
 }
 
@@ -152,6 +153,8 @@ model StockMovement {
   product     Product           @relation(fields: [productId], references: [id])
   branchId    String
   branch      Branch            @relation(fields: [branchId], references: [id])
+  userId      String?
+  user        User?             @relation(fields: [userId], references: [id])
   type        StockMovementType
   quantity    Int
   unitCost    Decimal?          @db.Decimal(10, 2)

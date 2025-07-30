@@ -30,8 +30,8 @@ interface Product {
   description?: string;
   category: string;
   brand?: string;
-  salePrice: string;
-  costPrice: string;
+  salePrice: number;
+  costPrice: number;
   currentStock: number;
   minStock: number;
   maxStock?: number;
@@ -83,33 +83,53 @@ export function ProductTable() {
     <div>
       <div className="border rounded-md overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-[#F5F5F0]">
             <tr>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Produto</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Categoria</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Marca</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Estoque</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Ações</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Produto</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Categoria</th>
+              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Preço Custo</th>
+              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Preço Venda</th>
+              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Estoque</th>
+              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {data?.map((product) => (
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
-                  <div className="font-medium">{product.name}</div>
-                  <div className="text-xs text-gray-500">{product.unit}</div>
+                  <div className="font-medium text-[#1A1A1A]">{product.name}</div>
+                  <div className="text-xs text-[#737373]">
+                    {product.brand && `${product.brand} • `}{product.unit}
+                  </div>
                 </td>
-                <td className="px-4 py-3 text-sm">{product.category || "-"}</td>
-                <td className="px-4 py-3 text-sm">{product.brand || "-"}</td>
+                <td className="px-4 py-3 text-sm text-[#737373]">{product.category || "-"}</td>
+                <td className="px-4 py-3 text-right text-sm">
+                  {product.costPrice > 0 ? (
+                    <span className="text-red-600 font-medium">
+                      R$ {Number(product.costPrice).toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-[#737373]">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right text-sm">
+                  {product.salePrice > 0 ? (
+                    <span className="text-[#D4AF37] font-medium">
+                      R$ {Number(product.salePrice).toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-[#737373]">-</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-right">
                   <span className={`font-medium ${
                     product.currentStock <= (product.minStock || 0) 
                       ? 'text-red-600' 
-                      : 'text-gray-900'
+                      : 'text-[#1A1A1A]'
                   }`}>
                     {product.currentStock}
                   </span>
-                  <span className="text-xs text-gray-500 ml-1">{product.unit}</span>
+                  <span className="text-xs text-[#737373] ml-1">{product.unit}</span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">

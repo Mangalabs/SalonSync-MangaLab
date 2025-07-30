@@ -80,9 +80,12 @@ export function FinancialSummary() {
             <div className="text-2xl font-bold text-[#D4AF37]">
               R$ {summary?.totalIncome?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-[#737373]">
-              Atendimentos: R$ {summary?.appointmentRevenue?.toFixed(2) || "0,00"}
-            </p>
+            <div className="text-xs text-[#737373] space-y-1">
+              <p>Atendimentos: R$ {summary?.appointmentRevenue?.toFixed(2) || "0,00"}</p>
+              {summary?.stockRevenue > 0 && (
+                <p>Vendas Estoque: R$ {summary?.stockRevenue?.toFixed(2) || "0,00"}</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -95,9 +98,15 @@ export function FinancialSummary() {
             <div className="text-2xl font-bold text-red-600">
               R$ {summary?.totalExpenses?.toFixed(2) || "0,00"}
             </div>
-            <p className="text-xs text-[#737373]">
-              Gastos operacionais
-            </p>
+            <div className="text-xs text-[#737373] space-y-1">
+              <p>Gastos operacionais</p>
+              {summary?.stockExpenses > 0 && (
+                <p>Compras Estoque: R$ {summary?.stockExpenses?.toFixed(2) || "0,00"}</p>
+              )}
+              {summary?.stockLosses > 0 && (
+                <p>Perdas Estoque: R$ {summary?.stockLosses?.toFixed(2) || "0,00"}</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -135,6 +144,48 @@ export function FinancialSummary() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Detalhamento de Estoque */}
+      {(summary?.stockRevenue > 0 || summary?.stockExpenses > 0 || summary?.stockLosses > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-[#8B4513]" />
+              Movimentações de Estoque
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {summary?.stockRevenue > 0 && (
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-lg font-semibold text-green-600">
+                    R$ {summary.stockRevenue.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-green-700">Vendas de Produtos</div>
+                </div>
+              )}
+              
+              {summary?.stockExpenses > 0 && (
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-lg font-semibold text-red-600">
+                    R$ {summary.stockExpenses.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-red-700">Compras de Produtos</div>
+                </div>
+              )}
+              
+              {summary?.stockLosses > 0 && (
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-lg font-semibold text-orange-600">
+                    R$ {summary.stockLosses.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-orange-700">Perdas de Produtos</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Indicadores */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

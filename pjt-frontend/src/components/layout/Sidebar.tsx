@@ -12,6 +12,7 @@ import {
   Shield,
   UserCheck,
   DollarSign,
+  ShoppingCart,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/select";
 
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
+import { ProductSaleForm } from "@/components/custom/ProductSaleForm";
 import { useState } from "react";
 import { useBranch } from "@/contexts/BranchContext";
 import { useUser } from "@/contexts/UserContext";
@@ -56,6 +58,7 @@ const getNavItems = (userRole: string) => {
 export function Sidebar() {
   const [showScheduledForm, setShowScheduledForm] = useState(false);
   const [showImmediateForm, setShowImmediateForm] = useState(false);
+  const [showSaleForm, setShowSaleForm] = useState(false);
   const { activeBranch, branches, setActiveBranch } = useBranch();
   const { user, logout, isAdmin } = useUser();
   
@@ -122,26 +125,37 @@ export function Sidebar() {
         ))}
       </div>
 
-      {!isAdmin && (
-        <div className="mt-6 space-y-2">
-          <Button
-            onClick={() => setShowScheduledForm(true)}
-            className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-sm py-2"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Novo Agendamento</span>
-            <span className="sm:hidden">Agendar</span>
-          </Button>
-          <Button
-            onClick={() => setShowImmediateForm(true)}
-            className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-sm py-2"
-          >
-            <CheckSquare className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Novo Atendimento</span>
-            <span className="sm:hidden">Atender</span>
-          </Button>
-        </div>
-      )}
+      <div className="mt-6 space-y-2">
+        {!isAdmin && (
+          <>
+            <Button
+              onClick={() => setShowScheduledForm(true)}
+              className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-sm py-2"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Novo Agendamento</span>
+              <span className="sm:hidden">Agendar</span>
+            </Button>
+            <Button
+              onClick={() => setShowImmediateForm(true)}
+              className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-sm py-2"
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Novo Atendimento</span>
+              <span className="sm:hidden">Atender</span>
+            </Button>
+          </>
+        )}
+        
+        <Button
+          onClick={() => setShowSaleForm(true)}
+          className="w-full bg-green-600 text-white hover:bg-green-700 text-sm py-2"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          <span className="hidden sm:inline">Vender Produto</span>
+          <span className="sm:hidden">Vender</span>
+        </Button>
+      </div>
 
       <Dialog open={showScheduledForm} onOpenChange={setShowScheduledForm}>
         <DialogContent>
@@ -164,6 +178,15 @@ export function Sidebar() {
             mode="immediate"
             onSuccess={() => setShowImmediateForm(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSaleForm} onOpenChange={setShowSaleForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Venda de Produto</DialogTitle>
+          </DialogHeader>
+          <ProductSaleForm onSuccess={() => setShowSaleForm(false)} />
         </DialogContent>
       </Dialog>
 

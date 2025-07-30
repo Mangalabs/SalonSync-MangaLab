@@ -139,18 +139,51 @@ export class FinancialService extends BaseDataService {
       0,
     );
 
+    // Movimentações de estoque com valores financeiros
+    const stockMovements = await this.prisma.stockMovement.findMany({
+      where: {
+        branchId: { in: branchIds },
+        totalCost: { not: null },
+        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+      },
+      include: {
+        product: { select: { name: true } },
+      },
+    });
+
+    // Separar movimentações por tipo
+    const stockPurchases = stockMovements
+      .filter((m) => m.type === 'IN')
+      .reduce((sum, m) => sum + Number(m.totalCost || 0), 0);
+
+    const stockSales = stockMovements
+      .filter((m) => m.type === 'OUT')
+      .reduce((sum, m) => sum + Number(m.totalCost || 0), 0);
+
+    const stockLosses = stockMovements
+      .filter((m) => m.type === 'LOSS')
+      .reduce((sum, m) => sum + Number(m.totalCost || 0), 0);
+
     const summary = {
       totalIncome:
         transactions
           .filter((t) => t.type === 'INCOME')
-          .reduce((sum, t) => sum + Number(t.amount), 0) + appointmentRevenue,
-      totalExpenses: transactions
-        .filter((t) => t.type === 'EXPENSE')
-        .reduce((sum, t) => sum + Number(t.amount), 0),
+          .reduce((sum, t) => sum + Number(t.amount), 0) + 
+        appointmentRevenue + 
+        stockSales,
+      totalExpenses: 
+        transactions
+          .filter((t) => t.type === 'EXPENSE')
+          .reduce((sum, t) => sum + Number(t.amount), 0) + 
+        stockPurchases + 
+        stockLosses,
       totalInvestments: transactions
         .filter((t) => t.type === 'INVESTMENT')
         .reduce((sum, t) => sum + Number(t.amount), 0),
       appointmentRevenue,
+      stockRevenue: stockSales,
+      stockExpenses: stockPurchases,
+      stockLosses,
       netProfit: 0,
     };
 
