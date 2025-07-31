@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "@/components/pages/Home";
 import Login from "@/components/pages/Login";
-import Register from "@/components/pages/Register";
 import Dashboard from "@/components/pages/Dashboard";
 import Professionals from "@/components/pages/Professionals";
 import Settings from "@/components/pages/Settings";

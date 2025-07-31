@@ -231,6 +231,6 @@ export class AuthService {
 
   private generateToken(userId: string): string {
     const secret = this.config.get<string>('JWT_SECRET') || 'secret';
-    return jwt.sign({ sub: userId }, secret, { expiresIn: '1h' });
+    return jwt.sign({ sub: userId }, secret, { expiresIn: '8h' });
   }
 }

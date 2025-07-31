@@ -6,21 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+
 
 const schema = z.object({
   name: z.string().min(2, "Informe o nome"),
-  roleId: z.string().optional(),
   role: z.string().min(2, "Informe a função"),
-  commissionRate: z.union([
-    z.string(),
-    z.number()
-  ]).transform(val => typeof val === 'string' ? parseFloat(val) : val)
-    .refine(val => !isNaN(val) && val >= 0 && val <= 100, {
-      message: "Comissão deve ser entre 0 e 100%"
-    })
-    .optional()
-    .default(0)
+  commissionRate: z.number().min(0).max(100, "Comissão deve ser entre 0 e 100%"),
+  roleId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -33,7 +25,6 @@ export function ProfessionalForm({
   initialData?: { id: string; name: string; role: string; commissionRate?: number; roleId?: string } | null;
 }) {
   const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
   const isEditing = !!initialData;
 
   const { data: roles = [] } = useQuery({

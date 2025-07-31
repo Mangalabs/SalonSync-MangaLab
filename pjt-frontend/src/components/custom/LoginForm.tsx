@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+
 import { Shield, User } from "lucide-react";
 
 const loginSchema = z.object({
@@ -16,7 +16,6 @@ const loginSchema = z.object({
 type LoginData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const navigate = useNavigate();
   const [erro, setErro] = useState("");
 
   const {

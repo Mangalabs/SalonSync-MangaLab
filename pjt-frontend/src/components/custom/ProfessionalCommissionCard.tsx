@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, TrendingUp, BarChart3 } from "lucide-react";
+import { DollarSign, Calendar, BarChart3 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import axios from "@/lib/axios";
 

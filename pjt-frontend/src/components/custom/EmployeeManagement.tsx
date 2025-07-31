@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -72,7 +72,7 @@ export function EmployeeManagement() {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       // Buscar dados da função selecionada
-      const selectedRole = roles.find(role => role.id === data.roleId);
+      const selectedRole = roles.find((role: any) => role.id === data.roleId);
       const employeeData = {
         ...data,
         role: selectedRole?.title || 'Profissional',
@@ -101,17 +101,18 @@ export function EmployeeManagement() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Gerenciar Funcionários</span>
-          <div className="flex gap-2">
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span className="text-base sm:text-lg">Gerenciar Funcionários</span>
+          <div className="flex flex-col sm:flex-row gap-2">
             <Dialog open={roleOpen} onOpenChange={setRoleOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Criar Função
+                <Button variant="outline" className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10 text-sm h-8">
+                  <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Criar Função</span>
+                  <span className="sm:hidden">Função</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Nova Função</DialogTitle>
                 </DialogHeader>
@@ -124,44 +125,45 @@ export function EmployeeManagement() {
             
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Novo Funcionário
+                <Button className="text-sm h-8">
+                  <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Novo Funcionário</span>
+                  <span className="sm:hidden">Funcionário</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Criar Novo Funcionário</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Criar Novo Funcionário</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                   <div>
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" {...register("name")} />
+                    <Label htmlFor="name" className="text-sm">Nome Completo</Label>
+                    <Input id="name" {...register("name")} className="h-8 text-sm" />
                     {errors.name && (
-                      <p className="text-sm text-red-500">{errors.name.message}</p>
+                      <p className="text-xs text-red-500">{errors.name.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" {...register("email")} />
+                    <Label htmlFor="email" className="text-sm">Email</Label>
+                    <Input id="email" type="email" {...register("email")} className="h-8 text-sm" />
                     {errors.email && (
-                      <p className="text-sm text-red-500">{errors.email.message}</p>
+                      <p className="text-xs text-red-500">{errors.email.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="password">Senha</Label>
-                    <Input id="password" type="password" {...register("password")} />
+                    <Label htmlFor="password" className="text-sm">Senha</Label>
+                    <Input id="password" type="password" {...register("password")} className="h-8 text-sm" />
                     {errors.password && (
-                      <p className="text-sm text-red-500">{errors.password.message}</p>
+                      <p className="text-xs text-red-500">{errors.password.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="branchId">Filial</Label>
+                    <Label htmlFor="branchId" className="text-sm">Filial</Label>
                     <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={activeBranch?.id}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Selecione a filial" />
                       </SelectTrigger>
                       <SelectContent>
@@ -173,20 +175,20 @@ export function EmployeeManagement() {
                       </SelectContent>
                     </Select>
                     {errors.branchId && (
-                      <p className="text-sm text-red-500">{errors.branchId.message}</p>
+                      <p className="text-xs text-red-500">{errors.branchId.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="roleId">Função</Label>
+                    <Label htmlFor="roleId" className="text-sm">Função</Label>
                     {roles.length > 0 ? (
                       <>
                         <Select onValueChange={(value) => setValue("roleId", value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Selecione a função" />
                           </SelectTrigger>
                           <SelectContent>
-                            {roles.map((role: any) => (
+                            {roles.map((role) => (
                               <SelectItem key={role.id} value={role.id}>
                                 {role.title} {role.commissionRate > 0 && `(${role.commissionRate}%)`}
                               </SelectItem>
@@ -194,12 +196,12 @@ export function EmployeeManagement() {
                           </SelectContent>
                         </Select>
                         {errors.roleId && (
-                          <p className="text-sm text-red-500">{errors.roleId.message}</p>
+                          <p className="text-xs text-red-500">{errors.roleId.message}</p>
                         )}
                       </>
                     ) : (
                       <>
-                        <Input value="Profissional" disabled className="bg-[#F0F0EB] text-[#737373]" />
+                        <Input value="Profissional" disabled className="bg-[#F0F0EB] text-[#737373] h-8 text-sm" />
                         <input type="hidden" {...register("role" as any)} value="PROFESSIONAL" />
                         <p className="text-xs text-[#8B4513] mt-1">
                           ⚠️ Crie funções primeiro ou aguarde implementação do backend
@@ -208,7 +210,7 @@ export function EmployeeManagement() {
                     )}
                   </div>
 
-                  <Button type="submit" disabled={isSubmitting} className="w-full">
+                  <Button type="submit" disabled={isSubmitting} className="w-full text-sm h-8">
                     {isSubmitting ? "Criando..." : "Criar Funcionário"}
                   </Button>
                 </form>
@@ -218,12 +220,12 @@ export function EmployeeManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <p className="text-sm text-[#737373]">
+            <p className="text-xs sm:text-sm text-[#737373]">
               Crie contas para seus funcionários. Cada conta criada aqui:
             </p>
-            <ul className="mt-2 text-sm text-[#737373] space-y-1">
+            <ul className="mt-2 text-xs sm:text-sm text-[#737373] space-y-1">
               <li>• <strong>Cria usuário:</strong> Login para acessar o sistema</li>
               <li>• <strong>Cria profissional:</strong> Aparece na lista de profissionais</li>
               <li>• <strong>Vincula à filial:</strong> Funcionário fica associado à filial selecionada</li>
@@ -233,10 +235,10 @@ export function EmployeeManagement() {
           
           {roles.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-[#1A1A1A] mb-2">Funções Disponíveis:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <h4 className="text-xs sm:text-sm font-medium text-[#1A1A1A] mb-2">Funções Disponíveis:</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {roles.map((role: any) => (
-                  <div key={role.id} className="border rounded p-2 text-sm">
+                  <div key={role.id} className="border rounded p-2 text-xs sm:text-sm">
                     <div className="font-medium">{role.title}</div>
                     <div className="text-[#737373]">
                       {role.commissionRate > 0 ? `${role.commissionRate}% comissão` : 'Sem comissão'}

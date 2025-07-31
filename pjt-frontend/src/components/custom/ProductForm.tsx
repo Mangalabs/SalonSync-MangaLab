@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
@@ -13,8 +13,8 @@ import { toast } from "sonner";
 const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   category: z.string().min(1, "Categoria é obrigatória"),
+  unit: z.string().min(1, "Unidade é obrigatória"),
   brand: z.string().optional(),
-  unit: z.string().default("un"),
   costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0").optional(),
   salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0").optional(),
 });

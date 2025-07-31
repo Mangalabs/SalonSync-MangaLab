@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller } from "react-hook-form";
@@ -73,13 +73,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
     },
   });
 
-  const getTypeColor = () => {
-    switch (type) {
-      case "INCOME": return "text-[#D4AF37]";
-      case "EXPENSE": return "text-red-600";
-      case "INVESTMENT": return "text-blue-600";
-    }
-  };
+
 
   const getTypeName = () => {
     switch (type) {

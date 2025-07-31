@@ -31,38 +31,40 @@ export function FinancialSummary() {
   if (isLoading) return <div className="p-4">Carregando resumo...</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 mt-4">
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Calendar className="h-4 w-4 md:h-5 md:w-5" />
             Período
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <Label htmlFor="startDate">Data Inicial</Label>
+          <div className="flex flex-col sm:flex-row items-end gap-3">
+            <div className="flex-1 w-full">
+              <Label htmlFor="startDate" className="text-xs sm:text-sm">Data Inicial</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="text-sm h-8"
               />
             </div>
             
-            <div className="flex-1">
-              <Label htmlFor="endDate">Data Final</Label>
+            <div className="flex-1 w-full">
+              <Label htmlFor="endDate" className="text-xs sm:text-sm">Data Final</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className="text-sm h-8"
               />
             </div>
             
-            <Button variant="outline" onClick={clearFilters}>
+            <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto text-sm h-8">
               Limpar
             </Button>
           </div>
@@ -70,14 +72,14 @@ export function FinancialSummary() {
       </Card>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Receitas</CardTitle>
             <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[#D4AF37]">
+            <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">
               R$ {summary?.totalIncome?.toFixed(2) || "0,00"}
             </div>
             <div className="text-xs text-[#737373] space-y-1">
@@ -91,11 +93,11 @@ export function FinancialSummary() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Despesas</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg md:text-2xl font-bold text-red-600">
               R$ {summary?.totalExpenses?.toFixed(2) || "0,00"}
             </div>
             <div className="text-xs text-[#737373] space-y-1">
@@ -112,11 +114,11 @@ export function FinancialSummary() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Investimentos</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Investimentos</CardTitle>
             <PiggyBank className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-lg md:text-2xl font-bold text-blue-600">
               R$ {summary?.totalInvestments?.toFixed(2) || "0,00"}
             </div>
             <p className="text-xs text-[#737373]">
@@ -127,13 +129,13 @@ export function FinancialSummary() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Lucro Líquido</CardTitle>
             <DollarSign className={`h-4 w-4 ${
               (summary?.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
             }`} />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${
+            <div className={`text-lg md:text-2xl font-bold ${
               (summary?.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
             }`}>
               R$ {summary?.netProfit?.toFixed(2) || "0,00"}
@@ -155,31 +157,31 @@ export function FinancialSummary() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               {summary?.stockRevenue > 0 && (
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-lg font-semibold text-green-600">
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-base sm:text-lg font-semibold text-green-600">
                     R$ {summary.stockRevenue.toFixed(2)}
                   </div>
-                  <div className="text-sm text-green-700">Vendas de Produtos</div>
+                  <div className="text-xs sm:text-sm text-green-700">Vendas de Produtos</div>
                 </div>
               )}
               
               {summary?.stockExpenses > 0 && (
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-lg font-semibold text-red-600">
+                <div className="text-center p-3 bg-red-50 rounded-lg">
+                  <div className="text-base sm:text-lg font-semibold text-red-600">
                     R$ {summary.stockExpenses.toFixed(2)}
                   </div>
-                  <div className="text-sm text-red-700">Compras de Produtos</div>
+                  <div className="text-xs sm:text-sm text-red-700">Compras de Produtos</div>
                 </div>
               )}
               
               {summary?.stockLosses > 0 && (
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <div className="text-lg font-semibold text-orange-600">
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <div className="text-base sm:text-lg font-semibold text-orange-600">
                     R$ {summary.stockLosses.toFixed(2)}
                   </div>
-                  <div className="text-sm text-orange-700">Perdas de Produtos</div>
+                  <div className="text-xs sm:text-sm text-orange-700">Perdas de Produtos</div>
                 </div>
               )}
             </div>
@@ -188,7 +190,7 @@ export function FinancialSummary() {
       )}
 
       {/* Indicadores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Distribuição Financeira</CardTitle>

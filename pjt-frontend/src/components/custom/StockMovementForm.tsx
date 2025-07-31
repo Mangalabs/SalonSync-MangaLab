@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+
 
 const movementSchema = z.object({
   productId: z.string().min(1, "Selecione um produto"),
@@ -28,7 +28,6 @@ interface StockMovementFormProps {
 
 export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
   const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
@@ -76,15 +75,7 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
     createMovement.mutate(data);
   };
 
-  const getMovementTypeLabel = (type: string) => {
-    switch (type) {
-      case "IN": return "Entrada";
-      case "OUT": return "Saída";
-      case "ADJUSTMENT": return "Ajuste";
-      case "LOSS": return "Perda";
-      default: return type;
-    }
-  };
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

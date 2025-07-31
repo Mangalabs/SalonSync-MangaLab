@@ -126,9 +126,9 @@ export default function Reports() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Relatórios Consolidados</h1>
+        <h1 className="text-xl md:text-3xl font-bold">Relatórios Consolidados</h1>
       </div>
 
       <Card>
@@ -139,54 +139,57 @@ export default function Reports() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="branch">Filial</Label>
-              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Filiais</SelectItem>
-                  {branches.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="branch" className="text-sm">Filial</Label>
+                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Filiais</SelectItem>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label htmlFor="startDate">Data Inicial</Label>
-              <input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
+              <div>
+                <Label htmlFor="startDate" className="text-sm">Data Inicial</Label>
+                <input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="endDate">Data Final</Label>
-              <input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
+              <div>
+                <Label htmlFor="endDate" className="text-sm">Data Final</Label>
+                <input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
             </div>
-
-            <div className="flex items-end gap-2">
-              <Button onClick={handleGenerateReport} disabled={isLoading} className="flex-1">
-                {isLoading ? "Gerando..." : "Gerar"}
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handleGenerateReport} disabled={isLoading} className="text-sm">
+                {isLoading ? "Gerando..." : "Gerar Relatório"}
               </Button>
               
               {reportData && (
-                <Button variant="outline" onClick={handleExportReport}>
-                  <Download className="h-4 w-4" />
+                <Button variant="outline" onClick={handleExportReport} className="text-sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
                 </Button>
               )}
             </div>
@@ -195,44 +198,44 @@ export default function Reports() {
       </Card>
 
       {reportData && (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{reportData.branchName} - {reportData.period.label}</CardTitle>
+              <CardTitle className="text-base md:text-lg">{reportData.branchName} - {reportData.period.label}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-[#D4AF37]">
+              <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 text-center">
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="text-lg md:text-2xl font-bold text-[#D4AF37] truncate">
                     R$ {reportData.financial.totalIncome?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Receitas</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Receitas</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-red-600">
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="text-lg md:text-2xl font-bold text-red-600 truncate">
                     R$ {reportData.financial.totalExpenses?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Despesas</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Despesas</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="text-lg md:text-2xl font-bold text-blue-600 truncate">
                     R$ {reportData.financial.totalInvestments?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Investimentos</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Investimentos</div>
                 </div>
-                <div>
-                  <div className={`text-2xl font-bold ${
+                <div className="bg-white border rounded-lg p-3">
+                  <div className={`text-lg md:text-2xl font-bold truncate ${
                     (reportData.financial.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
                   }`}>
                     R$ {reportData.financial.netProfit?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Lucro Líquido</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Lucro Líquido</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="text-lg md:text-2xl font-bold text-purple-600 truncate">
                     R$ {reportData.financial.appointmentRevenue?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Atendimentos</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Atendimentos</div>
                 </div>
               </div>
             </CardContent>
@@ -243,77 +246,122 @@ export default function Reports() {
               <CardTitle>Movimentação de Estoque</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-center mb-4 md:mb-6">
                 <div>
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-lg md:text-2xl font-bold text-red-600">
                     R$ {reportData.stock.summary.totalPurchases?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Compras</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Compras</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-[#D4AF37]">
+                  <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">
                     R$ {reportData.stock.summary.totalSales?.toFixed(2) || "0,00"}
                   </div>
-                  <div className="text-sm text-[#737373]">Vendas</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Vendas</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-lg md:text-2xl font-bold text-blue-600">
                     {reportData.stock.summary.totalMovements || 0}
                   </div>
-                  <div className="text-sm text-[#737373]">Movimentações</div>
+                  <div className="text-xs md:text-sm text-[#737373]">Movimentações</div>
                 </div>
               </div>
               
               {reportData.stock.movements.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Data</th>
-                        <th className="text-left p-2">Produto</th>
-                        <th className="text-center p-2">Tipo</th>
-                        <th className="text-right p-2">Qtd</th>
-                        <th className="text-right p-2">Valor Unit.</th>
-                        <th className="text-right p-2">Total</th>
-                        <th className="text-left p-2">Motivo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reportData.stock.movements.slice(0, 10).map((movement: any) => (
-                        <tr key={movement.id} className="border-b">
-                          <td className="p-2 text-sm">
-                            {new Date(movement.createdAt).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="p-2 font-medium">{movement.product.name}</td>
-                          <td className="p-2 text-center">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              movement.type === 'IN' 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {movement.type === 'IN' ? 'Entrada' : 'Saída'}
-                            </span>
-                          </td>
-                          <td className="p-2 text-right">{movement.quantity}</td>
-                          <td className="p-2 text-right">R$ {Number(movement.unitCost).toFixed(2)}</td>
-                          <td className="p-2 text-right font-medium">
-                            R$ {(movement.quantity * Number(movement.unitCost)).toFixed(2)}
-                          </td>
-                          <td className="p-2 text-sm text-[#737373]">
-                            {movement.reason.length > 30 
-                              ? `${movement.reason.substring(0, 30)}...` 
-                              : movement.reason}
-                          </td>
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2">Data</th>
+                          <th className="text-left p-2">Produto</th>
+                          <th className="text-center p-2">Tipo</th>
+                          <th className="text-right p-2">Qtd</th>
+                          <th className="text-right p-2">Valor Unit.</th>
+                          <th className="text-right p-2">Total</th>
+                          <th className="text-left p-2">Motivo</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {reportData.stock.movements.slice(0, 10).map((movement: any) => (
+                          <tr key={movement.id} className="border-b">
+                            <td className="p-2 text-sm">
+                              {new Date(movement.createdAt).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="p-2 font-medium">{movement.product.name}</td>
+                            <td className="p-2 text-center">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                movement.type === 'IN' 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {movement.type === 'IN' ? 'Entrada' : 'Saída'}
+                              </span>
+                            </td>
+                            <td className="p-2 text-right">{movement.quantity}</td>
+                            <td className="p-2 text-right">R$ {Number(movement.unitCost).toFixed(2)}</td>
+                            <td className="p-2 text-right font-medium">
+                              R$ {(movement.quantity * Number(movement.unitCost)).toFixed(2)}
+                            </td>
+                            <td className="p-2 text-sm text-[#737373]">
+                              {movement.reason.length > 30 
+                                ? `${movement.reason.substring(0, 30)}...` 
+                                : movement.reason}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden space-y-3">
+                    {reportData.stock.movements.slice(0, 5).map((movement: any) => (
+                      <div key={movement.id} className="bg-white border rounded-lg p-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">{movement.product.name}</h4>
+                            <p className="text-xs text-[#737373]">
+                              {new Date(movement.createdAt).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            movement.type === 'IN' 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {movement.type === 'IN' ? 'Entrada' : 'Saída'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs text-[#737373]">Quantidade:</span>
+                          <span className="font-medium text-sm">{movement.quantity}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs text-[#737373]">Total:</span>
+                          <span className="font-medium text-sm text-[#D4AF37]">
+                            R$ {(movement.quantity * Number(movement.unitCost)).toFixed(2)}
+                          </span>
+                        </div>
+                        
+                        <div className="text-xs text-[#737373]">
+                          <strong>Motivo:</strong> {movement.reason.length > 40 
+                            ? `${movement.reason.substring(0, 40)}...` 
+                            : movement.reason}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   {reportData.stock.movements.length > 10 && (
                     <p className="text-sm text-[#737373] mt-2 text-center">
-                      Mostrando 10 de {reportData.stock.movements.length} movimentações
+                      Mostrando {reportData.stock.movements.length > 5 ? '10' : '5'} de {reportData.stock.movements.length} movimentações
                     </p>
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -323,7 +371,8 @@ export default function Reports() {
               <CardTitle>Performance dos Profissionais</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
@@ -357,6 +406,49 @@ export default function Reports() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-3">
+                {reportData.professionals.map((item: any) => {
+                  const professionalBranch = branches.find(b => b.id === item.professional.branchId);
+                  return (
+                    <div key={item.professional.id} className="bg-white border rounded-lg p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{item.professional.name}</h4>
+                          {selectedBranch === 'all' && (
+                            <p className="text-xs text-[#737373]">
+                              {professionalBranch?.name || 'N/A'}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded">
+                          {item.commission.professional.commissionRate}%
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <div className="text-sm font-medium">{item.commission.summary.totalAppointments}</div>
+                          <div className="text-xs text-[#737373]">Atendimentos</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-[#D4AF37]">
+                            R$ {item.commission.summary.totalRevenue.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-[#737373]">Receita</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-green-600">
+                            R$ {item.commission.summary.totalCommission.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-[#737373]">Comissão</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

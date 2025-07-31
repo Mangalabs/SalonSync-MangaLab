@@ -19,15 +19,16 @@ export default function Inventory() {
   const [movementOpen, setMovementOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Estoque</h1>
-        <div className="flex gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-xl md:text-2xl font-bold text-[#1A1A1A]">Estoque</h1>
+        <div className="flex flex-col sm:flex-row gap-2">
           <Dialog open={movementOpen} onOpenChange={setMovementOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10">
+              <Button variant="outline" className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10 w-full sm:w-auto">
                 <TrendingUp className="h-4 w-4 mr-2" />
-                Nova Movimentação
+                <span className="hidden sm:inline">Nova Movimentação</span>
+                <span className="sm:hidden">Movimentação</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -40,9 +41,10 @@ export default function Inventory() {
           
           <Dialog open={productOpen} onOpenChange={setProductOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Package className="h-4 w-4 mr-2" />
-                Novo Produto
+                <span className="hidden sm:inline">Novo Produto</span>
+                <span className="sm:hidden">Produto</span>
               </Button>
             </DialogTrigger>
             <DialogContent>

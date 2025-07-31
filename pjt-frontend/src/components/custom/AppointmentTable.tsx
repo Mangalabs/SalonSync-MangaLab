@@ -27,9 +27,9 @@ interface RawAppointment {
   professional: { name: string };
   client: { name: string };
   appointmentServices: {
-    service: { id: string; name: string; price: string };
+    service: { id: string; name: string; price: number };
   }[];
-  total: string;
+  total: number;
   createdAt: string;
   scheduledAt: string;
   status?: string;
@@ -98,18 +98,7 @@ export function AppointmentTable({
   });
 
   const data = useMemo(
-    () =>
-      rawData.map((appt) => ({
-        ...appt,
-        total: Number(appt.total),
-        appointmentServices: appt.appointmentServices.map((as) => ({
-          ...as,
-          service: {
-            ...as.service,
-            price: Number(as.service.price),
-          },
-        })),
-      })),
+    () => rawData,
     [rawData]
   );
 

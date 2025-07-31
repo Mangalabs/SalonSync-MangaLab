@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+
 import { ShoppingCart } from "lucide-react";
 
 const saleSchema = z.object({
@@ -28,7 +28,6 @@ interface ProductSaleFormProps {
 
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],

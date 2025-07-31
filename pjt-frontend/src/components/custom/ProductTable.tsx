@@ -81,7 +81,8 @@ export function ProductTable() {
 
   return (
     <div>
-      <div className="border rounded-md overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border rounded-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-[#F5F5F0]">
             <tr>
@@ -172,11 +173,84 @@ export function ProductTable() {
         </table>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {data?.map((product) => (
+          <div key={product.id} className="bg-white border rounded-lg p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="font-medium text-[#1A1A1A]">{product.name}</h3>
+                <p className="text-xs text-[#737373]">
+                  {product.category} • {product.brand && `${product.brand} • `}{product.unit}
+                </p>
+              </div>
+              <span className={`font-medium text-sm ${
+                product.currentStock <= (product.minStock || 0) 
+                  ? 'text-red-600' 
+                  : 'text-[#1A1A1A]'
+              }`}>
+                {product.currentStock} {product.unit}
+              </span>
+            </div>
+            
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm">
+                {product.salePrice > 0 && (
+                  <span className="text-[#D4AF37] font-medium">
+                    R$ {Number(product.salePrice).toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAdjustment(product, "add")}
+                className="text-xs"
+              >
+                <Plus size={12} className="mr-1" />
+                Adicionar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAdjustment(product, "remove")}
+                className="text-xs"
+              >
+                <Minus size={12} className="mr-1" />
+                Remover
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingProduct(product)}
+                className="text-xs"
+              >
+                <Edit size={12} className="mr-1" />
+                Editar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeletingProductId(product.id)}
+                disabled={deleteProduct.isPending}
+                className="text-xs"
+              >
+                <Trash2 size={12} className="mr-1" />
+                Excluir
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <Dialog
         open={!!editingProduct}
         onOpenChange={() => setEditingProduct(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Produto</DialogTitle>
           </DialogHeader>
@@ -194,7 +268,7 @@ export function ProductTable() {
           setAdjustmentType(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {adjustmentType === "add" ? "Adicionar ao Estoque" : "Remover do Estoque"}
