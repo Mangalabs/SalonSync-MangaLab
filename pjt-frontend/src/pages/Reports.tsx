@@ -39,6 +39,9 @@ export default function Reports() {
       
       // Buscar dados financeiros
       const financialRes = await axios.get(`/api/financial/summary?startDate=${startDate}&endDate=${endDate}`);
+      const insight = await axios.get(`/api/ai/insights?startDate=${startDate}&endDate=${endDate}`);
+
+      console.log(insight)
       
       // Buscar profissionais
       const professionalsRes = await axios.get('/api/professionals');
