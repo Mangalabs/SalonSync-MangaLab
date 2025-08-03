@@ -19,54 +19,59 @@ export default function Appointments() {
   const [dateFilter, setDateFilter] = useState("all");
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Agendamentos</h1>
-          <p className="text-[#737373]">Gerencie seus agendamentos futuros</p>
+          <h1 className="text-xl md:text-3xl font-bold">Agendamentos</h1>
+          <p className="text-xs sm:text-sm text-[#737373]">Gerencie seus agendamentos futuros</p>
         </div>
         <Button 
           onClick={() => setShowForm(true)}
-          className=""
+          className="text-sm h-8 sm:h-10"
         >
-          + Novo Agendamento
+          <span className="hidden sm:inline">+ Novo Agendamento</span>
+          <span className="sm:hidden">+ Agendar</span>
         </Button>
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-4 items-center bg-white p-4 rounded-lg border">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Buscar por cliente ou profissional..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="bg-white p-3 md:p-4 rounded-lg border">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4" />
+            <Input
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 sm:pl-10 h-8 text-sm"
+            />
+          </div>
+          
+          <div className="flex gap-2 sm:gap-3">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="scheduled">Agendados</SelectItem>
+                <SelectItem value="overdue">Atrasados</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="week">Semana</SelectItem>
+                <SelectItem value="month">Mês</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="scheduled">Agendados</SelectItem>
-            <SelectItem value="overdue">Atrasados</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os períodos</SelectItem>
-            <SelectItem value="today">Hoje</SelectItem>
-            <SelectItem value="week">Esta semana</SelectItem>
-            <SelectItem value="month">Este mês</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <SchedulingCalendar 
@@ -77,9 +82,9 @@ export default function Appointments() {
       />
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Agendamento</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Novo Agendamento</DialogTitle>
           </DialogHeader>
           <AppointmentForm
             mode="scheduled"

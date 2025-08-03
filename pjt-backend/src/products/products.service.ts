@@ -215,6 +215,7 @@ export class ProductsService {
         data: {
           product: { connect: { id } },
           branch: { connect: { id: branchId } },
+          user: userId ? { connect: { id: userId } } : undefined,
           type: movementType,
           quantity,
           reason,
@@ -236,6 +237,12 @@ export class ProductsService {
       where: { branchId },
       include: {
         product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        user: {
           select: {
             id: true,
             name: true,

@@ -47,14 +47,22 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException('Usuário não encontrado');
       }
 
-      // Se for funcionário, buscar sua filial
+      // Buscar branchId baseado no tipo de usuário
       let branchId: string | undefined;
       if (user.role === 'PROFESSIONAL' && user.name) {
+        // Para funcionários, buscar pela tabela professional
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
           select: { branchId: true },
         });
         branchId = professional?.branchId;
+      } else if (user.role === 'ADMIN') {
+        // Para admins, buscar a primeira filial (ou usar header x-branch-id se implementado)
+        const branch = await this.prisma.branch.findFirst({
+          where: { ownerId: user.id },
+          select: { id: true },
+        });
+        branchId = branch?.id;
       }
 
       // Preservar o body original da requisição
