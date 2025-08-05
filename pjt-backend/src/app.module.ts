@@ -14,6 +14,7 @@ import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { FinancialModule } from './financial/financial.module';
 import { RolesModule } from './roles/roles.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
 
@@ -32,6 +33,7 @@ import { BaseDataService } from './common/services/base-data.service';
     ProductsModule,
     InventoryModule,
     FinancialModule,
+    WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [AppService, BaseDataService],
@@ -43,6 +45,7 @@ export class AppModule {
       .exclude(
         { path: 'auth/login', method: RequestMethod.POST },
         { path: 'auth/register', method: RequestMethod.POST },
+        { path: 'whatsapp/webhook', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

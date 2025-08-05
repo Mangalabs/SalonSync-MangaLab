@@ -58,7 +58,10 @@ export class ProfessionalsService extends BaseDataService {
     });
   }
 
-  async update(id: string, data: Partial<Professional & { roleId?: string }>): Promise<Professional> {
+  async update(
+    id: string,
+    data: Partial<Professional & { roleId?: string }>,
+  ): Promise<Professional> {
     return this.prisma.professional.update({ where: { id }, data });
   }
 

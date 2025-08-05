@@ -13,6 +13,7 @@ import {
   UserCheck,
   DollarSign,
   ShoppingCart,
+  MessageSquare,
   X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -48,6 +49,7 @@ const getNavItems = (userRole: string) => {
   
   const adminItems = [
     { to: "/dashboard/professionals", icon: Users, label: "Profissionais", roles: ["ADMIN"] },
+    { to: "/dashboard/whatsapp", icon: MessageSquare, label: "WhatsApp", roles: ["ADMIN"] },
     { to: "/dashboard/financial", icon: DollarSign, label: "Financeiro", roles: ["ADMIN"] },
     { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios", roles: ["ADMIN"] },
     { to: "/dashboard/settings", icon: Settings, label: "Configurações", roles: ["ADMIN", "PROFESSIONAL"] },
