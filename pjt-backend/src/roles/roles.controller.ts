@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -8,7 +18,10 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
-  create(@Body() createRoleDto: CreateRoleDto & { branchId?: string }, @Request() req) {
+  create(
+    @Body() createRoleDto: CreateRoleDto & { branchId?: string },
+    @Request() req,
+  ) {
     const branchId = createRoleDto.branchId || req.user.branchId;
     if (!branchId) {
       throw new BadRequestException('branchId é obrigatório');
@@ -33,7 +46,11 @@ export class RolesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateRoleDto: UpdateRoleDto,
+    @Request() req,
+  ) {
     if (!req.user.branchId) {
       throw new BadRequestException('branchId é obrigatório');
     }

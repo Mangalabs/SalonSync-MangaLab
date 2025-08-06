@@ -168,14 +168,14 @@ export class FinancialService extends BaseDataService {
       totalIncome:
         transactions
           .filter((t) => t.type === 'INCOME')
-          .reduce((sum, t) => sum + Number(t.amount), 0) + 
-        appointmentRevenue + 
+          .reduce((sum, t) => sum + Number(t.amount), 0) +
+        appointmentRevenue +
         stockSales,
-      totalExpenses: 
+      totalExpenses:
         transactions
           .filter((t) => t.type === 'EXPENSE')
-          .reduce((sum, t) => sum + Number(t.amount), 0) + 
-        stockPurchases + 
+          .reduce((sum, t) => sum + Number(t.amount), 0) +
+        stockPurchases +
         stockLosses,
       totalInvestments: transactions
         .filter((t) => t.type === 'INVESTMENT')
