@@ -57,6 +57,10 @@ export class AppointmentsController {
     @Param('professionalId') professionalId: string,
     @Param('date') date: string,
   ): Promise<string[]> {
+    // Validar parâmetros antes de chamar o service
+    if (!professionalId || professionalId === 'undefined' || !date || date === 'undefined') {
+      return Promise.resolve([]);
+    }
     return this.apptService.getAvailableSlots(professionalId, date);
   }
 

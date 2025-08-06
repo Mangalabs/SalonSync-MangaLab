@@ -79,11 +79,13 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const { data: availableSlots = [] } = useQuery({
     queryKey: ["available-slots", watchedProfessional, watchedDate],
     queryFn: async () => {
-      if (!watchedProfessional || !watchedDate) return [];
+      if (!watchedProfessional || !watchedDate || watchedProfessional === 'undefined' || watchedDate === 'undefined') {
+        return [];
+      }
       const res = await axios.get(`/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`);
       return res.data;
     },
-    enabled: !!watchedProfessional && !!watchedDate,
+    enabled: !!watchedProfessional && !!watchedDate && watchedProfessional !== 'undefined' && watchedDate !== 'undefined',
   });
 
   const createAppointment = useMutation({

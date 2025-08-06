@@ -3,26 +3,40 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
-
 
 const schema = z.object({
   name: z.string().min(2, "Informe o nome"),
   role: z.string().min(2, "Informe a função"),
-  commissionRate: z.number().min(0).max(100, "Comissão deve ser entre 0 e 100%"),
+  commissionRate: z
+    .number()
+    .min(0)
+    .max(100, "Comissão deve ser entre 0 e 100%"),
   roleId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
-export function ProfessionalForm({ 
-  onSuccess, 
-  initialData 
-}: { 
+export function ProfessionalForm({
+  onSuccess,
+  initialData,
+}: {
   onSuccess: () => void;
-  initialData?: { id: string; name: string; role: string; commissionRate?: number; roleId?: string } | null;
+  initialData?: {
+    id: string;
+    name: string;
+    role: string;
+    commissionRate?: number;
+    roleId?: string;
+  } | null;
 }) {
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
@@ -48,50 +62,57 @@ export function ProfessionalForm({
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ 
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: initialData ? {
-      name: initialData.name,
-      role: initialData.role,
-      roleId: initialData.roleId || (initialData as any).customRole?.id,
-      commissionRate: (initialData as any).customRole?.commissionRate || initialData.commissionRate || 0
-    } : {
-      commissionRate: 0
-    }
+    defaultValues: initialData
+      ? {
+          name: initialData.name,
+          role: initialData.role,
+          roleId: initialData.roleId || (initialData as any).customRole?.id,
+          commissionRate:
+            (initialData as any).customRole?.commissionRate ||
+            initialData.commissionRate ||
+            0,
+        }
+      : {
+          commissionRate: 0,
+        },
   });
 
-  const selectedRoleId = watch('roleId');
+  const selectedRoleId = watch("roleId");
   const selectedRole = roles.find((role: any) => role.id === selectedRoleId);
 
-  // Atualizar role e commissionRate quando uma role customizada for selecionada
   const handleRoleChange = (roleId: string) => {
-    setValue('roleId', roleId);
+    setValue("roleId", roleId);
     const role = roles.find((r: any) => r.id === roleId);
     if (role) {
-      setValue('role', role.title);
-      setValue('commissionRate', role.commissionRate || 0);
+      setValue("role", role.title);
+      setValue("commissionRate", role.commissionRate || 0);
     }
   };
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      console.log('🚀 ProfessionalForm mutation:', { data, isEditing });
-      
+      console.log("🚀 ProfessionalForm mutation:", { data, isEditing });
+
       if (isEditing) {
-        const res = await axios.patch(`/api/professionals/${initialData.id}`, data);
+        const res = await axios.patch(
+          `/api/professionals/${initialData.id}`,
+          data
+        );
         return res.data;
       } else {
-        const res = await axios.post('/api/professionals', data);
+        const res = await axios.post("/api/professionals", data);
         return res.data;
       }
     },
     onSuccess: (result) => {
-      console.log('✅ Professional mutation success:', result);
+      console.log("✅ Professional mutation success:", result);
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       onSuccess();
     },
     onError: (error) => {
-      console.log('❌ Professional mutation error:', error);
+      console.log("❌ Professional mutation error:", error);
     },
   });
 
@@ -109,7 +130,10 @@ export function ProfessionalForm({
       <div>
         {roles.length > 0 ? (
           <>
-            <Select onValueChange={handleRoleChange} value={selectedRoleId || 'custom'}>
+            <Select
+              onValueChange={handleRoleChange}
+              value={selectedRoleId || "custom"}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma função" />
               </SelectTrigger>
@@ -122,7 +146,7 @@ export function ProfessionalForm({
                 ))}
               </SelectContent>
             </Select>
-            {selectedRoleId === 'custom' && (
+            {selectedRoleId === "custom" && (
               <div className="mt-2">
                 <Input placeholder="Nome da função" {...register("role")} />
                 {errors.role && (
@@ -142,21 +166,23 @@ export function ProfessionalForm({
       </div>
       <div>
         <div className="flex items-center">
-          <Input 
-            type="number" 
-            min="0" 
-            max="100" 
+          <Input
+            type="number"
+            min="0"
+            max="100"
             step="0.1"
-            placeholder="Comissão (%)" 
-            {...register("commissionRate")} 
-            disabled={selectedRole && selectedRoleId !== 'custom'}
+            placeholder="Comissão (%)"
+            {...register("commissionRate")}
+            disabled={selectedRole && selectedRoleId !== "custom"}
           />
           <span className="ml-2">%</span>
         </div>
         {errors.commissionRate && (
-          <p className="text-sm text-red-500">{errors.commissionRate.message}</p>
+          <p className="text-sm text-red-500">
+            {errors.commissionRate.message}
+          </p>
         )}
-        {selectedRole && selectedRoleId !== 'custom' && (
+        {selectedRole && selectedRoleId !== "custom" && (
           <p className="text-xs text-[#737373] mt-1">
             Comissão definida pela função selecionada
           </p>
@@ -167,7 +193,7 @@ export function ProfessionalForm({
         disabled={isSubmitting}
         className="w-full bg-primary text-white"
       >
-        {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
+        {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}
       </Button>
     </form>
   );

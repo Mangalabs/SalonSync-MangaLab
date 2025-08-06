@@ -7,9 +7,9 @@ import axios from "@/lib/axios";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 
-const createSchema = (isProfessional: boolean, isScheduled: boolean) => {
+const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
   const baseSchema = {
-    professionalId: isProfessional ? z.string().optional() : z.string().min(1, "Selecione um profissional"),
+    professionalId: z.string().min(1, "Selecione um profissional"),
     clientId: z.string().min(1, "Selecione um cliente"),
     serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
   };
@@ -31,11 +31,11 @@ export function useAppointmentForm(
   onSuccess: () => void
 ) {
   const queryClient = useQueryClient();
-  const { user, isProfessional } = useUser();
+  const { user, isProfessional, isAdmin } = useUser();
   const isScheduled = mode === "scheduled";
 
   const form = useForm({
-    resolver: zodResolver(createSchema(isProfessional, isScheduled)),
+    resolver: zodResolver(createSchema(isAdmin, isScheduled)),
     defaultValues: isScheduled ? {
       professionalId: "", 
       clientId: "", 
@@ -49,14 +49,14 @@ export function useAppointmentForm(
     },
   });
 
-  // Auto-selecionar profissional se for funcionário
+  // Auto-selecionar profissional se for funcionário (não admin)
   const currentProfessionalId = useMemo(() => {
-    if (isProfessional && user?.name && professionals.length > 0) {
+    if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(p => p.name === user.name);
       return currentProfessional?.id || "";
     }
     return "";
-  }, [isProfessional, user?.name, professionals]);
+  }, [isProfessional, isAdmin, user?.name, professionals]);
   
   useEffect(() => {
     if (currentProfessionalId) {
@@ -77,9 +77,9 @@ export function useAppointmentForm(
         status = "COMPLETED";
       }
       
-      let finalProfessionalId = isProfessional ? currentProfessionalId : data.professionalId;
+      let finalProfessionalId = (isProfessional && !isAdmin) ? currentProfessionalId : data.professionalId;
       
-      if (isProfessional && !finalProfessionalId && user?.name) {
+      if (isProfessional && !isAdmin && !finalProfessionalId && user?.name) {
         const professional = professionals.find(p => p.name === user.name);
         finalProfessionalId = professional?.id || '';
       }

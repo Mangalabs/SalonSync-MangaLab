@@ -43,4 +43,8 @@ export class AdjustStockDto {
     typeof value === 'string' ? parseFloat(value) : value,
   )
   unitCost?: number;
+
+  @IsOptional()
+  @IsString()
+  soldById?: string;
 }

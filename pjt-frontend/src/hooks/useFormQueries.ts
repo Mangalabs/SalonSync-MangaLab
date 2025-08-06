@@ -41,10 +41,13 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
   const availableSlots = useQuery({
     queryKey: ["available-slots", selectedProfessional, selectedDate],
     queryFn: async () => {
+      if (!selectedProfessional || !selectedDate || selectedProfessional === 'undefined' || selectedDate === 'undefined') {
+        return [];
+      }
       const res = await axios.get(`/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`);
       return res.data;
     },
-    enabled: isScheduled && !!selectedProfessional && !!selectedDate,
+    enabled: isScheduled && !!selectedProfessional && !!selectedDate && selectedProfessional !== 'undefined' && selectedDate !== 'undefined',
   });
 
   return {

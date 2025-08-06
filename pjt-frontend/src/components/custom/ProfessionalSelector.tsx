@@ -11,7 +11,7 @@ interface ProfessionalSelectorProps {
 }
 
 export function ProfessionalSelector({ control, professionals, errors }: ProfessionalSelectorProps) {
-  const { user, isProfessional } = useUser();
+  const { user, isProfessional, isAdmin } = useUser();
 
   return (
     <div>
@@ -20,7 +20,7 @@ export function ProfessionalSelector({ control, professionals, errors }: Profess
         name="professionalId"
         control={control}
         render={({ field }) => (
-          isProfessional ? (
+          (isProfessional && !isAdmin) ? (
             <>
               <Input 
                 value={user?.name || ""} 

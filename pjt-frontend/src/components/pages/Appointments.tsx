@@ -11,12 +11,26 @@ import {
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
 import { Search, Filter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 export default function Appointments() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  const [professionalFilter, setProfessionalFilter] = useState("all");
+  const { activeBranch } = useBranch();
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals", activeBranch?.id],
+    queryFn: async () => {
+      const res = await axios.get("/api/professionals");
+      return res.data;
+    },
+    enabled: !!activeBranch,
+  });
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -70,6 +84,20 @@ export default function Appointments() {
                 <SelectItem value="month">Mês</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
+              <SelectTrigger className="w-28 sm:w-36 h-8 text-xs sm:text-sm">
+                <SelectValue placeholder="Profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {professionals.map((prof: any) => (
+                  <SelectItem key={prof.id} value={prof.name}>
+                    {prof.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -79,6 +107,7 @@ export default function Appointments() {
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         dateFilter={dateFilter}
+        professionalFilter={professionalFilter}
       />
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

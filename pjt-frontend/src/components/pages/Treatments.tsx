@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 
 export default function Treatments() {
   const [showForm, setShowForm] = useState(false);
@@ -23,9 +29,11 @@ export default function Treatments() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-3xl font-bold">Atendimentos</h1>
-          <p className="text-xs sm:text-sm text-[#737373]">Histórico de atendimentos realizados</p>
+          <p className="text-xs sm:text-sm text-[#737373]">
+            Histórico de atendimentos realizados
+          </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(true)}
           className="bg-[#8B4513] text-white hover:bg-[#7A3E11] text-sm h-8 sm:h-10"
         >
@@ -46,7 +54,7 @@ export default function Treatments() {
               className="pl-8 sm:pl-10 h-8 text-sm"
             />
           </div>
-          
+
           <div className="flex gap-2 sm:gap-3">
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
@@ -60,8 +68,11 @@ export default function Treatments() {
                 <SelectItem value="last-month">Mês passado</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
+
+            <Select
+              value={professionalFilter}
+              onValueChange={setProfessionalFilter}
+            >
               <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
                 <SelectValue placeholder="Prof." />
               </SelectTrigger>
@@ -73,28 +84,8 @@ export default function Treatments() {
         </div>
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-white p-3 md:p-4 rounded-lg border text-center">
-          <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">-</div>
-          <div className="text-xs md:text-sm text-gray-600">Atendimentos</div>
-        </div>
-        <div className="bg-white p-3 md:p-4 rounded-lg border text-center">
-          <div className="text-lg md:text-2xl font-bold text-blue-600">R$ -</div>
-          <div className="text-xs md:text-sm text-gray-600">Receita</div>
-        </div>
-        <div className="bg-white p-3 md:p-4 rounded-lg border text-center">
-          <div className="text-lg md:text-2xl font-bold text-purple-600">R$ -</div>
-          <div className="text-xs md:text-sm text-gray-600">Ticket Médio</div>
-        </div>
-        <div className="bg-white p-3 md:p-4 rounded-lg border text-center">
-          <div className="text-lg md:text-2xl font-bold text-orange-600">-</div>
-          <div className="text-xs md:text-sm text-gray-600">Prof. Top</div>
-        </div>
-      </div>
-
-      <SchedulingCalendar 
-        mode="completed" 
+      <SchedulingCalendar
+        mode="completed"
         searchTerm={searchTerm}
         dateFilter={dateFilter}
         professionalFilter={professionalFilter}
@@ -103,7 +94,9 @@ export default function Treatments() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">Novo Atendimento</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
+              Novo Atendimento
+            </DialogTitle>
           </DialogHeader>
           <AppointmentForm
             mode="immediate"

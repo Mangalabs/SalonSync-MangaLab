@@ -6,8 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, ChevronDown } from "lucide-react";
 import { TransactionForm } from "@/components/custom/TransactionForm";
-import { TransactionList } from "@/components/custom/TransactionList";
 import { FinancialSummary } from "@/components/custom/FinancialSummary";
+import { FinancialTabContent } from "@/components/custom/FinancialTabContent";
+import { FinancialProvider } from "@/contexts/FinancialContext";
+
 
 export default function Financial() {
   const [activeTab, setActiveTab] = useState("summary");
@@ -30,7 +32,8 @@ export default function Financial() {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <FinancialProvider>
+      <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-3xl font-bold">Financeiro</h1>
         
@@ -77,7 +80,7 @@ export default function Financial() {
               <span className="sm:hidden">+ Receita</span>
             </Button>
           </div>
-          <TransactionList type="INCOME" />
+          <FinancialTabContent type="INCOME" />
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-4 md:space-y-6">
@@ -94,7 +97,7 @@ export default function Financial() {
               <span className="sm:hidden">+ Despesa</span>
             </Button>
           </div>
-          <TransactionList type="EXPENSE" />
+          <FinancialTabContent type="EXPENSE" />
         </TabsContent>
 
         <TabsContent value="investments" className="space-y-4 md:space-y-6">
@@ -111,7 +114,7 @@ export default function Financial() {
               <span className="sm:hidden">+ Investimento</span>
             </Button>
           </div>
-          <TransactionList type="INVESTMENT" />
+          <FinancialTabContent type="INVESTMENT" />
         </TabsContent>
       </Tabs>
 
@@ -129,6 +132,7 @@ export default function Financial() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </FinancialProvider>
   );
 }
