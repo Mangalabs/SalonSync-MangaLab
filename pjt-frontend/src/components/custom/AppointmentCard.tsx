@@ -19,9 +19,10 @@ interface Appointment {
 interface AppointmentCardProps {
   appointment: Appointment;
   mode?: "scheduled" | "completed";
+  compact?: boolean;
 }
 
-export function AppointmentCard({ appointment, mode }: AppointmentCardProps) {
+export function AppointmentCard({ appointment, mode, compact = false }: AppointmentCardProps) {
   const queryClient = useQueryClient();
   
   const aptDate = new Date(appointment.scheduledAt);
@@ -46,6 +47,39 @@ export function AppointmentCard({ appointment, mode }: AppointmentCardProps) {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
   });
+
+  if (compact) {
+    return (
+      <div className="border rounded p-2 bg-white text-sm">
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span className="font-medium text-xs">
+              {aptDate.toLocaleDateString("pt-BR")} às{" "}
+              {aptDate.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <DollarSign className="h-3 w-3" />
+            <span className="font-semibold text-xs">R$ {Number(appointment.total).toFixed(2)}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 mb-1">
+          <User className="h-3 w-3" />
+          <span className="text-xs">{appointment.client.name}</span>
+        </div>
+        <div className="text-xs text-[#737373] mb-1">
+          {appointment.professional.name}
+        </div>
+        <div className="text-xs text-[#737373]">
+          {appointment.appointmentServices.map(as => as.service.name).join(", ")}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

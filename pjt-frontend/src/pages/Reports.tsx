@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, Calendar } from "lucide-react";
+import { FileText, Calendar } from "lucide-react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { ExportButton } from "@/components/custom/ExportButton";
+import { ExportService } from "@/services/exportService";
 
 export default function Reports() {
   const [startDate, setStartDate] = useState<string>(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
@@ -15,8 +17,8 @@ export default function Reports() {
   const { branches } = useBranch();
 
   const formatPeriodLabel = () => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
     return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
   };
 
@@ -88,44 +90,23 @@ export default function Reports() {
     refetch();
   };
 
-  const handleExportReport = () => {
+  const handleExportReport = (format: 'json' | 'pdf' | 'csv' | 'excel') => {
     if (!reportData) return;
     
-    const reportContent = {
-      filial: reportData.branchName,
-      periodo: reportData.period.label,
-      dataGeracao: new Date().toLocaleDateString('pt-BR'),
-      resumoFinanceiro: {
-        receitas: reportData.financial.totalIncome,
-        despesas: reportData.financial.totalExpenses,
-        investimentos: reportData.financial.totalInvestments,
-        lucroLiquido: reportData.financial.netProfit,
-        receitaAtendimentos: reportData.financial.appointmentRevenue
-      },
-      movimentacaoEstoque: {
-        totalCompras: reportData.stock.summary.totalPurchases,
-        totalVendas: reportData.stock.summary.totalSales,
-        totalMovimentacoes: reportData.stock.summary.totalMovements
-      },
-      profissionais: reportData.professionals.map((item: any) => ({
-        nome: item.professional.name,
-        atendimentos: item.commission.summary.totalAppointments,
-        receita: item.commission.summary.totalRevenue,
-        comissao: item.commission.summary.totalCommission,
-        percentualComissao: item.commission.professional.commissionRate
-      }))
-    };
-
-    const blob = new Blob([JSON.stringify(reportContent, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const branchSlug = reportData.branchName.toLowerCase().replace(/\s+/g, '-');
-    a.download = `relatorio-${branchSlug}-${reportData.period.startDate}-${reportData.period.endDate}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    switch (format) {
+      case 'json':
+        ExportService.exportJSON(reportData);
+        break;
+      case 'pdf':
+        ExportService.exportPDF(reportData);
+        break;
+      case 'csv':
+        ExportService.exportCSV(reportData);
+        break;
+      case 'excel':
+        ExportService.exportExcel(reportData);
+        break;
+    }
   };
 
   return (
@@ -190,10 +171,7 @@ export default function Reports() {
               </Button>
               
               {reportData && (
-                <Button variant="outline" onClick={handleExportReport} className="text-sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
+                <ExportButton onExport={handleExportReport} />
               )}
             </div>
           </div>

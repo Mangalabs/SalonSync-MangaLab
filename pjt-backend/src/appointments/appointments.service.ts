@@ -98,8 +98,29 @@ export class AppointmentsService extends BaseDataService {
     professionalId: string,
     date: string,
   ): Promise<string[]> {
+    // Validar parâmetros
+    if (
+      !professionalId ||
+      professionalId === 'undefined' ||
+      !date ||
+      date === 'undefined'
+    ) {
+      return [];
+    }
+
+    // Validar formato da data
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return [];
+    }
+
     const startDate = new Date(date + 'T00:00:00Z');
     const endDate = new Date(date + 'T23:59:59Z');
+
+    // Verificar se as datas são válidas
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return [];
+    }
 
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {

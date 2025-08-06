@@ -15,16 +15,21 @@ const clientSchema = z.object({
 
 type ClientFormData = z.infer<typeof clientSchema>;
 
-export function ClientForm({ 
-  onSuccess, 
-  initialData 
-}: { 
+export function ClientForm({
+  onSuccess,
+  initialData,
+}: {
   onSuccess: () => void;
-  initialData?: { id: string; name: string; phone?: string; email?: string } | null;
+  initialData?: {
+    id: string;
+    name: string;
+    phone?: string;
+    email?: string;
+  } | null;
 }) {
   const isEditing = !!initialData;
   const queryClient = useQueryClient();
-  
+
   const {
     register,
     handleSubmit,
@@ -32,16 +37,17 @@ export function ClientForm({
     formState: { errors, isSubmitting },
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
-    defaultValues: initialData ? {
-      name: initialData.name,
-      phone: initialData.phone || '',
-      email: initialData.email || ''
-    } : undefined
+    defaultValues: initialData
+      ? {
+          name: initialData.name,
+          phone: initialData.phone || "",
+          email: initialData.email || "",
+        }
+      : undefined,
   });
 
   const mutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
-      console.log('Sending data to backend:', data); // Debug log
       if (isEditing) {
         return axios.patch(`/api/clients/${initialData.id}`, data);
       } else {
@@ -49,7 +55,6 @@ export function ClientForm({
       }
     },
     onSuccess: (response) => {
-      console.log('Client created successfully in frontend:', response.data); // Debug log
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       reset();
       onSuccess();
@@ -57,7 +62,10 @@ export function ClientForm({
   });
 
   return (
-    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+    <form
+      onSubmit={handleSubmit((data) => mutation.mutate(data))}
+      className="space-y-4"
+    >
       <div>
         <Label htmlFor="name">Nome</Label>
         <Input id="name" {...register("name")} />
@@ -77,7 +85,7 @@ export function ClientForm({
         )}
       </div>
       <Button type="submit" disabled={mutation.isPending}>
-        {isSubmitting ? "Salvando..." : (isEditing ? "Atualizar" : "Salvar")}
+        {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}
       </Button>
     </form>
   );

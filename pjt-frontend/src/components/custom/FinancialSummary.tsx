@@ -5,28 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBranch } from "@/contexts/BranchContext";
+import { useFinancial } from "@/contexts/FinancialContext";
 import axios from "@/lib/axios";
 
 export function FinancialSummary() {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const { branches } = useBranch();
+  const { startDate, endDate, branchFilter, setStartDate, setEndDate, setBranchFilter, resetToToday } = useFinancial();
 
   const { data: summary, isLoading } = useQuery({
-    queryKey: ["financial-summary", startDate, endDate],
+    queryKey: ["financial-summary", startDate, endDate, branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
+      if (branchFilter !== "all") params.append("branchId", branchFilter);
       
       const res = await axios.get(`/api/financial/summary?${params}`);
       return res.data;
     },
   });
-
-  const clearFilters = () => {
-    setStartDate("");
-    setEndDate("");
-  };
 
   if (isLoading) return <div className="p-4">Carregando resumo...</div>;
 
@@ -41,32 +40,53 @@ export function FinancialSummary() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-end gap-3">
-            <div className="flex-1 w-full">
-              <Label htmlFor="startDate" className="text-xs sm:text-sm">Data Inicial</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="text-sm h-8"
-              />
-            </div>
+          <div className="space-y-3">
+            {branches.length > 1 && (
+              <div>
+                <Label className="text-xs sm:text-sm">Filial</Label>
+                <Select value={branchFilter} onValueChange={setBranchFilter}>
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as filiais</SelectItem>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
-            <div className="flex-1 w-full">
-              <Label htmlFor="endDate" className="text-xs sm:text-sm">Data Final</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="text-sm h-8"
-              />
+            <div className="flex flex-col sm:flex-row items-end gap-3">
+              <div className="flex-1 w-full">
+                <Label htmlFor="startDate" className="text-xs sm:text-sm">Data Inicial</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-sm h-8"
+                />
+              </div>
+              
+              <div className="flex-1 w-full">
+                <Label htmlFor="endDate" className="text-xs sm:text-sm">Data Final</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-sm h-8"
+                />
+              </div>
+              
+              <Button variant="outline" onClick={resetToToday} className="w-full sm:w-auto text-sm h-8">
+                Hoje
+              </Button>
             </div>
-            
-            <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto text-sm h-8">
-              Limpar
-            </Button>
           </div>
         </CardContent>
       </Card>

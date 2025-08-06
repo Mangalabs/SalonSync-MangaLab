@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useMemo, useEffect } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
+import { useUser } from "@/contexts/UserContext";
 
 import { ShoppingCart } from "lucide-react";
 
@@ -18,6 +20,7 @@ const saleSchema = z.object({
   unitPrice: z.number().min(0.01, "Preço deve ser maior que 0"),
   clientId: z.string().optional(),
   notes: z.string().optional(),
+  soldById: z.string().optional(),
 });
 
 type SaleFormData = z.infer<typeof saleSchema>;
@@ -28,6 +31,7 @@ interface ProductSaleFormProps {
 
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const queryClient = useQueryClient();
+  const { user, isAdmin, isProfessional } = useUser();
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
@@ -45,6 +49,14 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     },
   });
 
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals"],
+    queryFn: async () => {
+      const res = await axios.get("/api/professionals");
+      return res.data;
+    },
+  });
+
   const {
     register,
     handleSubmit,
@@ -54,6 +66,21 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   } = useForm<SaleFormData>({
     resolver: zodResolver(saleSchema),
   });
+
+  // Auto-selecionar profissional se for funcionário (não admin)
+  const currentProfessionalId = useMemo(() => {
+    if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
+      const currentProfessional = professionals.find(p => p.name === user.name);
+      return currentProfessional?.id || "";
+    }
+    return "";
+  }, [isProfessional, isAdmin, user?.name, professionals]);
+  
+  useEffect(() => {
+    if (currentProfessionalId) {
+      setValue('soldById', currentProfessionalId);
+    }
+  }, [currentProfessionalId, setValue]);
 
   const selectedProductId = watch("productId");
   const quantity = watch("quantity") || 0;
@@ -83,6 +110,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         unitCost: data.unitPrice,
         reason: `Venda de produto${clientName ? ` - Cliente: ${clientName}` : ""}${data.notes ? ` - ${data.notes}` : ""}`,
         reference: clientName ? `Cliente: ${clientName}` : undefined,
+        soldById: data.soldById,
       };
       
       const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData);
@@ -194,6 +222,35 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
               R$ {total.toFixed(2)}
             </span>
           </div>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div>
+          <Label htmlFor="soldById">Vendedor</Label>
+          <Select onValueChange={(value) => setValue("soldById", value)} defaultValue={currentProfessionalId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o vendedor" />
+            </SelectTrigger>
+            <SelectContent>
+              {professionals.map((professional: any) => (
+                <SelectItem key={professional.id} value={professional.id}>
+                  {professional.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {!isAdmin && (
+        <div>
+          <Label>Vendedor</Label>
+          <Input
+            value={professionals.find(p => p.id === currentProfessionalId)?.name || user?.name || ""}
+            readOnly
+            className="bg-[#F5F5F0] cursor-not-allowed"
+          />
         </div>
       )}
 

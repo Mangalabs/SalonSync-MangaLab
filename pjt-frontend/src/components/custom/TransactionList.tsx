@@ -6,6 +6,7 @@ import { Trash2, Calendar, CreditCard } from "lucide-react";
 
 import axios from "@/lib/axios";
 import { toast } from "sonner";
+import { useFinancial } from "@/contexts/FinancialContext";
 
 interface TransactionListProps {
   type: "INCOME" | "EXPENSE" | "INVESTMENT";
@@ -13,11 +14,18 @@ interface TransactionListProps {
 
 export function TransactionList({ type }: TransactionListProps) {
   const queryClient = useQueryClient();
+  const { startDate, endDate, branchFilter } = useFinancial();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["transactions", type],
+    queryKey: ["transactions", type, startDate, endDate, branchFilter],
     queryFn: async () => {
-      const res = await axios.get(`/api/financial/transactions?type=${type}`);
+      const params = new URLSearchParams();
+      params.append("type", type);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      
+      const res = await axios.get(`/api/financial/transactions?${params}`);
       return res.data;
     },
   });

@@ -13,6 +13,7 @@ import {
   UserCheck,
   DollarSign,
   ShoppingCart,
+  MessageSquare,
   X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -48,6 +49,7 @@ const getNavItems = (userRole: string) => {
   
   const adminItems = [
     { to: "/dashboard/professionals", icon: Users, label: "Profissionais", roles: ["ADMIN"] },
+    { to: "/dashboard/whatsapp", icon: MessageSquare, label: "WhatsApp", roles: ["ADMIN"] },
     { to: "/dashboard/financial", icon: DollarSign, label: "Financeiro", roles: ["ADMIN"] },
     { to: "/dashboard/reports", icon: BarChart2, label: "Relatórios", roles: ["ADMIN"] },
     { to: "/dashboard/settings", icon: Settings, label: "Configurações", roles: ["ADMIN", "PROFESSIONAL"] },
@@ -110,35 +112,31 @@ export function Sidebar() {
           Dashboard
         </NavLink>
 
-        {!isAdmin && (
-          <>
-            <NavLink
-              to="/dashboard/appointments"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                  isActive ? "bg-white/20 font-semibold" : ""
-                }`
-              }
-            >
-              <Calendar size={18} />
-              Agendamentos
-            </NavLink>
+        <NavLink
+          to="/dashboard/appointments"
+          onClick={handleNavClick}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              isActive ? "bg-white/20 font-semibold" : ""
+            }`
+          }
+        >
+          <Calendar size={18} />
+          Agendamentos
+        </NavLink>
 
-            <NavLink
-              to="/dashboard/treatments"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                  isActive ? "bg-white/20 font-semibold" : ""
-                }`
-              }
-            >
-              <CheckSquare size={18} />
-              Atendimentos
-            </NavLink>
-          </>
-        )}
+        <NavLink
+          to="/dashboard/treatments"
+          onClick={handleNavClick}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
+              isActive ? "bg-white/20 font-semibold" : ""
+            }`
+          }
+        >
+          <CheckSquare size={18} />
+          Atendimentos
+        </NavLink>
 
         {navItems.filter(item => item.to !== "/dashboard").map(({ to, icon: Icon, label }) => (
           <NavLink
@@ -158,26 +156,22 @@ export function Sidebar() {
       </div>
 
       <div className="mt-4 space-y-2">
-        {!isAdmin && (
-          <>
-            <Button
-              onClick={() => setShowScheduledForm(true)}
-              className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-xs sm:text-sm py-2 h-8"
-            >
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Novo Agendamento</span>
-              <span className="sm:hidden">Agendar</span>
-            </Button>
-            <Button
-              onClick={() => setShowImmediateForm(true)}
-              className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-xs sm:text-sm py-2 h-8"
-            >
-              <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Novo Atendimento</span>
-              <span className="sm:hidden">Atender</span>
-            </Button>
-          </>
-        )}
+        <Button
+          onClick={() => setShowScheduledForm(true)}
+          className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-xs sm:text-sm py-2 h-8"
+        >
+          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Novo Agendamento</span>
+          <span className="sm:hidden">Agendar</span>
+        </Button>
+        <Button
+          onClick={() => setShowImmediateForm(true)}
+          className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-xs sm:text-sm py-2 h-8"
+        >
+          <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Novo Atendimento</span>
+          <span className="sm:hidden">Atender</span>
+        </Button>
         
         <Button
           onClick={() => setShowSaleForm(true)}
@@ -223,7 +217,7 @@ export function Sidebar() {
       </Dialog>
 
       <div className="mt-3 space-y-2 border-t border-white/20 pt-3">
-        {isAdmin && branches.length > 1 && (
+        {branches.length > 1 && (
           <div>
             <label className="text-xs text-white/70 mb-1 block">
               Filial Ativa
