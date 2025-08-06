@@ -99,7 +99,12 @@ export class AppointmentsService extends BaseDataService {
     date: string,
   ): Promise<string[]> {
     // Validar parâmetros
-    if (!professionalId || professionalId === 'undefined' || !date || date === 'undefined') {
+    if (
+      !professionalId ||
+      professionalId === 'undefined' ||
+      !date ||
+      date === 'undefined'
+    ) {
       return [];
     }
 

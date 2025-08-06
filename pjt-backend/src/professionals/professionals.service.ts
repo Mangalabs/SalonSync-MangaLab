@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Professional } from '@/generated/client';
+import { Professional } from '@prisma/client';
 import {
   BaseDataService,
   UserContext,
