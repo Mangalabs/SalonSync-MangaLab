@@ -20,6 +20,11 @@ export class UpdateProfessionalDto {
   @IsString()
   role?: string;
 
+  @ApiPropertyOptional({ description: 'ID da função customizada' })
+  @IsOptional()
+  @IsString()
+  roleId?: string;
+
   @ApiPropertyOptional({ description: 'Status ativo do profissional' })
   @IsOptional()
   @IsBoolean()

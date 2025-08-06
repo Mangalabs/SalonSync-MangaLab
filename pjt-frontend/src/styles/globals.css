@@ -23,4 +23,28 @@
   .mobile-hidden {
     @apply hidden;
   }
+  
+  /* Cards responsivos */
+  .card {
+    @apply mb-4;
+  }
+  
+  /* Tabelas responsivas */
+  .table-container {
+    @apply overflow-x-auto;
+  }
+  
+  /* Formulários responsivos */
+  .form-grid {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  /* Botões responsivos */
+  .button-group {
+    @apply flex-col gap-2;
+  }
+  
+  .button-group .button {
+    @apply w-full;
+  }
 }

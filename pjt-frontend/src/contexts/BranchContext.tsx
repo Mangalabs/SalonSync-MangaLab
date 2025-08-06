@@ -68,6 +68,9 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryClient.invalidateQueries({ queryKey: ["appointments"] });
     queryClient.invalidateQueries({ queryKey: ["products"] });
     queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["whatsapp-messages"] });
+    queryClient.invalidateQueries({ queryKey: ["whatsapp-config"] });
 
     console.log("✅ Branch changed and queries invalidated");
   };

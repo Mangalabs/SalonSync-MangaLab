@@ -19,6 +19,7 @@ model User {
   isSuperAdmin Boolean @default(false)
   branches    Branch[]
   services    Service[]
+  stockMovements StockMovement[]
   createdAt   DateTime @default(now())
 }
 
@@ -32,6 +33,7 @@ model Branch {
   ownerId     String
   owner       User   @relation(fields: [ownerId], references: [id])
   
+  roles         Role[]
   professionals Professional[]
   services      Service[]
   clients       Client[]
@@ -40,8 +42,22 @@ model Branch {
   stockMovements StockMovement[]
   expenseCategories ExpenseCategory[]
   financialTransactions FinancialTransaction[]
+  whatsappConfigs WhatsAppConfig[]
+  whatsappMessages WhatsAppMessage[]
+  whatsappConversations WhatsAppConversation[]
   
   createdAt   DateTime @default(now())
+}
+
+model Role {
+  id             String         @id @default(uuid())
+  title          String
+  commissionRate Decimal        @default(0) @db.Decimal(5, 2)
+  branchId       String
+  branch         Branch         @relation(fields: [branchId], references: [id])
+  professionals  Professional[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model Professional {
@@ -50,6 +66,8 @@ model Professional {
   role             String
   active           Boolean       @default(true)
   commissionRate   Decimal       @default(0) @db.Decimal(5, 2)
+  roleId           String?
+  customRole       Role?         @relation(fields: [roleId], references: [id])
   branchId         String
   branch           Branch        @relation(fields: [branchId], references: [id])
   services         Service[]     @relation("ProfessionalServices")
@@ -138,6 +156,8 @@ model StockMovement {
   product     Product           @relation(fields: [productId], references: [id])
   branchId    String
   branch      Branch            @relation(fields: [branchId], references: [id])
+  userId      String?
+  user        User?             @relation(fields: [userId], references: [id])
   type        StockMovementType
   quantity    Int
   unitCost    Decimal?          @db.Decimal(10, 2)
@@ -193,4 +213,47 @@ enum PaymentMethod {
   PIX         // PIX
   TRANSFER    // Transferência
   OTHER       // Outros
+}
+
+model WhatsAppConfig {
+  id                 String   @id @default(uuid())
+  branchId           String
+  accountSid         String
+  authTokenEncrypted String
+  whatsappNumber     String
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppMessage {
+  id          String   @id @default(uuid())
+  branchId    String
+  messageSid  String   @unique
+  from        String
+  to          String
+  body        String
+  status      String
+  direction   String   // 'inbound' ou 'outbound'
+  createdAt   DateTime @default(now())
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppConversation {
+  id              String   @id @default(uuid())
+  branchId        String
+  phoneNumber     String   // Número do cliente
+  currentStep     String   @default("GREETING") // GREETING, BRANCH_SELECT, PROFESSIONAL_SELECT, SERVICE_SELECT, TIME_SELECT, CONFIRM
+  selectedData    Json?    // Dados selecionados durante a conversa
+  lastMessageAt   DateTime @default(now())
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, phoneNumber])
 }

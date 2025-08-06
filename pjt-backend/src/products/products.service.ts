@@ -161,7 +161,7 @@ export class ProductsService {
   ): Promise<{ product: Product; movement: StockMovement }> {
     const product = await this.findOne(id, branchId);
 
-    const { quantity, type, reason, reference, unitCost } = adjustStockDto;
+    const { quantity, type, reason, reference, unitCost, soldById } = adjustStockDto;
 
     // Calculate new stock level
     let newStock = product.currentStock;
@@ -215,6 +215,7 @@ export class ProductsService {
         data: {
           product: { connect: { id } },
           branch: { connect: { id: branchId } },
+          user: (soldById || userId) ? { connect: { id: soldById || userId } } : undefined,
           type: movementType,
           quantity,
           reason,
@@ -236,6 +237,12 @@ export class ProductsService {
       where: { branchId },
       include: {
         product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        user: {
           select: {
             id: true,
             name: true,

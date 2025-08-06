@@ -140,6 +140,8 @@ export class AuthService {
     password: string;
     name: string;
     role: string;
+    roleId?: string;
+    commissionRate?: number;
     branchId: string;
   }) {
     const existingUser = await this.prisma.user.findUnique({
@@ -156,11 +158,11 @@ export class AuthService {
         email: data.email,
         password: hashedPassword,
         name: data.name,
-        role: data.role,
+        role: 'PROFESSIONAL',
       },
     });
 
-    // Verificar se a filial existe e pertence ao usuário correto
+    // Verificar se a filial existe
     const branch = await this.prisma.branch.findUnique({
       where: { id: data.branchId },
     });
@@ -173,9 +175,10 @@ export class AuthService {
     await this.prisma.professional.create({
       data: {
         name: data.name,
-        role: 'Profissional',
+        role: data.role || 'Profissional',
         branchId: data.branchId,
-        commissionRate: 10, // Taxa padrão de 10%
+        commissionRate: data.commissionRate || 0,
+        roleId: data.roleId,
       },
     });
 
@@ -228,6 +231,6 @@ export class AuthService {
 
   private generateToken(userId: string): string {
     const secret = this.config.get<string>('JWT_SECRET') || 'secret';
-    return jwt.sign({ sub: userId }, secret, { expiresIn: '1h' });
+    return jwt.sign({ sub: userId }, secret, { expiresIn: '8h' });
   }
 }

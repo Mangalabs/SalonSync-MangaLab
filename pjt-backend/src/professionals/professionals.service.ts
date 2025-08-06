@@ -25,6 +25,9 @@ export class ProfessionalsService extends BaseDataService {
         branch: {
           select: { name: true },
         },
+        customRole: {
+          select: { id: true, title: true, commissionRate: true },
+        },
       },
     });
   }
@@ -55,7 +58,10 @@ export class ProfessionalsService extends BaseDataService {
     });
   }
 
-  async update(id: string, data: Partial<Professional>): Promise<Professional> {
+  async update(
+    id: string,
+    data: Partial<Professional & { roleId?: string }>,
+  ): Promise<Professional> {
     return this.prisma.professional.update({ where: { id }, data });
   }
 

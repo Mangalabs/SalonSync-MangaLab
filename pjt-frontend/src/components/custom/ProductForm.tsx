@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
@@ -13,8 +13,10 @@ import { toast } from "sonner";
 const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   category: z.string().min(1, "Categoria é obrigatória"),
+  unit: z.string().min(1, "Unidade é obrigatória"),
   brand: z.string().optional(),
-  unit: z.string().default("un"),
+  costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0").optional(),
+  salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0").optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -25,6 +27,8 @@ interface Product {
   category?: string;
   brand?: string;
   unit?: string;
+  costPrice?: number;
+  salePrice?: number;
   currentStock?: number;
 }
 
@@ -50,10 +54,14 @@ export function ProductForm({
       name: initialData.name,
       category: initialData.category || 'Geral',
       brand: initialData.brand || '',
-      unit: initialData.unit || 'un'
+      unit: initialData.unit || 'un',
+      costPrice: initialData.costPrice || 0,
+      salePrice: initialData.salePrice || 0
     } : {
       category: 'Geral',
-      unit: 'un'
+      unit: 'un',
+      costPrice: 0,
+      salePrice: 0
     }
   });
 
@@ -110,10 +118,48 @@ export function ProductForm({
         </p>
       </div>
       
-      <div className="bg-blue-50 p-3 rounded-md">
-        <p className="text-sm text-blue-700">
-          💡 <strong>Dica:</strong> Após criar o produto, você poderá gerenciar o estoque na aba "Estoque" - 
-          adicionar quantidades, definir estoque mínimo e acompanhar movimentações.
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
+          <Input 
+            id="costPrice" 
+            type="number" 
+            step="0.01" 
+            min="0"
+            {...register("costPrice", { valueAsNumber: true })} 
+            placeholder="0,00" 
+          />
+          {errors.costPrice && (
+            <p className="text-sm text-red-500">{errors.costPrice.message}</p>
+          )}
+          <p className="text-xs text-[#737373] mt-1">
+            Quanto você paga pelo produto
+          </p>
+        </div>
+        
+        <div>
+          <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
+          <Input 
+            id="salePrice" 
+            type="number" 
+            step="0.01" 
+            min="0"
+            {...register("salePrice", { valueAsNumber: true })} 
+            placeholder="0,00" 
+          />
+          {errors.salePrice && (
+            <p className="text-sm text-red-500">{errors.salePrice.message}</p>
+          )}
+          <p className="text-xs text-[#737373] mt-1">
+            Preço usado nas vendas
+          </p>
+        </div>
+      </div>
+      
+      <div className="bg-[#D4AF37]/10 p-3 rounded-md border border-[#D4AF37]/20">
+        <p className="text-sm text-[#8B4513]">
+          💡 <strong>Dica:</strong> O preço de venda será usado automaticamente nas vendas. 
+          Você pode alterá-lo a qualquer momento editando o produto.
         </p>
       </div>
       
