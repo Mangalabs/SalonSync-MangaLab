@@ -10,8 +10,9 @@ export class WhatsAppService {
 
   constructor(private prisma: PrismaService) {}
 
+  //TODO: Refactor de repetição de código entre funções
   private encrypt(text: string): string {
-    const algorithm = 'aes-256-cbc';
+    const algorithm = 'aes-256-cbc'; //TODO: Mover para .env
     const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -21,7 +22,7 @@ export class WhatsAppService {
   }
 
   private decrypt(encryptedText: string): string {
-    const algorithm = 'aes-256-cbc';
+    const algorithm = 'aes-256-cbc'; //TODO: Mover para .env
     const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
     const [ivHex, encrypted] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
