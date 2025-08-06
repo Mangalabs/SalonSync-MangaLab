@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Professional } from '../../prisma/generated/client';
+import { Professional } from '@prisma/client';
 import {
   BaseDataService,
   UserContext,
