@@ -16,7 +16,7 @@ export function ClientSelector({ control, clients, errors }: ClientSelectorProps
         <Label className="text-sm">Cliente</Label>
         <NavLink
           to="/dashboard/clients"
-          className="text-xs sm:text-sm text-blue-200 hover:underline"
+          className="text-xs sm:text-sm text-blue-600 hover:underline"
         >
           + Cliente
         </NavLink>
