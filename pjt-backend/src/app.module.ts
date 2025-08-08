@@ -17,6 +17,7 @@ import { RolesModule } from './roles/roles.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { BaseDataService } from './common/services/base-data.service';
     ProductsModule,
     InventoryModule,
     FinancialModule,
+    AiModule,
     WhatsAppModule,
   ],
   controllers: [AppController],
