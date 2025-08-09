@@ -22,7 +22,6 @@ export function DashboardStats({
 
   return (
     <div className="space-y-3">
-      {/* Card Receitas */}
       <Card className="cursor-pointer" onClick={() => toggleCard("revenue")}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Receitas</CardTitle>

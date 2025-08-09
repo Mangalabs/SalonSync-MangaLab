@@ -24,7 +24,7 @@ export function TransactionList({ type }: TransactionListProps) {
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       if (branchFilter !== "all") params.append("branchId", branchFilter);
-      
+
       const res = await axios.get(`/api/financial/transactions?${params}`);
       return res.data;
     },
@@ -46,9 +46,12 @@ export function TransactionList({ type }: TransactionListProps) {
 
   const getTypeColor = () => {
     switch (type) {
-      case "INCOME": return "bg-green-100 text-green-800";
-      case "EXPENSE": return "bg-red-100 text-red-800";
-      case "INVESTMENT": return "bg-blue-100 text-blue-800";
+      case "INCOME":
+        return "bg-green-100 text-green-800";
+      case "EXPENSE":
+        return "bg-red-100 text-red-800";
+      case "INVESTMENT":
+        return "bg-blue-100 text-blue-800";
     }
   };
 
@@ -58,7 +61,7 @@ export function TransactionList({ type }: TransactionListProps) {
       CARD: "Cartão",
       PIX: "PIX",
       TRANSFER: "Transferência",
-      OTHER: "Outros"
+      OTHER: "Outros",
     };
     return labels[method as keyof typeof labels] || method;
   };
@@ -80,7 +83,6 @@ export function TransactionList({ type }: TransactionListProps) {
       {transactions.map((transaction: any) => (
         <Card key={transaction.id}>
           <CardContent className="p-3 md:p-4">
-            {/* Desktop Layout */}
             <div className="hidden md:flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -89,32 +91,37 @@ export function TransactionList({ type }: TransactionListProps) {
                     {transaction.category.name}
                   </Badge>
                 </div>
-                
+
                 <div className="flex items-center gap-4 text-sm text-[#737373]">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {new Date(transaction.date).toLocaleDateString("pt-BR")}
                   </div>
-                  
+
                   <div className="flex items-center gap-1">
                     <CreditCard className="h-4 w-4" />
                     {getPaymentMethodLabel(transaction.paymentMethod)}
                   </div>
-                  
+
                   {transaction.reference && (
                     <span>Ref: {transaction.reference}</span>
                   )}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
-                <div className={`text-lg font-semibold ${
-                  type === "INCOME" ? "text-[#D4AF37]" : 
-                  type === "EXPENSE" ? "text-red-600" : "text-blue-600"
-                }`}>
+                <div
+                  className={`text-lg font-semibold ${
+                    type === "INCOME"
+                      ? "text-[#D4AF37]"
+                      : type === "EXPENSE"
+                      ? "text-red-600"
+                      : "text-blue-600"
+                  }`}
+                >
                   R$ {Number(transaction.amount).toFixed(2)}
                 </div>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -127,24 +134,32 @@ export function TransactionList({ type }: TransactionListProps) {
               </div>
             </div>
 
-            {/* Mobile Layout */}
             <div className="md:hidden">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm truncate">{transaction.description}</h3>
-                  <Badge className={`${getTypeColor()} text-xs mt-1 inline-block`}>
+                  <h3 className="font-medium text-sm truncate">
+                    {transaction.description}
+                  </h3>
+                  <Badge
+                    className={`${getTypeColor()} text-xs mt-1 inline-block`}
+                  >
                     {transaction.category.name}
                   </Badge>
                 </div>
-                
+
                 <div className="flex items-center gap-2 ml-2">
-                  <div className={`text-sm font-semibold ${
-                    type === "INCOME" ? "text-[#D4AF37]" : 
-                    type === "EXPENSE" ? "text-red-600" : "text-blue-600"
-                  }`}>
+                  <div
+                    className={`text-sm font-semibold ${
+                      type === "INCOME"
+                        ? "text-[#D4AF37]"
+                        : type === "EXPENSE"
+                        ? "text-red-600"
+                        : "text-blue-600"
+                    }`}
+                  >
                     R$ {Number(transaction.amount).toFixed(2)}
                   </div>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -156,18 +171,18 @@ export function TransactionList({ type }: TransactionListProps) {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="flex flex-wrap gap-2 text-xs text-[#737373]">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {new Date(transaction.date).toLocaleDateString("pt-BR")}
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <CreditCard className="h-3 w-3" />
                   {getPaymentMethodLabel(transaction.paymentMethod)}
                 </div>
-                
+
                 {transaction.reference && (
                   <span>Ref: {transaction.reference}</span>
                 )}
