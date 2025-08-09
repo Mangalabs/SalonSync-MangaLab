@@ -6,7 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({ origin: 'https://salonsync.mangalab.io/' });
+  app.enableCors({ origin: 'https://mangalab.io' });
 
   app.setGlobalPrefix('api');
 
