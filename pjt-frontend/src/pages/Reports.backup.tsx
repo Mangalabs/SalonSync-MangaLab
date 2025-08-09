@@ -10,16 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, DollarSign, User, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import {
+  Calendar,
+  DollarSign,
+  User,
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+} from "lucide-react";
 import axios from "@/lib/axios";
 
-type PeriodType = 'today' | 'week' | 'month' | 'year';
+type PeriodType = "today" | "week" | "month" | "year";
 
 export default function Reports() {
   const [selectedProfessional, setSelectedProfessional] = useState<string>("");
-  const [periodType, setPeriodType] = useState<PeriodType>('month');
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [periodType, setPeriodType] = useState<PeriodType>("month");
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    new Date().toISOString().slice(0, 7)
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    new Date().getFullYear().toString()
+  );
 
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals"],
@@ -32,46 +43,52 @@ export default function Reports() {
   const getDateRange = () => {
     const now = new Date();
     let startDate: string, endDate: string;
-    
+
     switch (periodType) {
-      case 'today':
-        startDate = endDate = now.toISOString().split('T')[0];
+      case "today":
+        startDate = endDate = now.toISOString().split("T")[0];
         break;
-      case 'week':
+      case "week":
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
-        startDate = weekStart.toISOString().split('T')[0];
-        endDate = weekEnd.toISOString().split('T')[0];
+        startDate = weekStart.toISOString().split("T")[0];
+        endDate = weekEnd.toISOString().split("T")[0];
         break;
-      case 'month':
-        const [year, month] = selectedMonth.split('-');
+      case "month":
+        const [year, month] = selectedMonth.split("-");
         startDate = `${year}-${month}-01`;
         const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-        endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+        endDate = `${year}-${month}-${lastDay.toString().padStart(2, "0")}`;
         break;
-      case 'year':
+      case "year":
         startDate = `${selectedYear}-01-01`;
         endDate = `${selectedYear}-12-31`;
         break;
       default:
-        startDate = endDate = now.toISOString().split('T')[0];
+        startDate = endDate = now.toISOString().split("T")[0];
     }
-    
+
     return { startDate, endDate };
   };
 
   const { data: commissionData, refetch: refetchCommission } = useQuery({
-    queryKey: ["commission", selectedProfessional, periodType, selectedMonth, selectedYear],
+    queryKey: [
+      "commission",
+      selectedProfessional,
+      periodType,
+      selectedMonth,
+      selectedYear,
+    ],
     queryFn: async () => {
       if (!selectedProfessional) return null;
-      
+
       const { startDate, endDate } = getDateRange();
       const params = new URLSearchParams();
       params.append("startDate", startDate);
       params.append("endDate", endDate);
-      
+
       const res = await axios.get(
         `/api/professionals/${selectedProfessional}/commission?${params}`
       );
@@ -87,7 +104,7 @@ export default function Reports() {
       const params = new URLSearchParams();
       params.append("startDate", startDate);
       params.append("endDate", endDate);
-      
+
       const res = await axios.get(`/api/financial/summary?${params}`);
       return res.data;
     },
@@ -117,7 +134,10 @@ export default function Reports() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="professional">Profissional</Label>
-              <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
+              <Select
+                value={selectedProfessional}
+                onValueChange={setSelectedProfessional}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -133,7 +153,10 @@ export default function Reports() {
 
             <div>
               <Label htmlFor="period">Período</Label>
-              <Select value={periodType} onValueChange={(value: PeriodType) => setPeriodType(value)}>
+              <Select
+                value={periodType}
+                onValueChange={(value: PeriodType) => setPeriodType(value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -146,7 +169,7 @@ export default function Reports() {
               </Select>
             </div>
 
-            {periodType === 'month' && (
+            {periodType === "month" && (
               <div>
                 <Label htmlFor="month">Mês/Ano</Label>
                 <input
@@ -159,7 +182,7 @@ export default function Reports() {
               </div>
             )}
 
-            {periodType === 'year' && (
+            {periodType === "year" && (
               <div>
                 <Label htmlFor="year">Ano</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -184,10 +207,10 @@ export default function Reports() {
               <Button onClick={handleGenerateReport} className="flex-1">
                 Gerar Relatório
               </Button>
-              
+
               {(financialData || commissionData) && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => window.print()}
                   className="px-4"
                 >
@@ -199,28 +222,38 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Cabeçalho do Relatório */}
       {(financialData || commissionData) && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Relatório {periodType === 'today' ? 'Diário' : 
-                           periodType === 'week' ? 'Semanal' : 
-                           periodType === 'month' ? 'Mensal' : 'Anual'}
+                  Relatório{" "}
+                  {periodType === "today"
+                    ? "Diário"
+                    : periodType === "week"
+                    ? "Semanal"
+                    : periodType === "month"
+                    ? "Mensal"
+                    : "Anual"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Período: {periodType === 'month' ? 
-                    new Date(selectedMonth + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) :
-                    periodType === 'year' ? selectedYear :
-                    periodType === 'today' ? 'Hoje' : 'Esta Semana'
-                  }
+                  Período:{" "}
+                  {periodType === "month"
+                    ? new Date(selectedMonth + "-01").toLocaleDateString(
+                        "pt-BR",
+                        { month: "long", year: "numeric" }
+                      )
+                    : periodType === "year"
+                    ? selectedYear
+                    : periodType === "today"
+                    ? "Hoje"
+                    : "Esta Semana"}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">
-                  Gerado em: {new Date().toLocaleDateString('pt-BR')}
+                  Gerado em: {new Date().toLocaleDateString("pt-BR")}
                 </p>
                 {selectedProfessional && commissionData && (
                   <p className="text-sm font-medium text-gray-700">
@@ -233,7 +266,6 @@ export default function Reports() {
         </Card>
       )}
 
-      {/* Resumo Financeiro Geral */}
       {financialData && (
         <div className="space-y-6">
           <h3 className="text-lg font-semibold">Resumo Financeiro</h3>
@@ -248,7 +280,8 @@ export default function Reports() {
                   R$ {financialData.totalIncome?.toFixed(2) || "0,00"}
                 </div>
                 <p className="text-xs text-[#737373]">
-                  Atendimentos: R$ {financialData.appointmentRevenue?.toFixed(2) || "0,00"}
+                  Atendimentos: R${" "}
+                  {financialData.appointmentRevenue?.toFixed(2) || "0,00"}
                 </p>
               </CardContent>
             </Card>
@@ -262,15 +295,15 @@ export default function Reports() {
                 <div className="text-2xl font-bold text-red-600">
                   R$ {financialData.totalExpenses?.toFixed(2) || "0,00"}
                 </div>
-                <p className="text-xs text-[#737373]">
-                  Gastos operacionais
-                </p>
+                <p className="text-xs text-[#737373]">Gastos operacionais</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Investimentos</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Investimentos
+                </CardTitle>
                 <PiggyBank className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
@@ -285,15 +318,25 @@ export default function Reports() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
-                <DollarSign className={`h-4 w-4 ${
-                  (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
-                }`} />
+                <CardTitle className="text-sm font-medium">
+                  Lucro Líquido
+                </CardTitle>
+                <DollarSign
+                  className={`h-4 w-4 ${
+                    (financialData.netProfit || 0) >= 0
+                      ? "text-[#D4AF37]"
+                      : "text-red-600"
+                  }`}
+                />
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${
-                  (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
-                }`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    (financialData.netProfit || 0) >= 0
+                      ? "text-[#D4AF37]"
+                      : "text-red-600"
+                  }`}
+                >
                   R$ {financialData.netProfit?.toFixed(2) || "0,00"}
                 </div>
                 <p className="text-xs text-[#737373]">
@@ -305,29 +348,32 @@ export default function Reports() {
         </div>
       )}
 
-      {/* Comissões por Profissional */}
       {commissionData && (
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold">Comissões - {commissionData.professional.name}</h3>
+          <h3 className="text-lg font-semibold">
+            Comissões - {commissionData.professional.name}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Atendimentos
+                </CardTitle>
                 <User className="h-4 w-4 text-[#737373]" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-[#1A1A1A]">
                   {commissionData.summary.totalAppointments}
                 </div>
-                <p className="text-xs text-[#737373]">
-                  No período selecionado
-                </p>
+                <p className="text-xs text-[#737373]">No período selecionado</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Receita Gerada</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Receita Gerada
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-[#737373]" />
               </CardHeader>
               <CardContent>
@@ -358,7 +404,6 @@ export default function Reports() {
         </div>
       )}
 
-      {/* Análise Comparativa */}
       {financialData && commissionData && (
         <Card>
           <CardHeader>
@@ -374,35 +419,55 @@ export default function Reports() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Margem de Lucro</span>
-                    <span className={`font-medium ${
-                      (financialData.netProfit || 0) >= 0 ? "text-[#D4AF37]" : "text-red-600"
-                    }`}>
-                      {financialData.totalIncome ? 
-                        ((financialData.netProfit / financialData.totalIncome) * 100).toFixed(1) 
-                        : "0"}%
+                    <span
+                      className={`font-medium ${
+                        (financialData.netProfit || 0) >= 0
+                          ? "text-[#D4AF37]"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {financialData.totalIncome
+                        ? (
+                            (financialData.netProfit /
+                              financialData.totalIncome) *
+                            100
+                          ).toFixed(1)
+                        : "0"}
+                      %
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Eficiência Operacional</span>
                     <span className="font-medium">
-                      {financialData.totalIncome && financialData.totalExpenses ? 
-                        ((financialData.totalIncome / financialData.totalExpenses) * 100).toFixed(0) 
-                        : "0"}%
+                      {financialData.totalIncome && financialData.totalExpenses
+                        ? (
+                            (financialData.totalIncome /
+                              financialData.totalExpenses) *
+                            100
+                          ).toFixed(0)
+                        : "0"}
+                      %
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm">ROI Investimentos</span>
                     <span className="font-medium text-blue-600">
-                      {financialData.totalInvestments && financialData.totalInvestments > 0 ? 
-                        ((financialData.netProfit / financialData.totalInvestments) * 100).toFixed(1) 
-                        : "0"}%
+                      {financialData.totalInvestments &&
+                      financialData.totalInvestments > 0
+                        ? (
+                            (financialData.netProfit /
+                              financialData.totalInvestments) *
+                            100
+                          ).toFixed(1)
+                        : "0"}
+                      %
                     </span>
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <h4 className="font-medium">Distribuição de Custos</h4>
                 <div className="space-y-3">
@@ -412,21 +477,30 @@ export default function Reports() {
                       R$ {commissionData.summary.totalCommission.toFixed(2)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm">% da Receita em Comissões</span>
                     <span className="font-medium">
-                      {financialData.appointmentRevenue ? 
-                        ((commissionData.summary.totalCommission / financialData.appointmentRevenue) * 100).toFixed(1) 
-                        : "0"}%
+                      {financialData.appointmentRevenue
+                        ? (
+                            (commissionData.summary.totalCommission /
+                              financialData.appointmentRevenue) *
+                            100
+                          ).toFixed(1)
+                        : "0"}
+                      %
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Receita por Atendimento</span>
                     <span className="font-medium">
-                      R$ {commissionData.summary.totalAppointments > 0 ? 
-                        (commissionData.summary.totalRevenue / commissionData.summary.totalAppointments).toFixed(2) 
+                      R${" "}
+                      {commissionData.summary.totalAppointments > 0
+                        ? (
+                            commissionData.summary.totalRevenue /
+                            commissionData.summary.totalAppointments
+                          ).toFixed(2)
                         : "0,00"}
                     </span>
                   </div>
@@ -437,7 +511,6 @@ export default function Reports() {
         </Card>
       )}
 
-      {/* Detalhamento Diário */}
       {commissionData && commissionData.dailyCommissions.length > 0 && (
         <Card>
           <CardHeader>

@@ -19,10 +19,7 @@ const userSchema = z.object({
   phone: z.string().optional(),
 });
 
-
-
 type UserFormData = z.infer<typeof userSchema>;
-
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -36,16 +33,12 @@ export default function Settings() {
     },
   });
 
-
-
   const userForm = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     values: {
       phone: user?.phone || "",
     },
   });
-
-
 
   const updateUser = useMutation({
     mutationFn: async (data: UserFormData) => {
@@ -56,20 +49,18 @@ export default function Settings() {
     },
   });
 
-
-
   const onUserSubmit = (data: UserFormData) => {
     updateUser.mutate(data);
   };
-
-
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
         <p className="text-[#737373]">
-          {isAdmin ? "Gerencie seu perfil, filiais e funcionários" : "Gerencie seus dados pessoais"}
+          {isAdmin
+            ? "Gerencie seu perfil, filiais e funcionários"
+            : "Gerencie seus dados pessoais"}
         </p>
       </div>
 
@@ -94,7 +85,10 @@ export default function Settings() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
+                <form
+                  onSubmit={userForm.handleSubmit(onUserSubmit)}
+                  className="space-y-4"
+                >
                   <div>
                     <Label htmlFor="phone">Telefone</Label>
                     <Input
@@ -116,20 +110,33 @@ export default function Settings() {
                     {updateUser.isPending ? "Salvando..." : "Salvar Alterações"}
                   </Button>
                 </form>
-                
+
                 <div className="mt-6 pt-6 border-t">
-                  <h4 className="font-medium text-gray-900 mb-3">Dados Fixos</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Dados Fixos
+                  </h4>
                   <div className="space-y-2 text-sm text-gray-600">
-                    <p><strong>Nome:</strong> {user?.name || 'Não informado'}</p>
-                    <p><strong>Email:</strong> {user?.email}</p>
+                    <p>
+                      <strong>Nome:</strong> {user?.name || "Não informado"}
+                    </p>
+                    <p>
+                      <strong>Email:</strong> {user?.email}
+                    </p>
                     {isAdmin ? (
-                      <p><strong>Empresa:</strong> {user?.businessName || 'Não informado'}</p>
+                      <p>
+                        <strong>Empresa:</strong>{" "}
+                        {user?.businessName || "Não informado"}
+                      </p>
                     ) : (
-                      <p><strong>Filial:</strong> {user?.branchName || 'Não informado'}</p>
+                      <p>
+                        <strong>Filial:</strong>{" "}
+                        {user?.branchName || "Não informado"}
+                      </p>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-3">
-                    Para alterar estes dados, entre em contato com o {isAdmin ? 'suporte' : 'administrador'}.
+                    Para alterar estes dados, entre em contato com o{" "}
+                    {isAdmin ? "suporte" : "administrador"}.
                   </p>
                 </div>
               </CardContent>
@@ -146,15 +153,22 @@ export default function Settings() {
                 <div className="flex flex-col items-center space-y-4">
                   <Avatar className="h-24 w-24">
                     <AvatarFallback className="text-2xl">
-                      {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+                      {user?.name?.charAt(0).toUpperCase() ||
+                        user?.email?.charAt(0).toUpperCase() ||
+                        "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <Button variant="outline" className="flex items-center gap-2" disabled>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    disabled
+                  >
                     <Camera className="h-4 w-4" />
                     Alterar Foto
                   </Button>
                   <p className="text-sm text-[#737373] text-center">
-                    Funcionalidade em desenvolvimento<br/>
+                    Funcionalidade em desenvolvimento
+                    <br />
                     Em breve você poderá alterar sua foto
                   </p>
                 </div>

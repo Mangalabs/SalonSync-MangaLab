@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +43,11 @@ export default function Appointments() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-3xl font-bold">Agendamentos</h1>
-          <p className="text-xs sm:text-sm text-[#737373]">Gerencie seus agendamentos futuros</p>
+          <p className="text-xs sm:text-sm text-[#737373]">
+            Gerencie seus agendamentos futuros
+          </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(true)}
           className="text-sm h-8 sm:h-10"
         >
@@ -48,7 +56,6 @@ export default function Appointments() {
         </Button>
       </div>
 
-      {/* Filtros */}
       <div className="bg-white p-3 md:p-4 rounded-lg border">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
           <div className="flex-1 relative">
@@ -60,7 +67,7 @@ export default function Appointments() {
               className="pl-8 sm:pl-10 h-8 text-sm"
             />
           </div>
-          
+
           <div className="flex gap-2 sm:gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
@@ -72,7 +79,7 @@ export default function Appointments() {
                 <SelectItem value="overdue">Atrasados</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-24 sm:w-32 h-8 text-xs sm:text-sm">
                 <SelectValue placeholder="Período" />
@@ -84,8 +91,11 @@ export default function Appointments() {
                 <SelectItem value="month">Mês</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
+
+            <Select
+              value={professionalFilter}
+              onValueChange={setProfessionalFilter}
+            >
               <SelectTrigger className="w-28 sm:w-36 h-8 text-xs sm:text-sm">
                 <SelectValue placeholder="Profissional" />
               </SelectTrigger>
@@ -102,8 +112,8 @@ export default function Appointments() {
         </div>
       </div>
 
-      <SchedulingCalendar 
-        mode="scheduled" 
+      <SchedulingCalendar
+        mode="scheduled"
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         dateFilter={dateFilter}
@@ -113,7 +123,9 @@ export default function Appointments() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">Novo Agendamento</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
+              Novo Agendamento
+            </DialogTitle>
           </DialogHeader>
           <AppointmentForm
             mode="scheduled"

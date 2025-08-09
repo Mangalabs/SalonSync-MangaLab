@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  DollarSign,
+  Calendar,
+  User,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { ProfessionalCommissionCard } from "./ProfessionalCommissionCard";
 
 interface ProfessionalDashboardCardsProps {
@@ -22,7 +28,6 @@ export function ProfessionalDashboardCards({
 
   return (
     <div className="space-y-3">
-      {/* Card Receitas */}
       <Card className="cursor-pointer" onClick={() => toggleCard("revenue")}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Receitas</CardTitle>
@@ -76,7 +81,6 @@ export function ProfessionalDashboardCards({
         )}
       </Card>
 
-      {/* Card Minhas Comissões */}
       <Card className="cursor-pointer" onClick={() => toggleCard("commission")}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">

@@ -396,7 +396,6 @@ export default function Reports() {
 
               {reportData.stock.movements.length > 0 && (
                 <>
-                  {/* Desktop Table */}
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -457,7 +456,6 @@ export default function Reports() {
                     </table>
                   </div>
 
-                  {/* Mobile Cards */}
                   <div className="md:hidden space-y-3">
                     {reportData.stock.movements
                       .slice(0, 5)
@@ -536,7 +534,6 @@ export default function Reports() {
               <CardTitle>Performance dos Profissionais</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -586,7 +583,6 @@ export default function Reports() {
                 </table>
               </div>
 
-              {/* Mobile Cards */}
               <div className="md:hidden space-y-3">
                 {reportData.professionals.map((item: any) => {
                   const professionalBranch = branches.find(

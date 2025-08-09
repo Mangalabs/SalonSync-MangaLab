@@ -42,7 +42,6 @@ export default function Treatments() {
         </Button>
       </div>
 
-      {/* Filtros */}
       <div className="bg-white p-3 md:p-4 rounded-lg border">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
           <div className="flex-1 relative">
