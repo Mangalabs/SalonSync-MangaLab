@@ -81,7 +81,7 @@ export const getConfig = (
   ),
   ALLOWED_ORIGINS: configService.get<string>(
     'ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:5173,https://salonsync.mangalab.io',
+    'http://localhost:3000,http://localhost:5173,https://salondash.mangalab.io',
   ),
 
   ENABLE_DEBUG: configService.get<boolean>('ENABLE_DEBUG', true),
