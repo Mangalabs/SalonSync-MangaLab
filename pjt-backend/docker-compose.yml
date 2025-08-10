@@ -35,7 +35,7 @@ services:
       - ./nginx/conf:/etc/nginx/conf.d:ro
       - ./nginx/certs:/etc/nginx/ssl:ro
     depends_on:
-      - salonSyncAPI
+      - app
     restart: always
   
 
