@@ -27,13 +27,15 @@ services:
       DB_NAME: salonSync
 
   nginx:
-    image: nginx:latest
-    container_name: nginx
+    image: nginx:stable-alpine
     ports:
-      - '80:80'
-      - '443:443'
+      - "80:80"
+      - "443:443"
     volumes:
-      - /etc/ssl:/etc/nginx/ssl:ro
+      - ./nginx/conf:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/ssl:ro
+    depends_on:
+      - salonSyncAPI
     restart: always
   
 
