@@ -115,6 +115,9 @@ export class FinancialService extends BaseDataService {
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
+    dateFilter.gte.setUTCHours(0, 0, 0, 0);
+    dateFilter.lte.setUTCHours(23, 59, 59, 999);
+
     const transactions = await this.prisma.financialTransaction.findMany({
       where: {
         branchId: { in: branchIds },
