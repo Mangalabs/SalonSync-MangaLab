@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://142.44.224.179",
+        target: "https://salonsyncapi.mangalab.io",
         changeOrigin: true,
         rewrite: (path) => path,
       },
