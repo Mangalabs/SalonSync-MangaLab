@@ -177,7 +177,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
             min="1"
             max={selectedProduct?.currentStock || 999}
             {...register("quantity", { valueAsNumber: true })}
-            placeholder="1"
+            placeholder="Quantos foram vendidos"
           />
           {errors.quantity && (
             <p className="text-sm text-[#DC2626] mt-1">{errors.quantity.message}</p>
