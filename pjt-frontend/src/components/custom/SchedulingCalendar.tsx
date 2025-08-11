@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,16 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useBranch } from "@/contexts/BranchContext";
 import { useUser } from "@/contexts/UserContext";
 import { useAppointmentFilters } from "@/hooks/useAppointmentFilters";
@@ -52,7 +62,12 @@ export function SchedulingCalendar({
   const { isAdmin } = useUser();
   const queryClient = useQueryClient();
   const [showHistory, setShowHistory] = useState(false);
-  const [expandedProfessionals, setExpandedProfessionals] = useState<Set<string>>(new Set());
+  const [expandedProfessionals, setExpandedProfessionals] = useState<
+    Set<string>
+  >(new Set());
+  const [deletingAppointment, setDeletingAppointment] = useState<string | null>(
+    null
+  );
 
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
     queryKey: ["appointments", activeBranch?.id],
@@ -95,110 +110,133 @@ export function SchedulingCalendar({
   if (mode) {
     return (
       <div className="space-y-4">
-        {mode === "completed" && <AppointmentStats appointments={appointments} />}
+        {mode === "completed" && (
+          <AppointmentStats appointments={appointments} />
+        )}
         <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {mode === "completed" ? "Atendimentos Realizados" : "Agendamentos"}
-            </div>
-            {mode === "completed" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowHistory(!showHistory)}
-                className="text-xs"
-              >
-                {showHistory ? (
-                  <><ChevronUp className="h-4 w-4 mr-1" />Ocultar Histórico</>
-                ) : (
-                  <><ChevronDown className="h-4 w-4 mr-1" />Mostrar Histórico</>
-                )}
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {mode === "completed" && !showHistory ? (
-            <p className="text-[#737373]">Clique em "Mostrar Histórico" para ver os atendimentos realizados</p>
-          ) : mode === "completed" ? (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {Object.entries(
-                sortedAppointments.reduce((groups, apt) => {
-                  const profName = apt.professional.name;
-                  if (!groups[profName]) groups[profName] = [];
-                  groups[profName].push(apt);
-                  return groups;
-                }, {} as Record<string, typeof sortedAppointments>)
-              ).map(([professionalName, appointments]) => {
-                const isExpanded = expandedProfessionals.has(professionalName);
-                const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
-                
-                return (
-                  <div key={professionalName} className="border rounded-lg">
-                    <div 
-                      className="p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => {
-                        const newExpanded = new Set(expandedProfessionals);
-                        if (isExpanded) {
-                          newExpanded.delete(professionalName);
-                        } else {
-                          newExpanded.add(professionalName);
-                        }
-                        setExpandedProfessionals(newExpanded);
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                          <User className="h-4 w-4" />
-                          <span className="font-medium">{professionalName}</span>
-                          <span className="text-sm text-[#737373]">({appointments.length} atendimentos)</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span className="font-semibold">R$ {totalRevenue.toFixed(2)}</span>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {mode === "completed"
+                  ? "Atendimentos Realizados"
+                  : "Agendamentos"}
+              </div>
+              {mode === "completed" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="text-xs"
+                >
+                  {showHistory ? (
+                    <>
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                      Ocultar Histórico
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                      Mostrar Histórico
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mode === "completed" && !showHistory ? (
+              <p className="text-[#737373]">
+                Clique em "Mostrar Histórico" para ver os atendimentos
+                realizados
+              </p>
+            ) : mode === "completed" ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {Object.entries(
+                  sortedAppointments.reduce((groups, apt) => {
+                    const profName = apt.professional.name;
+                    if (!groups[profName]) groups[profName] = [];
+                    groups[profName].push(apt);
+                    return groups;
+                  }, {} as Record<string, typeof sortedAppointments>)
+                ).map(([professionalName, appointments]) => {
+                  const isExpanded =
+                    expandedProfessionals.has(professionalName);
+                  const totalRevenue = appointments.reduce(
+                    (sum, apt) => sum + Number(apt.total),
+                    0
+                  );
+
+                  return (
+                    <div key={professionalName} className="border rounded-lg">
+                      <div
+                        className="p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => {
+                          const newExpanded = new Set(expandedProfessionals);
+                          if (isExpanded) {
+                            newExpanded.delete(professionalName);
+                          } else {
+                            newExpanded.add(professionalName);
+                          }
+                          setExpandedProfessionals(newExpanded);
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">
+                              {professionalName}
+                            </span>
+                            <span className="text-sm text-[#737373]">
+                              ({appointments.length} atendimentos)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="font-semibold">
+                              R$ {totalRevenue.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
                       </div>
+
+                      {isExpanded && (
+                        <div className="p-3 space-y-2">
+                          {appointments.map((apt) => (
+                            <AppointmentCard
+                              key={apt.id}
+                              appointment={apt}
+                              mode={mode}
+                              compact={true}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    
-                    {isExpanded && (
-                      <div className="p-3 space-y-2">
-                        {appointments.map((apt) => (
-                          <AppointmentCard 
-                            key={apt.id} 
-                            appointment={apt} 
-                            mode={mode} 
-                            compact={true} 
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : sortedAppointments.length === 0 ? (
-            <p className="text-[#737373]">Nenhum agendamento</p>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {sortedAppointments.map((apt) => (
-                <AppointmentCard 
-                  key={apt.id} 
-                  appointment={apt} 
-                  mode={mode} 
-                  compact={false} 
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            ) : sortedAppointments.length === 0 ? (
+              <p className="text-[#737373]">Nenhum agendamento</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {sortedAppointments.map((apt) => (
+                  <AppointmentCard
+                    key={apt.id}
+                    appointment={apt}
+                    mode={mode}
+                    compact={false}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -209,39 +247,67 @@ export function SchedulingCalendar({
         <div className="space-y-3">
           {isAdmin ? (
             <DashboardStats
-              todayRevenue={appointments.filter(apt => {
-                const today = new Date().toISOString().split("T")[0];
-                return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
-              }).reduce((sum, apt) => sum + Number(apt.total), 0)}
-              todayAppointments={appointments.filter(apt => {
-                const today = new Date().toISOString().split("T")[0];
-                return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
-              }).length}
-              monthlyRevenue={appointments.filter(apt => {
-                const today = new Date();
-                const aptDate = new Date(apt.scheduledAt);
-                return apt.status === "COMPLETED" && 
-                       aptDate.getMonth() === today.getMonth() && 
-                       aptDate.getFullYear() === today.getFullYear();
-              }).reduce((sum, apt) => sum + Number(apt.total), 0)}
+              todayRevenue={appointments
+                .filter((apt) => {
+                  const today = new Date().toISOString().split("T")[0];
+                  return (
+                    apt.status === "COMPLETED" &&
+                    apt.scheduledAt.split("T")[0] === today
+                  );
+                })
+                .reduce((sum, apt) => sum + Number(apt.total), 0)}
+              todayAppointments={
+                appointments.filter((apt) => {
+                  const today = new Date().toISOString().split("T")[0];
+                  return (
+                    apt.status === "COMPLETED" &&
+                    apt.scheduledAt.split("T")[0] === today
+                  );
+                }).length
+              }
+              monthlyRevenue={appointments
+                .filter((apt) => {
+                  const today = new Date();
+                  const aptDate = new Date(apt.scheduledAt);
+                  return (
+                    apt.status === "COMPLETED" &&
+                    aptDate.getMonth() === today.getMonth() &&
+                    aptDate.getFullYear() === today.getFullYear()
+                  );
+                })
+                .reduce((sum, apt) => sum + Number(apt.total), 0)}
             />
           ) : (
             <ProfessionalDashboardCards
-              todayRevenue={appointments.filter(apt => {
-                const today = new Date().toISOString().split("T")[0];
-                return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
-              }).reduce((sum, apt) => sum + Number(apt.total), 0)}
-              todayAppointments={appointments.filter(apt => {
-                const today = new Date().toISOString().split("T")[0];
-                return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
-              }).length}
-              monthlyRevenue={appointments.filter(apt => {
-                const today = new Date();
-                const aptDate = new Date(apt.scheduledAt);
-                return apt.status === "COMPLETED" && 
-                       aptDate.getMonth() === today.getMonth() && 
-                       aptDate.getFullYear() === today.getFullYear();
-              }).reduce((sum, apt) => sum + Number(apt.total), 0)}
+              todayRevenue={appointments
+                .filter((apt) => {
+                  const today = new Date().toISOString().split("T")[0];
+                  return (
+                    apt.status === "COMPLETED" &&
+                    apt.scheduledAt.split("T")[0] === today
+                  );
+                })
+                .reduce((sum, apt) => sum + Number(apt.total), 0)}
+              todayAppointments={
+                appointments.filter((apt) => {
+                  const today = new Date().toISOString().split("T")[0];
+                  return (
+                    apt.status === "COMPLETED" &&
+                    apt.scheduledAt.split("T")[0] === today
+                  );
+                }).length
+              }
+              monthlyRevenue={appointments
+                .filter((apt) => {
+                  const today = new Date();
+                  const aptDate = new Date(apt.scheduledAt);
+                  return (
+                    apt.status === "COMPLETED" &&
+                    aptDate.getMonth() === today.getMonth() &&
+                    aptDate.getFullYear() === today.getFullYear()
+                  );
+                })
+                .reduce((sum, apt) => sum + Number(apt.total), 0)}
             />
           )}
         </div>
@@ -256,7 +322,8 @@ export function SchedulingCalendar({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {appointments.filter((apt) => apt.status === "SCHEDULED").length === 0 ? (
+            {appointments.filter((apt) => apt.status === "SCHEDULED").length ===
+            0 ? (
               <p className="text-[#737373]">Nenhum agendamento</p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -331,7 +398,7 @@ export function SchedulingCalendar({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => cancelAppointment.mutate(apt.id)}
+                            onClick={() => setDeletingAppointment(apt.id)}
                             disabled={cancelAppointment.isPending}
                             className="w-full text-[#DC2626] border-[#FCA5A5] hover:bg-[#FEF2F2]"
                           >
@@ -357,7 +424,10 @@ export function SchedulingCalendar({
           <CardContent>
             {appointments.filter((apt) => {
               const today = new Date().toISOString().split("T")[0];
-              return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
+              return (
+                apt.status === "COMPLETED" &&
+                apt.scheduledAt.split("T")[0] === today
+              );
             }).length === 0 ? (
               <p className="text-[#737373]">Nenhum atendimento hoje</p>
             ) : (
@@ -365,7 +435,10 @@ export function SchedulingCalendar({
                 {appointments
                   .filter((apt) => {
                     const today = new Date().toISOString().split("T")[0];
-                    return apt.status === "COMPLETED" && apt.scheduledAt.split("T")[0] === today;
+                    return (
+                      apt.status === "COMPLETED" &&
+                      apt.scheduledAt.split("T")[0] === today
+                    );
                   })
                   .map((apt) => {
                     const aptDate = new Date(apt.scheduledAt);
@@ -407,6 +480,31 @@ export function SchedulingCalendar({
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog
+        open={!!deletingAppointment}
+        onOpenChange={() => setDeletingAppointment(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar este agendamento? Esta ação não pode
+              ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                deletingAppointment && cancelAppointment.mutate(deletingAppointment)
+              }
+            >
+              Cancelar Agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

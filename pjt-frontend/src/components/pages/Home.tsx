@@ -146,7 +146,9 @@ export default function Home() {
             <div className="w-48 h-48 mx-auto rounded-lg flex items-center justify-center">
               <div className="text-white/50 text-sm text-center">
                 <div className="text-lg mb-2">
-                  <img src="/logo-removebg-preview.png" alt="MangaLab Logo" />
+                  <a href="https://www.mangalab.io/" target="#">
+                    <img src="/logo-removebg-preview.png" alt="MangaLab Logo" />
+                  </a>
                 </div>
               </div>
             </div>
