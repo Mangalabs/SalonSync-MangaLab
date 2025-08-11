@@ -37,14 +37,69 @@ export class FinancialService extends BaseDataService {
 
   async getCategories(user: UserContext, type?: TransactionType) {
     const branchIds = await this.getUserBranchIds(user);
+    const branchId = branchIds[0]; // Use first branch for creating default categories
 
-    return this.prisma.expenseCategory.findMany({
+    // Check if categories exist for this type and branch
+    const existingCategories = await this.prisma.expenseCategory.findMany({
       where: {
         branchId: { in: branchIds },
         ...(type && { type }),
       },
       orderBy: { name: 'asc' },
     });
+
+    // If no categories exist for this type, create default ones
+    if (existingCategories.length === 0 && type && branchId) {
+      await this.createDefaultCategories(branchId, type);
+      
+      // Fetch categories again after creating defaults
+      return this.prisma.expenseCategory.findMany({
+        where: {
+          branchId: { in: branchIds },
+          ...(type && { type }),
+        },
+        orderBy: { name: 'asc' },
+      });
+    }
+
+    return existingCategories;
+  }
+
+  private async createDefaultCategories(branchId: string, type: TransactionType) {
+    const defaultCategories = {
+      INCOME: [
+        { name: 'Serviços', color: '#10B981' },
+        { name: 'Produtos', color: '#3B82F6' },
+        { name: 'Outras Receitas', color: '#8B5CF6' },
+      ],
+      EXPENSE: [
+        { name: 'Aluguel', color: '#EF4444' },
+        { name: 'Produtos/Insumos', color: '#F59E0B' },
+        { name: 'Salários', color: '#EC4899' },
+        { name: 'Contas (Luz, Água, Internet)', color: '#6B7280' },
+        { name: 'Marketing', color: '#14B8A6' },
+        { name: 'Outras Despesas', color: '#84CC16' },
+      ],
+      INVESTMENT: [
+        { name: 'Equipamentos', color: '#3B82F6' },
+        { name: 'Reforma/Decoração', color: '#8B5CF6' },
+        { name: 'Capacitação', color: '#10B981' },
+        { name: 'Outros Investimentos', color: '#F59E0B' },
+      ],
+    };
+
+    const categoriesToCreate = defaultCategories[type] || [];
+    
+    for (const category of categoriesToCreate) {
+      await this.prisma.expenseCategory.create({
+        data: {
+          name: category.name,
+          type,
+          color: category.color,
+          branchId,
+        },
+      });
+    }
   }
 
   // Transações

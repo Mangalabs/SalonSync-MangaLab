@@ -18,24 +18,29 @@ export class ProductsService {
     branchId: string,
   ): Promise<Product> {
     try {
+      console.log('Received DTO:', createProductDto);
+      console.log('Branch ID:', branchId);
+
       const productData: Prisma.ProductCreateInput = {
         name: createProductDto.name,
         category: createProductDto.category,
-        brand: createProductDto.brand,
+        brand: createProductDto.brand || null,
         unit: createProductDto.unit || 'un',
-        // Valores padrão para campos obrigatórios
-        costPrice: 0,
-        salePrice: 0,
-        currentStock: 0,
+        costPrice: createProductDto.costPrice !== undefined ? createProductDto.costPrice : 0,
+        salePrice: createProductDto.salePrice !== undefined ? createProductDto.salePrice : 0,
+        currentStock: createProductDto.initialStock !== undefined ? createProductDto.initialStock : 0,
         minStock: 0,
         branch: { connect: { id: branchId } },
       };
 
       console.log('Creating product with data:', productData);
 
-      return this.prisma.product.create({
+      const createdProduct = await this.prisma.product.create({
         data: productData,
       });
+
+      console.log('Created product result:', createdProduct);
+      return createdProduct;
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
@@ -212,22 +217,41 @@ export class ProductsService {
       });
 
       // Create stock movement record
-      const movement = await tx.stockMovement.create({
-        data: {
-          product: { connect: { id } },
-          branch: { connect: { id: branchId } },
-          user:
-            soldById || userId
-              ? { connect: { id: soldById || userId } }
-              : undefined,
-          type: movementType,
-          quantity,
-          reason,
-          reference,
-          unitCost,
-          totalCost,
-        },
-      });
+      const movementData: any = {
+        product: { connect: { id } },
+        branch: { connect: { id: branchId } },
+        type: movementType,
+        quantity,
+        reason,
+        reference,
+        unitCost,
+        totalCost,
+      };
+
+      // Only add user connection if we have a valid user ID
+      const userIdToConnect = soldById || userId;
+      if (userIdToConnect) {
+        movementData.user = { connect: { id: userIdToConnect } };
+      }
+      // If no user ID, the movement will be created without user association
+
+      let movement;
+      try {
+        movement = await tx.stockMovement.create({
+          data: movementData,
+        });
+      } catch (error) {
+        // If user connection fails, create without user
+        if (error.code === 'P2025' && error.meta?.cause?.includes('User')) {
+          console.log('User not found, creating movement without user association');
+          const { user, ...dataWithoutUser } = movementData;
+          movement = await tx.stockMovement.create({
+            data: dataWithoutUser,
+          });
+        } else {
+          throw error;
+        }
+      }
 
       return {
         product: updatedProduct,
