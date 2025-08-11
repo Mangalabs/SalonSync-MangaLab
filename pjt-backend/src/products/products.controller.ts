@@ -27,6 +27,22 @@ export class ProductsController {
     @Body() createProductDto: CreateProductDto,
     @Headers('x-branch-id') branchId: string,
   ): Promise<Product> {
+    console.log('=== CONTROLLER DEBUG ===');
+    console.log('Raw body:', createProductDto);
+    console.log('Individual fields:', {
+      name: createProductDto.name,
+      category: createProductDto.category,
+      brand: createProductDto.brand,
+      unit: createProductDto.unit,
+      costPrice: createProductDto.costPrice,
+      salePrice: createProductDto.salePrice,
+      initialStock: createProductDto.initialStock
+    });
+    console.log('Field types:', {
+      costPrice: typeof createProductDto.costPrice,
+      salePrice: typeof createProductDto.salePrice,
+      initialStock: typeof createProductDto.initialStock
+    });
     return this.productsService.create(createProductDto, branchId);
   }
 
