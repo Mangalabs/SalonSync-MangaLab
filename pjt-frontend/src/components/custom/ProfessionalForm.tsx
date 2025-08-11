@@ -172,7 +172,7 @@ export function ProfessionalForm({
             max="100"
             step="0.1"
             placeholder="Comissão (%)"
-            {...register("commissionRate")}
+            {...register("commissionRate", { valueAsNumber: true })}
             disabled={selectedRole && selectedRoleId !== "custom"}
           />
           <span className="ml-2">%</span>

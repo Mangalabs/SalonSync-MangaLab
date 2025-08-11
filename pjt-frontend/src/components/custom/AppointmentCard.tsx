@@ -1,8 +1,18 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, DollarSign, X, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Appointment {
   id: string;
@@ -22,8 +32,16 @@ interface AppointmentCardProps {
   compact?: boolean;
 }
 
-export function AppointmentCard({ appointment, mode, compact = false }: AppointmentCardProps) {
+export function AppointmentCard({
+  appointment,
+  mode,
+  compact = false,
+}: AppointmentCardProps) {
   const queryClient = useQueryClient();
+
+  const [openConfirmationModal, setOpenConfirmationModal] = useState<boolean | null>(
+    null
+  );
   
   const aptDate = new Date(appointment.scheduledAt);
   const now = new Date();
@@ -64,7 +82,9 @@ export function AppointmentCard({ appointment, mode, compact = false }: Appointm
           </div>
           <div className="flex items-center gap-1">
             <DollarSign className="h-3 w-3" />
-            <span className="font-semibold text-xs">R$ {Number(appointment.total).toFixed(2)}</span>
+            <span className="font-semibold text-xs">
+              R$ {Number(appointment.total).toFixed(2)}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-1 mb-1">
@@ -75,7 +95,9 @@ export function AppointmentCard({ appointment, mode, compact = false }: Appointm
           {appointment.professional.name}
         </div>
         <div className="text-xs text-[#737373]">
-          {appointment.appointmentServices.map(as => as.service.name).join(", ")}
+          {appointment.appointmentServices
+            .map((as) => as.service.name)
+            .join(", ")}
         </div>
       </div>
     );
@@ -155,7 +177,7 @@ export function AppointmentCard({ appointment, mode, compact = false }: Appointm
             <Button
               size="sm"
               variant="outline"
-              onClick={() => cancelAppointment.mutate()}
+              onClick={() => setOpenConfirmationModal(true)}
               disabled={cancelAppointment.isPending}
               className="w-full text-[#DC2626] border-[#FCA5A5] hover:bg-[#FEF2F2]"
             >
@@ -165,6 +187,31 @@ export function AppointmentCard({ appointment, mode, compact = false }: Appointm
           )}
         </div>
       )}
+
+      <AlertDialog
+        open={!!openConfirmationModal}
+        onOpenChange={() => setOpenConfirmationModal(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar este agendamento? Esta ação não
+              pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                cancelAppointment.mutate()
+              }
+            >
+              Cancelar Agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
