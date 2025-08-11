@@ -206,7 +206,15 @@ export class ProductsService {
     }
 
     // Calculate total cost if unit cost is provided
-    const totalCost = unitCost ? unitCost * quantity : undefined;
+    const totalCost = unitCost ? unitCost * quantity : (movementType === 'LOSS' ? Number(product.costPrice) * quantity : undefined);
+    
+    console.log('Stock movement calculation:', {
+      unitCost,
+      quantity,
+      productCostPrice: product.costPrice,
+      calculatedTotalCost: totalCost,
+      movementType
+    });
 
     // Create transaction to update both product and create movement
     return this.prisma.$transaction(async (tx) => {
@@ -253,11 +261,120 @@ export class ProductsService {
         }
       }
 
+      // Create financial transaction for specific movement types
+      await this.createFinancialTransactionForMovement(
+        movement,
+        updatedProduct,
+        branchId,
+        tx
+      );
+
       return {
         product: updatedProduct,
         movement,
       };
     });
+  }
+
+  private async createFinancialTransactionForMovement(
+    movement: StockMovement,
+    product: Product,
+    branchId: string,
+    tx: any
+  ) {
+    console.log('Creating financial transaction for movement:', {
+      movementId: movement.id,
+      type: movement.type,
+      totalCost: movement.totalCost,
+      productName: product.name
+    });
+
+    // Only create financial transactions for movements with financial impact
+    if (!movement.totalCost || Number(movement.totalCost) <= 0) {
+      console.log('Skipping financial transaction - no totalCost or totalCost <= 0', {
+        totalCost: movement.totalCost,
+        unitCost: movement.unitCost,
+        quantity: movement.quantity
+      });
+      return;
+    }
+
+    let transactionType: 'INCOME' | 'EXPENSE' | 'INVESTMENT' | null = null;
+    let categoryName = '';
+    let description = '';
+
+    switch (movement.type) {
+      case 'LOSS':
+        transactionType = 'EXPENSE';
+        categoryName = 'Perdas de Estoque';
+        description = `Perda: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
+        break;
+      case 'IN':
+        transactionType = 'INVESTMENT';
+        categoryName = 'Compra de Produtos';
+        description = `Entrada: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
+        break;
+      case 'OUT':
+        transactionType = 'INCOME';
+        categoryName = 'Venda de Produtos';
+        description = `Saída: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
+        break;
+      default:
+        console.log('No financial transaction for ADJUSTMENT type');
+        return;
+    }
+
+    if (!transactionType) return;
+
+    // Find or create the appropriate category
+    let category = await tx.expenseCategory.findFirst({
+      where: {
+        branchId,
+        name: categoryName,
+        type: transactionType,
+      },
+    });
+
+    if (!category) {
+      const categoryColors = {
+        'Perdas de Estoque': '#DC2626',
+        'Compra de Produtos': '#F59E0B', 
+        'Venda de Produtos': '#10B981',
+      };
+
+      category = await tx.expenseCategory.create({
+        data: {
+          name: categoryName,
+          type: transactionType,
+          color: categoryColors[categoryName] || '#6B7280',
+          branchId,
+        },
+      });
+    }
+
+    // Create the financial transaction
+    console.log('Creating financial transaction:', {
+      description,
+      amount: movement.totalCost,
+      type: transactionType,
+      categoryName: category.name,
+      reference: `Estoque-${movement.id}`
+    });
+
+    const financialTransaction = await tx.financialTransaction.create({
+      data: {
+        description,
+        amount: movement.totalCost,
+        type: transactionType,
+        categoryId: category.id,
+        paymentMethod: 'OTHER',
+        reference: `Estoque-${movement.id}`,
+        date: movement.createdAt,
+        branchId,
+      },
+    });
+
+    console.log('Financial transaction created successfully:', financialTransaction.id);
   }
 
   async getStockMovements(branchId: string): Promise<StockMovement[]> {
@@ -268,6 +385,7 @@ export class ProductsService {
           select: {
             id: true,
             name: true,
+            unit: true,
           },
         },
         user: {

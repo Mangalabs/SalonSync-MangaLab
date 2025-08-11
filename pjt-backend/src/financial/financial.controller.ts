@@ -68,14 +68,16 @@ export class FinancialController {
 
   @Get('transactions')
   @ApiOperation({ summary: 'Listar transações financeiras' })
-  getTransactions(
+  async getTransactions(
     @Query('type') type: TransactionType,
     @Query('categoryId') categoryId: string,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.financialService.getTransactions(
+    console.log('Getting transactions with filters:', { type, categoryId, startDate, endDate });
+    
+    const transactions = await this.financialService.getTransactions(
       {
         id: req.user.id,
         role: req.user.role,
@@ -83,6 +85,13 @@ export class FinancialController {
       },
       { type, categoryId, startDate, endDate },
     );
+    
+    console.log(`Found ${transactions.length} transactions`);
+    console.log('Transactions with Estoque reference:', 
+      transactions.filter(t => t.reference?.startsWith('Estoque-')).length
+    );
+    
+    return transactions;
   }
 
   @Get('summary')

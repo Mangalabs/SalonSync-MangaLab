@@ -96,8 +96,8 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
             <div>
               <h3 className="font-medium">Total do Período</h3>
               <p className="text-sm text-gray-500">
-                {new Date(startDate).toLocaleDateString("pt-BR")} -{" "}
-                {new Date(endDate).toLocaleDateString("pt-BR")}
+                {new Date(startDate + 'T00:00:00').toLocaleDateString("pt-BR")} -{" "}
+                {new Date(endDate + 'T00:00:00').toLocaleDateString("pt-BR")}
               </p>
             </div>
             <div
@@ -148,6 +148,12 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                       {transaction.reference && (
                         <span>Ref: {transaction.reference}</span>
                       )}
+                      
+                      {transaction.reference && transaction.reference.startsWith('Estoque-') && (
+                        <Badge variant="outline" className="text-xs">
+                          Estoque Automático
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
@@ -163,6 +169,19 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                     {formatCurrency(Number(transaction.amount))}
                   </div>
                 </div>
+                
+                {transaction.reference && transaction.reference.startsWith('Estoque-') && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">
+                        Transação gerada automaticamente por movimentação de estoque
+                      </span>
+                      <span className="text-gray-500">
+                        Ref: {transaction.reference}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
