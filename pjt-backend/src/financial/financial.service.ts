@@ -69,12 +69,13 @@ export class FinancialService extends BaseDataService {
     const defaultCategories = {
       INCOME: [
         { name: 'Serviços', color: '#10B981' },
-        { name: 'Produtos', color: '#3B82F6' },
+        { name: 'Venda de Produtos', color: '#10B981' },
         { name: 'Outras Receitas', color: '#8B5CF6' },
       ],
       EXPENSE: [
         { name: 'Aluguel', color: '#EF4444' },
         { name: 'Produtos/Insumos', color: '#F59E0B' },
+        { name: 'Perdas de Estoque', color: '#DC2626' },
         { name: 'Salários', color: '#EC4899' },
         { name: 'Contas (Luz, Água, Internet)', color: '#6B7280' },
         { name: 'Marketing', color: '#14B8A6' },
@@ -82,9 +83,10 @@ export class FinancialService extends BaseDataService {
       ],
       INVESTMENT: [
         { name: 'Equipamentos', color: '#3B82F6' },
+        { name: 'Compra de Produtos', color: '#F59E0B' },
         { name: 'Reforma/Decoração', color: '#8B5CF6' },
         { name: 'Capacitação', color: '#10B981' },
-        { name: 'Outros Investimentos', color: '#F59E0B' },
+        { name: 'Outros Investimentos', color: '#6366F1' },
       ],
     };
 
@@ -146,8 +148,8 @@ export class FinancialService extends BaseDataService {
     if (filters?.categoryId) where.categoryId = filters.categoryId;
     if (filters?.startDate || filters?.endDate) {
       where.date = {};
-      if (filters.startDate) where.date.gte = new Date(filters.startDate);
-      if (filters.endDate) where.date.lte = new Date(filters.endDate);
+      if (filters.startDate) where.date.gte = new Date(filters.startDate + 'T00:00:00.000Z');
+      if (filters.endDate) where.date.lte = new Date(filters.endDate + 'T23:59:59.999Z');
     }
 
     return this.prisma.financialTransaction.findMany({
@@ -167,11 +169,12 @@ export class FinancialService extends BaseDataService {
     const branchIds = await this.getUserBranchIds(user);
 
     const dateFilter: any = {};
-    if (startDate) dateFilter.gte = new Date(startDate);
-    if (endDate) dateFilter.lte = new Date(endDate);
-
-    dateFilter.gte.setUTCHours(0, 0, 0, 0);
-    dateFilter.lte.setUTCHours(23, 59, 59, 999);
+    if (startDate) {
+      dateFilter.gte = new Date(startDate + 'T00:00:00.000Z');
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(endDate + 'T23:59:59.999Z');
+    }
 
     const transactions = await this.prisma.financialTransaction.findMany({
       where: {

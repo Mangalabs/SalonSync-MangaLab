@@ -16,9 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Edit, Plus, Minus } from "lucide-react";
+import { Trash2, Edit } from "lucide-react";
 import { ProductForm } from "./ProductForm";
-import { InventoryAdjustmentForm } from "./InventoryAdjustmentForm";
+import { AdjustmentStockForm } from "./AdjustmentStockForm";
 import { useState } from "react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
@@ -41,10 +41,9 @@ interface Product {
 
 export function ProductTable() {
   const queryClient = useQueryClient();
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
-  const [adjustmentType, setAdjustmentType] = useState<"add" | "remove" | null>(null);
   const { activeBranch } = useBranch();
 
   const { data, isLoading, error } = useQuery<Product[]>({
@@ -70,9 +69,8 @@ export function ProductTable() {
     },
   });
 
-  const handleAdjustment = (product: Product, type: "add" | "remove") => {
+  const handleAdjustment = (product: Product) => {
     setAdjustingProduct(product);
-    setAdjustmentType(type);
   };
 
   if (isLoading) return <p className="p-4">Carregando...</p>;
@@ -137,23 +135,8 @@ export function ProductTable() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAdjustment(product, "add")}
-                      title="Adicionar ao estoque"
-                    >
-                      <Plus size={14} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAdjustment(product, "remove")}
-                      title="Remover do estoque"
-                    >
-                      <Minus size={14} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingProduct(product)}
+                      onClick={() => handleAdjustment(product)}
+                      title="Ajustar estoque"
                     >
                       <Edit size={14} />
                     </Button>
@@ -203,33 +186,15 @@ export function ProductTable() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleAdjustment(product, "add")}
-                className="text-xs"
-              >
-                <Plus size={12} className="mr-1" />
-                Adicionar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleAdjustment(product, "remove")}
-                className="text-xs"
-              >
-                <Minus size={12} className="mr-1" />
-                Remover
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditingProduct(product)}
-                className="text-xs"
+                onClick={() => handleAdjustment(product)}
+                className="text-xs flex-1"
               >
                 <Edit size={12} className="mr-1" />
-                Editar
+                Ajustar Estoque
               </Button>
               <Button
                 variant="destructive"
@@ -247,43 +212,17 @@ export function ProductTable() {
       </div>
 
       <Dialog
-        open={!!editingProduct}
-        onOpenChange={() => setEditingProduct(null)}
+        open={!!adjustingProduct}
+        onOpenChange={() => setAdjustingProduct(null)}
       >
         <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Produto</DialogTitle>
+            <DialogTitle>Editar Produto - {adjustingProduct?.name}</DialogTitle>
           </DialogHeader>
-          <ProductForm
-            initialData={editingProduct}
-            onSuccess={() => setEditingProduct(null)}
+          <AdjustmentStockForm
+            product={adjustingProduct}
+            onSuccess={() => setAdjustingProduct(null)}
           />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={!!adjustingProduct && adjustmentType !== null}
-        onOpenChange={() => {
-          setAdjustingProduct(null);
-          setAdjustmentType(null);
-        }}
-      >
-        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {adjustmentType === "add" ? "Adicionar ao Estoque" : "Remover do Estoque"}
-            </DialogTitle>
-          </DialogHeader>
-          {adjustingProduct && (
-            <InventoryAdjustmentForm
-              product={adjustingProduct}
-              type={adjustmentType as "add" | "remove"}
-              onSuccess={() => {
-                setAdjustingProduct(null);
-                setAdjustmentType(null);
-              }}
-            />
-          )}
         </DialogContent>
       </Dialog>
 
