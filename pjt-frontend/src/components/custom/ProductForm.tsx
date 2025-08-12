@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 
 const productSchema = z.object({
@@ -19,6 +20,7 @@ const productSchema = z.object({
   costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0").nullable().optional(),
   salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0").nullable().optional(),
   initialStock: z.number().min(0, "Quantidade inicial deve ser maior ou igual a 0").nullable().optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
 });
 
 const unitOptions = [
@@ -56,6 +58,16 @@ export function ProductForm({
   const isEditing = !!initialData;
   const queryClient = useQueryClient();
   const { activeBranch } = useBranch();
+  const { user, isAdmin } = useUser();
+
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const res = await axios.get("/api/branches");
+      return res.data;
+    },
+    enabled: isAdmin,
+  });
   
   const {
     register,
@@ -73,7 +85,8 @@ export function ProductForm({
       unit: initialData.unit || 'un',
       costPrice: Number(initialData.costPrice) || 0,
       salePrice: Number(initialData.salePrice) || 0,
-      initialStock: Number(initialData.currentStock) || 0
+      initialStock: Number(initialData.currentStock) || 0,
+      branchId: (initialData as any).branchId || (!isAdmin ? activeBranch?.id : undefined),
     } : {
       name: '',
       category: 'Geral',
@@ -81,7 +94,8 @@ export function ProductForm({
       unit: 'un',
       costPrice: 0,
       salePrice: 0,
-      initialStock: 0
+      initialStock: 0,
+      branchId: !isAdmin ? activeBranch?.id : undefined,
     }
   });
 
@@ -98,10 +112,11 @@ export function ProductForm({
         brand: data.brand || undefined // Enviar undefined se vazio
       };
       console.log('Sending data to API:', payload);
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
       if (isEditing) {
-        return axios.patch(`/api/products/${initialData.id}`, payload);
+        return axios.patch(`/api/products/${initialData.id}`, payload, { headers });
       } else {
-        return axios.post("/api/products", payload);
+        return axios.post("/api/products", payload, { headers });
       }
     },
     onSuccess: () => {
@@ -138,6 +153,27 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : (initialData as any)?.branchId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+
       <div>
         <Label htmlFor="name">Nome do Produto</Label>
         <Input id="name" {...register("name")} placeholder="Ex: Shampoo Anticaspa" />

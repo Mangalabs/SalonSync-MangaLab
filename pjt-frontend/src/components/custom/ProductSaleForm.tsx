@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
 import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 import { ShoppingCart } from "lucide-react";
 
@@ -21,6 +22,7 @@ const saleSchema = z.object({
   clientId: z.string().optional(),
   notes: z.string().optional(),
   soldById: z.string().optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
 });
 
 type SaleFormData = z.infer<typeof saleSchema>;
@@ -32,29 +34,15 @@ interface ProductSaleFormProps {
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const queryClient = useQueryClient();
   const { user, isAdmin, isProfessional } = useUser();
+  const { activeBranch } = useBranch();
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["products"],
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
     queryFn: async () => {
-      const res = await axios.get("/api/products");
+      const res = await axios.get("/api/branches");
       return res.data;
     },
-  });
-
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const res = await axios.get("/api/clients");
-      return res.data;
-    },
-  });
-
-  const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data;
-    },
+    enabled: isAdmin,
   });
 
   const {
@@ -65,6 +53,44 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<SaleFormData>({
     resolver: zodResolver(saleSchema),
+    defaultValues: {
+      branchId: !isAdmin ? activeBranch?.id : undefined,
+    },
+  });
+
+  const selectedBranchId = watch("branchId");
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", selectedBranchId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranchId) params.append("branchId", selectedBranchId);
+      const res = await axios.get(`/api/products?${params}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients", selectedBranchId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranchId) params.append("branchId", selectedBranchId);
+      const res = await axios.get(`/api/clients?${params}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
+  });
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals", selectedBranchId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranchId) params.append("branchId", selectedBranchId);
+      const res = await axios.get(`/api/professionals?${params}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
   });
 
   // Auto-selecionar profissional se for funcionário (não admin)
@@ -113,7 +139,8 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         soldById: data.soldById,
       };
       
-      const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData);
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData, { headers });
       return res.data;
     },
     onSuccess: () => {
@@ -148,6 +175,27 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         <ShoppingCart className="h-5 w-5 text-[#D4AF37]" />
         <h3 className="text-lg font-semibold text-[#1A1A1A]">Venda de Produto</h3>
       </div>
+
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
 
       <div>
         <Label htmlFor="productId">Produto</Label>

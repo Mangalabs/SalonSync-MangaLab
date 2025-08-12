@@ -47,25 +47,42 @@ export class AuthMiddleware implements NestMiddleware {
         throw new UnauthorizedException('Usuário não encontrado');
       }
 
-      // Buscar branchId baseado no tipo de usuário
+      // Determinar branchId baseado no contexto
       let branchId: string | undefined;
+      const requestedBranchId = req.headers['x-branch-id'] as string;
+
       if (user.role === 'PROFESSIONAL' && user.name) {
-        // Para funcionários, buscar pela tabela professional
+        // Para funcionários, sempre usar sua filial (ignorar header)
         const professional = await this.prisma.professional.findFirst({
           where: { name: user.name },
           select: { branchId: true },
         });
         branchId = professional?.branchId;
       } else if (user.role === 'ADMIN') {
-        // Para admins, buscar a primeira filial (ou usar header x-branch-id se implementado)
-        const branch = await this.prisma.branch.findFirst({
-          where: { ownerId: user.id },
-          select: { id: true },
-        });
-        branchId = branch?.id;
+        // Para admins, usar header x-branch-id se fornecido
+        if (requestedBranchId) {
+          // Validar se o admin tem acesso à filial solicitada
+          const branch = await this.prisma.branch.findFirst({
+            where: { 
+              id: requestedBranchId,
+              ownerId: user.id 
+            },
+          });
+          if (branch) {
+            branchId = requestedBranchId;
+          } else {
+            throw new UnauthorizedException('Acesso negado à filial solicitada');
+          }
+        } else {
+          // Usar primeira filial como fallback
+          const branch = await this.prisma.branch.findFirst({
+            where: { ownerId: user.id },
+            select: { id: true },
+          });
+          branchId = branch?.id;
+        }
       }
 
-      // Preservar o body original da requisição
       req.user = {
         id: user.id,
         email: user.email,

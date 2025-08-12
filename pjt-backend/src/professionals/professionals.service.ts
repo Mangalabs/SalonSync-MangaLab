@@ -47,14 +47,39 @@ export class ProfessionalsService extends BaseDataService {
   }
 
   async create(
-    data: { name: string; role: string },
+    data: { 
+      name: string; 
+      role: string; 
+      commissionRate?: number;
+      roleId?: string;
+      baseSalary?: number;
+      salaryPayDay?: number;
+    },
     user: UserContext,
     targetBranchId?: string,
   ): Promise<Professional> {
     const branchId = await this.getTargetBranchId(user, targetBranchId);
+    
+    const { roleId, ...professionalData } = data;
+    const createData: any = { 
+      ...professionalData, 
+      branchId,
+      commissionRate: data.commissionRate || 0,
+    };
+    
+    // Tratar roleId
+    if (roleId && roleId !== 'custom') {
+      createData.roleId = roleId;
+    }
 
     return this.prisma.professional.create({
-      data: { ...data, branchId },
+      data: createData,
+      include: {
+        customRole: true,
+        branch: {
+          select: { name: true },
+        },
+      },
     });
   }
 

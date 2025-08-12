@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Headers,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -47,7 +48,11 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(@Headers('x-branch-id') branchId: string): Promise<Product[]> {
+  findAll(
+    @Query('branchId') queryBranchId: string,
+    @Headers('x-branch-id') headerBranchId: string,
+  ): Promise<Product[]> {
+    const branchId = queryBranchId || headerBranchId;
     return this.productsService.findAll(branchId);
   }
 

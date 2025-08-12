@@ -12,13 +12,15 @@ axios.interceptors.request.use((config) => {
     method: config.method,
     token: token ? "Present" : "Missing",
     branchId: activeBranchId || "Missing",
+    existingBranchHeader: config.headers["x-branch-id"] || "None",
   });
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (activeBranchId) {
+  // Sempre enviar x-branch-id se disponível, a menos que já esteja definido
+  if (activeBranchId && !config.headers["x-branch-id"]) {
     config.headers["x-branch-id"] = activeBranchId;
   }
 

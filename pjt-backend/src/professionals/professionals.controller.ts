@@ -23,11 +23,14 @@ export class ProfessionalsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os profissionais' })
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
-  findAll(@Req() req: AuthenticatedRequest) {
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: branchId || req.user.branchId,
     });
   }
 
@@ -50,7 +53,7 @@ export class ProfessionalsController {
       id: req.user.id,
       role: req.user.role,
       branchId: req.user.branchId,
-    });
+    }, body.branchId);
   }
 
   @Patch(':id')

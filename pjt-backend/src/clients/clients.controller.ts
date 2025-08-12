@@ -7,6 +7,7 @@ import {
   Post,
   Patch,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
@@ -21,11 +22,14 @@ export class ClientsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os clientes' })
   @ApiResponse({ status: 200, description: 'Lista de clientes' })
-  findAll(@Req() req: AuthenticatedRequest) {
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.clientsService.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: branchId || req.user.branchId,
     });
   }
 

@@ -1,18 +1,22 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
+import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 const roleSchema = z.object({
   title: z.string().min(2, "Título deve ter no mínimo 2 caracteres"),
   commissionRate: z.number().min(0).max(100).optional(),
   baseSalary: z.union([z.number(), z.nan()]).optional(),
   salaryPayDay: z.union([z.number(), z.nan()]).optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
 });
 
 type RoleFormData = z.infer<typeof roleSchema>;
@@ -24,10 +28,22 @@ interface RoleFormProps {
 
 export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
   const queryClient = useQueryClient();
+  const { user, isAdmin } = useUser();
+  const { activeBranch } = useBranch();
+
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const res = await axios.get("/api/branches");
+      return res.data;
+    },
+    enabled: isAdmin,
+  });
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
@@ -36,19 +52,22 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
       commissionRate: initialData.commissionRate || 0,
       baseSalary: initialData.baseSalary || undefined,
       salaryPayDay: initialData.salaryPayDay || undefined,
+      branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
     } : {
       commissionRate: 0,
+      branchId: !isAdmin ? activeBranch?.id : undefined,
     }
   });
 
   const createRole = useMutation({
     mutationFn: async (data: RoleFormData) => {
       try {
+        const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
         if (initialData) {
-          const res = await axios.patch(`/api/roles/${initialData.id}`, data);
+          const res = await axios.patch(`/api/roles/${initialData.id}`, data, { headers });
           return res.data;
         } else {
-          const res = await axios.post("/api/roles", data);
+          const res = await axios.post("/api/roles", data, { headers });
           return res.data;
         }
       } catch (error: any) {
@@ -74,6 +93,27 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : initialData?.branchId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+
       <div>
         <Label htmlFor="title">Título da Função</Label>
         <Input
