@@ -154,6 +154,12 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                           Estoque Automático
                         </Badge>
                       )}
+                      
+                      {transaction.appointment && (
+                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+                          Comissão
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
@@ -178,6 +184,19 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                       </span>
                       <span className="text-gray-500">
                         Ref: {transaction.reference}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {transaction.appointment && (
+                  <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">
+                        Comissão: {transaction.appointment.professional.name}
+                      </span>
+                      <span className="text-gray-500">
+                        Cliente: {transaction.appointment.client.name}
                       </span>
                     </div>
                   </div>

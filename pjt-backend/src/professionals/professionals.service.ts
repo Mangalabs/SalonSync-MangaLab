@@ -60,9 +60,28 @@ export class ProfessionalsService extends BaseDataService {
 
   async update(
     id: string,
-    data: Partial<Professional & { roleId?: string }>,
+    data: Partial<Professional & { roleId?: string; baseSalary?: number; salaryPayDay?: number }>,
   ): Promise<Professional> {
-    return this.prisma.professional.update({ where: { id }, data });
+    const { roleId, baseSalary, salaryPayDay, ...professionalData } = data;
+    
+    const updateData: any = { ...professionalData };
+    
+    // Tratar roleId
+    if (roleId !== undefined) {
+      if (roleId === 'custom' || roleId === '') {
+        updateData.roleId = null;
+      } else {
+        updateData.roleId = roleId;
+      }
+    }
+    
+    return this.prisma.professional.update({ 
+      where: { id }, 
+      data: updateData,
+      include: {
+        customRole: true,
+      },
+    });
   }
 
   async remove(id: string): Promise<void> {

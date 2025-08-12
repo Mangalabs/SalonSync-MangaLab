@@ -11,6 +11,8 @@ import axios from "@/lib/axios";
 const roleSchema = z.object({
   title: z.string().min(2, "Título deve ter no mínimo 2 caracteres"),
   commissionRate: z.number().min(0).max(100).optional(),
+  baseSalary: z.union([z.number(), z.nan()]).optional(),
+  salaryPayDay: z.union([z.number(), z.nan()]).optional(),
 });
 
 type RoleFormData = z.infer<typeof roleSchema>;
@@ -32,6 +34,8 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
     defaultValues: initialData ? {
       title: initialData.title,
       commissionRate: initialData.commissionRate || 0,
+      baseSalary: initialData.baseSalary || undefined,
+      salaryPayDay: initialData.salaryPayDay || undefined,
     } : {
       commissionRate: 0,
     }
@@ -41,7 +45,7 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
     mutationFn: async (data: RoleFormData) => {
       try {
         if (initialData) {
-          const res = await axios.put(`/api/roles/${initialData.id}`, data);
+          const res = await axios.patch(`/api/roles/${initialData.id}`, data);
           return res.data;
         } else {
           const res = await axios.post("/api/roles", data);
@@ -99,6 +103,42 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
         <p className="text-xs text-[#737373] mt-1">
           Deixe 0 se não houver comissão para esta função
         </p>
+      </div>
+
+      <div className="border-t pt-4">
+        <h3 className="text-sm font-medium mb-3">Configuração de Salário (Opcional)</h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="baseSalary">Salário Base (R$)</Label>
+            <Input
+              id="baseSalary"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register("baseSalary", { valueAsNumber: true })}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-[#737373] mt-1">
+              Valor fixo mensal para esta função
+            </p>
+          </div>
+          
+          <div>
+            <Label htmlFor="salaryPayDay">Dia do Pagamento</Label>
+            <Input
+              id="salaryPayDay"
+              type="number"
+              min="1"
+              max="31"
+              {...register("salaryPayDay", { valueAsNumber: true })}
+              placeholder="5"
+            />
+            <p className="text-xs text-[#737373] mt-1">
+              Dia do mês para gerar despesa
+            </p>
+          </div>
+        </div>
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">

@@ -15,6 +15,8 @@ import {
   TransactionType,
 } from './dto/create-transaction.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { CreateRecurringExpenseDto } from './dto/create-recurring-expense.dto';
+import { PayRecurringExpenseDto } from './dto/pay-recurring-expense.dto';
 import { AuthenticatedRequest } from '../common/middleware/auth.middleware';
 
 @ApiTags('financial')
@@ -116,6 +118,64 @@ export class FinancialController {
   @ApiOperation({ summary: 'Excluir transação' })
   deleteTransaction(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.financialService.deleteTransaction(id, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  // Despesas Fixas
+  @Post('recurring-expenses')
+  @ApiOperation({ summary: 'Criar despesa fixa' })
+  createRecurringExpense(
+    @Body() body: CreateRecurringExpenseDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.financialService.createRecurringExpense(body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  @Get('recurring-expenses')
+  @ApiOperation({ summary: 'Listar despesas fixas' })
+  getRecurringExpenses(@Req() req: AuthenticatedRequest) {
+    return this.financialService.getRecurringExpenses({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  @Get('recurring-expenses/pending')
+  @ApiOperation({ summary: 'Listar despesas fixas pendentes' })
+  getPendingRecurringExpenses(@Req() req: AuthenticatedRequest) {
+    return this.financialService.getPendingRecurringExpenses({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  @Post('recurring-expenses/:id/pay')
+  @ApiOperation({ summary: 'Pagar despesa fixa' })
+  payRecurringExpense(
+    @Param('id') id: string,
+    @Body() body: PayRecurringExpenseDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.financialService.payRecurringExpense(id, body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  @Post('generate-salary-expenses')
+  @ApiOperation({ summary: 'Gerar despesas de salário automaticamente' })
+  generateSalaryExpenses(@Req() req: AuthenticatedRequest) {
+    return this.financialService.generateSalaryExpenses({
       id: req.user.id,
       role: req.user.role,
       branchId: req.user.branchId,
