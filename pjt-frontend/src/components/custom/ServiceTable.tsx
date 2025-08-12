@@ -22,7 +22,8 @@ export function ServiceTable() {
   const { data, isLoading } = useQuery({
     queryKey: ["services", activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/services");
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : "";
+      const res = await axios.get(`/api/services${params}`);
       return res.data;
     },
     enabled: !!activeBranch,

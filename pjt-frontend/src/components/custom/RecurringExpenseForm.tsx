@@ -72,9 +72,10 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals", selectedBranchId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranchId) params.append("branchId", selectedBranchId);
-      const res = await axios.get(`/api/professionals?${params}`);
+      if (!selectedBranchId) return [];
+      console.log("📝 RecurringExpenseForm: Loading professionals for branch:", selectedBranchId);
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
+      console.log("📝 RecurringExpenseForm: Loaded professionals:", res.data.length, "professionals", res.data.map(p => p.name));
       return res.data;
     },
     enabled: !!selectedBranchId,

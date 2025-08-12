@@ -27,10 +27,13 @@ export class ProfessionalsController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    // Para admin, usar branchId do query se fornecido, senão usar do contexto
+    const targetBranchId = req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+    
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: branchId || req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 

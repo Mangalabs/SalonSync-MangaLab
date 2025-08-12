@@ -59,13 +59,19 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   });
 
   const selectedBranchId = watch("branchId");
+  
+  // Log para debug da seleção de filial
+  useEffect(() => {
+    console.log("🏢 ProductSaleForm: selectedBranchId changed to:", selectedBranchId);
+  }, [selectedBranchId]);
 
   const { data: products = [] } = useQuery({
     queryKey: ["products", selectedBranchId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranchId) params.append("branchId", selectedBranchId);
-      const res = await axios.get(`/api/products?${params}`);
+      if (!selectedBranchId) return [];
+      console.log("📝 ProductSaleForm: Loading products for branch:", selectedBranchId);
+      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
+      console.log("📝 ProductSaleForm: Loaded products:", res.data.length, "products");
       return res.data;
     },
     enabled: !!selectedBranchId,
@@ -74,9 +80,13 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients", selectedBranchId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranchId) params.append("branchId", selectedBranchId);
-      const res = await axios.get(`/api/clients?${params}`);
+      if (!selectedBranchId) {
+        console.log("⚠️ ProductSaleForm: No selectedBranchId for clients");
+        return [];
+      }
+      console.log("📝 ProductSaleForm: Loading clients for branch:", selectedBranchId);
+      const res = await axios.get(`/api/clients?branchId=${selectedBranchId}`);
+      console.log("📝 ProductSaleForm: Loaded clients:", res.data.length, "clients", res.data.map(c => c.name));
       return res.data;
     },
     enabled: !!selectedBranchId,
@@ -85,9 +95,13 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals", selectedBranchId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranchId) params.append("branchId", selectedBranchId);
-      const res = await axios.get(`/api/professionals?${params}`);
+      if (!selectedBranchId) {
+        console.log("⚠️ ProductSaleForm: No selectedBranchId for professionals");
+        return [];
+      }
+      console.log("📝 ProductSaleForm: Loading professionals for branch:", selectedBranchId);
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
+      console.log("📝 ProductSaleForm: Loaded professionals:", res.data.length, "professionals", res.data.map(p => p.name));
       return res.data;
     },
     enabled: !!selectedBranchId,
@@ -136,7 +150,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         unitCost: data.unitPrice,
         reason: `Venda de produto${clientName ? ` - Cliente: ${clientName}` : ""}${data.notes ? ` - ${data.notes}` : ""}`,
         reference: clientName ? `Cliente: ${clientName}` : undefined,
-        soldById: data.soldById,
+        soldById: data.soldById || undefined, // undefined se não selecionado
       };
       
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
@@ -275,12 +289,13 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
       {isAdmin && (
         <div>
-          <Label htmlFor="soldById">Vendedor</Label>
-          <Select onValueChange={(value) => setValue("soldById", value)} defaultValue={currentProfessionalId}>
+          <Label htmlFor="soldById">Vendedor (opcional)</Label>
+          <Select onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)} defaultValue={currentProfessionalId || "none"}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione o vendedor" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">Sem vendedor (Admin)</SelectItem>
               {professionals.map((professional: any) => (
                 <SelectItem key={professional.id} value={professional.id}>
                   {professional.name}
@@ -288,6 +303,9 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
               ))}
             </SelectContent>
           </Select>
+          <p className="text-xs text-gray-500 mt-1">
+            Deixe "Sem vendedor" se você (admin) está fazendo a venda
+          </p>
         </div>
       )}
 

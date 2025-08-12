@@ -21,6 +21,7 @@ const movementSchema = z.object({
   reason: z.string().min(1, "Informe o motivo"),
   reference: z.string().optional(),
   branchId: z.string().min(1, "Selecione uma filial"),
+  soldById: z.string().optional(),
 });
 
 type MovementFormData = z.infer<typeof movementSchema>;
@@ -61,12 +62,21 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
   const { data: products = [] } = useQuery({
     queryKey: ["products", selectedBranchId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranchId) params.append("branchId", selectedBranchId);
-      const res = await axios.get(`/api/products?${params}`);
+      if (!selectedBranchId) return [];
+      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
       return res.data;
     },
     enabled: !!selectedBranchId,
+  });
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals", selectedBranchId],
+    queryFn: async () => {
+      if (!selectedBranchId) return [];
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId && isAdmin,
   });
 
   const movementType = watch("type");
@@ -80,6 +90,7 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
         unitCost: data.unitCost,
         reason: data.reason,
         reference: data.reference,
+        soldById: data.soldById,
       }, { headers });
       return res.data;
     },
@@ -212,6 +223,28 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
           placeholder="Nota fiscal, pedido, etc."
         />
       </div>
+
+      {isAdmin && (
+        <div>
+          <Label htmlFor="soldById">Usuário Responsável (opcional)</Label>
+          <Select onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o usuário responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Admin (você)</SelectItem>
+              {professionals.map((professional: any) => (
+                <SelectItem key={professional.id} value={professional.id}>
+                  {professional.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500 mt-1">
+            Deixe "Admin (você)" se você está fazendo a movimentação
+          </p>
+        </div>
+      )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "Registrando..." : "Registrar Movimentação"}

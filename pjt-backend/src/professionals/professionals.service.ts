@@ -17,7 +17,20 @@ export class ProfessionalsService extends BaseDataService {
   }
 
   async findAll(user: UserContext): Promise<Professional[]> {
-    const branchIds = await this.getUserBranchIds(user);
+    let branchIds: string[];
+    
+    // Se branchId específico foi fornecido, usar apenas ele
+    if (user.branchId && user.role === 'ADMIN') {
+      // Verificar se admin tem acesso a esta filial
+      const allowedBranchIds = await this.getUserBranchIds({ ...user, branchId: undefined });
+      if (allowedBranchIds.includes(user.branchId)) {
+        branchIds = [user.branchId];
+      } else {
+        throw new Error('Acesso negado à filial especificada');
+      }
+    } else {
+      branchIds = await this.getUserBranchIds(user);
+    }
 
     return this.prisma.professional.findMany({
       where: { branchId: { in: branchIds } },

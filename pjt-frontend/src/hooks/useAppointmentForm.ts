@@ -12,6 +12,7 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
     professionalId: z.string().min(1, "Selecione um profissional"),
     clientId: z.string().min(1, "Selecione um cliente"),
     serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
+    ...(isAdmin && { branchId: z.string().min(1, "Selecione uma filial") }),
   };
   
   if (isScheduled) {
@@ -41,11 +42,13 @@ export function useAppointmentForm(
       clientId: "", 
       serviceIds: [],
       scheduledDate: "",
-      scheduledTime: ""
+      scheduledTime: "",
+      ...(isAdmin && { branchId: "" }),
     } : {
       professionalId: "", 
       clientId: "", 
-      serviceIds: []
+      serviceIds: [],
+      ...(isAdmin && { branchId: "" }),
     },
   });
 
@@ -92,7 +95,8 @@ export function useAppointmentForm(
         status
       };
       
-      await axios.post("/api/appointments", payload);
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      await axios.post("/api/appointments", payload, { headers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
