@@ -42,6 +42,7 @@ model Branch {
   stockMovements StockMovement[]
   expenseCategories ExpenseCategory[]
   financialTransactions FinancialTransaction[]
+  recurringExpenses RecurringExpense[]
   whatsappConfigs WhatsAppConfig[]
   whatsappMessages WhatsAppMessage[]
   whatsappConversations WhatsAppConversation[]
@@ -53,6 +54,8 @@ model Role {
   id             String         @id @default(uuid())
   title          String
   commissionRate Decimal        @default(0) @db.Decimal(5, 2)
+  baseSalary     Decimal?       @db.Decimal(10, 2) // Salário base da função
+  salaryPayDay   Int?           // Dia do pagamento (1-31)
   branchId       String
   branch         Branch         @relation(fields: [branchId], references: [id])
   professionals  Professional[]
@@ -72,6 +75,7 @@ model Professional {
   branch           Branch        @relation(fields: [branchId], references: [id])
   services         Service[]     @relation("ProfessionalServices")
   appointments     Appointment[]
+  recurringExpenses RecurringExpense[] // Despesas fixas (salários)
 }
 
 model Service {
@@ -110,6 +114,7 @@ model Appointment {
   total               Decimal              @db.Decimal(10, 2)
   scheduledAt         DateTime
   status              AppointmentStatus    @default(SCHEDULED)
+  commissionTransactions FinancialTransaction[] // Transações de comissão geradas
   createdAt           DateTime             @default(now())
 }
 
@@ -183,6 +188,7 @@ model ExpenseCategory {
   branchId    String
   branch      Branch                 @relation(fields: [branchId], references: [id])
   transactions FinancialTransaction[]
+  recurringExpenses RecurringExpense[]
   createdAt   DateTime               @default(now())
 }
 
@@ -195,10 +201,33 @@ model FinancialTransaction {
   category      ExpenseCategory        @relation(fields: [categoryId], references: [id])
   paymentMethod PaymentMethod          @default(CASH)
   reference     String?                // Número da nota, comprovante, etc
+  recurringExpenseId String?           // Referência para despesa fixa
+  recurringExpense RecurringExpense?   @relation(fields: [recurringExpenseId], references: [id])
+  appointmentId String?               // Referência para atendimento (comissão)
+  appointment   Appointment?           @relation(fields: [appointmentId], references: [id])
   date          DateTime               @default(now())
   branchId      String
   branch        Branch                 @relation(fields: [branchId], references: [id])
   createdAt     DateTime               @default(now())
+}
+
+model RecurringExpense {
+  id            String                 @id @default(uuid())
+  name          String                 // Nome da despesa (ex: "Conta de Luz")
+  description   String?                // Descrição adicional
+  categoryId    String
+  category      ExpenseCategory        @relation(fields: [categoryId], references: [id])
+  fixedAmount   Decimal?               @db.Decimal(10, 2) // Valor fixo (opcional)
+  receiptDay    Int                    // Dia que a conta chega (1-31)
+  dueDay        Int                    // Dia do vencimento (1-31)
+  professionalId String?               // Profissional (para salários)
+  professional  Professional?          @relation(fields: [professionalId], references: [id])
+  isActive      Boolean                @default(true)
+  branchId      String
+  branch        Branch                 @relation(fields: [branchId], references: [id])
+  transactions  FinancialTransaction[] // Transações geradas
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 }
 
 enum FinancialTransactionType {

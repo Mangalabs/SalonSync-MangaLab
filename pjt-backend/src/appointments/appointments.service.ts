@@ -152,18 +152,80 @@ export class AppointmentsService extends BaseDataService {
   async confirmAppointment(id: string): Promise<Appointment> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
+      include: {
+        professional: {
+          include: {
+            customRole: true,
+          },
+        },
+      },
     });
     if (!appointment) {
       throw new NotFoundException('Agendamento não encontrado');
     }
 
-    return this.prisma.appointment.update({
-      where: { id },
-      data: { status: 'COMPLETED' },
-      include: {
-        professional: true,
-        client: true,
-        appointmentServices: { include: { service: true } },
+    return this.prisma.$transaction(async (tx) => {
+      // Atualizar status do appointment
+      const updatedAppointment = await tx.appointment.update({
+        where: { id },
+        data: { status: 'COMPLETED' },
+        include: {
+          professional: {
+            include: {
+              customRole: true,
+            },
+          },
+          client: true,
+          appointmentServices: { include: { service: true } },
+        },
+      });
+
+      // Criar transação de comissão
+      await this.createCommissionTransaction(updatedAppointment, tx);
+
+      return updatedAppointment;
+    });
+  }
+
+  private async createCommissionTransaction(appointment: any, tx: any) {
+    // Calcular comissão
+    const commissionRate = appointment.professional.customRole?.commissionRate || appointment.professional.commissionRate || 0;
+    const commissionAmount = (Number(appointment.total) * Number(commissionRate)) / 100;
+
+    if (commissionAmount <= 0) return;
+
+    // Buscar ou criar categoria de comissão
+    let commissionCategory = await tx.expenseCategory.findFirst({
+      where: {
+        branchId: appointment.branchId,
+        name: 'Comissões',
+        type: 'EXPENSE',
+      },
+    });
+
+    if (!commissionCategory) {
+      commissionCategory = await tx.expenseCategory.create({
+        data: {
+          name: 'Comissões',
+          type: 'EXPENSE',
+          color: '#8B5CF6',
+          branchId: appointment.branchId,
+        },
+      });
+    }
+
+    // Criar transação de comissão
+    await tx.financialTransaction.create({
+      data: {
+        description: `Comissão: ${appointment.professional.name} - ${appointment.client.name}`,
+        amount: commissionAmount,
+        type: 'EXPENSE',
+        categoryId: commissionCategory.id,
+        paymentMethod: 'OTHER',
+        reference: `Atendimento-${appointment.id}`,
+        appointmentId: appointment.id,
+        date: appointment.scheduledAt,
+        branchId: appointment.branchId,
       },
     });
   }

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { UserPlus, Settings } from "lucide-react";
+import { UserPlus, Settings, Edit } from "lucide-react";
 import { RoleForm } from "./RoleForm";
 
 const employeeSchema = z.object({
@@ -29,6 +29,7 @@ type EmployeeFormData = z.infer<typeof employeeSchema>;
 export function EmployeeManagement() {
   const [open, setOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
   const queryClient = useQueryClient();
   const { activeBranch } = useBranch();
   
@@ -104,7 +105,10 @@ export function EmployeeManagement() {
         <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <span className="text-base sm:text-lg">Gerenciar Funcionários</span>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Dialog open={roleOpen} onOpenChange={setRoleOpen}>
+            <Dialog open={roleOpen} onOpenChange={(open) => {
+              setRoleOpen(open);
+              if (!open) setEditingRole(null);
+            }}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10 text-sm h-8">
                   <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -114,12 +118,16 @@ export function EmployeeManagement() {
               </DialogTrigger>
               <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Nova Função</DialogTitle>
+                  <DialogTitle>{editingRole ? 'Editar Função' : 'Nova Função'}</DialogTitle>
                 </DialogHeader>
-                <RoleForm onSuccess={() => {
-                  setRoleOpen(false);
-                  refreshRoles();
-                }} />
+                <RoleForm 
+                  initialData={editingRole}
+                  onSuccess={() => {
+                    setRoleOpen(false);
+                    setEditingRole(null);
+                    refreshRoles();
+                  }} 
+                />
               </DialogContent>
             </Dialog>
             
@@ -239,9 +247,29 @@ export function EmployeeManagement() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {roles.map((role: any) => (
                   <div key={role.id} className="border rounded p-2 text-xs sm:text-sm">
-                    <div className="font-medium">{role.title}</div>
-                    <div className="text-[#737373]">
-                      {role.commissionRate > 0 ? `${role.commissionRate}% comissão` : 'Sem comissão'}
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-medium">{role.title}</div>
+                        <div className="text-[#737373] space-y-1">
+                          <div>{role.commissionRate > 0 ? `${role.commissionRate}% comissão` : 'Sem comissão'}</div>
+                          {role.baseSalary && (
+                            <div className="text-green-600">
+                              Salário: R$ {Number(role.baseSalary).toFixed(2)} (dia {role.salaryPayDay})
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingRole(role);
+                          setRoleOpen(true);
+                        }}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 ))}

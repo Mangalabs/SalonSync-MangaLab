@@ -21,6 +21,8 @@ const schema = z.object({
     .min(0)
     .max(100, "Comissão deve ser entre 0 e 100%"),
   roleId: z.string().optional(),
+  baseSalary: z.union([z.number(), z.nan()]).optional(),
+  salaryPayDay: z.union([z.number(), z.nan()]).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -73,6 +75,8 @@ export function ProfessionalForm({
             (initialData as any).customRole?.commissionRate ||
             initialData.commissionRate ||
             0,
+          baseSalary: (initialData as any).baseSalary || undefined,
+          salaryPayDay: (initialData as any).salaryPayDay || undefined,
         }
       : {
           commissionRate: 0,
@@ -81,6 +85,7 @@ export function ProfessionalForm({
 
   const selectedRoleId = watch("roleId");
   const selectedRole = roles.find((role: any) => role.id === selectedRoleId);
+  const isCustomRole = selectedRoleId === "custom" || !selectedRoleId;
 
   const handleRoleChange = (roleId: string) => {
     setValue("roleId", roleId);
@@ -88,6 +93,12 @@ export function ProfessionalForm({
     if (role) {
       setValue("role", role.title);
       setValue("commissionRate", role.commissionRate || 0);
+      setValue("baseSalary", role.baseSalary ? Number(role.baseSalary) : undefined);
+      setValue("salaryPayDay", role.salaryPayDay || undefined);
+    } else {
+      // Função personalizada - limpar valores
+      setValue("baseSalary", undefined);
+      setValue("salaryPayDay", undefined);
     }
   };
 
@@ -162,6 +173,63 @@ export function ProfessionalForm({
               <p className="text-sm text-red-500">{errors.role.message}</p>
             )}
           </>
+        )}
+      </div>
+      
+      <div className="border-t pt-4">
+        <h3 className="text-sm font-medium mb-3">
+          Configuração de Salário 
+          {!isCustomRole && selectedRole?.baseSalary && (
+            <span className="text-xs font-normal text-gray-500">
+              (Herdado da função: R$ {Number(selectedRole.baseSalary).toFixed(2)})
+            </span>
+          )}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder={selectedRole?.baseSalary ? `Padrão: R$ ${Number(selectedRole.baseSalary).toFixed(2)}` : "Salário base (R$)"}
+              {...register("baseSalary", { valueAsNumber: true })}
+              disabled={!isCustomRole && selectedRole?.baseSalary}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {isCustomRole 
+                ? "Valor fixo mensal personalizado"
+                : selectedRole?.baseSalary 
+                  ? "Definido pela função selecionada"
+                  : "Valor fixo mensal (comissões serão somadas)"
+              }
+            </p>
+          </div>
+          
+          <div>
+            <Input
+              type="number"
+              min="1"
+              max="31"
+              placeholder={selectedRole?.salaryPayDay ? `Padrão: Dia ${selectedRole.salaryPayDay}` : "Dia do pagamento"}
+              {...register("salaryPayDay", { valueAsNumber: true })}
+              disabled={!isCustomRole && selectedRole?.salaryPayDay}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {isCustomRole 
+                ? "Dia do mês personalizado"
+                : selectedRole?.salaryPayDay 
+                  ? "Definido pela função selecionada"
+                  : "Dia do mês para gerar despesa"
+              }
+            </p>
+          </div>
+        </div>
+        
+        {!isCustomRole && selectedRole && (
+          <p className="text-xs text-blue-600 mt-2">
+            ℹ️ Para personalizar salário, selecione "Função personalizada"
+          </p>
         )}
       </div>
       <div>

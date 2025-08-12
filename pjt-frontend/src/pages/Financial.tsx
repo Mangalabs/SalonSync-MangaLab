@@ -24,6 +24,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { TransactionForm } from "@/components/custom/TransactionForm";
+import { RecurringExpenseForm } from "@/components/custom/RecurringExpenseForm";
+import { RecurringExpensesTabContent } from "@/components/custom/RecurringExpensesTabContent";
 import { FinancialSummary } from "@/components/custom/FinancialSummary";
 import { FinancialTabContent } from "@/components/custom/FinancialTabContent";
 import { FinancialProvider } from "@/contexts/FinancialContext";
@@ -31,6 +33,7 @@ import { FinancialProvider } from "@/contexts/FinancialContext";
 export default function Financial() {
   const [activeTab, setActiveTab] = useState("summary");
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [recurringExpenseDialogOpen, setRecurringExpenseDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<
     "INCOME" | "EXPENSE" | "INVESTMENT"
   >("EXPENSE");
@@ -58,13 +61,14 @@ export default function Financial() {
 
           <div className="md:hidden">
             <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-28 text-xs h-8">
+              <SelectTrigger className="w-32 text-xs h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="summary">Resumo</SelectItem>
                 <SelectItem value="income">Receitas</SelectItem>
                 <SelectItem value="expenses">Despesas</SelectItem>
+                <SelectItem value="recurring">Despesas Fixas</SelectItem>
                 <SelectItem value="investments">Investimentos</SelectItem>
               </SelectContent>
             </Select>
@@ -72,10 +76,11 @@ export default function Financial() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden md:grid w-full grid-cols-4">
+          <TabsList className="hidden md:grid w-full grid-cols-5">
             <TabsTrigger value="summary">Resumo</TabsTrigger>
             <TabsTrigger value="income">Receitas</TabsTrigger>
             <TabsTrigger value="expenses">Despesas</TabsTrigger>
+            <TabsTrigger value="recurring">Despesas Fixas</TabsTrigger>
             <TabsTrigger value="investments">Investimentos</TabsTrigger>
           </TabsList>
 
@@ -115,6 +120,32 @@ export default function Financial() {
               </Button>
             </div>
             <FinancialTabContent type="EXPENSE" />
+          </TabsContent>
+
+          <TabsContent value="recurring" className="space-y-4 md:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-base md:text-xl font-semibold flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+                Despesas Fixas
+              </h2>
+              <Dialog open={recurringExpenseDialogOpen} onOpenChange={setRecurringExpenseDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-purple-600 hover:bg-purple-700 text-sm h-8"
+                  >
+                    <span className="hidden sm:inline">+ Nova Despesa Fixa</span>
+                    <span className="sm:hidden">+ Fixa</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nova Despesa Fixa</DialogTitle>
+                  </DialogHeader>
+                  <RecurringExpenseForm onSuccess={() => setRecurringExpenseDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+            <RecurringExpensesTabContent />
           </TabsContent>
 
           <TabsContent value="investments" className="space-y-4 md:space-y-6">
