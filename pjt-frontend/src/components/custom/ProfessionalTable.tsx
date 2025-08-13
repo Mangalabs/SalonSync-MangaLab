@@ -50,6 +50,15 @@ export function ProfessionalTable() {
     setSelectedProfessional(null);
   }, [activeBranch?.id]);
 
+  // Force refetch commission data when professional is selected
+  useEffect(() => {
+    if (selectedProfessional) {
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission", selectedProfessional] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission", selectedProfessional] });
+      queryClient.invalidateQueries({ queryKey: ["professional", selectedProfessional] });
+    }
+  }, [selectedProfessional, queryClient]);
+
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {
       await axios.delete(`/api/professionals/${id}`);

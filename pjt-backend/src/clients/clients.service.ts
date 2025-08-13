@@ -18,11 +18,14 @@ export class ClientsService extends BaseDataService {
 
   async findAll(user: UserContext): Promise<Client[]> {
     let branchIds: string[];
-    
+
     // Se branchId específico foi fornecido, usar apenas ele
     if (user.branchId && user.role === 'ADMIN') {
       // Verificar se admin tem acesso a esta filial
-      const allowedBranchIds = await this.getUserBranchIds({ ...user, branchId: undefined });
+      const allowedBranchIds = await this.getUserBranchIds({
+        ...user,
+        branchId: undefined,
+      });
       if (allowedBranchIds.includes(user.branchId)) {
         branchIds = [user.branchId];
       } else {
@@ -52,7 +55,7 @@ export class ClientsService extends BaseDataService {
     }
 
     // Use targetBranchId if provided, otherwise use getTargetBranchId logic
-    const branchId = targetBranchId || await this.getTargetBranchId(user);
+    const branchId = targetBranchId || (await this.getTargetBranchId(user));
 
     const clientData = {
       name: data.name,

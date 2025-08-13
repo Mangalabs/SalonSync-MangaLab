@@ -17,11 +17,14 @@ export class ServicesService extends BaseDataService {
 
   async findAll(user: UserContext) {
     let branchIds: string[];
-    
+
     // Se branchId específico foi fornecido, usar apenas ele
     if (user.branchId && user.role === 'ADMIN') {
       // Verificar se admin tem acesso a esta filial
-      const allowedBranchIds = await this.getUserBranchIds({ ...user, branchId: undefined });
+      const allowedBranchIds = await this.getUserBranchIds({
+        ...user,
+        branchId: undefined,
+      });
       if (allowedBranchIds.includes(user.branchId)) {
         branchIds = [user.branchId];
       } else {
@@ -89,8 +92,10 @@ export class ServicesService extends BaseDataService {
   ) {
     if (user.role === 'ADMIN') {
       // Admin pode criar serviços globais ou específicos de filial
-      const branchId = targetBranchId ? await this.getTargetBranchId(user, targetBranchId) : null;
-      
+      const branchId = targetBranchId
+        ? await this.getTargetBranchId(user, targetBranchId)
+        : null;
+
       return this.prisma.service.create({
         data: {
           name: data.name,

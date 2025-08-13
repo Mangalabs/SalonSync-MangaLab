@@ -53,7 +53,7 @@ export class FinancialService extends BaseDataService {
     // If no categories exist for this type, create default ones
     if (existingCategories.length === 0 && type && branchId) {
       await this.createDefaultCategories(branchId, type);
-      
+
       // Fetch categories again after creating defaults
       return this.prisma.expenseCategory.findMany({
         where: {
@@ -67,7 +67,10 @@ export class FinancialService extends BaseDataService {
     return existingCategories;
   }
 
-  private async createDefaultCategories(branchId: string, type: TransactionType) {
+  private async createDefaultCategories(
+    branchId: string,
+    type: TransactionType,
+  ) {
     const defaultCategories = {
       INCOME: [
         { name: 'Serviços', color: '#10B981' },
@@ -94,7 +97,7 @@ export class FinancialService extends BaseDataService {
     };
 
     const categoriesToCreate = defaultCategories[type] || [];
-    
+
     for (const category of categoriesToCreate) {
       await this.prisma.expenseCategory.create({
         data: {
@@ -151,8 +154,10 @@ export class FinancialService extends BaseDataService {
     if (filters?.categoryId) where.categoryId = filters.categoryId;
     if (filters?.startDate || filters?.endDate) {
       where.date = {};
-      if (filters.startDate) where.date.gte = new Date(filters.startDate + 'T00:00:00.000Z');
-      if (filters.endDate) where.date.lte = new Date(filters.endDate + 'T23:59:59.999Z');
+      if (filters.startDate)
+        where.date.gte = new Date(filters.startDate + 'T00:00:00.000Z');
+      if (filters.endDate)
+        where.date.lte = new Date(filters.endDate + 'T23:59:59.999Z');
     }
 
     return this.prisma.financialTransaction.findMany({
@@ -235,16 +240,17 @@ export class FinancialService extends BaseDataService {
     });
 
     // Despesas fixas pagas no período
-    const recurringExpenseTransactions = await this.prisma.financialTransaction.findMany({
-      where: {
-        branchId: { in: branchIds },
-        recurringExpenseId: { not: null },
-        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
-      },
-      include: {
-        recurringExpense: true,
-      },
-    });
+    const recurringExpenseTransactions =
+      await this.prisma.financialTransaction.findMany({
+        where: {
+          branchId: { in: branchIds },
+          recurringExpenseId: { not: null },
+          ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
+        },
+        include: {
+          recurringExpense: true,
+        },
+      });
 
     // Separar movimentações por tipo
     const stockPurchases = stockMovements
@@ -259,8 +265,10 @@ export class FinancialService extends BaseDataService {
       .filter((m) => m.type === 'LOSS')
       .reduce((sum, m) => sum + Number(m.totalCost || 0), 0);
 
-    const recurringExpensesTotal = recurringExpenseTransactions
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const recurringExpensesTotal = recurringExpenseTransactions.reduce(
+      (sum, t) => sum + Number(t.amount),
+      0,
+    );
 
     const summary = {
       totalIncome:
@@ -287,7 +295,10 @@ export class FinancialService extends BaseDataService {
     };
 
     summary.netProfit =
-      summary.totalIncome - summary.totalExpenses - summary.totalInvestments - summary.recurringExpenses;
+      summary.totalIncome -
+      summary.totalExpenses -
+      summary.totalInvestments -
+      summary.recurringExpenses;
 
     return summary;
   }
@@ -380,7 +391,9 @@ export class FinancialService extends BaseDataService {
     });
 
     // Filtrar apenas as que não foram pagas no mês atual
-    return recurringExpenses.filter(expense => expense.transactions.length === 0);
+    return recurringExpenses.filter(
+      (expense) => expense.transactions.length === 0,
+    );
   }
 
   async payRecurringExpense(
@@ -492,7 +505,10 @@ export class FinancialService extends BaseDataService {
         },
       });
 
-      const totalCommissions = commissions.reduce((sum, c) => sum + Number(c.amount), 0);
+      const totalCommissions = commissions.reduce(
+        (sum, c) => sum + Number(c.amount),
+        0,
+      );
       const baseSalary = Number(professional.customRole?.baseSalary || 0);
       const totalSalary = baseSalary + totalCommissions;
 

@@ -18,11 +18,14 @@ export class ProfessionalsService extends BaseDataService {
 
   async findAll(user: UserContext): Promise<Professional[]> {
     let branchIds: string[];
-    
+
     // Se branchId específico foi fornecido, usar apenas ele
     if (user.branchId && user.role === 'ADMIN') {
       // Verificar se admin tem acesso a esta filial
-      const allowedBranchIds = await this.getUserBranchIds({ ...user, branchId: undefined });
+      const allowedBranchIds = await this.getUserBranchIds({
+        ...user,
+        branchId: undefined,
+      });
       if (allowedBranchIds.includes(user.branchId)) {
         branchIds = [user.branchId];
       } else {
@@ -60,9 +63,9 @@ export class ProfessionalsService extends BaseDataService {
   }
 
   async create(
-    data: { 
-      name: string; 
-      role: string; 
+    data: {
+      name: string;
+      role: string;
       commissionRate?: number;
       roleId?: string;
       baseSalary?: number;
@@ -72,14 +75,14 @@ export class ProfessionalsService extends BaseDataService {
     targetBranchId?: string,
   ): Promise<Professional> {
     const branchId = await this.getTargetBranchId(user, targetBranchId);
-    
+
     const { roleId, ...professionalData } = data;
-    const createData: any = { 
-      ...professionalData, 
+    const createData: any = {
+      ...professionalData,
       branchId,
       commissionRate: data.commissionRate || 0,
     };
-    
+
     // Tratar roleId
     if (roleId && roleId !== 'custom') {
       createData.roleId = roleId;
@@ -98,12 +101,18 @@ export class ProfessionalsService extends BaseDataService {
 
   async update(
     id: string,
-    data: Partial<Professional & { roleId?: string; baseSalary?: number; salaryPayDay?: number }>,
+    data: Partial<
+      Professional & {
+        roleId?: string;
+        baseSalary?: number;
+        salaryPayDay?: number;
+      }
+    >,
   ): Promise<Professional> {
     const { roleId, baseSalary, salaryPayDay, ...professionalData } = data;
-    
+
     const updateData: any = { ...professionalData };
-    
+
     // Tratar roleId
     if (roleId !== undefined) {
       if (roleId === 'custom' || roleId === '') {
@@ -112,9 +121,9 @@ export class ProfessionalsService extends BaseDataService {
         updateData.roleId = roleId;
       }
     }
-    
-    return this.prisma.professional.update({ 
-      where: { id }, 
+
+    return this.prisma.professional.update({
+      where: { id },
       data: updateData,
       include: {
         customRole: true,
@@ -171,6 +180,40 @@ export class ProfessionalsService extends BaseDataService {
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
     }
 
+    // First, let's see ALL appointments for this professional
+    const allAppointments = await this.prisma.appointment.findMany({
+      where: {
+        professionalId: id,
+        branchId: (professional as any).branchId,
+      },
+      select: {
+        id: true,
+        status: true,
+        scheduledAt: true,
+        total: true,
+      },
+      orderBy: { scheduledAt: 'desc' },
+    });
+
+    console.log(
+      '📊 ALL appointments for professional:',
+      allAppointments.length,
+      allAppointments.map((apt) => ({
+        id: apt.id.substring(0, 8),
+        status: apt.status,
+        scheduledAt: apt.scheduledAt.toISOString(),
+        total: apt.total,
+      })),
+    );
+
+    console.log('🔍 Searching COMPLETED appointments with criteria:', {
+      professionalId: id,
+      branchId: (professional as any).branchId,
+      status: 'COMPLETED',
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
     const appointments = await this.prisma.appointment.findMany({
       where: {
         professionalId: id,
@@ -189,6 +232,17 @@ export class ProfessionalsService extends BaseDataService {
         },
       },
     });
+
+    console.log(
+      '📊 Found appointments:',
+      appointments.length,
+      appointments.map((apt) => ({
+        id: apt.id,
+        status: apt.status,
+        scheduledAt: apt.scheduledAt.toISOString(),
+        total: apt.total,
+      })),
+    );
 
     const commissionRate =
       Number((professional as any).commissionRate || 0) / 100;

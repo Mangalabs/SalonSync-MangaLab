@@ -37,12 +37,12 @@ export class ProductsController {
       unit: createProductDto.unit,
       costPrice: createProductDto.costPrice,
       salePrice: createProductDto.salePrice,
-      initialStock: createProductDto.initialStock
+      initialStock: createProductDto.initialStock,
     });
     console.log('Field types:', {
       costPrice: typeof createProductDto.costPrice,
       salePrice: typeof createProductDto.salePrice,
-      initialStock: typeof createProductDto.initialStock
+      initialStock: typeof createProductDto.initialStock,
     });
     return this.productsService.create(createProductDto, branchId);
   }

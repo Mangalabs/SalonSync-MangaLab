@@ -91,6 +91,9 @@ export function AppointmentTable({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["professional"] });
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || "Erro ao excluir agendamento");

@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, Calendar, BarChart3, RefreshCw } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import axios from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface ProfessionalCommissionCardProps {
   professionalId?: string;
@@ -12,9 +14,11 @@ export function ProfessionalCommissionCard({
   professionalId,
 }: ProfessionalCommissionCardProps) {
   const { user } = useUser();
+  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient();
 
   const { data: professional } = useQuery({
-    queryKey: ["professional", professionalId || user?.id],
+    queryKey: ["professional", professionalId || user?.id, activeBranch?.id],
     queryFn: async () => {
       if (professionalId) {
         const res = await axios.get(`/api/professionals/${professionalId}`);
@@ -29,7 +33,7 @@ export function ProfessionalCommissionCard({
   });
 
   const { data: monthlyCommission } = useQuery({
-    queryKey: ["monthly-commission", professional?.id],
+    queryKey: ["monthly-commission", professional?.id, activeBranch?.id],
     queryFn: async () => {
       const now = new Date();
       const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -45,10 +49,14 @@ export function ProfessionalCommissionCard({
       return res.data;
     },
     enabled: !!professional,
+    staleTime: 0,
+    gcTime: 0, // Don't cache at all
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: dailyCommission } = useQuery({
-    queryKey: ["daily-commission", professional?.id],
+    queryKey: ["daily-commission", professional?.id, activeBranch?.id],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
 
@@ -58,7 +66,19 @@ export function ProfessionalCommissionCard({
       return res.data;
     },
     enabled: !!professional,
+    staleTime: 0,
+    gcTime: 0, // Don't cache at all
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
+
+  const handleRefresh = () => {
+    if (professional) {
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission", professional.id] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission", professional.id] });
+      queryClient.invalidateQueries({ queryKey: ["professional", professional.id] });
+    }
+  };
 
   if (!professional) {
     return (
@@ -72,6 +92,18 @@ export function ProfessionalCommissionCard({
 
   return (
     <div className="space-y-4 md:space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">{professional.name}</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Atualizar
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

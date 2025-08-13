@@ -41,7 +41,10 @@ export class CreateProfessionalDto {
   @Min(0)
   baseSalary?: number;
 
-  @ApiProperty({ description: 'Dia do pagamento personalizado', required: false })
+  @ApiProperty({
+    description: 'Dia do pagamento personalizado',
+    required: false,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)

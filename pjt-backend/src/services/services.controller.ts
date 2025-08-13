@@ -28,8 +28,9 @@ export class ServicesController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    const targetBranchId = req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
-    
+    const targetBranchId =
+      req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
@@ -49,15 +50,19 @@ export class ServicesController {
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
   create(
-    @Body() body: CreateServiceDto, 
+    @Body() body: CreateServiceDto,
     @Headers('x-branch-id') branchId: string,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.create(body, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    }, branchId);
+    return this.service.create(
+      body,
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      branchId,
+    );
   }
 
   @Patch(':id')

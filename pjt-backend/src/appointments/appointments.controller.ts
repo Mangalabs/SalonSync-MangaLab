@@ -25,6 +25,7 @@ export class AppointmentsController {
     @Body() body: CreateAppointmentDto & { status?: string },
     @Req() req: AuthenticatedRequest,
   ): Promise<Appointment> {
+    const targetBranchId = req.headers['x-branch-id'] as string;
     return this.apptService.create(
       {
         ...body,
@@ -36,6 +37,7 @@ export class AppointmentsController {
         role: req.user.role,
         branchId: req.user.branchId,
       },
+      targetBranchId,
     );
   }
 

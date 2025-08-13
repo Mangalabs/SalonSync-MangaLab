@@ -31,8 +31,18 @@ export class AppointmentsService extends BaseDataService {
       },
     });
     if (existingAppointment) {
+      console.log('⚠️ CONFLICT: Appointment already exists at this time:', {
+        existing: existingAppointment.id,
+        scheduledAt: data.scheduledAt.toISOString(),
+      });
       throw new Error('Já existe um agendamento neste horário');
     }
+
+    console.log('✅ No conflict, creating appointment:', {
+      professionalId: data.professionalId,
+      scheduledAt: data.scheduledAt.toISOString(),
+      status: data.status,
+    });
 
     const services = await this.prisma.service.findMany({
       where: { id: { in: data.serviceIds } },
@@ -45,7 +55,16 @@ export class AppointmentsService extends BaseDataService {
 
     const branchId = await this.getTargetBranchId(user, targetBranchId);
 
-    return this.prisma.appointment.create({
+    console.log('🔍 Backend creating appointment:', {
+      professionalId: data.professionalId,
+      clientId: data.clientId,
+      branchId,
+      status: data.status,
+      scheduledAt: data.scheduledAt.toISOString(),
+      serviceIds: data.serviceIds,
+    });
+
+    const createdAppointment = await this.prisma.appointment.create({
       data: {
         professionalId: data.professionalId,
         clientId: data.clientId,
@@ -65,6 +84,15 @@ export class AppointmentsService extends BaseDataService {
         },
       },
     });
+
+    console.log('✅ Appointment created successfully:', {
+      id: createdAppointment.id,
+      professionalId: createdAppointment.professionalId,
+      status: createdAppointment.status,
+      branchId: createdAppointment.branchId,
+    });
+
+    return createdAppointment;
   }
 
   async findAll(user: UserContext): Promise<Appointment[]> {
@@ -189,8 +217,12 @@ export class AppointmentsService extends BaseDataService {
 
   private async createCommissionTransaction(appointment: any, tx: any) {
     // Calcular comissão
-    const commissionRate = appointment.professional.customRole?.commissionRate || appointment.professional.commissionRate || 0;
-    const commissionAmount = (Number(appointment.total) * Number(commissionRate)) / 100;
+    const commissionRate =
+      appointment.professional.customRole?.commissionRate ||
+      appointment.professional.commissionRate ||
+      0;
+    const commissionAmount =
+      (Number(appointment.total) * Number(commissionRate)) / 100;
 
     if (commissionAmount <= 0) return;
 

@@ -28,8 +28,9 @@ export class ClientsController {
     @Req() req: AuthenticatedRequest,
   ) {
     // Para admin, usar branchId do query se fornecido, senão usar do contexto
-    const targetBranchId = req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
-    
+    const targetBranchId =
+      req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+
     return this.clientsService.findAll({
       id: req.user.id,
       role: req.user.role,
@@ -41,17 +42,19 @@ export class ClientsController {
   @ApiOperation({ summary: 'Criar novo cliente' })
   @ApiResponse({ status: 201, description: 'Cliente criado com sucesso' })
   create(
-    @Body() body: CreateClientDto, 
+    @Body() body: CreateClientDto,
     @Headers('x-branch-id') branchId: string,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ) {
-
-
-    return this.clientsService.create(body, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    }, branchId);
+    return this.clientsService.create(
+      body,
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      branchId,
+    );
   }
 
   @Patch(':id')

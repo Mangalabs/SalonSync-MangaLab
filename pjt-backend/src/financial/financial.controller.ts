@@ -79,8 +79,14 @@ export class FinancialController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    console.log('Getting transactions with filters:', { type, categoryId, startDate, endDate, branchId });
-    
+    console.log('Getting transactions with filters:', {
+      type,
+      categoryId,
+      startDate,
+      endDate,
+      branchId,
+    });
+
     const transactions = await this.financialService.getTransactions(
       {
         id: req.user.id,
@@ -89,12 +95,13 @@ export class FinancialController {
       },
       { type, categoryId, startDate, endDate },
     );
-    
+
     console.log(`Found ${transactions.length} transactions`);
-    console.log('Transactions with Estoque reference:', 
-      transactions.filter(t => t.reference?.startsWith('Estoque-')).length
+    console.log(
+      'Transactions with Estoque reference:',
+      transactions.filter((t) => t.reference?.startsWith('Estoque-')).length,
     );
-    
+
     return transactions;
   }
 

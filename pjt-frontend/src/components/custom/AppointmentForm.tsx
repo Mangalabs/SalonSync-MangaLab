@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
@@ -41,10 +41,12 @@ export function AppointmentForm({
   
   const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form;
   
-  // Definir branchId padrão para não-admins
-  if (!isAdmin && activeBranch?.id) {
-    setValue('branchId', activeBranch.id);
-  }
+  // Definir branchId padrão para não-admins usando useEffect
+  React.useEffect(() => {
+    if (!isAdmin && activeBranch?.id && !watch('branchId')) {
+      setValue('branchId', activeBranch.id);
+    }
+  }, [isAdmin, activeBranch?.id, setValue, watch]);
   const selectedBranchId = watch("branchId");
   const selectedProfessional = watch("professionalId");
   const selectedDate = isScheduled ? watch("scheduledDate" as any) : undefined;

@@ -26,9 +26,18 @@ export class ProductsService {
         category: createProductDto.category,
         brand: createProductDto.brand || null,
         unit: createProductDto.unit || 'un',
-        costPrice: createProductDto.costPrice !== undefined ? createProductDto.costPrice : 0,
-        salePrice: createProductDto.salePrice !== undefined ? createProductDto.salePrice : 0,
-        currentStock: createProductDto.initialStock !== undefined ? createProductDto.initialStock : 0,
+        costPrice:
+          createProductDto.costPrice !== undefined
+            ? createProductDto.costPrice
+            : 0,
+        salePrice:
+          createProductDto.salePrice !== undefined
+            ? createProductDto.salePrice
+            : 0,
+        currentStock:
+          createProductDto.initialStock !== undefined
+            ? createProductDto.initialStock
+            : 0,
         minStock: 0,
         branch: { connect: { id: branchId } },
       };
@@ -206,14 +215,18 @@ export class ProductsService {
     }
 
     // Calculate total cost if unit cost is provided
-    const totalCost = unitCost ? unitCost * quantity : (movementType === 'LOSS' ? Number(product.costPrice) * quantity : undefined);
-    
+    const totalCost = unitCost
+      ? unitCost * quantity
+      : movementType === 'LOSS'
+        ? Number(product.costPrice) * quantity
+        : undefined;
+
     console.log('Stock movement calculation:', {
       unitCost,
       quantity,
       productCostPrice: product.costPrice,
       calculatedTotalCost: totalCost,
-      movementType
+      movementType,
     });
 
     // Create transaction to update both product and create movement
@@ -251,7 +264,9 @@ export class ProductsService {
       } catch (error) {
         // If user connection fails, create without user
         if (error.code === 'P2025' && error.meta?.cause?.includes('User')) {
-          console.log('User not found, creating movement without user association');
+          console.log(
+            'User not found, creating movement without user association',
+          );
           const { user, ...dataWithoutUser } = movementData;
           movement = await tx.stockMovement.create({
             data: dataWithoutUser,
@@ -266,7 +281,7 @@ export class ProductsService {
         movement,
         updatedProduct,
         branchId,
-        tx
+        tx,
       );
 
       return {
@@ -280,22 +295,25 @@ export class ProductsService {
     movement: StockMovement,
     product: Product,
     branchId: string,
-    tx: any
+    tx: any,
   ) {
     console.log('Creating financial transaction for movement:', {
       movementId: movement.id,
       type: movement.type,
       totalCost: movement.totalCost,
-      productName: product.name
+      productName: product.name,
     });
 
     // Only create financial transactions for movements with financial impact
     if (!movement.totalCost || Number(movement.totalCost) <= 0) {
-      console.log('Skipping financial transaction - no totalCost or totalCost <= 0', {
-        totalCost: movement.totalCost,
-        unitCost: movement.unitCost,
-        quantity: movement.quantity
-      });
+      console.log(
+        'Skipping financial transaction - no totalCost or totalCost <= 0',
+        {
+          totalCost: movement.totalCost,
+          unitCost: movement.unitCost,
+          quantity: movement.quantity,
+        },
+      );
       return;
     }
 
@@ -338,7 +356,7 @@ export class ProductsService {
     if (!category) {
       const categoryColors = {
         'Perdas de Estoque': '#DC2626',
-        'Compra de Produtos': '#F59E0B', 
+        'Compra de Produtos': '#F59E0B',
         'Venda de Produtos': '#10B981',
       };
 
@@ -358,7 +376,7 @@ export class ProductsService {
       amount: movement.totalCost,
       type: transactionType,
       categoryName: category.name,
-      reference: `Estoque-${movement.id}`
+      reference: `Estoque-${movement.id}`,
     });
 
     const financialTransaction = await tx.financialTransaction.create({
@@ -374,7 +392,10 @@ export class ProductsService {
       },
     });
 
-    console.log('Financial transaction created successfully:', financialTransaction.id);
+    console.log(
+      'Financial transaction created successfully:',
+      financialTransaction.id,
+    );
   }
 
   async getStockMovements(branchId: string): Promise<StockMovement[]> {

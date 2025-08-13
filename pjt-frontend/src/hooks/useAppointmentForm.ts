@@ -100,6 +100,9 @@ export function useAppointmentForm(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["professional"] });
       toast.success(isScheduled ? "Agendamento criado com sucesso!" : "Atendimento registrado com sucesso!");
       onSuccess();
     },

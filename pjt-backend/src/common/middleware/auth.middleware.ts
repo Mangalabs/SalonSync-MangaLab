@@ -63,15 +63,17 @@ export class AuthMiddleware implements NestMiddleware {
         if (requestedBranchId) {
           // Validar se o admin tem acesso à filial solicitada
           const branch = await this.prisma.branch.findFirst({
-            where: { 
+            where: {
               id: requestedBranchId,
-              ownerId: user.id 
+              ownerId: user.id,
             },
           });
           if (branch) {
             branchId = requestedBranchId;
           } else {
-            throw new UnauthorizedException('Acesso negado à filial solicitada');
+            throw new UnauthorizedException(
+              'Acesso negado à filial solicitada',
+            );
           }
         } else {
           // Usar primeira filial como fallback
