@@ -91,16 +91,27 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
       const scheduledAt = `${data.date}T${data.time}:00`;
+      const appointmentDate = new Date(data.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      appointmentDate.setHours(0, 0, 0, 0);
+      
+      // Se o agendamento é para hoje ou no passado, marcar como COMPLETED
+      const status = appointmentDate <= today ? 'COMPLETED' : 'SCHEDULED';
+      
       await axios.post("/api/appointments", {
         professionalId: data.professionalId,
         clientId: data.clientId,
         serviceIds: data.serviceIds,
         scheduledAt,
-        status: 'SCHEDULED'
+        status
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["professional"] });
       reset();
       onSuccess();
     },
