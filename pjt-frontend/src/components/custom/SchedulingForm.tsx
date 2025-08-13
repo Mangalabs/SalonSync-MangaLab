@@ -16,8 +16,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { Clock } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
+import { Combobox } from "@/components/ui/combobox";
 
 const schema = z.object({
+  branchId: z.string().optional(),
   professionalId: z.string().min(1, "Selecione um profissional"),
   clientId: z.string().min(1, "Selecione um cliente"),
   serviceIds: z.array(z.string()).min(1, "Selecione ao menos um serviço"),
@@ -29,11 +32,13 @@ type FormData = z.infer<typeof schema>;
 
 export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
+  const { activeBranch, branches } = useBranch();
+  const { isAdmin } = useUser();
 
   const { control, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      branchId: activeBranch?.id || "",
       professionalId: "",
       clientId: "",
       serviceIds: [],
@@ -42,38 +47,47 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
     },
   });
 
+  const watchedBranch = watch("branchId");
   const watchedProfessional = watch("professionalId");
   const watchedDate = watch("date");
   const watchedServices = watch("serviceIds");
 
+  const selectedBranchId = isAdmin ? watchedBranch : activeBranch?.id;
+
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ["professionals", selectedBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
+      const res = await axios.get("/api/professionals", {
+        params: selectedBranchId ? { branchId: selectedBranchId } : {},
+      });
       return res.data;
     },
-    enabled: !!activeBranch,
+    enabled: !!selectedBranchId,
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients", activeBranch?.id],
+    queryKey: ["clients", selectedBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/clients");
+      const res = await axios.get("/api/clients", {
+        params: selectedBranchId ? { branchId: selectedBranchId } : {},
+      });
       return res.data;
     },
-    enabled: !!activeBranch,
+    enabled: !!selectedBranchId,
   });
 
   const { data: services = [] } = useQuery({
-    queryKey: ["services", activeBranch?.id],
+    queryKey: ["services", selectedBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/services");
+      const res = await axios.get("/api/services", {
+        params: selectedBranchId ? { branchId: selectedBranchId } : {},
+      });
       return res.data.map((s: any) => ({
         ...s,
         price: Number(s.price),
       }));
     },
-    enabled: !!activeBranch,
+    enabled: !!selectedBranchId,
   });
 
   const { data: availableSlots = [] } = useQuery({
@@ -96,8 +110,11 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
       today.setHours(0, 0, 0, 0);
       appointmentDate.setHours(0, 0, 0, 0);
       
-      // Se o agendamento é para hoje ou no passado, marcar como COMPLETED
       const status = appointmentDate <= today ? 'COMPLETED' : 'SCHEDULED';
+      
+      const config = isAdmin && data.branchId ? {
+        headers: { 'x-branch-id': data.branchId }
+      } : {};
       
       await axios.post("/api/appointments", {
         professionalId: data.professionalId,
@@ -105,7 +122,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
         serviceIds: data.serviceIds,
         scheduledAt,
         status
-      });
+      }, config);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
@@ -127,6 +144,30 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label>Filial</Label>
+          <Controller
+            name="branchId"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a filial..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+      )}
+
       <div>
         <Label>Data</Label>
         <Controller
@@ -149,18 +190,14 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
           name="professionalId"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {professionals.map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={professionals.map((p: any) => ({ value: p.id, label: p.name }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Selecione um profissional..."
+              searchPlaceholder="Buscar profissional..."
+              emptyText="Nenhum profissional encontrado"
+            />
           )}
         />
         {errors.professionalId && <p className="text-sm text-red-500">{errors.professionalId.message}</p>}
@@ -200,18 +237,14 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
           name="clientId"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Selecione um cliente..."
+              searchPlaceholder="Buscar cliente..."
+              emptyText="Nenhum cliente encontrado"
+            />
           )}
         />
         {errors.clientId && <p className="text-sm text-red-500">{errors.clientId.message}</p>}

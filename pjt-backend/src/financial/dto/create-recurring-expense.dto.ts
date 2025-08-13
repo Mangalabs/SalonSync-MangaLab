@@ -41,8 +41,4 @@ export class CreateRecurringExpenseDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-
-  @IsOptional()
-  @IsString()
-  professionalId?: string;
 }

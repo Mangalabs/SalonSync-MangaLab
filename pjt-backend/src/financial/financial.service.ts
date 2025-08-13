@@ -164,20 +164,6 @@ export class FinancialService extends BaseDataService {
       where,
       include: {
         category: true,
-        appointment: {
-          include: {
-            professional: {
-              select: {
-                name: true,
-              },
-            },
-            client: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
       },
       orderBy: { date: 'desc' },
     });
@@ -188,7 +174,16 @@ export class FinancialService extends BaseDataService {
     startDate?: string,
     endDate?: string,
   ) {
-    const branchIds = await this.getUserBranchIds(user);
+    const allBranchIds = await this.getUserBranchIds(user);
+    // Se branchId é undefined, usar todas as filiais
+    // Se branchId foi especificado, usar apenas essa filial
+    const branchIds = user.branchId ? [user.branchId] : allBranchIds;
+
+    console.log('Financial Summary Service:', {
+      userBranchId: user.branchId,
+      allBranchIds,
+      finalBranchIds: branchIds,
+    });
 
     const dateFilter: any = {};
     if (startDate) {
@@ -205,11 +200,6 @@ export class FinancialService extends BaseDataService {
       },
       include: {
         category: true,
-        appointment: {
-          include: {
-            professional: true,
-          },
-        },
       },
     });
 
@@ -335,13 +325,11 @@ export class FinancialService extends BaseDataService {
         fixedAmount: data.fixedAmount,
         receiptDay: data.receiptDay,
         dueDay: data.dueDay,
-        professionalId: data.professionalId,
         isActive: data.isActive ?? true,
         branchId,
       },
       include: {
         category: true,
-        professional: true,
       },
     });
   }
@@ -356,7 +344,6 @@ export class FinancialService extends BaseDataService {
       },
       include: {
         category: true,
-        professional: true,
       },
       orderBy: { receiptDay: 'asc' },
     });
@@ -379,20 +366,25 @@ export class FinancialService extends BaseDataService {
       },
       include: {
         category: true,
-        transactions: {
-          where: {
-            date: {
-              gte: new Date(currentYear, currentMonth, 1),
-              lt: new Date(currentYear, currentMonth + 1, 1),
-            },
-          },
+      },
+    });
+
+    // Buscar transações relacionadas separadamente
+    const expenseIds = recurringExpenses.map((e) => e.id);
+    const transactions = await this.prisma.financialTransaction.findMany({
+      where: {
+        recurringExpenseId: { in: expenseIds },
+        date: {
+          gte: new Date(currentYear, currentMonth, 1),
+          lt: new Date(currentYear, currentMonth + 1, 1),
         },
       },
     });
 
     // Filtrar apenas as que não foram pagas no mês atual
     return recurringExpenses.filter(
-      (expense) => expense.transactions.length === 0,
+      (expense) =>
+        !transactions.some((t) => t.recurringExpenseId === expense.id),
     );
   }
 

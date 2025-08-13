@@ -44,25 +44,39 @@ export default function Reports() {
     queryKey: ["consolidated-report", startDate, endDate, selectedBranch],
     queryFn: async () => {
       // Buscar dados financeiros
+      const financialParams = new URLSearchParams({
+        startDate,
+        endDate,
+      });
+      if (selectedBranch !== "all") {
+        financialParams.append("branchId", selectedBranch);
+      }
       const financialRes = await axios.get(
-        `/api/financial/summary?startDate=${startDate}&endDate=${endDate}`
+        `/api/financial/summary?${financialParams}`
       );
 
       // Buscar movimentações de estoque
+      const stockParams = new URLSearchParams({
+        startDate,
+        endDate,
+      });
+      if (selectedBranch !== "all") {
+        stockParams.append("branchId", selectedBranch);
+      }
       const stockRes = await axios.get(
-        `/api/inventory/movements?startDate=${startDate}&endDate=${endDate}`
+        `/api/inventory/movements?${stockParams}`
       );
 
       // Buscar profissionais
-      const professionalsRes = await axios.get("/api/professionals");
-
-      // Filtrar profissionais por filial se necessário
-      const filteredProfessionals =
-        selectedBranch === "all"
-          ? professionalsRes.data
-          : professionalsRes.data.filter(
-              (prof: any) => prof.branchId === selectedBranch
-            );
+      const professionalsParams = new URLSearchParams();
+      if (selectedBranch !== "all") {
+        professionalsParams.append("branchId", selectedBranch);
+      }
+      const professionalsRes = await axios.get(
+        `/api/professionals?${professionalsParams}`
+      );
+      
+      const filteredProfessionals = professionalsRes.data;
 
       // Buscar comissões dos profissionais filtrados
       const commissionsPromises = filteredProfessionals.map((prof: any) =>
@@ -124,8 +138,15 @@ export default function Reports() {
   } = useQuery({
     queryKey: ["insight-query", startDate, endDate, selectedBranch],
     queryFn: async () => {
+      const insightsParams = new URLSearchParams({
+        startDate,
+        endDate,
+      });
+      if (selectedBranch !== "all") {
+        insightsParams.append("branchId", selectedBranch);
+      }
       const insightsResponse = await axios.get(
-        `/api/ai/insights?startDate=${startDate}&endDate=${endDate}`
+        `/api/ai/insights?${insightsParams}`
       );
 
       const insights = insightsResponse.data.map((insightResponse: string) => {

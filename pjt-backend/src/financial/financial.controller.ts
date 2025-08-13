@@ -31,10 +31,12 @@ export class FinancialController {
     @Body() body: CreateCategoryDto,
     @Req() req: AuthenticatedRequest,
   ) {
+    const targetBranchId =
+      (req.headers['x-branch-id'] as string) || req.user.branchId;
     return this.financialService.createCategory(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
@@ -62,10 +64,12 @@ export class FinancialController {
     @Body() body: CreateTransactionDto,
     @Req() req: AuthenticatedRequest,
   ) {
+    const targetBranchId =
+      (req.headers['x-branch-id'] as string) || req.user.branchId;
     return this.financialService.createTransaction(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
@@ -110,13 +114,24 @@ export class FinancialController {
   getFinancialSummary(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    const finalBranchId = branchId || undefined;
+    console.log('Financial Summary Request:', {
+      startDate,
+      endDate,
+      branchIdParam: branchId,
+      userBranchId: req.user.branchId,
+      finalBranchId,
+      userRole: req.user.role,
+    });
+
     return this.financialService.getFinancialSummary(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: req.user.branchId,
+        branchId: finalBranchId,
       },
       startDate,
       endDate,
@@ -140,10 +155,12 @@ export class FinancialController {
     @Body() body: CreateRecurringExpenseDto,
     @Req() req: AuthenticatedRequest,
   ) {
+    const targetBranchId =
+      (req.headers['x-branch-id'] as string) || req.user.branchId;
     return this.financialService.createRecurringExpense(body, {
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
