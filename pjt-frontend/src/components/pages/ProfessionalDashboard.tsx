@@ -41,44 +41,95 @@ export default function ProfessionalDashboard() {
 
   const { startDate, endDate } = getDateRange();
 
-  // Dados de comissão
-  const { data: commissionData, isLoading: commissionLoading, error: commissionError } = useQuery({
-    queryKey: ["professional-commission", user?.id, startDate, endDate, activeBranch?.id],
+  // Primeiro buscar o Professional correto baseado no User
+  const { data: professionalInfo, isLoading: professionalLoading } = useQuery({
+    queryKey: ["user-professional", user?.id, activeBranch?.id],
     queryFn: async () => {
-      if (!user?.id) {
-        console.log('❌ Commission: No user ID found');
-        return null;
-      }
+      if (!user?.id || !activeBranch?.id) return null;
       
-      console.log('💰 Loading commission for user:', user.id, 'period:', { startDate, endDate });
+      console.log('🔍 Searching for professional with user:', user.id, 'in branch:', activeBranch.id);
       
       try {
-        const res = await axios.get(`/api/professionals/${user.id}/commission?startDate=${startDate}&endDate=${endDate}`);
+        // Buscar todos os profissionais da filial
+        const res = await axios.get(`/api/professionals?branchId=${activeBranch.id}`);
+        console.log('📊 Found professionals:', res.data.length);
+        
+        // Procurar o profissional que corresponde ao usuário logado (por nome ou email)
+        const professional = res.data.find((prof: any) => 
+          prof.name.toLowerCase() === user.name?.toLowerCase() ||
+          prof.id === user.id
+        );
+        
+        if (professional) {
+          console.log('✅ Found matching professional:', professional.id, professional.name);
+          return professional;
+        } else {
+          console.warn('⚠️ No matching professional found for user:', user.name);
+          return null;
+        }
+      } catch (error) {
+        console.error('❌ Error finding professional:', error);
+        return null;
+      }
+    },
+    enabled: !!user?.id && !!activeBranch?.id,
+    staleTime: 60000,
+  });
+
+  // Dados de comissão usando o Professional ID correto
+  const { data: commissionData, isLoading: commissionLoading, error: commissionError } = useQuery({
+    queryKey: ["professional-commission", professionalInfo?.id, startDate, endDate, activeBranch?.id],
+    queryFn: async () => {
+      if (!professionalInfo?.id) {
+        console.log('❌ Commission: No professional ID found');
+        return {
+          professional: { id: user?.id, name: user?.name, commissionRate: 0 },
+          summary: { totalAppointments: 0, totalRevenue: 0, totalCommission: 0 },
+          dailyCommissions: []
+        };
+      }
+      
+      console.log('💰 Loading commission for professional:', professionalInfo.id, 'period:', { startDate, endDate });
+      
+      try {
+        const res = await axios.get(`/api/professionals/${professionalInfo.id}/commission?startDate=${startDate}&endDate=${endDate}`);
         console.log('✅ Commission loaded:', res.data);
         return res.data;
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Commission error:', error);
+        if (error.response?.status === 404) {
+          console.warn('⚠️ Professional commission not found, returning empty data');
+          return {
+            professional: { id: professionalInfo.id, name: professionalInfo.name, commissionRate: professionalInfo.commissionRate || 0 },
+            summary: { totalAppointments: 0, totalRevenue: 0, totalCommission: 0 },
+            dailyCommissions: []
+          };
+        }
         throw error;
       }
     },
-    enabled: !!user?.id && !!activeBranch,
+    enabled: !!professionalInfo?.id && !!activeBranch,
     staleTime: 30000,
     retry: 2,
   });
 
-  // Dados de agendamentos
+  // Dados de agendamentos usando o Professional ID correto
   const { data: appointmentsData, isLoading: appointmentsLoading, error: appointmentsError } = useQuery({
-    queryKey: ["professional-appointments", user?.id, startDate, today, activeBranch?.id],
+    queryKey: ["professional-appointments", professionalInfo?.id, startDate, today, activeBranch?.id],
     queryFn: async () => {
-      if (!user?.id) {
-        console.log('❌ Appointments: No user ID found');
-        return null;
+      if (!professionalInfo?.id) {
+        console.log('❌ Appointments: No professional ID found');
+        return {
+          all: [],
+          today: [],
+          period: []
+        };
       }
       
-      console.log('📋 Loading appointments for user:', user.id, 'period:', { startDate, endDate: today });
+      console.log('📋 Loading appointments for professional:', professionalInfo.id, 'period:', { startDate, endDate: today });
       
       try {
-        const res = await axios.get(`/api/appointments?professionalId=${user.id}&startDate=${startDate}&endDate=${today}`);
+        const res = await axios.get(`/api/appointments?professionalId=${professionalInfo.id}&startDate=${startDate}&endDate=${today}`);
         console.log('✅ Appointments loaded:', res.data.length, 'appointments');
         
         const allAppointments = res.data;
@@ -105,15 +156,19 @@ export default function ProfessionalDashboard() {
         };
       } catch (error) {
         console.error('❌ Appointments error:', error);
-        throw error;
+        return {
+          all: [],
+          today: [],
+          period: []
+        };
       }
     },
-    enabled: !!user?.id && !!activeBranch,
+    enabled: !!professionalInfo?.id && !!activeBranch,
     staleTime: 30000,
     retry: 2,
   });
 
-  const isLoading = commissionLoading || appointmentsLoading;
+  const isLoading = professionalLoading || commissionLoading || appointmentsLoading;
   const error = commissionError || appointmentsError;
   
   // Combinar dados
