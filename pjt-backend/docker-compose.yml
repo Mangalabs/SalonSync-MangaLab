@@ -12,6 +12,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  migrate:
+    build: . # Or use a pre-built image
+    depends_on:
+      - postgres
+    command: npx prisma migrate dev
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/salonSync?schema=public
+      
   app:
     build: .
     container_name: salonSyncAPI
@@ -19,6 +27,7 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
+    command: npm start
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
