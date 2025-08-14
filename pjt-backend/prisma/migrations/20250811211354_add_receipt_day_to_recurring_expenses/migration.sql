@@ -12,6 +12,7 @@ CREATE TABLE "RecurringExpense" (
     "dueDay" INTEGER NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "branchId" TEXT NOT NULL,
+    "professionalId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -26,3 +27,6 @@ ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_categoryId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_professionalId_fkey" FOREIGN KEY ("professionalId") REFERENCES "Professional"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
