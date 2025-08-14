@@ -42,7 +42,9 @@ export function FinancialSummary() {
       if (endDate) params.append("endDate", endDate);
       if (branchFilter !== "all") params.append("branchId", branchFilter);
 
+      console.log('FinancialSummary fazendo requisição com params:', params.toString());
       const res = await axios.get(`/api/financial/summary?${params}`);
+      console.log('FinancialSummary resposta:', res.data);
       return res.data;
     },
   });

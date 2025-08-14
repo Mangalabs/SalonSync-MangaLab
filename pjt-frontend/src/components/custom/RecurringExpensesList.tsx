@@ -4,7 +4,7 @@ import { Calendar, DollarSign, Clock } from "lucide-react";
 import axios from "@/lib/axios";
 
 export function RecurringExpensesList() {
-  const { data: recurringExpenses = [] } = useQuery({
+  const { data: allRecurringExpenses = [] } = useQuery({
     queryKey: ["recurring-expenses"],
     queryFn: async () => {
       const res = await axios.get("/api/financial/recurring-expenses");
@@ -12,26 +12,32 @@ export function RecurringExpensesList() {
     },
   });
 
-  if (recurringExpenses.length === 0) return null;
-
   const getCurrentMonthStatus = (receiptDay: number, dueDay: number) => {
     const today = new Date().getDate();
     
     if (today < receiptDay) {
-      return { status: "upcoming", label: "Próxima", color: "text-blue-600" };
+      return { status: "upcoming", label: "Próxima", color: "text-blue-600", inPeriod: false };
     } else if (today >= receiptDay && today <= dueDay) {
-      return { status: "active", label: "Ativa", color: "text-orange-600" };
+      return { status: "active", label: "Ativa", color: "text-orange-600", inPeriod: true };
     } else {
-      return { status: "overdue", label: "Vencida", color: "text-red-600" };
+      return { status: "overdue", label: "Vencida", color: "text-red-600", inPeriod: true };
     }
   };
+
+  // Filtrar apenas despesas no período de cobrança (ativas ou vencidas)
+  const recurringExpenses = allRecurringExpenses.filter((expense: any) => {
+    const status = getCurrentMonthStatus(expense.receiptDay, expense.dueDay);
+    return status.inPeriod;
+  });
+
+  if (recurringExpenses.length === 0) return null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Despesas Fixas ({recurringExpenses.length})
+          Despesas no Período ({recurringExpenses.length})
         </CardTitle>
       </CardHeader>
       <CardContent>

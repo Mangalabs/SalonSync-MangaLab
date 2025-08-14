@@ -398,9 +398,25 @@ export class ProductsService {
     );
   }
 
-  async getStockMovements(branchId: string): Promise<StockMovement[]> {
+  async getStockMovements(
+    branchId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<StockMovement[]> {
+    const where: any = { branchId };
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate + 'T00:00:00.000Z');
+      }
+      if (endDate) {
+        where.createdAt.lte = new Date(endDate + 'T23:59:59.999Z');
+      }
+    }
+
     return this.prisma.stockMovement.findMany({
-      where: { branchId },
+      where,
       include: {
         product: {
           select: {
