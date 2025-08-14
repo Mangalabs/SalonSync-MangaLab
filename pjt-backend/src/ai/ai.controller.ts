@@ -16,13 +16,15 @@ export class AiController {
   async getFinancialSummary(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    const finalBranchId = branchId || undefined;
     const summary = await this.financialService.getFinancialSummary(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: req.user.branchId,
+        branchId: finalBranchId,
       },
       startDate,
       endDate,

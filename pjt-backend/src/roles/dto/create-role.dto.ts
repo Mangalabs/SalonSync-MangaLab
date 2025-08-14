@@ -11,17 +11,6 @@ export class CreateRoleDto {
   commissionRate?: number;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  baseSalary?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(31)
-  salaryPayDay?: number;
-
-  @IsOptional()
   @IsString()
   branchId?: string;
 }

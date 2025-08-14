@@ -4,14 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller } from "react-hook-form";
 import axios from "@/lib/axios";
 import { toast } from "sonner";
+import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 
 const transactionSchema = z.object({
+  branchId: z.string().optional(),
   description: z.string().min(1, "Descrição é obrigatória"),
   amount: z.string().refine(
     (val) => !isNaN(Number(val)) && Number(val) > 0,
@@ -32,35 +34,53 @@ interface TransactionFormProps {
 
 export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
   const queryClient = useQueryClient();
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories", type],
-    queryFn: async () => {
-      const res = await axios.get(`/api/financial/categories?type=${type}`);
-      return res.data;
-    },
-  });
+  const { activeBranch, branches } = useBranch();
+  const { isAdmin } = useUser();
 
   const {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
+      branchId: activeBranch?.id || "",
       date: new Date().toISOString().split('T')[0],
       paymentMethod: "CASH"
     }
   });
 
+  const watchedBranch = watch("branchId");
+  const selectedBranchId = isAdmin ? watchedBranch : activeBranch?.id;
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories", type, selectedBranchId],
+    queryFn: async () => {
+      const params = new URLSearchParams({ type });
+      if (selectedBranchId) {
+        params.append('branchId', selectedBranchId);
+      }
+      const res = await axios.get(`/api/financial/categories?${params}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
+  });
+
+
+
   const mutation = useMutation({
     mutationFn: async (data: TransactionFormData) => {
+      const config = isAdmin && data.branchId ? {
+        headers: { 'x-branch-id': data.branchId }
+      } : {};
+      
       return axios.post("/api/financial/transactions", {
         ...data,
         amount: Number(data.amount),
         type
-      });
+      }, config);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -85,6 +105,30 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
 
   return (
     <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Controller
+            name="branchId"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a filial..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+      )}
+
       <div>
         <Label htmlFor="description">Descrição</Label>
         <Input 

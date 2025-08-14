@@ -95,18 +95,57 @@ export class AppointmentsService extends BaseDataService {
     return createdAppointment;
   }
 
-  async findAll(user: UserContext): Promise<Appointment[]> {
+  async findAll(
+    user: UserContext,
+    filters?: {
+      professionalId?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+  ): Promise<Appointment[]> {
     const branchIds = await this.getUserBranchIds(user);
 
-    return this.prisma.appointment.findMany({
-      where: { branchId: { in: branchIds } },
-      orderBy: { createdAt: 'desc' },
+    const where: any = { branchId: { in: branchIds } };
+
+    if (filters?.professionalId) {
+      where.professionalId = filters.professionalId;
+    }
+
+    if (filters?.startDate && filters?.endDate) {
+      where.scheduledAt = {
+        gte: new Date(filters.startDate + 'T00:00:00'),
+        lte: new Date(filters.endDate + 'T23:59:59'),
+      };
+    }
+
+    console.log('🔍 AppointmentsService.findAll with filters:', {
+      user: user.id,
+      branchIds,
+      filters,
+      where,
+    });
+
+    const appointments = await this.prisma.appointment.findMany({
+      where,
+      orderBy: { scheduledAt: 'desc' },
       include: {
         professional: true,
         client: true,
         appointmentServices: { include: { service: true } },
       },
     });
+
+    console.log('📊 AppointmentsService.findAll result:', {
+      count: appointments.length,
+      appointments: appointments.map((apt) => ({
+        id: apt.id.substring(0, 8),
+        professional: apt.professional.name,
+        status: apt.status,
+        scheduledAt: apt.scheduledAt.toISOString(),
+      })),
+    });
+
+    return appointments;
   }
 
   async findOne(id: string): Promise<Appointment> {

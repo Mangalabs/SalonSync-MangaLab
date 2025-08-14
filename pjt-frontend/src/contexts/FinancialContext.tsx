@@ -24,7 +24,9 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   });
   
   const [branchFilter, setBranchFilterState] = useState(() => {
-    return localStorage.getItem('financial-branch-filter') || 'all';
+    const saved = localStorage.getItem('financial-branch-filter') || 'all';
+    console.log('FinancialContext initial branchFilter:', saved);
+    return saved;
   });
 
   const setStartDate = (date: string) => {
@@ -38,6 +40,7 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   };
 
   const setBranchFilter = (branch: string) => {
+    console.log('FinancialContext setBranchFilter:', branch);
     setBranchFilterState(branch);
     localStorage.setItem('financial-branch-filter', branch);
   };

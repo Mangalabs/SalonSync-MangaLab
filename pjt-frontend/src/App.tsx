@@ -14,6 +14,7 @@ import Inventory from "./components/pages/Inventory";
 import Reports from "./pages/Reports";
 import Financial from "./pages/Financial";
 import WhatsApp from "./components/pages/WhatsApp";
+import TestBranch from "./pages/TestBranch";
 import { BranchProvider } from "@/contexts/BranchContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -79,6 +80,11 @@ export default function App() {
             <Route path="settings" element={
               <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
                 <Settings />
+              </RoleGuard>
+            } />
+            <Route path="test-branch" element={
+              <RoleGuard allowedRoles={["ADMIN"]}>
+                <TestBranch />
               </RoleGuard>
             } />
           </Route>

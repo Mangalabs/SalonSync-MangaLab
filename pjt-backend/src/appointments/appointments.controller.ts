@@ -6,6 +6,7 @@ import {
   Post,
   Delete,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
@@ -44,12 +45,20 @@ export class AppointmentsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os agendamentos' })
   @ApiResponse({ status: 200, description: 'Lista de agendamentos' })
-  findAll(@Req() req: AuthenticatedRequest): Promise<Appointment[]> {
-    return this.apptService.findAll({
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    });
+  findAll(
+    @Req() req: AuthenticatedRequest,
+    @Query('professionalId') professionalId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<Appointment[]> {
+    return this.apptService.findAll(
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      { professionalId, startDate, endDate },
+    );
   }
 
   @Get('available-slots/:professionalId/:date')
