@@ -27,6 +27,9 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments", activeBranch?.id] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
+      queryClient.invalidateQueries({ queryKey: ["professional"] });
       toast.success("Agendamento confirmado com sucesso!");
     },
     onError: (error: any) => {

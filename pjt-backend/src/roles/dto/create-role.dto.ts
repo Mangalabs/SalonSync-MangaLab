@@ -20,4 +20,8 @@ export class CreateRoleDto {
   @Min(1)
   @Max(31)
   salaryPayDay?: number;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

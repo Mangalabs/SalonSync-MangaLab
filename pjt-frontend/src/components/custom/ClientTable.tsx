@@ -21,12 +21,14 @@ import { ClientForm } from "./ClientForm";
 import { useState } from "react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useUser } from "@/contexts/UserContext";
 
 interface Client {
   id: string;
   name: string;
   phone?: string;
   email?: string;
+  branchId?: string;
 }
 
 export function ClientTable() {
@@ -34,11 +36,13 @@ export function ClientTable() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const { activeBranch } = useBranch();
+  const { isAdmin } = useUser();
 
   const { data, isLoading, error } = useQuery<Client[]>({
     queryKey: ["clients", activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/clients");
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : "";
+      const res = await axios.get(`/api/clients${params}`);
       return res.data;
     },
     enabled: !!activeBranch,

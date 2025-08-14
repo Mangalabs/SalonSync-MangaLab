@@ -7,6 +7,8 @@ import {
   Patch,
   Delete,
   Req,
+  Query,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
@@ -22,11 +24,17 @@ export class ServicesController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os serviços' })
   @ApiResponse({ status: 200, description: 'Lista de serviços' })
-  findAll(@Req() req: AuthenticatedRequest) {
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const targetBranchId =
+      req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
@@ -41,12 +49,20 @@ export class ServicesController {
   @Post()
   @ApiOperation({ summary: 'Criar novo serviço' })
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
-  create(@Body() body: CreateServiceDto, @Req() req: AuthenticatedRequest) {
-    return this.service.create(body, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    });
+  create(
+    @Body() body: CreateServiceDto,
+    @Headers('x-branch-id') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.create(
+      body,
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      branchId,
+    );
   }
 
   @Patch(':id')

@@ -16,7 +16,23 @@ export class ServicesService extends BaseDataService {
   }
 
   async findAll(user: UserContext) {
-    const branchIds = await this.getUserBranchIds(user);
+    let branchIds: string[];
+
+    // Se branchId específico foi fornecido, usar apenas ele
+    if (user.branchId && user.role === 'ADMIN') {
+      // Verificar se admin tem acesso a esta filial
+      const allowedBranchIds = await this.getUserBranchIds({
+        ...user,
+        branchId: undefined,
+      });
+      if (allowedBranchIds.includes(user.branchId)) {
+        branchIds = [user.branchId];
+      } else {
+        throw new Error('Acesso negado à filial especificada');
+      }
+    } else {
+      branchIds = await this.getUserBranchIds(user);
+    }
 
     if (user.role === 'ADMIN') {
       return this.prisma.service.findMany({
@@ -75,12 +91,16 @@ export class ServicesService extends BaseDataService {
     targetBranchId?: string,
   ) {
     if (user.role === 'ADMIN') {
-      // Admin cria serviços globais
+      // Admin pode criar serviços globais ou específicos de filial
+      const branchId = targetBranchId
+        ? await this.getTargetBranchId(user, targetBranchId)
+        : null;
+
       return this.prisma.service.create({
         data: {
           name: data.name,
           price: data.price,
-          branchId: null, // Global para todas as filiais do admin
+          branchId, // null = global, string = específico da filial
           ownerId: user.id,
         },
       });

@@ -42,13 +42,14 @@ export class FinancialController {
   @ApiOperation({ summary: 'Listar categorias financeiras' })
   getCategories(
     @Query('type') type: TransactionType,
+    @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.financialService.getCategories(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: req.user.branchId,
+        branchId: branchId || req.user.branchId,
       },
       type,
     );
@@ -75,24 +76,32 @@ export class FinancialController {
     @Query('categoryId') categoryId: string,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    console.log('Getting transactions with filters:', { type, categoryId, startDate, endDate });
-    
+    console.log('Getting transactions with filters:', {
+      type,
+      categoryId,
+      startDate,
+      endDate,
+      branchId,
+    });
+
     const transactions = await this.financialService.getTransactions(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: req.user.branchId,
+        branchId: branchId || req.user.branchId,
       },
       { type, categoryId, startDate, endDate },
     );
-    
+
     console.log(`Found ${transactions.length} transactions`);
-    console.log('Transactions with Estoque reference:', 
-      transactions.filter(t => t.reference?.startsWith('Estoque-')).length
+    console.log(
+      'Transactions with Estoque reference:',
+      transactions.filter((t) => t.reference?.startsWith('Estoque-')).length,
     );
-    
+
     return transactions;
   }
 
@@ -140,11 +149,14 @@ export class FinancialController {
 
   @Get('recurring-expenses')
   @ApiOperation({ summary: 'Listar despesas fixas' })
-  getRecurringExpenses(@Req() req: AuthenticatedRequest) {
+  getRecurringExpenses(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.financialService.getRecurringExpenses({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: branchId || req.user.branchId,
     });
   }
 

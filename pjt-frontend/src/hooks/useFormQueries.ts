@@ -2,31 +2,35 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
 
-export function useFormQueries(selectedProfessional?: string, selectedDate?: string, isScheduled?: boolean) {
+export function useFormQueries(selectedProfessional?: string, selectedDate?: string, isScheduled?: boolean, branchId?: string) {
   const { activeBranch } = useBranch();
+  const targetBranchId = branchId || activeBranch?.id;
 
   const professionals = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ["professionals", targetBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
+      const params = targetBranchId ? `?branchId=${targetBranchId}` : "";
+      const res = await axios.get(`/api/professionals${params}`);
       return res.data;
     },
-    enabled: !!activeBranch,
+    enabled: !!targetBranchId,
   });
 
   const clients = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["clients", activeBranch?.id],
+    queryKey: ["clients", targetBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/clients");
+      const params = targetBranchId ? `?branchId=${targetBranchId}` : "";
+      const res = await axios.get(`/api/clients${params}`);
       return res.data;
     },
-    enabled: !!activeBranch,
+    enabled: !!targetBranchId,
   });
 
   const services = useQuery<{ id: string; name: string; price: number }[]>({
-    queryKey: ["services", activeBranch?.id],
+    queryKey: ["services", targetBranchId],
     queryFn: async () => {
-      const res = await axios.get("/api/services");
+      const params = targetBranchId ? `?branchId=${targetBranchId}` : "";
+      const res = await axios.get(`/api/services${params}`);
       return res.data as any[];
     },
     select: (raw) =>
@@ -35,7 +39,7 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
         name: s.name,
         price: Number(s.price),
       })),
-    enabled: !!activeBranch,
+    enabled: !!targetBranchId,
   });
   
   const availableSlots = useQuery({

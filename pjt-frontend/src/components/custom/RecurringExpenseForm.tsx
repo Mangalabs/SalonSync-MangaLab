@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
+import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 const recurringExpenseSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -18,6 +20,7 @@ const recurringExpenseSchema = z.object({
   receiptDay: z.number().min(1, "Dia deve ser entre 1 e 31").max(31, "Dia deve ser entre 1 e 31"),
   dueDay: z.number().min(1, "Dia deve ser entre 1 e 31").max(31, "Dia deve ser entre 1 e 31"),
   professionalId: z.string().optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
 });
 
 type RecurringExpenseFormData = z.infer<typeof recurringExpenseSchema>;
@@ -28,21 +31,16 @@ interface RecurringExpenseFormProps {
 
 export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
   const queryClient = useQueryClient();
+  const { user, isAdmin } = useUser();
+  const { activeBranch } = useBranch();
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories", "EXPENSE"],
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
     queryFn: async () => {
-      const res = await axios.get("/api/financial/categories?type=EXPENSE");
+      const res = await axios.get("/api/branches");
       return res.data;
     },
-  });
-
-  const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data;
-    },
+    enabled: isAdmin,
   });
 
   const {
@@ -53,6 +51,34 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<RecurringExpenseFormData>({
     resolver: zodResolver(recurringExpenseSchema),
+    defaultValues: {
+      branchId: !isAdmin ? activeBranch?.id : undefined,
+    },
+  });
+
+  const selectedBranchId = watch("branchId");
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories", "EXPENSE", selectedBranchId],
+    queryFn: async () => {
+      const params = new URLSearchParams({ type: "EXPENSE" });
+      if (selectedBranchId) params.append("branchId", selectedBranchId);
+      const res = await axios.get(`/api/financial/categories?${params}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
+  });
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals", selectedBranchId],
+    queryFn: async () => {
+      if (!selectedBranchId) return [];
+      console.log("📝 RecurringExpenseForm: Loading professionals for branch:", selectedBranchId);
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
+      console.log("📝 RecurringExpenseForm: Loaded professionals:", res.data.length, "professionals", res.data.map(p => p.name));
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
   });
 
   const selectedCategoryId = watch("categoryId");
@@ -89,7 +115,8 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
         dueDay: data.dueDay,
         professionalId: data.professionalId,
       };
-      const res = await axios.post("/api/financial/recurring-expenses", payload);
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      const res = await axios.post("/api/financial/recurring-expenses", payload, { headers });
       return res.data;
     },
     onSuccess: () => {
@@ -108,6 +135,27 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+
       <div>
         <Label htmlFor="name">Nome da Despesa</Label>
         <Input

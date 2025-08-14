@@ -9,8 +9,6 @@ import {
   LogOut,
   Calendar,
   CheckSquare,
-  Shield,
-  UserCheck,
   DollarSign,
   ShoppingCart,
   MessageSquare,
@@ -24,18 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import { AppointmentForm } from "@/components/custom/AppointmentForm";
 import { ProductSaleForm } from "@/components/custom/ProductSaleForm";
+import { UserMenu } from "@/components/custom/UserMenu";
 import { useState } from "react";
-import { useBranch } from "@/contexts/BranchContext";
 import { useUser } from "@/contexts/UserContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 
@@ -108,7 +99,6 @@ export function Sidebar() {
   const [showScheduledForm, setShowScheduledForm] = useState(false);
   const [showImmediateForm, setShowImmediateForm] = useState(false);
   const [showSaleForm, setShowSaleForm] = useState(false);
-  const { activeBranch, branches, setActiveBranch } = useBranch();
   const { user, logout, isAdmin } = useUser();
   const { isOpen, close } = useSidebar();
 
@@ -250,67 +240,8 @@ export function Sidebar() {
           </DialogContent>
         </Dialog>
 
-        <div className="mt-3 space-y-2 border-t border-white/20 pt-3">
-          {branches.length > 1 && (
-            <div>
-              <label className="text-xs text-white/70 mb-1 block">
-                Filial Ativa
-              </label>
-              <Select
-                value={activeBranch?.id || ""}
-                onValueChange={(value) => {
-                  const branch = branches.find((b) => b.id === value);
-                  if (branch) setActiveBranch(branch);
-                }}
-              >
-                <SelectTrigger className="bg-primary/20 border-[#D4AF37]/20 text-primary-foreground text-xs sm:text-sm h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {branches.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <NavLink
-            to="/dashboard/settings"
-            onClick={handleNavClick}
-            className={({ isActive }) =>
-              `flex items-center gap-2 p-2 rounded-lg transition hover:bg-white/10 ${
-                isActive ? "bg-white/20" : "bg-white/5"
-              }`
-            }
-          >
-            <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20">
-              {isAdmin ? (
-                <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-              ) : (
-                <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-white truncate">
-                {user?.name || user?.email || "Usuário"}
-              </p>
-              <p className="text-xs text-white/60 truncate">
-                {isAdmin ? "Admin" : "Prof."}
-              </p>
-            </div>
-          </NavLink>
-
-          <Button
-            variant="ghost"
-            onClick={logout}
-            className="w-full flex items-center gap-2 px-2 py-2 text-xs sm:text-sm text-white hover:bg-white/10 justify-start rounded-lg h-8"
-          >
-            <LogOut size={14} />
-            Sair
-          </Button>
+        <div className="mt-3 border-t border-white/20 pt-3">
+          <UserMenu />
         </div>
       </aside>
     </>

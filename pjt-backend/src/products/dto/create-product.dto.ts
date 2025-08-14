@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateProductDto {
@@ -21,18 +27,24 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => typeof value === 'string' ? parseFloat(value) : value)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   costPrice?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => typeof value === 'string' ? parseFloat(value) : value)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   salePrice?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => typeof value === 'string' ? parseInt(value, 10) : value)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseInt(value, 10) : value,
+  )
   initialStock?: number;
 }

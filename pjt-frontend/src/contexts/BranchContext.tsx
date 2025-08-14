@@ -62,6 +62,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     setActiveBranchState(branch);
     localStorage.setItem("activeBranchId", branch.id);
 
+    // Invalidar todas as queries relacionadas à filial
     queryClient.invalidateQueries({ queryKey: ["professionals"] });
     queryClient.invalidateQueries({ queryKey: ["services"] });
     queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -71,6 +72,10 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     queryClient.invalidateQueries({ queryKey: ["whatsapp-messages"] });
     queryClient.invalidateQueries({ queryKey: ["whatsapp-config"] });
+    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["recurring-expenses"] });
+    queryClient.invalidateQueries({ queryKey: ["roles"] });
 
     console.log("✅ Branch changed and queries invalidated");
   };

@@ -1,16 +1,17 @@
 import { Controller } from "react-hook-form";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
 import { useUser } from "@/contexts/UserContext";
 
 interface ProfessionalSelectorProps {
   control: any;
   professionals: { id: string; name: string }[];
   errors: any;
+  branchId?: string;
 }
 
-export function ProfessionalSelector({ control, professionals, errors }: ProfessionalSelectorProps) {
+export function ProfessionalSelector({ control, professionals, errors, branchId }: ProfessionalSelectorProps) {
   const { user, isProfessional, isAdmin } = useUser();
 
   return (
@@ -30,20 +31,17 @@ export function ProfessionalSelector({ control, professionals, errors }: Profess
               <input type="hidden" {...field} />
             </>
           ) : (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {professionals.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={professionals.map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Selecione um profissional"
+              searchPlaceholder="Pesquisar profissional..."
+              disabled={!branchId && isAdmin}
+            />
           )
         )}
       />

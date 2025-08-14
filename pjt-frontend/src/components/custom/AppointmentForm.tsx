@@ -1,11 +1,17 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
 import { useAppointmentForm } from "@/hooks/useAppointmentForm";
 import { useFormQueries } from "@/hooks/useFormQueries";
 import { ProfessionalSelector } from "./ProfessionalSelector";
 import { ClientSelector } from "./ClientSelector";
 import { ServiceSelector } from "./ServiceSelector";
 import { SchedulingFields } from "./SchedulingFields";
+import { Combobox } from "@/components/ui/combobox";
+import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
+import axios from "@/lib/axios";
 
 
 
@@ -17,46 +23,92 @@ export function AppointmentForm({
   mode?: "immediate" | "scheduled";
 }) {
   const isScheduled = mode === "scheduled";
+  const { isAdmin } = useUser();
+  const { activeBranch } = useBranch();
+  
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const res = await axios.get("/api/branches");
+      return res.data;
+    },
+    enabled: isAdmin,
+  });
   
   // Primeiro buscar os dados básicos
   const { professionals, clients, services } = useFormQueries();
   const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess);
   
-  const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = form;
+  const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form;
+  
+  // Definir branchId padrão para não-admins usando useEffect
+  React.useEffect(() => {
+    if (!isAdmin && activeBranch?.id && !watch('branchId')) {
+      setValue('branchId', activeBranch.id);
+    }
+  }, [isAdmin, activeBranch?.id, setValue, watch]);
+  const selectedBranchId = watch("branchId");
   const selectedProfessional = watch("professionalId");
   const selectedDate = isScheduled ? watch("scheduledDate" as any) : undefined;
   
-  // Depois buscar slots disponíveis com os valores selecionados
-  const { availableSlots } = useFormQueries(selectedProfessional, selectedDate, isScheduled);
+  // Buscar dados da filial selecionada
+  const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId);
+  const { availableSlots } = branchData;
 
 
 
   const watchedServices = watch("serviceIds");
   const total = useMemo(() => {
     return (
-      services
+      branchData.services
         .filter((s) => watchedServices?.includes(s.id))
         .reduce((sum, s) => sum + s.price, 0) || 0
     );
-  }, [watchedServices, services]);
+  }, [watchedServices, branchData.services]);
 
   return (
     <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
+      {isAdmin && (
+        <div>
+          <Label className="text-sm">Filial</Label>
+          <Combobox
+            options={branches.map((branch: any) => ({
+              value: branch.id,
+              label: branch.name,
+            }))}
+            value={selectedBranchId}
+            onValueChange={(value) => {
+              setValue("branchId", value);
+              setValue("professionalId", "");
+              setValue("clientId", "");
+              setValue("serviceIds", []);
+            }}
+            placeholder="Selecione uma filial"
+            searchPlaceholder="Pesquisar filial..."
+          />
+          {errors.branchId && (
+            <p className="text-xs text-red-500">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+      
       <ProfessionalSelector 
         control={control} 
-        professionals={professionals} 
+        professionals={branchData.professionals} 
         errors={errors} 
+        branchId={selectedBranchId}
       />
       
       <ClientSelector 
         control={control} 
-        clients={clients} 
+        clients={branchData.clients} 
         errors={errors} 
+        branchId={selectedBranchId}
       />
       
       <ServiceSelector 
         control={control} 
-        services={services} 
+        services={branchData.services} 
         errors={errors} 
       />
 

@@ -12,15 +12,42 @@ axios.interceptors.request.use((config) => {
     method: config.method,
     token: token ? "Present" : "Missing",
     branchId: activeBranchId || "Missing",
+    existingBranchHeader: config.headers["x-branch-id"] || "None",
   });
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (activeBranchId) {
+  // Verificar se a URL já contém branchId como parâmetro
+  const fullUrl = config.baseURL ? config.baseURL + config.url : config.url;
+  const urlHasBranchId = fullUrl?.includes('branchId=') || config.params?.branchId;
+  
+  // Log para debug ANTES de modificar headers
+  console.log("🔍 Axios Request Analysis:", {
+    url: config.url,
+    fullUrl,
+    method: config.method,
+    urlHasBranchId,
+    existingHeader: config.headers["x-branch-id"],
+    activeBranchId,
+    params: config.params
+  });
+  
+  // Sempre enviar x-branch-id se disponível, a menos que já esteja definido ou URL tenha branchId
+  if (activeBranchId && !config.headers["x-branch-id"] && !urlHasBranchId) {
     config.headers["x-branch-id"] = activeBranchId;
+    console.log("✅ Added x-branch-id header:", activeBranchId);
+  } else if (urlHasBranchId) {
+    console.log("⚠️ Skipping x-branch-id header - URL has branchId parameter");
   }
+  
+  // Log final
+  console.log("🔍 Final request:", {
+    "x-branch-id": config.headers["x-branch-id"],
+    url: config.url,
+    method: config.method
+  });
 
   return config;
 });

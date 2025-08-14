@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
+import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 
 const movementSchema = z.object({
@@ -18,6 +20,8 @@ const movementSchema = z.object({
   unitCost: z.number().optional(),
   reason: z.string().min(1, "Informe o motivo"),
   reference: z.string().optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
+  soldById: z.string().optional(),
 });
 
 type MovementFormData = z.infer<typeof movementSchema>;
@@ -28,13 +32,16 @@ interface StockMovementFormProps {
 
 export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
   const queryClient = useQueryClient();
+  const { user, isAdmin } = useUser();
+  const { activeBranch } = useBranch();
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["products"],
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
     queryFn: async () => {
-      const res = await axios.get("/api/products");
+      const res = await axios.get("/api/branches");
       return res.data;
     },
+    enabled: isAdmin,
   });
 
   const {
@@ -45,19 +52,46 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
+    defaultValues: {
+      branchId: !isAdmin ? activeBranch?.id : undefined,
+    },
+  });
+
+  const selectedBranchId = watch("branchId");
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", selectedBranchId],
+    queryFn: async () => {
+      if (!selectedBranchId) return [];
+      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId,
+  });
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals", selectedBranchId],
+    queryFn: async () => {
+      if (!selectedBranchId) return [];
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
+      return res.data;
+    },
+    enabled: !!selectedBranchId && isAdmin,
   });
 
   const movementType = watch("type");
 
   const createMovement = useMutation({
     mutationFn: async (data: MovementFormData) => {
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
       const res = await axios.post(`/api/products/${data.productId}/adjust`, {
         type: data.type,
         quantity: data.quantity,
         unitCost: data.unitCost,
         reason: data.reason,
         reference: data.reference,
-      });
+        soldById: data.soldById,
+      }, { headers });
       return res.data;
     },
     onSuccess: () => {
@@ -79,6 +113,27 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+
       <div>
         <Label htmlFor="productId">Produto</Label>
         <Select onValueChange={(value) => setValue("productId", value)}>
@@ -168,6 +223,28 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
           placeholder="Nota fiscal, pedido, etc."
         />
       </div>
+
+      {isAdmin && (
+        <div>
+          <Label htmlFor="soldById">Usuário Responsável (opcional)</Label>
+          <Select onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o usuário responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Admin (você)</SelectItem>
+              {professionals.map((professional: any) => (
+                <SelectItem key={professional.id} value={professional.id}>
+                  {professional.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500 mt-1">
+            Deixe "Admin (você)" se você está fazendo a movimentação
+          </p>
+        </div>
+      )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "Registrando..." : "Registrar Movimentação"}

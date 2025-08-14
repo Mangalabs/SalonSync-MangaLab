@@ -23,11 +23,18 @@ export class ProfessionalsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os profissionais' })
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
-  findAll(@Req() req: AuthenticatedRequest) {
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // Para admin, usar branchId do query se fornecido, senão usar do contexto
+    const targetBranchId =
+      req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+
     return this.service.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
@@ -46,11 +53,15 @@ export class ProfessionalsController {
     @Body() body: CreateProfessionalDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.create(body, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    });
+    return this.service.create(
+      body,
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      body.branchId,
+    );
   }
 
   @Patch(':id')

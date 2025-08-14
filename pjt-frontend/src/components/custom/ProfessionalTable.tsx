@@ -9,7 +9,7 @@ import {
 import { Trash2, Edit, DollarSign } from "lucide-react";
 import { ProfessionalForm } from "./ProfessionalForm";
 import { ProfessionalCommissionCard } from "./ProfessionalCommissionCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
 
@@ -44,6 +44,20 @@ export function ProfessionalTable() {
     },
     enabled: !!activeBranch,
   });
+
+  // Reset selected professional when branch changes
+  useEffect(() => {
+    setSelectedProfessional(null);
+  }, [activeBranch?.id]);
+
+  // Force refetch commission data when professional is selected
+  useEffect(() => {
+    if (selectedProfessional) {
+      queryClient.invalidateQueries({ queryKey: ["monthly-commission", selectedProfessional] });
+      queryClient.invalidateQueries({ queryKey: ["daily-commission", selectedProfessional] });
+      queryClient.invalidateQueries({ queryKey: ["professional", selectedProfessional] });
+    }
+  }, [selectedProfessional, queryClient]);
 
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {

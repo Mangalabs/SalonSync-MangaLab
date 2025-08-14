@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
+import { useUser } from "@/contexts/UserContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 const schema = z.object({
   name: z.string().min(2, "Informe o nome"),
@@ -23,6 +26,7 @@ const schema = z.object({
   roleId: z.string().optional(),
   baseSalary: z.union([z.number(), z.nan()]).optional(),
   salaryPayDay: z.union([z.number(), z.nan()]).optional(),
+  branchId: z.string().min(1, "Selecione uma filial"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -38,24 +42,21 @@ export function ProfessionalForm({
     role: string;
     commissionRate?: number;
     roleId?: string;
+    branchId?: string;
   } | null;
 }) {
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
+  const { user, isAdmin } = useUser();
+  const { activeBranch } = useBranch();
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ["roles"],
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
     queryFn: async () => {
-      try {
-        const res = await axios.get("/api/roles");
-        return res.data;
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          return [];
-        }
-        throw error;
-      }
+      const res = await axios.get("/api/branches");
+      return res.data;
     },
+    enabled: isAdmin,
   });
 
   const {
@@ -77,10 +78,32 @@ export function ProfessionalForm({
             0,
           baseSalary: (initialData as any).baseSalary || undefined,
           salaryPayDay: (initialData as any).salaryPayDay || undefined,
+          branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
         }
       : {
           commissionRate: 0,
+          branchId: !isAdmin ? activeBranch?.id : undefined,
         },
+  });
+
+  const selectedBranchId = watch("branchId");
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles", selectedBranchId],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedBranchId) params.append("branchId", selectedBranchId);
+        const res = await axios.get(`/api/roles?${params}`);
+        return res.data;
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return [];
+        }
+        throw error;
+      }
+    },
+    enabled: !!selectedBranchId,
   });
 
   const selectedRoleId = watch("roleId");
@@ -106,14 +129,16 @@ export function ProfessionalForm({
     mutationFn: async (data: FormData) => {
       console.log("🚀 ProfessionalForm mutation:", { data, isEditing });
 
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
       if (isEditing) {
         const res = await axios.patch(
           `/api/professionals/${initialData.id}`,
-          data
+          data,
+          { headers }
         );
         return res.data;
       } else {
-        const res = await axios.post("/api/professionals", data);
+        const res = await axios.post("/api/professionals", data, { headers });
         return res.data;
       }
     },
@@ -132,7 +157,29 @@ export function ProfessionalForm({
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
       className="space-y-4"
     >
+      {isAdmin && (
+        <div>
+          <Label htmlFor="branchId">Filial</Label>
+          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : initialData?.branchId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma filial" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch: any) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.branchId && (
+            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+          )}
+        </div>
+      )}
+
       <div>
+        <Label htmlFor="name">Nome do Funcionário</Label>
         <Input placeholder="Nome" {...register("name")} />
         {errors.name && (
           <p className="text-sm text-red-500">{errors.name.message}</p>

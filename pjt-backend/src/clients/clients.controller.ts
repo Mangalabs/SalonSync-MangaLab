@@ -7,6 +7,8 @@ import {
   Post,
   Patch,
   Req,
+  Query,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
@@ -21,30 +23,38 @@ export class ClientsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os clientes' })
   @ApiResponse({ status: 200, description: 'Lista de clientes' })
-  findAll(@Req() req: AuthenticatedRequest) {
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // Para admin, usar branchId do query se fornecido, senão usar do contexto
+    const targetBranchId =
+      req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
+
     return this.clientsService.findAll({
       id: req.user.id,
       role: req.user.role,
-      branchId: req.user.branchId,
+      branchId: targetBranchId,
     });
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar novo cliente' })
   @ApiResponse({ status: 201, description: 'Cliente criado com sucesso' })
-  create(@Body() body: CreateClientDto, @Req() req: AuthenticatedRequest) {
-    console.log('ClientsController - Received body:', body);
-    console.log('ClientsController - User context:', {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    });
-
-    return this.clientsService.create(body, {
-      id: req.user.id,
-      role: req.user.role,
-      branchId: req.user.branchId,
-    });
+  create(
+    @Body() body: CreateClientDto,
+    @Headers('x-branch-id') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.clientsService.create(
+      body,
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      branchId,
+    );
   }
 
   @Patch(':id')

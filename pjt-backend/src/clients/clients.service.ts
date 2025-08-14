@@ -17,7 +17,23 @@ export class ClientsService extends BaseDataService {
   }
 
   async findAll(user: UserContext): Promise<Client[]> {
-    const branchIds = await this.getUserBranchIds(user);
+    let branchIds: string[];
+
+    // Se branchId específico foi fornecido, usar apenas ele
+    if (user.branchId && user.role === 'ADMIN') {
+      // Verificar se admin tem acesso a esta filial
+      const allowedBranchIds = await this.getUserBranchIds({
+        ...user,
+        branchId: undefined,
+      });
+      if (allowedBranchIds.includes(user.branchId)) {
+        branchIds = [user.branchId];
+      } else {
+        throw new Error('Acesso negado à filial especificada');
+      }
+    } else {
+      branchIds = await this.getUserBranchIds(user);
+    }
 
     return this.prisma.client.findMany({
       where: { branchId: { in: branchIds } },
@@ -34,19 +50,12 @@ export class ClientsService extends BaseDataService {
     user: UserContext,
     targetBranchId?: string,
   ): Promise<Client> {
-    console.log('=== ClientsService CREATE DEBUG ===');
-    console.log('Received data:', JSON.stringify(data, null, 2));
-    console.log('Data type:', typeof data);
-    console.log('Data.name:', data.name);
-    console.log('Data.name type:', typeof data.name);
-    console.log('User context:', JSON.stringify(user, null, 2));
-
     if (!data.name) {
       throw new Error('Name is required but not provided');
     }
 
-    const branchId = await this.getTargetBranchId(user, targetBranchId);
-    console.log('Target branchId:', branchId);
+    // Use targetBranchId if provided, otherwise use getTargetBranchId logic
+    const branchId = targetBranchId || (await this.getTargetBranchId(user));
 
     const clientData = {
       name: data.name,
@@ -54,9 +63,6 @@ export class ClientsService extends BaseDataService {
       email: data.email || null,
       branchId,
     };
-
-    console.log('Final client data:', JSON.stringify(clientData, null, 2));
-    console.log('=== END DEBUG ===');
 
     return this.prisma.client.create({
       data: clientData,

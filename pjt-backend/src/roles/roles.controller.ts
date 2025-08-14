@@ -6,12 +6,13 @@ import {
   Patch,
   Param,
   Delete,
-  Request,
-  BadRequestException,
+  Req,
+  Query,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { AuthenticatedRequest } from '../common/middleware/auth.middleware';
 
 @Controller('roles')
 export class RolesController {
@@ -19,49 +20,36 @@ export class RolesController {
 
   @Post()
   create(
-    @Body() createRoleDto: CreateRoleDto & { branchId?: string },
-    @Request() req,
+    @Body() createRoleDto: CreateRoleDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    const branchId = createRoleDto.branchId || req.user.branchId;
-    if (!branchId) {
-      throw new BadRequestException('branchId é obrigatório');
-    }
-    return this.rolesService.create(createRoleDto, branchId);
+    return this.rolesService.create(createRoleDto, req.user.branchId!);
   }
 
   @Get()
-  findAll(@Request() req) {
-    if (!req.user.branchId) {
-      throw new BadRequestException('branchId é obrigatório');
-    }
-    return this.rolesService.findAll(req.user.branchId);
+  findAll(
+    @Query('branchId') branchId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.rolesService.findAll(branchId || req.user.branchId!);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
-    if (!req.user.branchId) {
-      throw new BadRequestException('branchId é obrigatório');
-    }
-    return this.rolesService.findOne(id, req.user.branchId);
+  findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.rolesService.findOne(id, req.user.branchId!);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
-    @Request() req,
+    @Req() req: AuthenticatedRequest,
   ) {
-    if (!req.user.branchId) {
-      throw new BadRequestException('branchId é obrigatório');
-    }
-    return this.rolesService.update(id, updateRoleDto, req.user.branchId);
+    return this.rolesService.update(id, updateRoleDto, req.user.branchId!);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req) {
-    if (!req.user.branchId) {
-      throw new BadRequestException('branchId é obrigatório');
-    }
-    return this.rolesService.remove(id, req.user.branchId);
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.rolesService.remove(id, req.user.branchId!);
   }
 }
