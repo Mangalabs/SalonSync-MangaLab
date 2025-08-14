@@ -24,6 +24,7 @@ CREATE TABLE "FinancialTransaction" (
     "amount" DECIMAL(10,2) NOT NULL,
     "type" "FinancialTransactionType" NOT NULL,
     "categoryId" TEXT NOT NULL,
+    "appointmentId" TEXT NOT NULL,
     "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'CASH',
     "reference" TEXT,
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -41,3 +42,5 @@ ALTER TABLE "FinancialTransaction" ADD CONSTRAINT "FinancialTransaction_category
 
 -- AddForeignKey
 ALTER TABLE "FinancialTransaction" ADD CONSTRAINT "FinancialTransaction_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "FinancialTransaction" ADD CONSTRAINT "FinancialTransaction_appointmentId_fkey" FOREIGN KEY ("appointmentId") REFERENCES "Appointment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
