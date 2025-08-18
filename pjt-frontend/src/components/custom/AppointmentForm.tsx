@@ -17,10 +17,12 @@ import axios from "@/lib/axios";
 
 export function AppointmentForm({ 
   onSuccess, 
-  mode = "immediate" 
+  mode = "immediate",
+  initialData
 }: { 
   onSuccess: () => void;
   mode?: "immediate" | "scheduled";
+  initialData?: any;
 }) {
   const isScheduled = mode === "scheduled";
   const { isAdmin } = useUser();
@@ -37,7 +39,7 @@ export function AppointmentForm({
   
   // Primeiro buscar os dados básicos
   const { professionals, clients, services } = useFormQueries();
-  const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess);
+  const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess, initialData);
   
   const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form;
   
@@ -126,7 +128,7 @@ export function AppointmentForm({
         Total: R$ {total.toFixed(2)}
       </div>
       <Button type="submit" disabled={isSubmitting} className="w-full text-sm h-8">
-        {isSubmitting ? "Salvando..." : (isScheduled ? "Agendar" : "Finalizar")}
+        {isSubmitting ? "Salvando..." : initialData ? "Atualizar" : (isScheduled ? "Agendar" : "Finalizar")}
       </Button>
     </form>
   );

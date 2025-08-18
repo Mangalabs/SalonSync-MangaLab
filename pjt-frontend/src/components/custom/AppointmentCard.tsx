@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, DollarSign, X, Check } from "lucide-react";
+import { Calendar, User, DollarSign, X, Check, Edit, Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import {
@@ -13,6 +13,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AppointmentForm } from "./AppointmentForm";
 
 interface Appointment {
   id: string;
@@ -42,6 +49,8 @@ export function AppointmentCard({
   const [openConfirmationModal, setOpenConfirmationModal] = useState<boolean | null>(
     null
   );
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const aptDate = new Date(appointment.scheduledAt);
   const now = new Date();
@@ -57,6 +66,16 @@ export function AppointmentCard({
     },
   });
 
+  const deleteAppointment = useMutation({
+    mutationFn: async () => {
+      await axios.delete(`/api/appointments/${appointment.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      setIsDeleting(false);
+    },
+  });
+
   const confirmAppointment = useMutation({
     mutationFn: async () => {
       await axios.post(`/api/appointments/${appointment.id}/confirm`);
@@ -68,38 +87,96 @@ export function AppointmentCard({
 
   if (compact) {
     return (
-      <div className="border rounded p-2 bg-white text-sm">
-        <div className="flex justify-between items-start mb-1">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span className="font-medium text-xs">
-              {aptDate.toLocaleDateString("pt-BR")} às{" "}
-              {aptDate.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+      <>
+        <div className="border rounded p-2 bg-white text-sm">
+          <div className="flex justify-between items-start mb-1">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span className="font-medium text-xs">
+                {aptDate.toLocaleDateString("pt-BR")} às{" "}
+                {aptDate.toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              <span className="font-semibold text-xs">
+                R$ {Number(appointment.total).toFixed(2)}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
-            <span className="font-semibold text-xs">
-              R$ {Number(appointment.total).toFixed(2)}
-            </span>
+          <div className="flex items-center gap-1 mb-1">
+            <User className="h-3 w-3" />
+            <span className="text-xs">{appointment.client.name}</span>
           </div>
+          <div className="text-xs text-[#737373] mb-1">
+            {appointment.professional.name}
+          </div>
+          <div className="text-xs text-[#737373] mb-2">
+            {appointment.appointmentServices
+              .map((as) => as.service.name)
+              .join(", ")}
+          </div>
+          
+          {mode === "completed" && (
+            <div className="flex gap-1 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="h-6 px-2 text-xs"
+              >
+                <Edit size={10} className="mr-1" />
+                Editar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsDeleting(true)}
+                className="h-6 px-2 text-xs"
+              >
+                <Trash2 size={10} className="mr-1" />
+                Excluir
+              </Button>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-1 mb-1">
-          <User className="h-3 w-3" />
-          <span className="text-xs">{appointment.client.name}</span>
-        </div>
-        <div className="text-xs text-[#737373] mb-1">
-          {appointment.professional.name}
-        </div>
-        <div className="text-xs text-[#737373]">
-          {appointment.appointmentServices
-            .map((as) => as.service.name)
-            .join(", ")}
-        </div>
-      </div>
+        
+        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Atendimento</DialogTitle>
+            </DialogHeader>
+            <AppointmentForm
+              mode="immediate"
+              initialData={appointment}
+              onSuccess={() => setIsEditing(false)}
+            />
+          </DialogContent>
+        </Dialog>
+        
+        <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este atendimento? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteAppointment.mutate()}
+                disabled={deleteAppointment.isPending}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 

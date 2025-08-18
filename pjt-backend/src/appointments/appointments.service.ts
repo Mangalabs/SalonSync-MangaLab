@@ -139,7 +139,7 @@ export class AppointmentsService extends BaseDataService {
       count: appointments.length,
       appointments: appointments.map((apt) => ({
         id: apt.id.substring(0, 8),
-        professional: apt.professional.name,
+        professional: apt.professional?.name || 'Profissional removido',
         status: apt.status,
         scheduledAt: apt.scheduledAt.toISOString(),
       })),
@@ -298,6 +298,78 @@ export class AppointmentsService extends BaseDataService {
         date: appointment.scheduledAt,
         branchId: appointment.branchId,
       },
+    });
+  }
+
+  async update(
+    id: string,
+    data: {
+      professionalId: string;
+      clientId: string;
+      serviceIds: string[];
+      scheduledAt: Date;
+      status?: string;
+    },
+    user: UserContext,
+    targetBranchId?: string,
+  ): Promise<Appointment> {
+    const existingAppointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
+    if (!existingAppointment) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
+
+    // Verificar conflito de horário (excluindo o próprio agendamento)
+    const conflictingAppointment = await this.prisma.appointment.findFirst({
+      where: {
+        professionalId: data.professionalId,
+        scheduledAt: data.scheduledAt,
+        id: { not: id },
+      },
+    });
+    if (conflictingAppointment) {
+      throw new Error('Já existe um agendamento neste horário');
+    }
+
+    const services = await this.prisma.service.findMany({
+      where: { id: { in: data.serviceIds } },
+      select: { price: true },
+    });
+    if (services.length !== data.serviceIds.length) {
+      throw new NotFoundException('Algum dos serviços não foi encontrado');
+    }
+    const total = services.reduce((sum, s) => sum + Number(s.price), 0);
+
+    return this.prisma.$transaction(async (tx) => {
+      // Remover serviços antigos
+      await tx.appointmentService.deleteMany({
+        where: { appointmentId: id },
+      });
+
+      // Atualizar agendamento
+      const updatedAppointment = await tx.appointment.update({
+        where: { id },
+        data: {
+          professionalId: data.professionalId,
+          clientId: data.clientId,
+          total,
+          scheduledAt: data.scheduledAt,
+          status: (data.status as any) || existingAppointment.status,
+          appointmentServices: {
+            create: data.serviceIds.map((serviceId) => ({ serviceId })),
+          },
+        },
+        include: {
+          professional: true,
+          client: true,
+          appointmentServices: {
+            include: { service: true },
+          },
+        },
+      });
+
+      return updatedAppointment;
     });
   }
 

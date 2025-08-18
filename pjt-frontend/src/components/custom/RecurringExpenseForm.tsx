@@ -73,9 +73,7 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
     queryKey: ["professionals", selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) return [];
-      console.log("📝 RecurringExpenseForm: Loading professionals for branch:", selectedBranchId);
       const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
-      console.log("📝 RecurringExpenseForm: Loaded professionals:", res.data.length, "professionals", res.data.map(p => p.name));
       return res.data;
     },
     enabled: !!selectedBranchId,
@@ -130,6 +128,11 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
   });
 
   const onSubmit = (data: RecurringExpenseFormData) => {
+    // Validar se dia de vencimento é após dia de recebimento
+    if (data.receiptDay && data.dueDay && data.receiptDay > data.dueDay) {
+      toast.error("O dia de vencimento deve ser após o dia de recebimento");
+      return;
+    }
     createRecurringExpense.mutate(data);
   };
 

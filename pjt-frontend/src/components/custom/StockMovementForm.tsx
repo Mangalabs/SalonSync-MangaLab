@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import axios from "@/lib/axios";
 import { useUser } from "@/contexts/UserContext";
 import { useBranch } from "@/contexts/BranchContext";
+import { useEffect } from "react";
 
 
 const movementSchema = z.object({
@@ -28,9 +29,30 @@ type MovementFormData = z.infer<typeof movementSchema>;
 
 interface StockMovementFormProps {
   onSuccess: () => void;
+  initialData?: InventoryMovement;
 }
 
-export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
+interface InventoryMovement {
+  id: string;
+  type: "IN" | "OUT" | "ADJUSTMENT" | "LOSS";
+  quantity: number;
+  unitCost?: number;
+  totalCost?: number;
+  reason: string;
+  reference?: string;
+  createdAt: string;
+  product: {
+    id: string;
+    name: string;
+  };
+  user?: {
+    id: string;
+    name: string;
+  };
+}
+
+export function StockMovementForm({ onSuccess, initialData }: StockMovementFormProps) {
+  const isEditing = !!initialData;
   const queryClient = useQueryClient();
   const { user, isAdmin } = useUser();
   const { activeBranch } = useBranch();
@@ -53,7 +75,13 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
   } = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
-      branchId: !isAdmin ? activeBranch?.id : undefined,
+      branchId: !isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined),
+      productId: initialData?.product.id || "",
+      type: initialData?.type || undefined,
+      quantity: initialData?.quantity || 0,
+      unitCost: initialData?.unitCost || undefined,
+      reason: initialData?.reason || "",
+      reference: initialData?.reference || "",
     },
   });
 
@@ -63,7 +91,9 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
     queryKey: ["products", selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) return [];
+      console.log('📈 Loading products for branch:', selectedBranchId);
       const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
+      console.log('📈 Products loaded:', res.data.length, 'products');
       return res.data;
     },
     enabled: !!selectedBranchId,
@@ -81,27 +111,75 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
 
   const movementType = watch("type");
 
+  // Garantir que os valores sejam definidos quando editando
+  useEffect(() => {
+    if (initialData && isEditing) {
+      console.log('🔧 Setting form values for editing:', {
+        productId: initialData.product.id,
+        productName: initialData.product.name,
+        type: initialData.type,
+        quantity: initialData.quantity
+      });
+      
+      setValue("productId", initialData.product.id);
+      setValue("type", initialData.type);
+      setValue("quantity", initialData.quantity);
+      setValue("unitCost", initialData.unitCost || undefined);
+      setValue("reason", initialData.reason);
+      setValue("reference", initialData.reference || "");
+      setValue("soldById", initialData.user?.id || undefined);
+    }
+  }, [initialData, isEditing, setValue]);
+
+  // Definir produto quando os produtos forem carregados
+  useEffect(() => {
+    if (initialData && isEditing && products.length > 0) {
+      const productExists = products.find(p => p.id === initialData.product.id);
+      console.log('🔧 Product check:', {
+        searchingFor: initialData.product.id,
+        productName: initialData.product.name,
+        foundInList: !!productExists,
+        productsCount: products.length,
+        currentValue: watch("productId")
+      });
+      
+      if (productExists) {
+        setValue("productId", initialData.product.id);
+        console.log('🔧 Product set successfully');
+      }
+    }
+  }, [initialData, isEditing, products, setValue, watch]);
+
   const createMovement = useMutation({
     mutationFn: async (data: MovementFormData) => {
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
-      const res = await axios.post(`/api/products/${data.productId}/adjust`, {
+      const payload = {
+        ...(isEditing && { productId: data.productId }),
         type: data.type,
         quantity: data.quantity,
         unitCost: data.unitCost,
         reason: data.reason,
         reference: data.reference,
         soldById: data.soldById,
-      }, { headers });
-      return res.data;
+      };
+      
+      if (isEditing) {
+        const res = await axios.patch(`/api/inventory/movements/${initialData!.id}`, payload, { headers });
+        return res.data;
+      } else {
+        const res = await axios.post(`/api/products/${data.productId}/adjust`, payload, { headers });
+        return res.data;
+      }
     },
     onSuccess: () => {
-      toast.success("Movimentação registrada com sucesso!");
+      toast.success(isEditing ? "Movimentação atualizada com sucesso!" : "Movimentação registrada com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
       onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao registrar movimentação");
+      toast.error(error.response?.data?.message || (isEditing ? "Erro ao atualizar movimentação" : "Erro ao registrar movimentação"));
     },
   });
 
@@ -116,7 +194,11 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
+          <Select 
+            onValueChange={(value) => setValue("branchId", value)} 
+            defaultValue={!isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined)}
+            disabled={isEditing}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma filial" />
             </SelectTrigger>
@@ -128,6 +210,11 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
               ))}
             </SelectContent>
           </Select>
+          {isEditing && (
+            <p className="text-xs text-gray-500 mt-1">
+              A filial não pode ser alterada durante a edição
+            </p>
+          )}
           {errors.branchId && (
             <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
           )}
@@ -136,7 +223,11 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
 
       <div>
         <Label htmlFor="productId">Produto</Label>
-        <Select onValueChange={(value) => setValue("productId", value)}>
+        <Select 
+          key={`product-${initialData?.product.id || 'new'}-${products.length}`}
+          onValueChange={(value) => setValue("productId", value)}
+          value={watch("productId") || ""}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione um produto" />
           </SelectTrigger>
@@ -155,7 +246,10 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
 
       <div>
         <Label htmlFor="type">Tipo de Movimentação</Label>
-        <Select onValueChange={(value) => setValue("type", value as any)}>
+        <Select 
+          onValueChange={(value) => setValue("type", value as any)}
+          defaultValue={initialData?.type}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tipo" />
           </SelectTrigger>
@@ -227,7 +321,10 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
       {isAdmin && (
         <div>
           <Label htmlFor="soldById">Usuário Responsável (opcional)</Label>
-          <Select onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)}>
+          <Select 
+            onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)}
+            defaultValue={initialData?.user?.id || "none"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o usuário responsável" />
             </SelectTrigger>
@@ -247,7 +344,7 @@ export function StockMovementForm({ onSuccess }: StockMovementFormProps) {
       )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Registrando..." : "Registrar Movimentação"}
+        {isSubmitting ? (isEditing ? "Atualizando..." : "Registrando...") : (isEditing ? "Atualizar Movimentação" : "Registrar Movimentação")}
       </Button>
     </form>
   );

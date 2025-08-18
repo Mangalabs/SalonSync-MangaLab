@@ -39,7 +39,7 @@ export function PendingExpensesNotification() {
       const res = await axios.get("/api/financial/recurring-expenses/pending");
       return res.data;
     },
-    refetchInterval: 60000, // Verifica a cada minuto
+    refetchInterval: 5 * 60 * 1000, // Verifica a cada 5 minutos
   });
 
   const payExpense = useMutation({

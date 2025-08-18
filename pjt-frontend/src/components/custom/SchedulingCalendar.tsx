@@ -211,7 +211,7 @@ export function SchedulingCalendar({
                             <AppointmentCard
                               key={apt.id}
                               appointment={apt}
-                              mode={mode}
+                              mode="completed"
                               compact={true}
                             />
                           ))}
