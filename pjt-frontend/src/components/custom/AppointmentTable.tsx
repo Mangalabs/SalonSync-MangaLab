@@ -32,7 +32,7 @@ import { AppointmentForm } from "./AppointmentForm";
 
 interface RawAppointment {
   id: string;
-  professional: { name: string };
+  professional: { name: string } | null;
   client: { name: string };
   appointmentServices: {
     service: { id: string; name: string; price: number };
@@ -124,7 +124,7 @@ export function AppointmentTable({
 
     if (selectedProfessional !== "all") {
       filtered = filtered.filter(
-        (apt) => apt.professional.name === selectedProfessional
+        (apt) => apt.professional?.name === selectedProfessional
       );
     }
 
@@ -157,7 +157,7 @@ export function AppointmentTable({
 
   const groupedData = useMemo(() => {
     return filteredAppointments.reduce((acc, apt) => {
-      const professionalName = apt.professional.name;
+      const professionalName = apt.professional?.name || 'Profissional removido';
       const date = new Date(apt.scheduledAt);
       const monthKey = `${date.getFullYear()}-${String(
         date.getMonth() + 1

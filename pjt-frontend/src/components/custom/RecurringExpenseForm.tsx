@@ -5,7 +5,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "@/lib/axios";
@@ -141,18 +141,16 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue("branchId", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={branches.map((branch: any) => ({
+              value: branch.id,
+              label: branch.name,
+            }))}
+            value={watch("branchId")}
+            onValueChange={(value) => setValue("branchId", value)}
+            placeholder="Selecione uma filial"
+            searchPlaceholder="Pesquisar filial..."
+          />
           {errors.branchId && (
             <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
           )}
@@ -183,18 +181,16 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
 
       <div>
         <Label htmlFor="categoryId">Categoria</Label>
-        <Select onValueChange={(value) => setValue("categoryId", value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione uma categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category: any) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          options={categories.map((category: any) => ({
+            value: category.id,
+            label: category.name,
+          }))}
+          value={selectedCategoryId}
+          onValueChange={(value) => setValue("categoryId", value)}
+          placeholder="Selecione uma categoria"
+          searchPlaceholder="Pesquisar categoria..."
+        />
         {errors.categoryId && (
           <p className="text-sm text-red-600 mt-1">{errors.categoryId.message}</p>
         )}
@@ -203,25 +199,21 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
       {isSalaryCategory && (
         <div>
           <Label htmlFor="professionalId">Funcionário</Label>
-          <Select onValueChange={handleProfessionalChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um funcionário" />
-            </SelectTrigger>
-            <SelectContent>
-              {professionals.map((professional: any) => {
-                const baseSalary = professional.customRole?.baseSalary || professional.baseSalary;
-                const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay;
-                
-                return (
-                  <SelectItem key={professional.id} value={professional.id}>
-                    {professional.name} 
-                    {baseSalary && `(R$ ${Number(baseSalary).toFixed(2)})`}
-                    {payDay && ` - Dia ${payDay}`}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={professionals.map((professional: any) => {
+              const baseSalary = professional.customRole?.baseSalary || professional.baseSalary;
+              const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay;
+              
+              return {
+                value: professional.id,
+                label: `${professional.name}${baseSalary ? ` (R$ ${Number(baseSalary).toFixed(2)})` : ''}${payDay ? ` - Dia ${payDay}` : ''}`
+              };
+            })}
+            value={watch("professionalId")}
+            onValueChange={handleProfessionalChange}
+            placeholder="Selecione um funcionário"
+            searchPlaceholder="Pesquisar funcionário..."
+          />
           <p className="text-xs text-gray-500 mt-1">
             Selecione o funcionário para puxar automaticamente os dados de salário
           </p>
@@ -231,18 +223,16 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="receiptDay">Dia de Recebimento</Label>
-          <Select onValueChange={(value) => setValue("receiptDay", parseInt(value))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Dia do mês" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                <SelectItem key={day} value={day.toString()}>
-                  Dia {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={Array.from({ length: 31 }, (_, i) => ({
+              value: (i + 1).toString(),
+              label: `Dia ${i + 1}`
+            }))}
+            value={watch("receiptDay")?.toString()}
+            onValueChange={(value) => setValue("receiptDay", parseInt(value))}
+            placeholder="Dia do mês"
+            searchPlaceholder="Pesquisar dia..."
+          />
           {errors.receiptDay && (
             <p className="text-sm text-red-600 mt-1">{errors.receiptDay.message}</p>
           )}
@@ -253,18 +243,16 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
 
         <div>
           <Label htmlFor="dueDay">Dia de Vencimento</Label>
-          <Select onValueChange={(value) => setValue("dueDay", parseInt(value))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Dia do mês" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                <SelectItem key={day} value={day.toString()}>
-                  Dia {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={Array.from({ length: 31 }, (_, i) => ({
+              value: (i + 1).toString(),
+              label: `Dia ${i + 1}`
+            }))}
+            value={watch("dueDay")?.toString()}
+            onValueChange={(value) => setValue("dueDay", parseInt(value))}
+            placeholder="Dia do mês"
+            searchPlaceholder="Pesquisar dia..."
+          />
           {errors.dueDay && (
             <p className="text-sm text-red-600 mt-1">{errors.dueDay.message}</p>
           )}

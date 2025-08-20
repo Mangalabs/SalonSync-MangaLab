@@ -25,7 +25,7 @@ interface Appointment {
   id: string;
   scheduledAt: string;
   status?: string;
-  professional: { name: string };
+  professional: { name: string } | null;
   client: { name: string };
   appointmentServices: {
     service: { name: string; price: string };
@@ -112,7 +112,7 @@ export function AppointmentCard({
             <span className="text-xs">{appointment.client.name}</span>
           </div>
           <div className="text-xs text-[#737373] mb-1">
-            {appointment.professional.name}
+            {appointment.professional?.name || 'Profissional removido'}
           </div>
           <div className="text-xs text-[#737373] mb-2">
             {appointment.appointmentServices
@@ -217,7 +217,7 @@ export function AppointmentCard({
       </div>
 
       <div className="text-xs sm:text-sm text-[#737373] mb-2">
-        <strong>Profissional:</strong> {appointment.professional.name}
+        <strong>Profissional:</strong> {appointment.professional?.name || 'Profissional removido'}
       </div>
 
       <div className="text-xs sm:text-sm text-[#737373] mb-3">
