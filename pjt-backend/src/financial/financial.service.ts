@@ -327,6 +327,7 @@ export class FinancialService extends BaseDataService {
         dueDay: data.dueDay,
         isActive: data.isActive ?? true,
         branchId,
+        professionalId: data.professionalId,
       },
       include: {
         category: true,
