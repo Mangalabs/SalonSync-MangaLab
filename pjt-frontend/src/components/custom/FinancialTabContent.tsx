@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,13 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error } = useQuery({
     queryKey: ["financial-tab-data", type, startDate, endDate, branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      params.append("branchId", branchFilter); // Sempre passar branchFilter, mesmo se for "all"
 
       const [summaryRes, transactionsRes, appointmentsRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
@@ -45,7 +45,46 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     },
   });
 
+  // Memoizar cálculos complexos
+  const calculations = useMemo(() => {
+    if (!summary) return { totalFromTransactions: 0, totalFromAppointments: 0, stockRevenue: 0, stockExpenses: 0, grandTotal: 0, categorySummary: {}, categories: [], paymentMethods: [] };
+    
+    const totalFromTransactions = summary.transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
+    const totalFromAppointments = type === "INCOME" ? summary.appointments?.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) || 0 : 0;
+    const stockRevenue = type === "INCOME" ? summary.summary?.stockRevenue || 0 : 0;
+    const stockExpenses = type === "EXPENSE" ? summary.summary?.stockLosses || 0 : type === "INVESTMENT" ? summary.summary?.stockExpenses || 0 : 0;
+    const grandTotal = totalFromTransactions + totalFromAppointments + stockRevenue + stockExpenses;
+
+    const categorySummary = summary.transactions?.reduce((acc: any, t: any) => {
+      const categoryName = t.category.name;
+      if (!acc[categoryName]) {
+        acc[categoryName] = { total: 0, count: 0, color: t.category.color };
+      }
+      acc[categoryName].total += Number(t.amount);
+      acc[categoryName].count += 1;
+      return acc;
+    }, {}) || {};
+
+    const categories = [...new Set(summary.transactions?.map((t: any) => t.category.name) || [])];
+    const paymentMethods = [...new Set(summary.transactions?.map((t: any) => t.paymentMethod) || [])];
+
+    return { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods };
+  }, [summary, type]);
+
+  // Memoizar transações filtradas
+  const filteredTransactions = useMemo(() => {
+    return summary?.transactions?.filter((t: any) => {
+      const matchesCategory = categoryFilter === "all" || t.category.name === categoryFilter;
+      const matchesPayment = paymentMethodFilter === "all" || t.paymentMethod === paymentMethodFilter;
+      const matchesSearch = searchTerm === "" || t.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesPayment && matchesSearch;
+    }) || [];
+  }, [summary?.transactions, categoryFilter, paymentMethodFilter, searchTerm]);
+
   if (isLoading) return <div className="p-4">Carregando...</div>;
+  if (error) return <div className="p-4 text-red-600">Erro ao carregar dados financeiros</div>;
+
+  const { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods } = calculations;
 
   const getTypeColor = () => {
     switch (type) {
@@ -65,49 +104,33 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`;
 
-  // Calcular totais
-  const totalFromTransactions = summary?.transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
-  const totalFromAppointments = type === "INCOME" ? summary?.appointments?.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) || 0 : 0;
-  const stockRevenue = type === "INCOME" ? summary?.summary?.stockRevenue || 0 : 0;
-  const stockExpenses = type === "EXPENSE" ? (summary?.summary?.stockExpenses || 0) + (summary?.summary?.stockLosses || 0) : 0;
-  const grandTotal = totalFromTransactions + totalFromAppointments + stockRevenue + stockExpenses;
-
-  // Agrupar por categoria
-  const categorySummary = summary?.transactions?.reduce((acc: any, t: any) => {
-    const categoryName = t.category.name;
-    if (!acc[categoryName]) {
-      acc[categoryName] = { total: 0, count: 0, color: t.category.color };
-    }
-    acc[categoryName].total += Number(t.amount);
-    acc[categoryName].count += 1;
-    return acc;
-  }, {}) || {};
-
-  // Filtrar transações
-  const filteredTransactions = summary?.transactions?.filter((t: any) => {
-    const matchesCategory = categoryFilter === "all" || t.category.name === categoryFilter;
-    const matchesPayment = paymentMethodFilter === "all" || t.paymentMethod === paymentMethodFilter;
-    const matchesSearch = searchTerm === "" || t.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesPayment && matchesSearch;
-  }) || [];
-
-  const categories = [...new Set(summary?.transactions?.map((t: any) => t.category.name) || [])];
-  const paymentMethods = [...new Set(summary?.transactions?.map((t: any) => t.paymentMethod) || [])];
-
   return (
     <div className="space-y-6">
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total do Período</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${getTypeColor()}`}>
-              {formatCurrency(grandTotal)}
+              {formatCurrency(
+                type === "INCOME" ? summary?.summary?.totalIncome || 0 :
+                type === "EXPENSE" ? summary?.summary?.totalExpenses || 0 :
+                summary?.summary?.totalInvestments || 0
+              )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {new Date(startDate + 'T00:00:00').toLocaleDateString("pt-BR")} - {new Date(endDate + 'T00:00:00').toLocaleDateString("pt-BR")}
+              {(() => {
+                try {
+                  const start = new Date(startDate + 'T00:00:00');
+                  const end = new Date(endDate + 'T00:00:00');
+                  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Período inválido';
+                  return `${start.toLocaleDateString("pt-BR")} - ${end.toLocaleDateString("pt-BR")}`;
+                } catch {
+                  return 'Período inválido';
+                }
+              })()} 
             </p>
           </CardContent>
         </Card>
@@ -125,15 +148,59 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         </Card>
 
         {type === "INCOME" && (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-semibold">{summary?.appointments?.length || 0}</div>
+                <div className="text-sm text-green-600">
+                  {formatCurrency(totalFromAppointments)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Vendas de Produtos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-semibold">📦</div>
+                <div className="text-sm text-green-600">
+                  {formatCurrency(stockRevenue)}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Automático do estoque</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {type === "EXPENSE" && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
+              <CardTitle className="text-sm font-medium">Perdas de Estoque</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-semibold">{summary?.appointments?.length || 0}</div>
-              <div className="text-sm text-green-600">
-                {formatCurrency(totalFromAppointments)}
+              <div className="text-xl font-semibold">📉</div>
+              <div className="text-sm text-red-600">
+                {formatCurrency(stockExpenses)}
               </div>
+              <p className="text-xs text-gray-500 mt-1">Automático do estoque</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {type === "INVESTMENT" && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Compra de Produtos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-semibold">🛒</div>
+              <div className="text-sm text-blue-600">
+                {formatCurrency(stockExpenses)}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Automático do estoque</p>
             </CardContent>
           </Card>
         )}
@@ -251,35 +318,52 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((transaction: any) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="text-sm">
-                      {new Date(transaction.date).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-sm">{transaction.description}</div>
-                        {transaction.reference && (
-                          <div className="text-xs text-gray-500">Ref: {transaction.reference}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="secondary"
-                        style={{ backgroundColor: transaction.category.color + '20', color: transaction.category.color }}
-                      >
-                        {transaction.category.name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {getPaymentMethodLabel(transaction.paymentMethod)}
-                    </TableCell>
-                    <TableCell className={`text-right font-semibold ${getTypeColor()}`}>
-                      {formatCurrency(Number(transaction.amount))}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredTransactions.map((transaction: any) => {
+                  const isStockRelated = transaction.reference?.startsWith('Estoque-') || transaction.reference?.startsWith('Produto-');
+                  return (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="text-sm">
+                        {(() => {
+                          try {
+                            const date = new Date(transaction.date);
+                            return isNaN(date.getTime()) ? 'Data inválida' : date.toLocaleDateString("pt-BR");
+                          } catch {
+                            return 'Data inválida';
+                          }
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium text-sm flex items-center gap-2">
+                            {isStockRelated && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                📦 Estoque
+                              </span>
+                            )}
+                            {transaction.description}
+                          </div>
+                          {transaction.reference && (
+                            <div className="text-xs text-gray-500">Ref: {transaction.reference}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary"
+                          style={{ backgroundColor: transaction.category.color + '20', color: transaction.category.color }}
+                        >
+                          {transaction.category.name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {getPaymentMethodLabel(transaction.paymentMethod)}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold ${getTypeColor()}`}>
+                        {formatCurrency(Number(transaction.amount))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -287,7 +371,24 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       ) : (
         <Card>
           <CardContent className="p-6 text-center text-gray-500">
-            Nenhuma transação encontrada com os filtros aplicados
+            <div className="space-y-2">
+              <p>Nenhuma transação encontrada com os filtros aplicados</p>
+              {type === "INVESTMENT" && (
+                <p className="text-xs text-blue-600">
+                  💡 Dica: Transações de investimento são criadas automaticamente ao cadastrar produtos com estoque inicial
+                </p>
+              )}
+              {type === "INCOME" && (
+                <p className="text-xs text-green-600">
+                  💡 Dica: Receitas são geradas automaticamente por atendimentos e vendas de produtos
+                </p>
+              )}
+              {type === "EXPENSE" && (
+                <p className="text-xs text-red-600">
+                  💡 Dica: Despesas incluem perdas de estoque registradas automaticamente
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

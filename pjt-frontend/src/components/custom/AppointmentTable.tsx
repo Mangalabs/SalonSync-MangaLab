@@ -11,7 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Trash2,
+  Edit,
   User,
   Calendar,
   DollarSign,
@@ -21,10 +28,11 @@ import {
 } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { ScheduledAppointmentCard } from "./ScheduledAppointmentCard";
+import { AppointmentForm } from "./AppointmentForm";
 
 interface RawAppointment {
   id: string;
-  professional: { name: string };
+  professional: { name: string } | null;
   client: { name: string };
   appointmentServices: {
     service: { id: string; name: string; price: number };
@@ -47,6 +55,7 @@ export function AppointmentTable({
   const [selectedService, setSelectedService] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [editingAppointment, setEditingAppointment] = useState<RawAppointment | null>(null);
   const { activeBranch } = useBranch();
 
   const { data: rawData = [], isLoading } = useQuery<RawAppointment[]>({
@@ -115,7 +124,7 @@ export function AppointmentTable({
 
     if (selectedProfessional !== "all") {
       filtered = filtered.filter(
-        (apt) => apt.professional.name === selectedProfessional
+        (apt) => apt.professional?.name === selectedProfessional
       );
     }
 
@@ -148,7 +157,7 @@ export function AppointmentTable({
 
   const groupedData = useMemo(() => {
     return filteredAppointments.reduce((acc, apt) => {
-      const professionalName = apt.professional.name;
+      const professionalName = apt.professional?.name || 'Profissional removido';
       const date = new Date(apt.scheduledAt);
       const monthKey = `${date.getFullYear()}-${String(
         date.getMonth() + 1
@@ -399,6 +408,13 @@ export function AppointmentTable({
                                     R$ {apt.total.toFixed(2)}
                                   </span>
                                   <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingAppointment(apt)}
+                                  >
+                                    <Edit size={14} />
+                                  </Button>
+                                  <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() =>
@@ -430,6 +446,24 @@ export function AppointmentTable({
           )
         )
       )}
+      
+      <Dialog
+        open={!!editingAppointment}
+        onOpenChange={() => setEditingAppointment(null)}
+      >
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Agendamento</DialogTitle>
+          </DialogHeader>
+          {editingAppointment && (
+            <AppointmentForm
+              mode={editingAppointment.status === 'SCHEDULED' ? 'scheduled' : 'immediate'}
+              initialData={editingAppointment}
+              onSuccess={() => setEditingAppointment(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

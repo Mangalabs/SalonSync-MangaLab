@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
@@ -156,18 +156,16 @@ export function ProductForm({
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : (initialData as any)?.branchId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={branches.map((branch: any) => ({
+              value: branch.id,
+              label: branch.name,
+            }))}
+            value={watch("branchId")}
+            onValueChange={(value) => setValue("branchId", value)}
+            placeholder="Selecione uma filial"
+            searchPlaceholder="Pesquisar filial..."
+          />
           {errors.branchId && (
             <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
           )}
@@ -200,18 +198,13 @@ export function ProductForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="unit">Unidade de Medida</Label>
-          <Select onValueChange={(value) => setValue('unit', value)} defaultValue={watch('unit')}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a unidade" />
-            </SelectTrigger>
-            <SelectContent>
-              {unitOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={unitOptions}
+            value={watch('unit')}
+            onValueChange={(value) => setValue('unit', value)}
+            placeholder="Selecione a unidade"
+            searchPlaceholder="Pesquisar unidade..."
+          />
           {errors.unit && (
             <p className="text-sm text-red-500">{errors.unit.message}</p>
           )}

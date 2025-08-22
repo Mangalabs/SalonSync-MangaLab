@@ -90,11 +90,15 @@ export class ServicesService extends BaseDataService {
     user: UserContext,
     targetBranchId?: string,
   ) {
+    console.log('🔧 ServicesService: Creating service with targetBranchId:', targetBranchId);
+    
     if (user.role === 'ADMIN') {
       // Admin pode criar serviços globais ou específicos de filial
       const branchId = targetBranchId
         ? await this.getTargetBranchId(user, targetBranchId)
         : null;
+
+      console.log('🔧 ServicesService: Final branchId for creation:', branchId);
 
       return this.prisma.service.create({
         data: {
@@ -129,7 +133,31 @@ export class ServicesService extends BaseDataService {
     }
   }
 
-  async update(id: string, data: { name?: string; price?: number }) {
+  async update(
+    id: string, 
+    data: { name?: string; price?: number },
+    user?: UserContext,
+    targetBranchId?: string,
+  ) {
+    console.log('🔧 ServicesService: Updating service with targetBranchId:', targetBranchId);
+    
+    // Se user e targetBranchId foram fornecidos, atualizar o branchId também
+    if (user && user.role === 'ADMIN') {
+      const branchId = targetBranchId
+        ? await this.getTargetBranchId(user, targetBranchId)
+        : null;
+      
+      console.log('🔧 ServicesService: Final branchId for update:', branchId);
+      
+      return this.prisma.service.update({ 
+        where: { id }, 
+        data: {
+          ...data,
+          branchId, // null = global, string = específico da filial
+        }
+      });
+    }
+    
     return this.prisma.service.update({ where: { id }, data });
   }
 

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   Delete,
   Req,
   Query,
@@ -114,5 +115,31 @@ export class AppointmentsController {
   })
   cancelAppointment(@Param('id') id: string): Promise<void> {
     return this.apptService.cancelAppointment(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar agendamento' })
+  @ApiResponse({ status: 200, description: 'Agendamento atualizado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Agendamento não encontrado' })
+  update(
+    @Param('id') id: string,
+    @Body() body: CreateAppointmentDto & { status?: string },
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Appointment> {
+    const targetBranchId = req.headers['x-branch-id'] as string;
+    return this.apptService.update(
+      id,
+      {
+        ...body,
+        scheduledAt: new Date(body.scheduledAt),
+        status: (body.status as any) || 'SCHEDULED',
+      },
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+      targetBranchId,
+    );
   }
 }

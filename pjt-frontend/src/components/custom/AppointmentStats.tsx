@@ -25,7 +25,7 @@ export function AppointmentStats({ appointments }: AppointmentStatsProps) {
   if (isAdmin) {
     // Calcular top profissional
     const professionalStats = professionals.map(prof => {
-      const profAppointments = completedAppointments.filter(apt => apt.professional.name === prof.name);
+      const profAppointments = completedAppointments.filter(apt => apt.professional?.name === prof.name);
       return {
         name: prof.name,
         count: profAppointments.length,
@@ -58,7 +58,7 @@ export function AppointmentStats({ appointments }: AppointmentStatsProps) {
 
   // Para profissional
   const professionalAppointments = completedAppointments.filter(
-    apt => apt.professional.name === user?.name
+    apt => apt.professional?.name === user?.name
   );
   
   // Encontrar dados do profissional logado na lista (buscar por nome)

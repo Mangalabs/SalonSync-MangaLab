@@ -35,7 +35,7 @@ interface Appointment {
   id: string;
   scheduledAt: string;
   status?: string;
-  professional: { name: string };
+  professional: { name: string } | null;
   client: { name: string };
   appointmentServices: {
     service: { name: string; price: string };
@@ -154,7 +154,7 @@ export function SchedulingCalendar({
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {Object.entries(
                   sortedAppointments.reduce((groups, apt) => {
-                    const profName = apt.professional.name;
+                    const profName = apt.professional?.name || 'Profissional removido';
                     if (!groups[profName]) groups[profName] = [];
                     groups[profName].push(apt);
                     return groups;
@@ -211,7 +211,7 @@ export function SchedulingCalendar({
                             <AppointmentCard
                               key={apt.id}
                               appointment={apt}
-                              mode={mode}
+                              mode="completed"
                               compact={true}
                             />
                           ))}
@@ -364,7 +364,7 @@ export function SchedulingCalendar({
                           <span>{apt.client.name}</span>
                         </div>
                         <div className="text-sm text-[#737373] mb-2">
-                          {apt.professional.name}
+                          {apt.professional?.name || 'Profissional removido'}
                         </div>
                         <div className="text-sm text-[#737373] mb-3">
                           {apt.appointmentServices
@@ -470,7 +470,7 @@ export function SchedulingCalendar({
                           <span>{apt.client.name}</span>
                         </div>
                         <div className="text-sm text-[#737373]">
-                          {apt.professional.name}
+                          {apt.professional?.name || 'Profissional removido'}
                         </div>
                       </div>
                     );

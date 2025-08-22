@@ -49,7 +49,7 @@ export function ServiceForm({
     defaultValues: {
       name: initialData?.name || "",
       price: initialData ? Number(initialData.price) : 0,
-      branchId: !isAdmin ? activeBranch?.id : initialData?.branchId,
+      branchId: !isAdmin ? activeBranch?.id : (initialData?.branchId || undefined),
     }
   });
 
@@ -57,17 +57,24 @@ export function ServiceForm({
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
+      console.log('🔧 ServiceForm: Submitting data:', data);
+      
       const payload = {
         name: data.name,
         price: data.price,
       };
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      
+      const config = {
+        headers: data.branchId ? { 'x-branch-id': data.branchId } : { 'x-skip-branch-header': 'true' }
+      };
+      
+      console.log('🔧 ServiceForm: Config:', config);
       
       if (isEditing) {
-        const res = await axios.patch(`/api/services/${initialData.id}`, payload, { headers });
+        const res = await axios.patch(`/api/services/${initialData.id}`, payload, config);
         return res.data;
       } else {
-        const res = await axios.post('/api/services', payload, { headers });
+        const res = await axios.post('/api/services', payload, config);
         return res.data;
       }
     },
@@ -89,7 +96,10 @@ export function ServiceForm({
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Escopo do Serviço</Label>
-          <Select onValueChange={(value) => setValue("branchId", value === "global" ? undefined : value)} defaultValue={initialData?.branchId || "global"}>
+          <Select 
+            onValueChange={(value) => setValue("branchId", value === "global" ? undefined : value)} 
+            defaultValue={initialData?.branchId ? initialData.branchId : "global"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o escopo" />
             </SelectTrigger>

@@ -144,7 +144,14 @@ export class FinancialService extends BaseDataService {
       endDate?: string;
     },
   ) {
-    const branchIds = await this.getUserBranchIds(user);
+    const allBranchIds = await this.getUserBranchIds(user);
+    const branchIds = user.branchId ? [user.branchId] : allBranchIds;
+
+    console.log('getTransactions branchIds:', {
+      userBranchId: user.branchId,
+      allBranchIds,
+      finalBranchIds: branchIds
+    });
 
     const where: any = {
       branchId: { in: branchIds },
@@ -175,8 +182,8 @@ export class FinancialService extends BaseDataService {
     endDate?: string,
   ) {
     const allBranchIds = await this.getUserBranchIds(user);
-    // Se branchId é undefined, usar todas as filiais
-    // Se branchId foi especificado, usar apenas essa filial
+    // Se branchId foi especificado no contexto, usar apenas essa filial
+    // Senão, usar todas as filiais do usuário
     const branchIds = user.branchId ? [user.branchId] : allBranchIds;
 
     console.log('Financial Summary Service:', {
@@ -203,6 +210,15 @@ export class FinancialService extends BaseDataService {
       },
     });
 
+    console.log('Financial transactions found:', {
+      total: transactions.length,
+      byBranch: transactions.reduce((acc, t) => {
+        acc[t.branchId] = (acc[t.branchId] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      stockRelated: transactions.filter(t => t.reference?.startsWith('Estoque-') || t.reference?.startsWith('Produto-')).length
+    });
+
     // Receitas de atendimentos
     const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -227,6 +243,18 @@ export class FinancialService extends BaseDataService {
       include: {
         product: { select: { name: true } },
       },
+    });
+
+    console.log('Stock movements found:', {
+      total: stockMovements.length,
+      byBranch: stockMovements.reduce((acc, m) => {
+        acc[m.branchId] = (acc[m.branchId] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      byType: stockMovements.reduce((acc, m) => {
+        acc[m.type] = (acc[m.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
     });
 
     // Despesas fixas pagas no período
@@ -260,29 +288,51 @@ export class FinancialService extends BaseDataService {
       0,
     );
 
+    // Separar transações por origem
+    const stockRelatedTransactions = transactions.filter(t => 
+      t.reference?.startsWith('Estoque-') || t.reference?.startsWith('Produto-')
+    );
+    const manualTransactions = transactions.filter(t => 
+      !t.reference?.startsWith('Estoque-') && !t.reference?.startsWith('Produto-')
+    );
+
+    const manualIncomeTransactions = manualTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + Number(t.amount), 0);
+    const manualExpenseTransactions = manualTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + Number(t.amount), 0);
+    const manualInvestmentTransactions = manualTransactions.filter((t) => t.type === 'INVESTMENT').reduce((sum, t) => sum + Number(t.amount), 0);
+
+    // Transações automáticas do estoque
+    const stockIncomeTransactions = stockRelatedTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + Number(t.amount), 0);
+    const stockExpenseTransactions = stockRelatedTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + Number(t.amount), 0);
+    const stockInvestmentTransactions = stockRelatedTransactions.filter((t) => t.type === 'INVESTMENT').reduce((sum, t) => sum + Number(t.amount), 0);
+
     const summary = {
-      totalIncome:
-        transactions
-          .filter((t) => t.type === 'INCOME')
-          .reduce((sum, t) => sum + Number(t.amount), 0) +
-        appointmentRevenue +
-        stockSales,
-      totalExpenses:
-        transactions
-          .filter((t) => t.type === 'EXPENSE')
-          .reduce((sum, t) => sum + Number(t.amount), 0) +
-        stockPurchases +
-        stockLosses,
-      totalInvestments: transactions
-        .filter((t) => t.type === 'INVESTMENT')
-        .reduce((sum, t) => sum + Number(t.amount), 0),
+      totalIncome: manualIncomeTransactions + appointmentRevenue + stockIncomeTransactions,
+      totalExpenses: manualExpenseTransactions + stockExpenseTransactions,
+      totalInvestments: manualInvestmentTransactions + stockInvestmentTransactions,
       recurringExpenses: recurringExpensesTotal,
       appointmentRevenue,
-      stockRevenue: stockSales,
-      stockExpenses: stockPurchases,
-      stockLosses,
+      stockRevenue: stockIncomeTransactions,
+      stockExpenses: stockInvestmentTransactions,
+      stockLosses: stockExpenseTransactions,
       netProfit: 0,
     };
+
+    console.log('Summary calculation:', {
+      manualIncome: manualIncomeTransactions,
+      manualExpenses: manualExpenseTransactions,
+      manualInvestments: manualInvestmentTransactions,
+      stockIncomeTransactions,
+      stockExpenseTransactions,
+      stockInvestmentTransactions,
+      appointmentRevenue,
+      stockSales,
+      stockPurchases,
+      stockLosses,
+      stockRelatedTransactionsCount: stockRelatedTransactions.length,
+      totalIncome: summary.totalIncome,
+      totalExpenses: summary.totalExpenses,
+      totalInvestments: summary.totalInvestments
+    });
 
     summary.netProfit =
       summary.totalIncome -
@@ -326,11 +376,18 @@ export class FinancialService extends BaseDataService {
         receiptDay: data.receiptDay,
         dueDay: data.dueDay,
         isActive: data.isActive ?? true,
+        professionalId: data.professionalId,
         branchId,
         professionalId: data.professionalId,
       },
       include: {
         category: true,
+        professional: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
   }
@@ -345,6 +402,12 @@ export class FinancialService extends BaseDataService {
       },
       include: {
         category: true,
+        professional: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: { receiptDay: 'asc' },
     });
@@ -357,21 +420,26 @@ export class FinancialService extends BaseDataService {
     const currentYear = now.getFullYear();
     const currentDay = now.getDate();
 
-    // Buscar despesas fixas ativas (entre data de recebimento e vencimento)
+    // Buscar todas as despesas fixas ativas
     const recurringExpenses = await this.prisma.recurringExpense.findMany({
       where: {
         branchId: { in: branchIds },
         isActive: true,
-        receiptDay: { lte: currentDay },
-        dueDay: { gte: currentDay },
       },
       include: {
         category: true,
       },
     });
 
-    // Buscar transações relacionadas separadamente
-    const expenseIds = recurringExpenses.map((e) => e.id);
+    // Filtrar despesas que estão no período de cobrança (receiptDay <= hoje <= dueDay)
+    const expensesInPeriod = recurringExpenses.filter(expense => 
+      expense.receiptDay <= currentDay && currentDay <= expense.dueDay
+    );
+
+    if (expensesInPeriod.length === 0) return [];
+
+    // Buscar pagamentos do mês atual
+    const expenseIds = expensesInPeriod.map((e) => e.id);
     const transactions = await this.prisma.financialTransaction.findMany({
       where: {
         recurringExpenseId: { in: expenseIds },
@@ -382,8 +450,8 @@ export class FinancialService extends BaseDataService {
       },
     });
 
-    // Filtrar apenas as que não foram pagas no mês atual
-    return recurringExpenses.filter(
+    // Retornar apenas despesas não pagas
+    return expensesInPeriod.filter(
       (expense) =>
         !transactions.some((t) => t.recurringExpenseId === expense.id),
     );

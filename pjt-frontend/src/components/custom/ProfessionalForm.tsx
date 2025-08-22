@@ -4,13 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useUser } from "@/contexts/UserContext";
@@ -160,18 +154,16 @@ export function ProfessionalForm({
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : initialData?.branchId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={branches.map((branch: any) => ({
+              value: branch.id,
+              label: branch.name,
+            }))}
+            value={watch("branchId")}
+            onValueChange={(value) => setValue("branchId", value)}
+            placeholder="Selecione uma filial"
+            searchPlaceholder="Pesquisar filial..."
+          />
           {errors.branchId && (
             <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
           )}
@@ -188,22 +180,19 @@ export function ProfessionalForm({
       <div>
         {roles.length > 0 ? (
           <>
-            <Select
-              onValueChange={handleRoleChange}
+            <Combobox
+              options={[
+                { value: "custom", label: "Função personalizada" },
+                ...roles.map((role: any) => ({
+                  value: role.id,
+                  label: `${role.title} (${role.commissionRate}%)`
+                }))
+              ]}
               value={selectedRoleId || "custom"}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma função" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="custom">Função personalizada</SelectItem>
-                {roles.map((role: any) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.title} ({role.commissionRate}%)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onValueChange={handleRoleChange}
+              placeholder="Selecione uma função"
+              searchPlaceholder="Pesquisar função..."
+            />
             {selectedRoleId === "custom" && (
               <div className="mt-2">
                 <Input placeholder="Nome da função" {...register("role")} />
