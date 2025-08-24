@@ -54,7 +54,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   };
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
   const isProfessional = user?.role === "PROFESSIONAL";
 
   return (

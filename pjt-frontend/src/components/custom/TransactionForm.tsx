@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller } from "react-hook-form";
 import axios from "@/lib/axios";
@@ -112,18 +112,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
             name="branchId"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a filial..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {branches.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                options={branches.map((branch) => ({
+                  value: branch.id,
+                  label: branch.name,
+                }))}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder="Selecione a filial..."
+                searchPlaceholder="Pesquisar filial..."
+              />
             )}
           />
         </div>
@@ -173,18 +171,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           name="categoryId"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category: any) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={categories.map((category: any) => ({
+                value: category.id,
+                label: category.name,
+              }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Selecione uma categoria"
+              searchPlaceholder="Pesquisar categoria..."
+            />
           )}
         />
         {errors.categoryId && (
@@ -198,18 +194,19 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           name="paymentMethod"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CASH">Dinheiro</SelectItem>
-                <SelectItem value="CARD">Cartão</SelectItem>
-                <SelectItem value="PIX">PIX</SelectItem>
-                <SelectItem value="TRANSFER">Transferência</SelectItem>
-                <SelectItem value="OTHER">Outros</SelectItem>
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[
+                { value: "CASH", label: "Dinheiro" },
+                { value: "CARD", label: "Cartão" },
+                { value: "PIX", label: "PIX" },
+                { value: "TRANSFER", label: "Transferência" },
+                { value: "OTHER", label: "Outros" },
+              ]}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Selecione forma de pagamento"
+              searchPlaceholder="Pesquisar forma..."
+            />
           )}
         />
       </div>

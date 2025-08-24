@@ -6,12 +6,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Edit, DollarSign } from "lucide-react";
 import { ProfessionalForm } from "./ProfessionalForm";
 import { ProfessionalCommissionCard } from "./ProfessionalCommissionCard";
 import { useState, useEffect } from "react";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { toast } from "sonner";
 
 type Professional = {
   id: string;
@@ -34,6 +45,7 @@ export function ProfessionalTable() {
   const queryClient = useQueryClient();
   const [editingProfessional, setEditingProfessional] = useState<any>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null);
   const { activeBranch } = useBranch();
 
   const { data: professionals = [], isLoading } = useQuery({
@@ -65,9 +77,12 @@ export function ProfessionalTable() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
+      toast.success("Profissional excluído com sucesso!");
+      setDeletingProfessional(null);
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "Erro ao excluir profissional");
+      toast.error(error.response?.data?.message || "Erro ao excluir profissional");
+      setDeletingProfessional(null);
     },
   });
 
@@ -135,7 +150,7 @@ export function ProfessionalTable() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteProfessional.mutate(prof.id);
+                              setDeletingProfessional(prof);
                             }}
                             disabled={deleteProfessional.isPending}
                             className="bg-[#DC2626] hover:bg-[#DC2626]/90"
@@ -178,6 +193,34 @@ export function ProfessionalTable() {
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deletingProfessional}
+        onOpenChange={() => setDeletingProfessional(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Profissional</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o profissional "{deletingProfessional?.name}"?
+              <br /><br />
+              Esta ação não pode ser desfeita e irá:
+              <br />• Remover o profissional do sistema
+              <br />• Desativar despesas fixas relacionadas
+              <br />• Remover acesso ao sistema (se houver)
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingProfessional && deleteProfessional.mutate(deletingProfessional.id)}
+              className="bg-[#DC2626] hover:bg-[#DC2626]/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
