@@ -35,6 +35,10 @@ export class BranchesService {
           where: { ownerId: decoded.sub },
           select: { id: true, name: true, address: true, phone: true },
         });
+      } else if (user.role === 'SUPERADMIN') {
+        return this.prisma.branch.findMany({
+          select: { id: true, name: true, address: true, phone: true },
+        });
       } else {
         // Professional: retornar filial onde trabalha
         if (!user.name) {

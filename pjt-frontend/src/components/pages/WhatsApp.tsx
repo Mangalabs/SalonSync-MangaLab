@@ -5,12 +5,17 @@ import { MessageSquare, Settings, Bell } from "lucide-react";
 import { WhatsAppConfig } from "@/components/custom/WhatsAppConfig";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { useBranch } from "@/contexts/BranchContext";
 
 export default function WhatsApp() {
+  const { activeBranch } = useBranch();
+
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["whatsapp-messages"],
     queryFn: async () => {
-      const response = await api.get("/api/whatsapp/messages");
+      console.log(activeBranch)
+      const headers = activeBranch ? { "x-branch-id": activeBranch.id } : {};
+      const response = await api.get("/api/whatsapp/messages", { headers });
       return response.data;
     },
     refetchInterval: 5000,

@@ -19,7 +19,7 @@ export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) 
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role) && user.role !== "SUPERADMIN") {
     if (fallback) {
       return <>{fallback}</>;
     }
