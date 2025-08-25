@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,20 @@ import {
   BarChart3,
   Activity,
   Target,
-  Zap
+  Zap,
+  RefreshCw,
+  FileText,
+  CreditCard,
+  TrendingDown
 } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { PendingExpensesNotification } from "@/components/custom/PendingExpensesNotification";
+import { toast } from "sonner";
 import axios from "@/lib/axios";
 
 export default function AdminDashboard() {
   const { activeBranch } = useBranch();
+  const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState("today");
   
   const today = new Date().toISOString().split('T')[0];
@@ -119,7 +125,7 @@ export default function AdminDashboard() {
   };
 
   // Calculate metrics
-  const totalRevenue = (dashboardData?.financial?.totalIncome || 0) + (dashboardData?.financial?.appointmentRevenue || 0);
+  const totalRevenue = dashboardData?.financial?.totalIncome || 0;
   const totalExpenses = dashboardData?.financial?.totalExpenses || 0;
   const netProfit = totalRevenue - totalExpenses;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -353,35 +359,95 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
+      {/* Management Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
+          <CardTitle>Gestão Rápida</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col gap-2">
-              <Calendar className="h-6 w-6" />
-              <span className="text-sm">Novo Agendamento</span>
-            </Button>
+            <QuickActionButton
+              icon={<RefreshCw className="h-6 w-6 text-blue-600" />}
+              title="Atualizar Dados"
+              description="Recarregar informações"
+              onClick={() => {
+                queryClient.invalidateQueries();
+                toast.success("Dados atualizados!");
+              }}
+              className="hover:bg-blue-50 hover:border-blue-200"
+            />
             
-            <Button variant="outline" className="h-20 flex-col gap-2">
-              <DollarSign className="h-6 w-6" />
-              <span className="text-sm">Registrar Receita</span>
-            </Button>
+            <QuickActionButton
+              icon={<CreditCard className="h-6 w-6 text-green-600" />}
+              title="Pagar Despesas"
+              description={`${dashboardData?.pendingExpenses?.length || 0} pendentes`}
+              onClick={() => window.location.href = '/financial?tab=expenses'}
+              className="hover:bg-green-50 hover:border-green-200"
+              disabled={!dashboardData?.pendingExpenses?.length}
+            />
             
-            <Button variant="outline" className="h-20 flex-col gap-2">
-              <Users className="h-6 w-6" />
-              <span className="text-sm">Gerenciar Equipe</span>
-            </Button>
+            <QuickActionButton
+              icon={<FileText className="h-6 w-6 text-purple-600" />}
+              title="Relatório Diário"
+              description="Exportar dados"
+              onClick={() => {
+                const data = {
+                  periodo: getPeriodLabel(),
+                  receita: formatCurrency(totalRevenue),
+                  despesas: formatCurrency(totalExpenses),
+                  lucro: formatCurrency(netProfit),
+                  atendimentos: dashboardData?.appointments?.length || 0
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio-${today}.json`;
+                a.click();
+                toast.success("Relatório exportado!");
+              }}
+              className="hover:bg-purple-50 hover:border-purple-200"
+            />
             
-            <Button variant="outline" className="h-20 flex-col gap-2">
-              <BarChart3 className="h-6 w-6" />
-              <span className="text-sm">Ver Relatórios</span>
-            </Button>
+            <QuickActionButton
+              icon={<TrendingDown className="h-6 w-6 text-orange-600" />}
+              title="Análise de Custos"
+              description={`${((totalExpenses/totalRevenue)*100 || 0).toFixed(0)}% da receita`}
+              onClick={() => {
+                const analysis = {
+                  margemLucro: `${profitMargin.toFixed(1)}%`,
+                  custoOperacional: `${((totalExpenses/totalRevenue)*100 || 0).toFixed(1)}%`,
+                  recomendacao: profitMargin < 20 ? 'Revisar custos' : 'Margem saudável'
+                };
+                toast.info(`Margem: ${analysis.margemLucro} | ${analysis.recomendacao}`);
+              }}
+              className="hover:bg-orange-50 hover:border-orange-200"
+            />
           </div>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function QuickActionButton({ icon, title, description, onClick, className, disabled = false }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+  className?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <Button 
+      variant="outline" 
+      className={`h-20 flex-col gap-1 p-4 ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+    >
+      {icon}
+      <span className="text-sm font-medium">{title}</span>
+      <span className="text-xs text-muted-foreground text-center">{description}</span>
+    </Button>
   );
 }

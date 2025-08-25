@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useBranch } from "@/contexts/BranchContext";
 import api from "@/lib/axios";
 
 const configSchema = z.object({
@@ -26,15 +27,18 @@ const configSchema = z.object({
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
+type testPayload = { to: string };
 
 export function WhatsAppConfig() {
   const [showToken, setShowToken] = useState(false);
   const queryClient = useQueryClient();
+  const { activeBranch } = useBranch();
 
   const { data: config, isLoading: configLoading } = useQuery({
     queryKey: ["whatsapp-config"],
     queryFn: async () => {
-      const response = await api.get("/api/whatsapp/config");
+      const headers = activeBranch ? { "x-branch-id": activeBranch.id } : {};
+      const response = await api.get("/api/whatsapp/config", { headers });
       return response.data;
     },
   });
@@ -64,8 +68,8 @@ export function WhatsAppConfig() {
   });
 
   const testMessage = useMutation({
-    mutationFn: async () => {
-      const response = await api.post("/api/whatsapp/test");
+    mutationFn: async (data: testPayload) => {
+      const response = await api.post("/api/whatsapp/test", data);
       return response.data;
     },
     onSuccess: () => {
@@ -103,7 +107,9 @@ export function WhatsAppConfig() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => testMessage.mutate()}
+                  onClick={() =>
+                    testMessage.mutate({ to: config.whatsappNumber })
+                  }
                   disabled={testMessage.isPending}
                   className="text-[#D4AF37] border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#1A1A1A]"
                 >

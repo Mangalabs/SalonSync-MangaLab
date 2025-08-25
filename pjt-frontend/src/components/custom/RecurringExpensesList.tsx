@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, DollarSign, Clock } from "lucide-react";
 import axios from "@/lib/axios";
@@ -8,6 +9,7 @@ export function RecurringExpensesList() {
     queryKey: ["recurring-expenses"],
     queryFn: async () => {
       const res = await axios.get("/api/financial/recurring-expenses");
+      console.log('🔍 Recurring expenses from API:', res.data);
       return res.data;
     },
   });
@@ -24,11 +26,15 @@ export function RecurringExpensesList() {
     }
   };
 
-  // Filtrar apenas despesas no período de cobrança (ativas ou vencidas)
-  const recurringExpenses = allRecurringExpenses.filter((expense: any) => {
-    const status = getCurrentMonthStatus(expense.receiptDay, expense.dueDay);
-    return status.inPeriod;
-  });
+  // Memoizar cálculos de status e filtragem
+  const recurringExpenses = useMemo(() => {
+    return allRecurringExpenses
+      .map((expense: any) => ({
+        ...expense,
+        status: getCurrentMonthStatus(expense.receiptDay, expense.dueDay)
+      }))
+      .filter((expense: any) => expense.status.inPeriod);
+  }, [allRecurringExpenses]);
 
   if (recurringExpenses.length === 0) return null;
 
@@ -43,15 +49,14 @@ export function RecurringExpensesList() {
       <CardContent>
         <div className="space-y-3">
           {recurringExpenses.map((expense: any) => {
-            const status = getCurrentMonthStatus(expense.receiptDay, expense.dueDay);
             
             return (
               <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium text-sm">{expense.name}</h4>
-                    <span className={`text-xs font-medium ${status.color}`}>
-                      {status.label}
+                    <span className={`text-xs font-medium ${expense.status.color}`}>
+                      {expense.status.label}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -63,13 +68,17 @@ export function RecurringExpensesList() {
                       <Calendar className="h-3 w-3" />
                       Vence: {expense.dueDay}
                     </div>
-                    {expense.fixedAmount && (
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        R$ {Number(expense.fixedAmount).toFixed(2)}
-                        {expense.professional && <span className="text-purple-600">+comissões</span>}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      {expense.fixedAmount ? (
+                        <>
+                          R$ {Number(expense.fixedAmount).toFixed(2)}
+                          {expense.professional && <span className="text-purple-600">+comissões</span>}
+                        </>
+                      ) : (
+                        <span className="text-gray-500">Valor variável</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-600">{expense.category.name}</p>

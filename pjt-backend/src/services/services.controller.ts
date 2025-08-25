@@ -51,9 +51,10 @@ export class ServicesController {
   @ApiResponse({ status: 201, description: 'Serviço criado com sucesso' })
   create(
     @Body() body: CreateServiceDto,
-    @Headers('x-branch-id') branchId: string,
+    @Headers('x-branch-id') branchId: string | undefined,
     @Req() req: AuthenticatedRequest,
   ) {
+    console.log('🔧 ServicesController: Creating service with branchId header:', branchId);
     return this.service.create(
       body,
       {
@@ -69,8 +70,18 @@ export class ServicesController {
   @ApiOperation({ summary: 'Atualizar serviço' })
   @ApiResponse({ status: 200, description: 'Serviço atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Serviço não encontrado' })
-  update(@Param('id') id: string, @Body() body: UpdateServiceDto) {
-    return this.service.update(id, body);
+  update(
+    @Param('id') id: string, 
+    @Body() body: UpdateServiceDto,
+    @Headers('x-branch-id') branchId: string | undefined,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    console.log('🔧 ServicesController: Updating service with branchId header:', branchId);
+    return this.service.update(id, body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    }, branchId);
   }
 
   @Delete(':id')

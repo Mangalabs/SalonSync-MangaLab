@@ -1,6 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { useBranch } from "@/contexts/BranchContext";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { StockMovementForm } from "./StockMovementForm";
+import { toast } from "sonner";
 
 interface InventoryMovement {
   id: string;
@@ -23,11 +44,32 @@ interface InventoryMovement {
 
 export function InventoryMovementTable() {
   const { activeBranch } = useBranch();
+  const queryClient = useQueryClient();
+  const [editingMovement, setEditingMovement] = useState<InventoryMovement | null>(null);
+  const [deletingMovement, setDeletingMovement] = useState<InventoryMovement | null>(null);
+
+  const deleteMovement = useMutation({
+    mutationFn: async (movementId: string) => {
+      await axios.delete(`/api/inventory/movements/${movementId}`);
+    },
+    onSuccess: () => {
+      toast.success("Movimentação excluída com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setDeletingMovement(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Erro ao excluir movimentação");
+    },
+  });
 
   const { data, isLoading, error } = useQuery<InventoryMovement[]>({
     queryKey: ["inventory-movements", activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/inventory/movements");
+      console.log('📈 Fetching inventory movements for branch:', activeBranch?.id);
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : '';
+      const res = await axios.get(`/api/inventory/movements${params}`);
+      console.log('📈 Inventory movements response:', res.data);
       return res.data;
     },
     enabled: !!activeBranch,
@@ -72,6 +114,7 @@ export function InventoryMovementTable() {
               <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Motivo</th>
               <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Referência</th>
               <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Usuário</th>
+              <th className="px-4 py-2 text-center text-sm font-medium text-[#1A1A1A]">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -121,6 +164,24 @@ export function InventoryMovementTable() {
                   <td className="px-4 py-3 text-sm text-[#737373]">
                     {movement.user?.name || "-"}
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingMovement(movement)}
+                      >
+                        <Edit size={14} />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeletingMovement(movement)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -167,18 +228,77 @@ export function InventoryMovementTable() {
                 <strong>Motivo:</strong> <span className="break-words">{movement.reason.length > 50 ? `${movement.reason.substring(0, 50)}...` : movement.reason}</span>
               </div>
               
-              <div className="flex justify-between text-xs text-[#737373]">
-                {movement.reference && (
-                  <span><strong>Ref:</strong> {movement.reference}</span>
-                )}
-                {movement.user?.name && (
-                  <span><strong>Por:</strong> {movement.user.name}</span>
-                )}
+              <div className="flex justify-between items-center text-xs text-[#737373] mb-2">
+                <div className="flex gap-4">
+                  {movement.reference && (
+                    <span><strong>Ref:</strong> {movement.reference}</span>
+                  )}
+                  {movement.user?.name && (
+                    <span><strong>Por:</strong> {movement.user.name}</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingMovement(movement)}
+                  className="flex-1"
+                >
+                  <Edit size={12} className="mr-1" />
+                  Editar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeletingMovement(movement)}
+                  className="flex-1"
+                >
+                  <Trash2 size={12} className="mr-1" />
+                  Excluir
+                </Button>
               </div>
             </div>
           );
         })}
       </div>
+      
+      {/* Dialog de Edição */}
+      <Dialog open={!!editingMovement} onOpenChange={() => setEditingMovement(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Movimentação</DialogTitle>
+          </DialogHeader>
+          {editingMovement && (
+            <StockMovementForm
+              initialData={editingMovement}
+              onSuccess={() => setEditingMovement(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog de Exclusão */}
+      <AlertDialog open={!!deletingMovement} onOpenChange={() => setDeletingMovement(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita e irá afetar o estoque do produto.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingMovement && deleteMovement.mutate(deletingMovement.id)}
+              disabled={deleteMovement.isPending}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

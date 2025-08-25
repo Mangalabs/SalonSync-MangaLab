@@ -12,7 +12,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     email: string;
     name: string;
-    role: 'ADMIN' | 'PROFESSIONAL';
+    role: 'SUPERADMIN' | 'ADMIN' | 'PROFESSIONAL';
     branchId?: string; // Para funcionários
   };
 }
@@ -58,7 +58,7 @@ export class AuthMiddleware implements NestMiddleware {
           select: { branchId: true },
         });
         branchId = professional?.branchId;
-      } else if (user.role === 'ADMIN') {
+      } else if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
         // Para admins, usar header x-branch-id se fornecido
         if (requestedBranchId) {
           // Validar se o admin tem acesso à filial solicitada
@@ -89,7 +89,7 @@ export class AuthMiddleware implements NestMiddleware {
         id: user.id,
         email: user.email,
         name: user.name || '',
-        role: user.role as 'ADMIN' | 'PROFESSIONAL',
+        role: user.role as 'SUPERADMIN' | 'ADMIN' | 'PROFESSIONAL',
         branchId,
       };
 

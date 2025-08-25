@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 interface ScheduledAppointment {
   id: string;
-  professional: { name: string };
+  professional: { name: string } | null;
   client: { name: string };
   appointmentServices: {
     service: { name: string; price: number };
@@ -89,7 +89,7 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
         </div>
 
         <div className="text-xs md:text-sm">
-          <strong>Profissional:</strong> {appointment.professional.name}
+          <strong>Profissional:</strong> {appointment.professional?.name || 'Profissional removido'}
         </div>
 
         <div className="text-xs md:text-sm">
