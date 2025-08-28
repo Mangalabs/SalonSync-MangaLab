@@ -21,6 +21,7 @@ model User {
   services    Service[]
   stockMovements StockMovement[]
   createdAt   DateTime @default(now())
+  resetLinks     ResetLinks[]
 }
 
 model Branch {
@@ -269,6 +270,23 @@ model WhatsAppMessage {
   createdAt   DateTime @default(now())
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model ResetLinks {
+  id            String   @id @default(uuid())
+  userId        String
+  resetToken    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([resetToken])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
 
 model WhatsAppConversation {

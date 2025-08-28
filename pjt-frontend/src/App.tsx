@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "@/components/pages/Home";
+import ResetPasswordRequest from "@/components/pages/ResetPasswordRequest";
+import ResetPassword from "@/components/pages/ResetPassword";
 import Dashboard from "@/components/pages/Dashboard";
 import Professionals from "@/components/pages/Professionals";
 import Settings from "@/components/pages/Settings";
@@ -27,6 +29,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/request-reset" element={<ResetPasswordRequest />} />
+          <Route path="/resetpassword" element={<ResetPassword />} />
 
           <Route
             path="/dashboard"
