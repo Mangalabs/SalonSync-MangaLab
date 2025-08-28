@@ -49,6 +49,8 @@ export default function ResetPassword() {
         return;
       }
 
+      alert('Email de redefinição de senha enviado');
+      
       window.location.href = "/dashboard";
     } catch {
       setErro("Erro de conexão com o servidor");
