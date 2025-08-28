@@ -27,6 +27,7 @@ export function UserMenu() {
       }
     } finally {
       setIsLoading(false);
+      window.location.reload()
     }
   };
 
@@ -54,18 +55,25 @@ export function UserMenu() {
               {user?.name || user?.email || "Usuário"}
             </p>
             <p className="text-xs text-white/60 truncate">
-              {isAdmin ? "Admin" : "Prof."} • {activeBranch?.name || "Sem filial"}
+              {isAdmin ? "Admin" : "Prof."} •{" "}
+              {activeBranch?.name || "Sem filial"}
             </p>
           </div>
           <ChevronDown size={14} className="text-white/60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={handleSettings} className="flex items-center gap-2">
+        <div className="px-2 py-1.5 text-sm font-bold ">
+          {user?.businessName}
+        </div>
+        <DropdownMenuItem
+          onClick={handleSettings}
+          className="flex items-center gap-2"
+        >
           <Settings size={16} />
           Configurações
         </DropdownMenuItem>
-        
+
         {isAdmin && branches.length > 1 && (
           <>
             <DropdownMenuSeparator />
@@ -95,9 +103,12 @@ export function UserMenu() {
             ))}
           </>
         )}
-        
+
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-red-600">
+        <DropdownMenuItem
+          onClick={logout}
+          className="flex items-center gap-2 text-red-600"
+        >
           <LogOut size={16} />
           Sair
         </DropdownMenuItem>

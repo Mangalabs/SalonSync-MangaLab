@@ -65,12 +65,13 @@ const getNavItems = (userRole: string) => {
       label: "Profissionais",
       roles: ["ADMIN"],
     },
-    {
-      to: "/dashboard/whatsapp",
-      icon: MessageSquare,
-      label: "WhatsApp",
-      roles: ["ADMIN"],
-    },
+    //TODO: Termianr configuração antes de habilitar
+    // {
+    //   to: "/dashboard/whatsapp",
+    //   icon: MessageSquare,
+    //   label: "WhatsApp",
+    //   roles: ["ADMIN"],
+    // },
     {
       to: "/dashboard/financial",
       icon: DollarSign,
@@ -92,7 +93,12 @@ const getNavItems = (userRole: string) => {
   ];
 
   const allItems = [...baseItems, ...adminItems];
-  return allItems.filter((item) => item.roles.includes(userRole));
+  return allItems.filter((item) => {
+    if (userRole === "SUPERADMIN") {
+      return true;
+    }
+    return item.roles.includes(userRole);
+  });
 };
 
 export function Sidebar() {

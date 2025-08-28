@@ -19,7 +19,7 @@ export class ServicesService extends BaseDataService {
     let branchIds: string[];
 
     // Se branchId específico foi fornecido, usar apenas ele
-    if (user.branchId && user.role === 'ADMIN') {
+    if (user.branchId && (user.role === 'ADMIN' || user.role === 'SUPERADMIN')) {
       // Verificar se admin tem acesso a esta filial
       const allowedBranchIds = await this.getUserBranchIds({
         ...user,
@@ -39,6 +39,20 @@ export class ServicesService extends BaseDataService {
         where: {
           AND: [
             { ownerId: user.id },
+            {
+              OR: [
+                { branchId: null }, // Serviços globais
+                { branchId: { in: branchIds } }, // Serviços das filiais
+              ],
+            },
+          ],
+        },
+        include: { professionals: true },
+      });
+    } else if (user.role === 'SUPERADMIN') {
+      return this.prisma.service.findMany({
+        where: {
+          AND: [
             {
               OR: [
                 { branchId: null }, // Serviços globais
@@ -90,11 +104,15 @@ export class ServicesService extends BaseDataService {
     user: UserContext,
     targetBranchId?: string,
   ) {
-    if (user.role === 'ADMIN') {
+    console.log('🔧 ServicesService: Creating service with targetBranchId:', targetBranchId);
+    
+    if (user.role === 'ADMIN' || user.role === 'SUPERADMIN' ) {
       // Admin pode criar serviços globais ou específicos de filial
       const branchId = targetBranchId
         ? await this.getTargetBranchId(user, targetBranchId)
         : null;
+
+      console.log('🔧 ServicesService: Final branchId for creation:', branchId);
 
       return this.prisma.service.create({
         data: {
@@ -129,7 +147,31 @@ export class ServicesService extends BaseDataService {
     }
   }
 
-  async update(id: string, data: { name?: string; price?: number }) {
+  async update(
+    id: string, 
+    data: { name?: string; price?: number },
+    user?: UserContext,
+    targetBranchId?: string,
+  ) {
+    console.log('🔧 ServicesService: Updating service with targetBranchId:', targetBranchId);
+    
+    // Se user e targetBranchId foram fornecidos, atualizar o branchId também
+    if (user && user.role === 'ADMIN') {
+      const branchId = targetBranchId
+        ? await this.getTargetBranchId(user, targetBranchId)
+        : null;
+      
+      console.log('🔧 ServicesService: Final branchId for update:', branchId);
+      
+      return this.prisma.service.update({ 
+        where: { id }, 
+        data: {
+          ...data,
+          branchId, // null = global, string = específico da filial
+        }
+      });
+    }
+    
     return this.prisma.service.update({ where: { id }, data });
   }
 

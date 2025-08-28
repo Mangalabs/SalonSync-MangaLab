@@ -34,7 +34,7 @@ export function FinancialSummary() {
     resetToToday,
   } = useFinancial();
 
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error } = useQuery({
     queryKey: ["financial-summary", startDate, endDate, branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -42,14 +42,13 @@ export function FinancialSummary() {
       if (endDate) params.append("endDate", endDate);
       if (branchFilter !== "all") params.append("branchId", branchFilter);
 
-      console.log('FinancialSummary fazendo requisição com params:', params.toString());
       const res = await axios.get(`/api/financial/summary?${params}`);
-      console.log('FinancialSummary resposta:', res.data);
       return res.data;
     },
   });
 
   if (isLoading) return <div className="p-4">Carregando resumo...</div>;
+  if (error) return <div className="p-4 text-red-600">Erro ao carregar resumo financeiro</div>;
 
   return (
     <div className="space-y-4 md:space-y-6 mt-4">

@@ -29,15 +29,29 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
 export function useAppointmentForm(
   mode: "immediate" | "scheduled",
   professionals: { id: string; name: string }[],
-  onSuccess: () => void
+  onSuccess: () => void,
+  initialData?: any
 ) {
   const queryClient = useQueryClient();
   const { user, isProfessional, isAdmin } = useUser();
   const isScheduled = mode === "scheduled";
 
-  const form = useForm({
-    resolver: zodResolver(createSchema(isAdmin, isScheduled)),
-    defaultValues: isScheduled ? {
+  const getDefaultValues = () => {
+    if (initialData) {
+      const scheduledAt = new Date(initialData.scheduledAt);
+      return {
+        professionalId: initialData.professionalId || initialData.professional?.id || "",
+        clientId: initialData.clientId || initialData.client?.id || "",
+        serviceIds: initialData.appointmentServices?.map((as: any) => as.service.id) || [],
+        ...(isScheduled && {
+          scheduledDate: scheduledAt.toISOString().split('T')[0],
+          scheduledTime: scheduledAt.toTimeString().slice(0, 5),
+        }),
+        ...(isAdmin && { branchId: initialData.branchId || "" }),
+      };
+    }
+    
+    return isScheduled ? {
       professionalId: "", 
       clientId: "", 
       serviceIds: [],
@@ -49,7 +63,12 @@ export function useAppointmentForm(
       clientId: "", 
       serviceIds: [],
       ...(isAdmin && { branchId: "" }),
-    },
+    };
+  };
+
+  const form = useForm({
+    resolver: zodResolver(createSchema(isAdmin, isScheduled)),
+    defaultValues: getDefaultValues(),
   });
 
   // Auto-selecionar profissional se for funcionário (não admin)
@@ -96,18 +115,27 @@ export function useAppointmentForm(
       };
       
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
-      await axios.post("/api/appointments", payload, { headers });
+      
+      if (initialData) {
+        await axios.patch(`/api/appointments/${initialData.id}`, payload, { headers });
+      } else {
+        await axios.post("/api/appointments", payload, { headers });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
       queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
       queryClient.invalidateQueries({ queryKey: ["professional"] });
-      toast.success(isScheduled ? "Agendamento criado com sucesso!" : "Atendimento registrado com sucesso!");
+      
+      const action = initialData ? "atualizado" : "criado";
+      const type = isScheduled ? "Agendamento" : "Atendimento";
+      toast.success(`${type} ${action} com sucesso!`);
       onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || `Erro ao ${isScheduled ? 'criar agendamento' : 'registrar atendimento'}`);
+      const action = initialData ? "atualizar" : (isScheduled ? "criar agendamento" : "registrar atendimento");
+      toast.error(error.response?.data?.message || `Erro ao ${action}`);
     },
   });
 

@@ -3,7 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 export interface UserContext {
   id: string;
-  role: 'ADMIN' | 'PROFESSIONAL';
+  role: 'SUPERADMIN' | 'ADMIN' | 'PROFESSIONAL';
   branchId?: string;
 }
 
@@ -22,7 +22,13 @@ export class BaseDataService {
         select: { id: true },
       });
       return branches.map((b) => b.id);
-    } else {
+    } else if (user.role === 'SUPERADMIN') {
+      // Admin: todas suas filiais
+      const branches = await this.prisma.branch.findMany({
+        select: { id: true },
+      });
+      return branches.map((b) => b.id);
+    }else {
       // Professional: apenas sua filial
       return user.branchId ? [user.branchId] : [];
     }
@@ -49,6 +55,13 @@ export class BaseDataService {
       const branch = await this.prisma.branch.findFirst({
         where: { ownerId: user.id },
       });
+      if (!branch) {
+        throw new Error('Nenhuma filial encontrada para este usuário');
+      }
+      return branch.id;
+    } else if (user.role === 'SUPERADMIN') {
+      // Admin: usar primeira filial
+      const branch = await this.prisma.branch.findFirst();
       if (!branch) {
         throw new Error('Nenhuma filial encontrada para este usuário');
       }

@@ -36,11 +36,13 @@ export class WhatsAppController {
     console.log('WhatsApp getConfig - User:', req.user);
     console.log('WhatsApp getConfig - BranchId:', req.user.branchId);
 
+    const targetBranchId = req.headers['x-branch-id'] as string;
+
     if (!req.user.branchId) {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getConfig(req.user.branchId);
+    return await this.whatsappService.getConfig(req.user.branchId || targetBranchId);
   }
 
   @Post('test')
@@ -79,10 +81,12 @@ export class WhatsAppController {
 
   @Get('messages')
   async getMessages(@Request() req: any) {
+    const targetBranchId = req.headers['x-branch-id'] as string;
+
     if (!req.user.branchId) {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getMessages(req.user.branchId);
+    return await this.whatsappService.getMessages(req.user.branchId || targetBranchId);
   }
 }

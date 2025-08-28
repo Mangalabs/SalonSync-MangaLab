@@ -34,8 +34,11 @@ axios.interceptors.request.use((config) => {
     params: config.params
   });
   
-  // Sempre enviar x-branch-id se disponível, a menos que já esteja definido ou URL tenha branchId
-  if (activeBranchId && !config.headers["x-branch-id"] && !urlHasBranchId) {
+  // Verificar se deve pular o header automático
+  if (config.headers["x-skip-branch-header"]) {
+    console.log("⚠️ Skipping x-branch-id header - x-skip-branch-header present");
+    delete config.headers["x-skip-branch-header"];
+  } else if (activeBranchId && !config.headers["x-branch-id"] && !urlHasBranchId) {
     config.headers["x-branch-id"] = activeBranchId;
     console.log("✅ Added x-branch-id header:", activeBranchId);
   } else if (urlHasBranchId) {

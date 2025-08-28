@@ -100,7 +100,7 @@ export class WhatsAppService {
       const client = twilio(config.accountSid, authToken);
 
       // Usar número fornecido ou seu número pessoal configurado no Sandbox
-      const destinationNumber = toNumber || '+558581263142';
+      const destinationNumber = toNumber;
       console.log('sendTestMessage - destinationNumber:', destinationNumber);
 
       const message = await client.messages.create({

@@ -8,75 +8,73 @@ datasource db {
 }
 
 model User {
-  id          String @id @default(uuid())
-  email       String @unique
-  password    String
-  name        String?
-  businessName String?
-  phone       String?
-  avatar      String?
-  role        String @default("ADMIN")
-  isSuperAdmin Boolean @default(false)
-  branches    Branch[]
-  services    Service[]
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String?
+  businessName   String?
+  phone          String?
+  avatar         String?
+  role           String          @default("ADMIN")
+  isSuperAdmin   Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  branches       Branch[]
+  services       Service[]
   stockMovements StockMovement[]
-  createdAt   DateTime @default(now())
   resetLinks     ResetLinks[]
 }
 
 model Branch {
-  id          String @id @default(uuid())
-  name        String
-  address     String?
-  phone       String?
-  logo        String?
-  isActive    Boolean @default(true)
-  ownerId     String
-  owner       User   @relation(fields: [ownerId], references: [id])
-  
-  roles         Role[]
-  professionals Professional[]
-  services      Service[]
-  clients       Client[]
-  appointments  Appointment[]
-  products      Product[]
-  stockMovements StockMovement[]
-  expenseCategories ExpenseCategory[]
+  id                    String                 @id @default(uuid())
+  name                  String
+  address               String?
+  phone                 String?
+  logo                  String?
+  isActive              Boolean                @default(true)
+  ownerId               String
+  createdAt             DateTime               @default(now())
+  appointments          Appointment[]
+  owner                 User                   @relation(fields: [ownerId], references: [id])
+  clients               Client[]
+  expenseCategories     ExpenseCategory[]
   financialTransactions FinancialTransaction[]
-  recurringExpenses RecurringExpense[]
-  whatsappConfigs WhatsAppConfig[]
-  whatsappMessages WhatsAppMessage[]
+  products              Product[]
+  professionals         Professional[]
+  recurringExpenses     RecurringExpense[]
+  roles                 Role[]
+  services              Service[]
+  stockMovements        StockMovement[]
+  whatsappConfigs       WhatsAppConfig[]
   whatsappConversations WhatsAppConversation[]
-  
-  createdAt   DateTime @default(now())
+  whatsappMessages      WhatsAppMessage[]
 }
 
 model Role {
   id             String         @id @default(uuid())
   title          String
   commissionRate Decimal        @default(0) @db.Decimal(5, 2)
-  baseSalary     Decimal?       @db.Decimal(10, 2) // Salário base da função
-  salaryPayDay   Int?           // Dia do pagamento (1-31)
+  baseSalary     Decimal?       @db.Decimal(10, 2)
+  salaryPayDay   Int?
   branchId       String
-  branch         Branch         @relation(fields: [branchId], references: [id])
-  professionals  Professional[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  professionals  Professional[]
+  branch         Branch         @relation(fields: [branchId], references: [id])
 }
 
 model Professional {
-  id               String        @id @default(uuid())
-  name             String
-  role             String
-  active           Boolean       @default(true)
-  commissionRate   Decimal       @default(0) @db.Decimal(5, 2)
-  roleId           String?
-  customRole       Role?         @relation(fields: [roleId], references: [id])
-  branchId         String
-  branch           Branch        @relation(fields: [branchId], references: [id])
-  services         Service[]     @relation("ProfessionalServices")
-  appointments     Appointment[]
-  recurringExpenses RecurringExpense[] // Despesas fixas (salários)
+  id                String             @id @default(uuid())
+  name              String
+  role              String
+  active            Boolean            @default(true)
+  commissionRate    Decimal            @default(0) @db.Decimal(5, 2)
+  roleId            String?
+  branchId          String
+  appointments      Appointment[]
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  customRole        Role?              @relation(fields: [roleId], references: [id])
+  recurringExpenses RecurringExpense[]
+  services          Service[]          @relation("ProfessionalServices")
 }
 
 model Service {
@@ -84,11 +82,11 @@ model Service {
   name                String
   price               Decimal              @db.Decimal(10, 2)
   branchId            String?
+  ownerId             String
+  appointmentServices AppointmentService[]
   branch              Branch?              @relation(fields: [branchId], references: [id])
-  ownerId             String               // Dono do serviço
   owner               User                 @relation(fields: [ownerId], references: [id])
   professionals       Professional[]       @relation("ProfessionalServices")
-  appointmentServices AppointmentService[]
 }
 
 model Client {
@@ -97,152 +95,125 @@ model Client {
   phone        String?
   email        String?
   branchId     String
-  branch       Branch        @relation(fields: [branchId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
+  branch       Branch        @relation(fields: [branchId], references: [id])
 }
 
 model Appointment {
-  id                  String               @id @default(uuid())
-  professional        Professional         @relation(fields: [professionalId], references: [id])
-  professionalId      String
-  client              Client               @relation(fields: [clientId], references: [id])
-  clientId            String
-  branchId            String
-  branch              Branch               @relation(fields: [branchId], references: [id])
-  appointmentServices AppointmentService[]
-  total               Decimal              @db.Decimal(10, 2)
-  scheduledAt         DateTime
-  status              AppointmentStatus    @default(SCHEDULED)
-  commissionTransactions FinancialTransaction[] // Transações de comissão geradas
-  createdAt           DateTime             @default(now())
-}
-
-enum AppointmentStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
+  id                     String                 @id @default(uuid())
+  professionalId         String?
+  clientId               String
+  branchId               String
+  total                  Decimal                @db.Decimal(10, 2)
+  scheduledAt            DateTime
+  status                 AppointmentStatus      @default(SCHEDULED)
+  createdAt              DateTime               @default(now())
+  branch                 Branch                 @relation(fields: [branchId], references: [id])
+  client                 Client                 @relation(fields: [clientId], references: [id])
+  professional           Professional?          @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  appointmentServices    AppointmentService[]
+  commissionTransactions FinancialTransaction[]
 }
 
 model AppointmentService {
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
   appointmentId String
-  service       Service     @relation(fields: [serviceId], references: [id])
   serviceId     String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  service       Service     @relation(fields: [serviceId], references: [id])
 
   @@id([appointmentId, serviceId])
 }
 
 model Product {
-  id            String          @id @default(uuid())
-  name          String
-  sku           String?
-  description   String?
-  category      String
-  brand         String?
-  barcode       String?         @unique
-  costPrice     Decimal         @db.Decimal(10, 2)
-  salePrice     Decimal?        @db.Decimal(10, 2)
-  currentStock  Int             @default(0)
-  minStock      Int             @default(0)
-  maxStock      Int?
-  unit          String          @default("un") // un, kg, l, ml, etc
-  isActive      Boolean         @default(true)
-  branchId      String
-  branch        Branch          @relation(fields: [branchId], references: [id])
+  id             String          @id @default(uuid())
+  name           String
+  sku            String?
+  description    String?
+  category       String
+  brand          String?
+  barcode        String?         @unique
+  costPrice      Decimal         @db.Decimal(10, 2)
+  salePrice      Decimal?        @db.Decimal(10, 2)
+  currentStock   Int             @default(0)
+  minStock       Int             @default(0)
+  maxStock       Int?
+  unit           String          @default("un")
+  isActive       Boolean         @default(true)
+  branchId       String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  branch         Branch          @relation(fields: [branchId], references: [id])
   stockMovements StockMovement[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
 }
 
 model StockMovement {
-  id          String            @id @default(uuid())
-  productId   String
-  product     Product           @relation(fields: [productId], references: [id])
-  branchId    String
-  branch      Branch            @relation(fields: [branchId], references: [id])
-  userId      String?
-  user        User?             @relation(fields: [userId], references: [id])
-  type        StockMovementType
-  quantity    Int
-  unitCost    Decimal?          @db.Decimal(10, 2)
-  totalCost   Decimal?          @db.Decimal(10, 2)
-  reason      String?
-  reference   String?           // Nota fiscal, pedido, etc
-  createdAt   DateTime          @default(now())
-}
-
-enum StockMovementType {
-  IN          // Entrada
-  OUT         // Saída
-  ADJUSTMENT  // Ajuste
-  LOSS        // Perda
+  id        String            @id @default(uuid())
+  productId String
+  branchId  String
+  userId    String?
+  type      StockMovementType
+  quantity  Int
+  unitCost  Decimal?          @db.Decimal(10, 2)
+  totalCost Decimal?          @db.Decimal(10, 2)
+  reason    String?
+  reference String?
+  createdAt DateTime          @default(now())
+  branch    Branch            @relation(fields: [branchId], references: [id])
+  product   Product           @relation(fields: [productId], references: [id])
+  user      User?             @relation(fields: [userId], references: [id])
 }
 
 model ExpenseCategory {
-  id          String                 @id @default(uuid())
-  name        String
-  type        FinancialTransactionType
-  color       String                 @default("#6B7280")
-  description String?
-  branchId    String
-  branch      Branch                 @relation(fields: [branchId], references: [id])
-  transactions FinancialTransaction[]
+  id                String                   @id @default(uuid())
+  name              String
+  type              FinancialTransactionType
+  color             String                   @default("#6B7280")
+  description       String?
+  branchId          String
+  createdAt         DateTime                 @default(now())
+  branch            Branch                   @relation(fields: [branchId], references: [id])
+  transactions      FinancialTransaction[]
   recurringExpenses RecurringExpense[]
-  createdAt   DateTime               @default(now())
 }
 
 model FinancialTransaction {
-  id            String                 @id @default(uuid())
-  description   String
-  amount        Decimal                @db.Decimal(10, 2)
-  type          FinancialTransactionType
-  categoryId    String
-  category      ExpenseCategory        @relation(fields: [categoryId], references: [id])
-  paymentMethod PaymentMethod          @default(CASH)
-  reference     String?                // Número da nota, comprovante, etc
-  recurringExpenseId String?           // Referência para despesa fixa
-  recurringExpense RecurringExpense?   @relation(fields: [recurringExpenseId], references: [id])
-  appointmentId String?               // Referência para atendimento (comissão)
-  appointment   Appointment?           @relation(fields: [appointmentId], references: [id])
-  date          DateTime               @default(now())
-  branchId      String
-  branch        Branch                 @relation(fields: [branchId], references: [id])
-  createdAt     DateTime               @default(now())
+  id                 String                   @id @default(uuid())
+  description        String
+  amount             Decimal                  @db.Decimal(10, 2)
+  type               FinancialTransactionType
+  categoryId         String
+  paymentMethod      PaymentMethod            @default(CASH)
+  reference          String?
+  recurringExpenseId String?
+  appointmentId      String?
+  date               DateTime                 @default(now())
+  branchId           String
+  createdAt          DateTime                 @default(now())
+  appointment        Appointment?             @relation(fields: [appointmentId], references: [id])
+  branch             Branch                   @relation(fields: [branchId], references: [id])
+  category           ExpenseCategory          @relation(fields: [categoryId], references: [id])
+  recurringExpense   RecurringExpense?        @relation(fields: [recurringExpenseId], references: [id])
 }
 
 model RecurringExpense {
-  id            String                 @id @default(uuid())
-  name          String                 // Nome da despesa (ex: "Conta de Luz")
-  description   String?                // Descrição adicional
-  categoryId    String
-  category      ExpenseCategory        @relation(fields: [categoryId], references: [id])
-  fixedAmount   Decimal?               @db.Decimal(10, 2) // Valor fixo (opcional)
-  receiptDay    Int                    // Dia que a conta chega (1-31)
-  dueDay        Int                    // Dia do vencimento (1-31)
-  professionalId String?               // Profissional (para salários)
-  professional  Professional?          @relation(fields: [professionalId], references: [id])
-  isActive      Boolean                @default(true)
-  branchId      String
-  branch        Branch                 @relation(fields: [branchId], references: [id])
-  transactions  FinancialTransaction[] // Transações geradas
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-}
-
-enum FinancialTransactionType {
-  INCOME      // Receita
-  EXPENSE     // Despesa
-  INVESTMENT  // Investimento
-}
-
-enum PaymentMethod {
-  CASH        // Dinheiro
-  CARD        // Cartão
-  PIX         // PIX
-  TRANSFER    // Transferência
-  OTHER       // Outros
+  id             String                 @id @default(uuid())
+  name           String
+  description    String?
+  categoryId     String
+  fixedAmount    Decimal?               @db.Decimal(10, 2)
+  receiptDay     Int
+  dueDay         Int
+  professionalId String?
+  isActive       Boolean                @default(true)
+  branchId       String
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  transactions   FinancialTransaction[]
+  branch         Branch                 @relation(fields: [branchId], references: [id])
+  category       ExpenseCategory        @relation(fields: [categoryId], references: [id])
+  professional   Professional?          @relation(fields: [professionalId], references: [id])
 }
 
 model WhatsAppConfig {
@@ -254,22 +225,20 @@ model WhatsAppConfig {
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch             Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
 
 model WhatsAppMessage {
-  id          String   @id @default(uuid())
-  branchId    String
-  messageSid  String   @unique
-  from        String
-  to          String
-  body        String
-  status      String
-  direction   String   // 'inbound' ou 'outbound'
-  createdAt   DateTime @default(now())
-
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  branchId   String
+  messageSid String   @unique
+  from       String
+  to         String
+  body       String
+  status     String
+  direction  String
+  createdAt  DateTime @default(now())
+  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
 
 model ResetLinks {
@@ -290,17 +259,43 @@ enum AppointmentStatus {
 }
 
 model WhatsAppConversation {
-  id              String   @id @default(uuid())
-  branchId        String
-  phoneNumber     String   // Número do cliente
-  currentStep     String   @default("GREETING") // GREETING, BRANCH_SELECT, PROFESSIONAL_SELECT, SERVICE_SELECT, TIME_SELECT, CONFIRM
-  selectedData    Json?    // Dados selecionados durante a conversa
-  lastMessageAt   DateTime @default(now())
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  branchId      String
+  phoneNumber   String
+  currentStep   String   @default("GREETING")
+  selectedData  Json?
+  lastMessageAt DateTime @default(now())
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  branch        Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, phoneNumber])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  LOSS
+}
+
+enum FinancialTransactionType {
+  INCOME
+  EXPENSE
+  INVESTMENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  PIX
+  TRANSFER
+  OTHER
 }

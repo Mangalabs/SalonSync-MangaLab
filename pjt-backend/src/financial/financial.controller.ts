@@ -83,19 +83,21 @@ export class FinancialController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
     console.log('Getting transactions with filters:', {
       type,
       categoryId,
       startDate,
       endDate,
-      branchId,
+      branchIdParam: branchId,
+      finalBranchId,
     });
 
     const transactions = await this.financialService.getTransactions(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: branchId || req.user.branchId,
+        branchId: finalBranchId,
       },
       { type, categoryId, startDate, endDate },
     );
@@ -117,7 +119,8 @@ export class FinancialController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    const finalBranchId = branchId || undefined;
+    // Se branchId for "all" ou vazio, não filtrar por filial específica
+    const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
     console.log('Financial Summary Request:', {
       startDate,
       endDate,
