@@ -19,7 +19,6 @@ export class BranchesService {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
 
-      // Buscar usuário para verificar role
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
         select: { role: true, name: true },

@@ -52,7 +52,7 @@ export class ProductsService {
         // Criar transação financeira de investimento se há estoque inicial e custo
         const initialStock = createProductDto.initialStock || 0;
         const costPrice = createProductDto.costPrice || 0;
-        
+
         if (initialStock > 0 && costPrice > 0) {
           await this.createFinancialTransactionForProductCreation(
             createdProduct,
@@ -422,7 +422,7 @@ export class ProductsService {
     tx: any,
   ) {
     const totalCost = initialStock * costPrice;
-    
+
     console.log('Creating financial transaction for product creation:', {
       productId: product.id,
       productName: product.name,
@@ -479,9 +479,9 @@ export class ProductsService {
     console.log('📈 ProductsService.getStockMovements called with:', {
       branchId,
       startDate,
-      endDate
+      endDate,
     });
-    
+
     const where: any = { branchId };
 
     if (startDate || endDate) {
@@ -517,13 +517,16 @@ export class ProductsService {
     });
 
     console.log('📈 Found movements:', movements.length, 'movements');
-    console.log('📈 Sample movements:', movements.slice(0, 2).map(m => ({
-      id: m.id.substring(0, 8),
-      type: m.type,
-      product: m.product.name,
-      quantity: m.quantity,
-      createdAt: m.createdAt
-    })));
+    console.log(
+      '📈 Sample movements:',
+      movements.slice(0, 2).map((m) => ({
+        id: m.id.substring(0, 8),
+        type: m.type,
+        product: m.product.name,
+        quantity: m.quantity,
+        createdAt: m.createdAt,
+      })),
+    );
 
     return movements;
   }
@@ -575,11 +578,13 @@ export class ProductsService {
         });
 
         // Aplicar movimentação no novo produto
-        const newProduct = await tx.product.findUnique({ where: { id: newProductId } });
+        const newProduct = await tx.product.findUnique({
+          where: { id: newProductId },
+        });
         if (!newProduct) {
           throw new NotFoundException('Novo produto não encontrado');
         }
-        
+
         let newProductStock = newProduct.currentStock;
         switch (newType) {
           case 'IN':
@@ -588,7 +593,9 @@ export class ProductsService {
           case 'OUT':
           case 'LOSS':
             if (newProductStock < newQuantity) {
-              throw new BadRequestException('Estoque insuficiente no novo produto');
+              throw new BadRequestException(
+                'Estoque insuficiente no novo produto',
+              );
             }
             newProductStock -= newQuantity;
             break;
@@ -603,7 +610,7 @@ export class ProductsService {
       } else {
         // Mesmo produto, apenas ajustar diferença
         let currentStock = movement.product.currentStock;
-        
+
         // Reverter movimentação anterior
         switch (movement.type) {
           case 'IN':
@@ -680,7 +687,9 @@ export class ProductsService {
         break;
       case 'ADJUSTMENT':
         // Para ajustes, não podemos reverter facilmente
-        throw new BadRequestException('Não é possível excluir movimentações de ajuste');
+        throw new BadRequestException(
+          'Não é possível excluir movimentações de ajuste',
+        );
     }
 
     return this.prisma.$transaction(async (tx) => {

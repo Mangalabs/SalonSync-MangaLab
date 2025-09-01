@@ -1,6 +1,9 @@
 import { Controller, Post, Param, Body } from '@nestjs/common';
 import { ResetPasswordService } from './resetPassword.service';
-import { ResetPasswordLinkDto, SendResetPasswordLinkDto } from './dto/resetPassword.dto';
+import {
+  ResetPasswordLinkDto,
+  SendResetPasswordLinkDto,
+} from './dto/resetPassword.dto';
 
 @Controller('reset')
 export class ResetPasswordController {
@@ -12,9 +15,7 @@ export class ResetPasswordController {
   }
 
   @Post('reset')
-  async resetPassword(
-    @Body() body: ResetPasswordLinkDto
-  ) {
+  async resetPassword(@Body() body: ResetPasswordLinkDto) {
     return this.resetPasswordService.resetPassword(body);
   }
 }

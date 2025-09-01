@@ -42,7 +42,9 @@ export class WhatsAppController {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getConfig(req.user.branchId || targetBranchId);
+    return await this.whatsappService.getConfig(
+      req.user.branchId || targetBranchId,
+    );
   }
 
   @Post('test')
@@ -87,6 +89,8 @@ export class WhatsAppController {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getMessages(req.user.branchId || targetBranchId);
+    return await this.whatsappService.getMessages(
+      req.user.branchId || targetBranchId,
+    );
   }
 }

@@ -15,4 +15,3 @@ export class ResetPasswordLinkDto {
   @IsNotEmpty()
   password: string;
 }
-

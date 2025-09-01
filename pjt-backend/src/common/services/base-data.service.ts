@@ -28,7 +28,7 @@ export class BaseDataService {
         select: { id: true },
       });
       return branches.map((b) => b.id);
-    }else {
+    } else {
       // Professional: apenas sua filial
       return user.branchId ? [user.branchId] : [];
     }
