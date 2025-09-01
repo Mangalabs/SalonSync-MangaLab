@@ -3,10 +3,11 @@ import {
   UnauthorizedException,
   ConflictException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +44,7 @@ export class AuthService {
           phone: true,
           avatar: true,
           role: true,
+          customerId: true,
         },
       });
 
@@ -191,15 +193,39 @@ export class AuthService {
     name: string;
     businessName: string;
     branchName?: string;
+    city: string;
+    country: string;
+    line1: string;
+    postal_code: string;
+    state: string;
   }) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
+
     if (existingUser) {
       throw new ConflictException('Este e-mail já está em uso');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+    const { city, country, email, line1, name, postal_code, state } = data;
+
+    const customer = await stripeClient.customers.create({
+      email,
+      name,
+      address: {
+        city,
+        country,
+        line1,
+        postal_code,
+        state,
+      },
+    });
+
+    const { id } = customer;
 
     const user = await this.prisma.user.create({
       data: {
@@ -209,6 +235,7 @@ export class AuthService {
         businessName: data.businessName,
         role: 'ADMIN',
         isSuperAdmin: false,
+        customerId: id,
       },
     });
 
@@ -226,6 +253,7 @@ export class AuthService {
       name: user.name,
       businessName: user.businessName,
       role: user.role,
+      customerId: user.customerId,
     };
   }
 

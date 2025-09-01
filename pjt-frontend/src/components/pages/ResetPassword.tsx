@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -5,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useState } from "react";
 
 const requestResetSchema = z.object({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
@@ -49,8 +49,8 @@ export default function ResetPassword() {
         return;
       }
 
-      alert('Email de redefinição de senha enviado');
-      
+      alert("Email de redefinição de senha enviado");
+
       window.location.href = "/dashboard";
     } catch {
       setErro("Erro de conexão com o servidor");

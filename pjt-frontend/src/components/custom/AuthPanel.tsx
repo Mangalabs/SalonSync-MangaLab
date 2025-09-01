@@ -98,7 +98,14 @@ export function AuthPanel() {
               </Button>
             </form>
           </CardContent>
-            <a href="/request-reset" className="m-auto text-sm md:text-base">Esqueci minha senha</a>
+          <div className="flex flex-row items-center justify-center h-full space-y-4 md:space-y-6 px-4 md:px-6">
+            <a href="/request-reset" className="m-auto text-sm md:text-base">
+              Esqueci minha senha
+            </a>
+            <a href="/register" className="m-auto text-sm md:text-base">
+              Registro
+            </a>
+          </div>
         </Card>
 
         <Card className="md:block hidden">

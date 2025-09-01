@@ -119,7 +119,10 @@ export class AppointmentsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar agendamento' })
-  @ApiResponse({ status: 200, description: 'Agendamento atualizado com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamento atualizado com sucesso',
+  })
   @ApiResponse({ status: 404, description: 'Agendamento não encontrado' })
   update(
     @Param('id') id: string,

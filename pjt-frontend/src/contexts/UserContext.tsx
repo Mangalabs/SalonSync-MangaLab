@@ -11,6 +11,7 @@ interface User {
   avatar?: string;
   role: string;
   branchName?: string;
+  customerId?: string;
 }
 
 interface UserContextType {
@@ -40,7 +41,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       const res = await axios.get("/api/auth/profile");
       setUser(res.data);
-    } catch (error) {
+    } catch {
       localStorage.removeItem("token");
     } finally {
       setIsLoading(false);
