@@ -36,15 +36,11 @@ export class WhatsAppController {
     console.log('WhatsApp getConfig - User:', req.user);
     console.log('WhatsApp getConfig - BranchId:', req.user.branchId);
 
-    const targetBranchId = req.headers['x-branch-id'] as string;
-
     if (!req.user.branchId) {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getConfig(
-      req.user.branchId || targetBranchId,
-    );
+    return await this.whatsappService.getConfig(req.user.branchId);
   }
 
   @Post('test')
@@ -69,28 +65,27 @@ export class WhatsAppController {
   }
 
   @Post('webhook')
-  async webhook(@Body() body: any) {
-    console.log('WhatsApp webhook received:', JSON.stringify(body, null, 2));
+  async webhook(@Body() body: any, @Request() req: any) {
+    console.log('--- ✅ NEW WEBHOOK REQUEST RECEIVED ---');
+    console.log('✅ HEADERS:', JSON.stringify(req.headers, null, 2));
+    console.log('✅ BODY:', JSON.stringify(body, null, 2));
+    console.log('------------------------------------');
 
     try {
       await this.whatsappService.handleIncomingMessage(body);
       return { status: 'ok' };
     } catch (error) {
-      console.error('WhatsApp webhook error:', error);
+      console.error('WhatsApp webhook processing error:', error);
       return { status: 'error', message: error.message };
     }
   }
 
   @Get('messages')
   async getMessages(@Request() req: any) {
-    const targetBranchId = req.headers['x-branch-id'] as string;
-
     if (!req.user.branchId) {
       throw new Error('BranchId não encontrado para o usuário');
     }
 
-    return await this.whatsappService.getMessages(
-      req.user.branchId || targetBranchId,
-    );
+    return await this.whatsappService.getMessages(req.user.branchId);
   }
 }

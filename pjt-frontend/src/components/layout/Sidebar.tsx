@@ -77,13 +77,12 @@ const getNavItems = (userRole: string) => {
       label: "Profissionais",
       roles: ["ADMIN"],
     },
-    //TODO: Termianr configuração antes de habilitar
-    // {
-    //   to: "/dashboard/whatsapp",
-    //   icon: MessageSquare,
-    //   label: "WhatsApp",
-    //   roles: ["ADMIN"],
-    // },
+    {
+      to: "/dashboard/whatsapp",
+      icon: MessageSquare,
+      label: "WhatsApp",
+      roles: ["ADMIN"],
+    },
     {
       to: "/dashboard/financial",
       icon: DollarSign,
