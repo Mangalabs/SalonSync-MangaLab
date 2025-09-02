@@ -13,7 +13,7 @@ import Scheduling from "./components/pages/Scheduling";
 import Appointments from "./components/pages/Appointments";
 import Treatments from "./components/pages/Treatments";
 import Inventory from "./components/pages/Inventory";
-import CheckoutForm from "./components/pages/CheckoutForm";
+import CheckoutPage from "./components/pages/CheckoutPage";
 import Register from "./components/pages/Register";
 import Reports from "./pages/Reports";
 import Financial from "./pages/Financial";
@@ -35,7 +35,8 @@ export default function App() {
             <Route path="/request-reset" element={<ResetPasswordRequest />} />
             <Route path="/resetpassword" element={<ResetPassword />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/checkout" element={<CheckoutForm />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            
 
             <Route
               path="/dashboard"

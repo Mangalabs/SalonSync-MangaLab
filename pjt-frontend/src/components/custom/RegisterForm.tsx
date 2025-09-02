@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSearchParams } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 
 const registerSchema = z
@@ -44,7 +43,6 @@ const registerSchema = z
 type RegisterData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [erro, setErro] = useState("");
   const [branches, setBranches] = useState([{ name: "" }]);

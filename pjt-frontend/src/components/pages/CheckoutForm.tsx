@@ -123,7 +123,7 @@ export default function CheckoutForm() {
       });
     };
 
-    if (user.customerId) {
+    if (user?.customerId) {
       getUsersSubscriptions();
     }
 
@@ -131,16 +131,15 @@ export default function CheckoutForm() {
   }, [user]);
 
   return (
-    <>
+    <div>
       <div>
         {products.map((product) => (
-          <>
-            <PlanCard
-              product={product}
-              selectedPlan={selectedPlan}
-              setSelectedPlan={setSelectedPlan}
-            />
-          </>
+          <PlanCard
+            key={product.id}
+            product={product}
+            selectedPlan={selectedPlan}
+            setSelectedPlan={setSelectedPlan}
+          />
         ))}
       </div>
 
@@ -158,6 +157,6 @@ export default function CheckoutForm() {
           </a>
         </div>
       )}
-    </>
+    </div>
   );
 }
