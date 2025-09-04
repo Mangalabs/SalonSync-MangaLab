@@ -11,8 +11,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AppointmentForm } from '@/components/custom/AppointmentForm'
-import { AppointmentTable } from '@/components/custom/AppointmentTable'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { AppointmentTable } from '@/components/custom/appointment/AppointmentTable'
 
 export default function Scheduling() {
   const [searchParams] = useSearchParams()

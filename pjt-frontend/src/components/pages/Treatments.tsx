@@ -16,8 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AppointmentForm } from '@/components/custom/AppointmentForm'
-import { SchedulingCalendar } from '@/components/custom/SchedulingCalendar'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { SchedulingCalendar } from '@/components/custom/scheduling/SchedulingCalendar'
 
 export default function Treatments() {
   const [showForm, setShowForm] = useState(false)

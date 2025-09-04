@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { EmployeeManagement } from '@/components/custom/EmployeeManagement'
-import { SubscriptionManagement } from '@/components/custom/SubscriptionManagement'
-import { BranchManagement } from '@/components/custom/BranchManagement'
+import { EmployeeManagement } from '@/components/custom/management/EmployeeManagement'
+import { SubscriptionManagement } from '@/components/custom/management/SubscriptionManagement'
+import { BranchManagement } from '@/components/custom/branch/BranchManagement'
 import { useUser } from '@/contexts/UserContext'
 
 const userSchema = z.object({

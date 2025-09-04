@@ -17,8 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AppointmentForm } from '@/components/custom/AppointmentForm'
-import { SchedulingCalendar } from '@/components/custom/SchedulingCalendar'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { SchedulingCalendar } from '@/components/custom/scheduling/SchedulingCalendar'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 

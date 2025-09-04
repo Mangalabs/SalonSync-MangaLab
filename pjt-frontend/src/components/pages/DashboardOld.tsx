@@ -1,6 +1,6 @@
-import { SchedulingCalendar } from '@/components/custom/SchedulingCalendar'
+import { SchedulingCalendar } from '@/components/custom/scheduling/SchedulingCalendar'
 import { PendingExpensesNotification } from '@/components/custom/PendingExpensesNotification'
-import { RecurringExpensesList } from '@/components/custom/RecurringExpensesList'
+import { RecurringExpensesList } from '@/components/custom/recurring/RecurringExpensesList'
 
 export default function Dashboard() {
   return (

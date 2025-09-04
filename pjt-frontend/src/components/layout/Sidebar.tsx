@@ -23,8 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AppointmentForm } from '@/components/custom/AppointmentForm'
-import { ProductSaleForm } from '@/components/custom/ProductSaleForm'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
 import { UserMenu } from '@/components/custom/UserMenu'
 import { useUser } from '@/contexts/UserContext'
 import { useSidebar } from '@/contexts/SidebarContext'

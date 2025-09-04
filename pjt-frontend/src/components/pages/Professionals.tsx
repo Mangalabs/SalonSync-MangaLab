@@ -1,4 +1,4 @@
-import { ProfessionalTable } from '@/components/custom/ProfessionalTable'
+import { ProfessionalTable } from '@/components/custom/professional/ProfessionalTable'
 
 export default function Professionals() {
   return (

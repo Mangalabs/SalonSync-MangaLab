@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
-import { RoleForm } from './RoleForm'
+import { RoleForm } from '../forms/RoleForm'
 
 const employeeSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),

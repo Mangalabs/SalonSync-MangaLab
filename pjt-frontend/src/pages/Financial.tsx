@@ -21,11 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { TransactionForm } from '@/components/custom/TransactionForm'
-import { RecurringExpenseForm } from '@/components/custom/RecurringExpenseForm'
-import { RecurringExpensesTabContent } from '@/components/custom/RecurringExpensesTabContent'
-import { FinancialSummary } from '@/components/custom/FinancialSummary'
-import { FinancialTabContent } from '@/components/custom/FinancialTabContent'
+import { TransactionForm } from '@/components/custom/transaction/TransactionForm'
+import { RecurringExpenseForm } from '@/components/custom/recurring/RecurringExpenseForm'
+import { RecurringExpensesTabContent } from '@/components/custom/recurring/RecurringExpensesTabContent'
+import { FinancialSummary } from '@/components/custom/financial/FinancialSummary'
+import { FinancialTabContent } from '@/components/custom/financial/FinancialTabContent'
 import { FinancialProvider } from '@/contexts/FinancialContext'
 
 export default function Financial() {

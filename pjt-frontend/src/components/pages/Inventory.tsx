@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { ProductForm } from '@/components/custom/ProductForm'
-import { ProductTable } from '@/components/custom/ProductTable'
+import { ProductForm } from '@/components/custom/products/ProductForm'
+import { ProductTable } from '@/components/custom/products/ProductTable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { InventoryMovementTable } from '@/components/custom/InventoryMovementTable'
-import { StockMovementForm } from '@/components/custom/StockMovementForm'
+import { InventoryMovementTable } from '@/components/custom/inventory/InventoryMovementTable'
+import { StockMovementForm } from '@/components/custom/forms/StockMovementForm'
 
 export default function Inventory() {
   const [productOpen, setProductOpen] = useState(false)

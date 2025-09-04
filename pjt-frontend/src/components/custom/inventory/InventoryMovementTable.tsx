@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-import { StockMovementForm } from './StockMovementForm'
+import { StockMovementForm } from '../forms/StockMovementForm'
 
 interface InventoryMovement {
   id: string;

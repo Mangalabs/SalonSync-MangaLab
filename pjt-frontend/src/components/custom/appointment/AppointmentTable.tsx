@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dialog'
 import { useBranch } from '@/contexts/BranchContext'
 
-import { ScheduledAppointmentCard } from './ScheduledAppointmentCard'
+import { ScheduledAppointmentCard } from '../scheduling/ScheduledAppointmentCard'
 import { AppointmentForm } from './AppointmentForm'
 
 interface RawAppointment {
@@ -222,7 +222,10 @@ export function AppointmentTable({
               .map((appointment) => (
                 <ScheduledAppointmentCard
                   key={appointment.id}
-                  appointment={appointment}
+                  appointment={{
+                    ...appointment,
+                    status: appointment.status ?? 'SCHEDULED',
+                  }}
                 />
               ))}
           </div>

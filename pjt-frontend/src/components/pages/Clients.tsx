@@ -8,8 +8,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { ClientForm } from '@/components/custom/ClientForm'
-import { ClientTable } from '@/components/custom/ClientTable'
+import { ClientForm } from '@/components/custom/client/ClientForm'
+import { ClientTable } from '@/components/custom/client/ClientTable'
 
 export default function Clients() {
   const [open, setOpen] = useState(false)

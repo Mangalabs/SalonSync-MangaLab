@@ -22,7 +22,7 @@ import {
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 
-import { AdjustmentStockForm } from './AdjustmentStockForm'
+import { AdjustmentStockForm } from '../forms/AdjustmentStockForm'
 
 interface Product {
   id: string;

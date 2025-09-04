@@ -266,7 +266,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={String(cat)} value={String(cat)}>{String(cat)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -278,8 +278,8 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 <SelectContent>
                   <SelectItem value="all">Todas as formas</SelectItem>
                   {paymentMethods.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {getPaymentMethodLabel(method)}
+                    <SelectItem key={String(method)} value={String(method)}>
+                      {getPaymentMethodLabel(String(method))}
                     </SelectItem>
                   ))}
                 </SelectContent>

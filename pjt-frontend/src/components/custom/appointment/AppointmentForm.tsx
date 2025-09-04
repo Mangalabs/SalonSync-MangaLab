@@ -10,10 +10,10 @@ import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
 
-import { ProfessionalSelector } from './ProfessionalSelector'
-import { ClientSelector } from './ClientSelector'
-import { ServiceSelector } from './ServiceSelector'
-import { SchedulingFields } from './SchedulingFields'
+import { ProfessionalSelector } from '../professional/ProfessionalSelector'
+import { ClientSelector } from '../client/ClientSelector'
+import { ServiceSelector } from '../service/ServiceSelector'
+import { SchedulingFields } from '../scheduling/SchedulingFields'
 
 export function AppointmentForm({ 
   onSuccess, 

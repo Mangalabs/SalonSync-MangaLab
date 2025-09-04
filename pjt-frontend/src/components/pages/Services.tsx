@@ -9,8 +9,8 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { ServiceForm } from '@/components/custom/ServiceForm'
-import { ServiceTable } from '@/components/custom/ServiceTable'
+import { ServiceForm } from '@/components/custom/service/ServiceForm'
+import { ServiceTable } from '@/components/custom/service/ServiceTable'
 
 export default function Services() {
   const [open, setOpen] = useState(false)

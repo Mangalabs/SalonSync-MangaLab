@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { isAuthenticated, logout } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { BranchSelector } from '@/components/custom/BranchSelector'
+import { BranchSelector } from '@/components/custom/branch/BranchSelector'
 
 export function Header() {
   const navigate = useNavigate()

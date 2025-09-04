@@ -3,7 +3,7 @@ import { DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import { ProfessionalCommissionSummary } from './ProfessionalCommissionSummary'
+import { ProfessionalCommissionSummary } from './professional/ProfessionalCommissionSummary'
 
 interface DashboardStatsProps {
   todayRevenue: number;

@@ -28,10 +28,10 @@ import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
 import { useAppointmentFilters } from '@/hooks/useAppointmentFilters'
 
-import { ProfessionalDashboardCards } from './ProfessionalDashboardCards'
-import { DashboardStats } from './DashboardStats'
-import { AppointmentCard } from './AppointmentCard'
-import { AppointmentStats } from './AppointmentStats'
+import { ProfessionalDashboardCards } from '../professional/ProfessionalDashboardCards'
+import { DashboardStats } from '../DashboardStats'
+import { AppointmentCard } from '../appointment/AppointmentCard'
+import { AppointmentStats } from '../appointment/AppointmentStats'
 
 
 interface Appointment {

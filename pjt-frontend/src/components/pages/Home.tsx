@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-import { AuthPanel } from '@/components/custom/AuthPanel'
+import { AuthPanel } from '@/components/custom/auth/AuthPanel'
 
 const carouselItems = [
   {
