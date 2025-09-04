@@ -3,7 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function syncExistingProfessionalsExpenses() {
-  console.log('🔄 Sincronizando despesas fixas para funcionários existentes...');
+  console.log(
+    '🔄 Sincronizando despesas fixas para funcionários existentes...',
+  );
 
   // Buscar todos os profissionais com salário configurado
   const professionals = await prisma.professional.findMany({
@@ -20,7 +22,9 @@ async function syncExistingProfessionalsExpenses() {
     },
   });
 
-  console.log(`👥 Encontrados ${professionals.length} funcionários com salário configurado`);
+  console.log(
+    `👥 Encontrados ${professionals.length} funcionários com salário configurado`,
+  );
 
   let expensesCreated = 0;
 
@@ -42,7 +46,9 @@ async function syncExistingProfessionalsExpenses() {
     const payDay = professional.customRole?.salaryPayDay;
 
     if (!baseSalary || !payDay) {
-      console.log(`⏭️  Funcionário ${professional.name} sem dados salariais completos`);
+      console.log(
+        `⏭️  Funcionário ${professional.name} sem dados salariais completos`,
+      );
       continue;
     }
 
@@ -64,7 +70,9 @@ async function syncExistingProfessionalsExpenses() {
           branchId: professional.branchId,
         },
       });
-      console.log(`📂 Categoria de salários criada para ${professional.branch.name}`);
+      console.log(
+        `📂 Categoria de salários criada para ${professional.branch.name}`,
+      );
     }
 
     // Criar despesa fixa automática
@@ -82,11 +90,15 @@ async function syncExistingProfessionalsExpenses() {
       },
     });
 
-    console.log(`✅ Despesa fixa criada para ${professional.name}: R$ ${Number(baseSalary).toFixed(2)} (${professional.branch.name})`);
+    console.log(
+      `✅ Despesa fixa criada para ${professional.name}: R$ ${Number(baseSalary).toFixed(2)} (${professional.branch.name})`,
+    );
     expensesCreated++;
   }
 
-  console.log(`🎉 Processo concluído! ${expensesCreated} despesas fixas criadas.`);
+  console.log(
+    `🎉 Processo concluído! ${expensesCreated} despesas fixas criadas.`,
+  );
 }
 
 syncExistingProfessionalsExpenses()

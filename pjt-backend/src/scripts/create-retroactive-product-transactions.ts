@@ -3,7 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function createRetroactiveProductTransactions() {
-  console.log('🔄 Iniciando criação de transações retroativas para produtos...');
+  console.log(
+    '🔄 Iniciando criação de transações retroativas para produtos...',
+  );
 
   // Buscar todos os produtos que têm estoque inicial mas não têm transação financeira
   const products = await prisma.product.findMany({
@@ -75,11 +77,15 @@ async function createRetroactiveProductTransactions() {
       },
     });
 
-    console.log(`✅ Transação criada para ${product.name}: R$ ${totalCost.toFixed(2)} (${product.branch.name})`);
+    console.log(
+      `✅ Transação criada para ${product.name}: R$ ${totalCost.toFixed(2)} (${product.branch.name})`,
+    );
     transactionsCreated++;
   }
 
-  console.log(`🎉 Processo concluído! ${transactionsCreated} transações criadas.`);
+  console.log(
+    `🎉 Processo concluído! ${transactionsCreated} transações criadas.`,
+  );
 }
 
 createRetroactiveProductTransactions()

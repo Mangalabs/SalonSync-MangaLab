@@ -75,7 +75,7 @@ export class ProfessionalsService extends BaseDataService {
     targetBranchId?: string,
   ): Promise<Professional> {
     console.log('🔍 Creating professional with data:', data);
-    
+
     const branchId = await this.getTargetBranchId(user, targetBranchId);
 
     const { roleId, ...professionalData } = data;
@@ -108,13 +108,15 @@ export class ProfessionalsService extends BaseDataService {
         id: professional.id,
         name: professional.name,
         hasCustomRole: !!professional.customRole,
-        customRoleData: professional.customRole
+        customRoleData: professional.customRole,
       });
 
       // Criar despesa fixa automática se tiver salário configurado
       await this.createSalaryRecurringExpense(professional, branchId, tx);
 
-      console.log(`✅ Professional creation completed for: ${professional.name}`);
+      console.log(
+        `✅ Professional creation completed for: ${professional.name}`,
+      );
       return professional;
     });
   }
@@ -132,13 +134,17 @@ export class ProfessionalsService extends BaseDataService {
       baseSalary: professional.baseSalary,
     });
 
-    const baseSalary = professional.customRole?.baseSalary || professional.baseSalary;
-    const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay;
+    const baseSalary =
+      professional.customRole?.baseSalary || professional.baseSalary;
+    const payDay =
+      professional.customRole?.salaryPayDay || professional.salaryPayDay;
 
     console.log('💰 Salary data:', { baseSalary, payDay });
 
     if (!baseSalary || !payDay) {
-      console.log('❌ Missing salary data, skipping automatic expense creation');
+      console.log(
+        '❌ Missing salary data, skipping automatic expense creation',
+      );
       return;
     }
 
@@ -224,13 +230,15 @@ export class ProfessionalsService extends BaseDataService {
   }
 
   private async syncSalaryRecurringExpense(professional: any, tx: any) {
-    const baseSalary = professional.customRole?.baseSalary || professional.baseSalary;
-    const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay;
+    const baseSalary =
+      professional.customRole?.baseSalary || professional.baseSalary;
+    const payDay =
+      professional.customRole?.salaryPayDay || professional.salaryPayDay;
 
     console.log(`🔄 Syncing salary for ${professional.name}:`, {
       baseSalary,
       payDay,
-      hasCustomRole: !!professional.customRole
+      hasCustomRole: !!professional.customRole,
     });
 
     // Buscar despesa fixa existente
@@ -258,7 +266,11 @@ export class ProfessionalsService extends BaseDataService {
         console.log(`✅ Updated existing recurring expense`);
       } else {
         // Criar nova despesa
-        await this.createSalaryRecurringExpense(professional, professional.branchId, tx);
+        await this.createSalaryRecurringExpense(
+          professional,
+          professional.branchId,
+          tx,
+        );
         console.log(`✅ Created new recurring expense`);
       }
     } else if (existingExpense) {
@@ -293,26 +305,33 @@ export class ProfessionalsService extends BaseDataService {
 
     console.log(`🔍 Professional ${professional.name} (${id}) appointments:`, {
       total: allAppointments.length,
-      appointments: allAppointments.map(apt => ({
+      appointments: allAppointments.map((apt) => ({
         id: apt.id.substring(0, 8),
         status: apt.status,
-        date: apt.scheduledAt.toISOString().split('T')[0]
-      }))
+        date: apt.scheduledAt.toISOString().split('T')[0],
+      })),
     });
 
     // Verificar apenas agendamentos que estão agendados (futuros)
-    const scheduledAppointments = allAppointments.filter(apt => 
-      apt.status === 'SCHEDULED'
+    const scheduledAppointments = allAppointments.filter(
+      (apt) => apt.status === 'SCHEDULED',
     );
 
-    console.log(`📊 Scheduled (future) appointments: ${scheduledAppointments.length}`);
-    console.log(`ℹ️  Completed/Cancelled appointments are OK to delete: ${allAppointments.length - scheduledAppointments.length}`);
+    console.log(
+      `📊 Scheduled (future) appointments: ${scheduledAppointments.length}`,
+    );
+    console.log(
+      `ℹ️  Completed/Cancelled appointments are OK to delete: ${allAppointments.length - scheduledAppointments.length}`,
+    );
 
     if (scheduledAppointments.length > 0) {
-      const appointmentsList = scheduledAppointments.map(apt => 
-        `- Agendado para ${apt.scheduledAt.toLocaleDateString('pt-BR')}`
-      ).join('\n');
-      
+      const appointmentsList = scheduledAppointments
+        .map(
+          (apt) =>
+            `- Agendado para ${apt.scheduledAt.toLocaleDateString('pt-BR')}`,
+        )
+        .join('\n');
+
       throw new BadRequestException(
         `Não é possível excluir profissional com ${scheduledAppointments.length} agendamento(s) futuro(s):\n\n${appointmentsList}\n\nCancele os agendamentos futuros primeiro.`,
       );
@@ -331,18 +350,23 @@ export class ProfessionalsService extends BaseDataService {
         SET "professionalId" = NULL 
         WHERE "professionalId" = ${id}
       `;
-      
-      console.log(`📅 Updated ${appointmentsUpdated} appointments to remove professional reference`);
+
+      console.log(
+        `📅 Updated ${appointmentsUpdated} appointments to remove professional reference`,
+      );
 
       // Buscar e excluir usuário correspondente (se existir)
       const user = await tx.user.findFirst({
-        where: { 
+        where: {
           name: professional.name,
-          role: 'PROFESSIONAL'
+          role: 'PROFESSIONAL',
         },
       });
 
-      console.log(`🔍 Looking for user account for ${professional.name}:`, user ? 'Found' : 'Not found');
+      console.log(
+        `🔍 Looking for user account for ${professional.name}:`,
+        user ? 'Found' : 'Not found',
+      );
 
       if (user) {
         await tx.user.delete({ where: { id: user.id } });
@@ -351,8 +375,10 @@ export class ProfessionalsService extends BaseDataService {
 
       // Excluir profissional
       await tx.professional.delete({ where: { id } });
-      
-      console.log(`✅ Professional ${professional.name} (${id}) deleted successfully`);
+
+      console.log(
+        `✅ Professional ${professional.name} (${id}) deleted successfully`,
+      );
       console.log(`🗑️ User account also deleted: ${user ? 'Yes' : 'No'}`);
       console.log(`💰 Recurring expenses deactivated`);
     });

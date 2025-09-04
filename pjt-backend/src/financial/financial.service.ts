@@ -150,7 +150,7 @@ export class FinancialService extends BaseDataService {
     console.log('getTransactions branchIds:', {
       userBranchId: user.branchId,
       allBranchIds,
-      finalBranchIds: branchIds
+      finalBranchIds: branchIds,
     });
 
     const where: any = {
@@ -212,11 +212,18 @@ export class FinancialService extends BaseDataService {
 
     console.log('Financial transactions found:', {
       total: transactions.length,
-      byBranch: transactions.reduce((acc, t) => {
-        acc[t.branchId] = (acc[t.branchId] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      stockRelated: transactions.filter(t => t.reference?.startsWith('Estoque-') || t.reference?.startsWith('Produto-')).length
+      byBranch: transactions.reduce(
+        (acc, t) => {
+          acc[t.branchId] = (acc[t.branchId] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+      stockRelated: transactions.filter(
+        (t) =>
+          t.reference?.startsWith('Estoque-') ||
+          t.reference?.startsWith('Produto-'),
+      ).length,
     });
 
     // Receitas de atendimentos
@@ -247,14 +254,20 @@ export class FinancialService extends BaseDataService {
 
     console.log('Stock movements found:', {
       total: stockMovements.length,
-      byBranch: stockMovements.reduce((acc, m) => {
-        acc[m.branchId] = (acc[m.branchId] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      byType: stockMovements.reduce((acc, m) => {
-        acc[m.type] = (acc[m.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
+      byBranch: stockMovements.reduce(
+        (acc, m) => {
+          acc[m.branchId] = (acc[m.branchId] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+      byType: stockMovements.reduce(
+        (acc, m) => {
+          acc[m.type] = (acc[m.type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
     });
 
     // Despesas fixas pagas no período
@@ -289,26 +302,44 @@ export class FinancialService extends BaseDataService {
     );
 
     // Separar transações por origem
-    const stockRelatedTransactions = transactions.filter(t => 
-      t.reference?.startsWith('Estoque-') || t.reference?.startsWith('Produto-')
+    const stockRelatedTransactions = transactions.filter(
+      (t) =>
+        t.reference?.startsWith('Estoque-') ||
+        t.reference?.startsWith('Produto-'),
     );
-    const manualTransactions = transactions.filter(t => 
-      !t.reference?.startsWith('Estoque-') && !t.reference?.startsWith('Produto-')
+    const manualTransactions = transactions.filter(
+      (t) =>
+        !t.reference?.startsWith('Estoque-') &&
+        !t.reference?.startsWith('Produto-'),
     );
 
-    const manualIncomeTransactions = manualTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + Number(t.amount), 0);
-    const manualExpenseTransactions = manualTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + Number(t.amount), 0);
-    const manualInvestmentTransactions = manualTransactions.filter((t) => t.type === 'INVESTMENT').reduce((sum, t) => sum + Number(t.amount), 0);
+    const manualIncomeTransactions = manualTransactions
+      .filter((t) => t.type === 'INCOME')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const manualExpenseTransactions = manualTransactions
+      .filter((t) => t.type === 'EXPENSE')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const manualInvestmentTransactions = manualTransactions
+      .filter((t) => t.type === 'INVESTMENT')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
 
     // Transações automáticas do estoque
-    const stockIncomeTransactions = stockRelatedTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + Number(t.amount), 0);
-    const stockExpenseTransactions = stockRelatedTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + Number(t.amount), 0);
-    const stockInvestmentTransactions = stockRelatedTransactions.filter((t) => t.type === 'INVESTMENT').reduce((sum, t) => sum + Number(t.amount), 0);
+    const stockIncomeTransactions = stockRelatedTransactions
+      .filter((t) => t.type === 'INCOME')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const stockExpenseTransactions = stockRelatedTransactions
+      .filter((t) => t.type === 'EXPENSE')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const stockInvestmentTransactions = stockRelatedTransactions
+      .filter((t) => t.type === 'INVESTMENT')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const summary = {
-      totalIncome: manualIncomeTransactions + appointmentRevenue + stockIncomeTransactions,
+      totalIncome:
+        manualIncomeTransactions + appointmentRevenue + stockIncomeTransactions,
       totalExpenses: manualExpenseTransactions + stockExpenseTransactions,
-      totalInvestments: manualInvestmentTransactions + stockInvestmentTransactions,
+      totalInvestments:
+        manualInvestmentTransactions + stockInvestmentTransactions,
       recurringExpenses: recurringExpensesTotal,
       appointmentRevenue,
       stockRevenue: stockIncomeTransactions,
@@ -331,7 +362,7 @@ export class FinancialService extends BaseDataService {
       stockRelatedTransactionsCount: stockRelatedTransactions.length,
       totalIncome: summary.totalIncome,
       totalExpenses: summary.totalExpenses,
-      totalInvestments: summary.totalInvestments
+      totalInvestments: summary.totalInvestments,
     });
 
     summary.netProfit =
@@ -431,8 +462,9 @@ export class FinancialService extends BaseDataService {
     });
 
     // Filtrar despesas que estão no período de cobrança (receiptDay <= hoje <= dueDay)
-    const expensesInPeriod = recurringExpenses.filter(expense => 
-      expense.receiptDay <= currentDay && currentDay <= expense.dueDay
+    const expensesInPeriod = recurringExpenses.filter(
+      (expense) =>
+        expense.receiptDay <= currentDay && currentDay <= expense.dueDay,
     );
 
     if (expensesInPeriod.length === 0) return [];

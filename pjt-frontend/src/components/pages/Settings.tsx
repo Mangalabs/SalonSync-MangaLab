@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Building2, Camera, Save, Users } from "lucide-react";
+import { User, Camera, Save } from "lucide-react";
 import { EmployeeManagement } from "@/components/custom/EmployeeManagement";
+import { SubscriptionManagement } from "@/components/custom/SubscriptionManagement";
 import { BranchManagement } from "@/components/custom/BranchManagement";
 import { useUser } from "@/contexts/UserContext";
 
@@ -71,6 +71,7 @@ export default function Settings() {
             <>
               <TabsTrigger value="branches">Filiais</TabsTrigger>
               <TabsTrigger value="employees">Funcionários</TabsTrigger>
+              <TabsTrigger value="subscription">Assinaturas</TabsTrigger>
             </>
           )}
         </TabsList>
@@ -185,6 +186,10 @@ export default function Settings() {
 
             <TabsContent value="employees">
               <EmployeeManagement />
+            </TabsContent>
+
+            <TabsContent value="subscription">
+              <SubscriptionManagement />
             </TabsContent>
           </>
         )}

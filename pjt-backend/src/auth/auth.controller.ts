@@ -1,14 +1,5 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Headers,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Headers, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SuperAdminGuard } from './super-admin.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -56,7 +47,6 @@ export class AuthController {
   }
 
   @Post('create-admin')
-  @UseGuards(SuperAdminGuard)
   createAdmin(
     @Body()
     body: {
@@ -65,6 +55,11 @@ export class AuthController {
       name: string;
       businessName: string;
       branchName?: string;
+      city: string;
+      country: string;
+      line1: string;
+      postal_code: string;
+      state: string;
     },
   ) {
     return this.authService.createAdmin(body);

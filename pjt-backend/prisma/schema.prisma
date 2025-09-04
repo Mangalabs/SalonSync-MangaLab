@@ -10,6 +10,7 @@ datasource db {
 model User {
   id             String          @id @default(uuid())
   email          String          @unique
+  customerId     String?         @unique
   password       String
   name           String?
   businessName   String?
@@ -21,6 +22,7 @@ model User {
   branches       Branch[]
   services       Service[]
   stockMovements StockMovement[]
+  resetLinks     ResetLinks[]
 }
 
 model Branch {
@@ -240,6 +242,23 @@ model WhatsAppMessage {
   branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
 
+model ResetLinks {
+  id            String   @id @default(uuid())
+  userId        String
+  resetToken    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([resetToken])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
 model WhatsAppConversation {
   id            String   @id @default(uuid())
   branchId      String
@@ -253,12 +272,6 @@ model WhatsAppConversation {
   branch        Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, phoneNumber])
-}
-
-enum AppointmentStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
 }
 
 enum StockMovementType {

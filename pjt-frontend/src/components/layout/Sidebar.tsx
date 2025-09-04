@@ -56,6 +56,18 @@ const getNavItems = (userRole: string) => {
       label: "Estoque",
       roles: ["ADMIN", "PROFESSIONAL"],
     },
+    {
+      to: "/dashboard/appointments",
+      icon: Calendar,
+      label: "Agendamentos",
+      roles: ["ADMIN", "PROFESSIONAL"],
+    },
+    {
+      to: "/dashboard/treatments",
+      icon: CheckSquare,
+      label: "Agendamentos",
+      roles: ["ADMIN", "PROFESSIONAL"],
+    },
   ];
 
   const adminItems = [
@@ -65,13 +77,12 @@ const getNavItems = (userRole: string) => {
       label: "Profissionais",
       roles: ["ADMIN"],
     },
-    //TODO: Termianr configuração antes de habilitar
-    // {
-    //   to: "/dashboard/whatsapp",
-    //   icon: MessageSquare,
-    //   label: "WhatsApp",
-    //   roles: ["ADMIN"],
-    // },
+    {
+      to: "/dashboard/whatsapp",
+      icon: MessageSquare,
+      label: "WhatsApp",
+      roles: ["ADMIN"],
+    },
     {
       to: "/dashboard/financial",
       icon: DollarSign,
@@ -157,32 +168,6 @@ export function Sidebar() {
               {label}
             </NavLink>
           ))}
-
-          <NavLink
-            to="/dashboard/appointments"
-            onClick={handleNavClick}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                isActive ? "bg-white/20 font-semibold" : ""
-              }`
-            }
-          >
-            <Calendar size={18} />
-            Agendamentos
-          </NavLink>
-
-          <NavLink
-            to="/dashboard/treatments"
-            onClick={handleNavClick}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                isActive ? "bg-white/20 font-semibold" : ""
-              }`
-            }
-          >
-            <CheckSquare size={18} />
-            Atendimentos
-          </NavLink>
         </div>
 
         <div className="mt-4 space-y-2">

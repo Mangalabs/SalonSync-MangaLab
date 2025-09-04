@@ -15,7 +15,6 @@ import { ProductsService } from '../products/products.service';
 import { StockMovement } from '@prisma/client';
 import { AuthenticatedRequest } from '../common/middleware/auth.middleware';
 
-
 @Controller('inventory')
 @UseGuards(JwtAuthGuard)
 export class InventoryController {
@@ -32,19 +31,19 @@ export class InventoryController {
       queryBranchId,
       userBranchId: req.user?.branchId,
       userRole: req.user?.role,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
-    
+
     // Use the branchId from query parameter directly
     const finalBranchId = queryBranchId || req.user?.branchId;
-    
+
     console.log('📈 Final branch ID for movements:', finalBranchId);
-    
+
     if (!finalBranchId) {
       console.log('⚠️ No branch ID available, returning empty array');
       return [];
     }
-    
+
     return this.productsService.getStockMovements(
       finalBranchId,
       startDate,
@@ -58,14 +57,15 @@ export class InventoryController {
     @Body() updateData: any,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.productsService.updateStockMovement(id, updateData, req.user?.id);
+    return this.productsService.updateStockMovement(
+      id,
+      updateData,
+      req.user?.id,
+    );
   }
 
   @Delete('movements/:id')
-  deleteMovement(
-    @Param('id') id: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  deleteMovement(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.productsService.deleteStockMovement(id, req.user?.id);
   }
 }

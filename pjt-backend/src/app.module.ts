@@ -18,6 +18,8 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
 import { AiModule } from './ai/ai.module';
+import { ResetPasswordModule } from './resetPassword/resetPassword.module';
+import { PaymentModule } from './payment/paument.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { AiModule } from './ai/ai.module';
     FinancialModule,
     AiModule,
     WhatsAppModule,
+    ResetPasswordModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService, BaseDataService],
@@ -46,8 +50,13 @@ export class AppModule {
       .apply(AuthMiddleware)
       .exclude(
         { path: 'auth/login', method: RequestMethod.POST },
-        { path: 'auth/register', method: RequestMethod.POST },
+        { path: 'auth/create-admin', method: RequestMethod.POST },
         { path: 'whatsapp/webhook', method: RequestMethod.POST },
+        { path: 'reset/generate', method: RequestMethod.POST },
+        { path: 'reset/reset', method: RequestMethod.POST },
+        { path: 'payment/create-checkout-session', method: RequestMethod.POST },
+        { path: 'payment/create-customer', method: RequestMethod.POST },
+        { path: 'payment/retrieve-products', method: RequestMethod.GET },
       )
       .forRoutes('*');
   }
