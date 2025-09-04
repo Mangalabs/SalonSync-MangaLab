@@ -1,72 +1,73 @@
-import React, { useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
-import { useAppointmentForm } from "@/hooks/useAppointmentForm";
-import { useFormQueries } from "@/hooks/useFormQueries";
-import { ProfessionalSelector } from "./ProfessionalSelector";
-import { ClientSelector } from "./ClientSelector";
-import { ServiceSelector } from "./ServiceSelector";
-import { SchedulingFields } from "./SchedulingFields";
-import { Combobox } from "@/components/ui/combobox";
-import { useUser } from "@/contexts/UserContext";
-import { useBranch } from "@/contexts/BranchContext";
-import axios from "@/lib/axios";
+import React, { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+
+
+import { ProfessionalSelector } from './ProfessionalSelector'
+import { ClientSelector } from './ClientSelector'
+import { ServiceSelector } from './ServiceSelector'
+import { SchedulingFields } from './SchedulingFields'
+
+import { useFormQueries } from '@/hooks/useFormQueries'
+import { Label } from '@/components/ui/label'
+import { useAppointmentForm } from '@/hooks/useAppointmentForm'
+import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
+import { useUser } from '@/contexts/UserContext'
+import { useBranch } from '@/contexts/BranchContext'
+import axios from '@/lib/axios'
 
 
 
 export function AppointmentForm({ 
   onSuccess, 
-  mode = "immediate",
-  initialData
+  mode = 'immediate',
+  initialData,
 }: { 
   onSuccess: () => void;
-  mode?: "immediate" | "scheduled";
+  mode?: 'immediate' | 'scheduled';
   initialData?: any;
 }) {
-  const isScheduled = mode === "scheduled";
-  const { isAdmin } = useUser();
-  const { activeBranch } = useBranch();
+  const isScheduled = mode === 'scheduled'
+  const { isAdmin } = useUser()
+  const { activeBranch } = useBranch()
   
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
     enabled: isAdmin,
-  });
+  })
   
   // Primeiro buscar os dados básicos
-  const { professionals, clients, services } = useFormQueries();
-  const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess, initialData);
+  const { professionals, clients, services } = useFormQueries()
+  const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess, initialData)
   
-  const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form;
+  const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form
   
   // Definir branchId padrão para não-admins usando useEffect
   React.useEffect(() => {
     if (!isAdmin && activeBranch?.id && !watch('branchId')) {
-      setValue('branchId', activeBranch.id);
+      setValue('branchId', activeBranch.id)
     }
-  }, [isAdmin, activeBranch?.id, setValue, watch]);
-  const selectedBranchId = watch("branchId");
-  const selectedProfessional = watch("professionalId");
-  const selectedDate = isScheduled ? watch("scheduledDate" as any) : undefined;
+  }, [isAdmin, activeBranch?.id, setValue, watch])
+  const selectedBranchId = watch('branchId')
+  const selectedProfessional = watch('professionalId')
+  const selectedDate = isScheduled ? watch('scheduledDate' as any) : undefined
   
   // Buscar dados da filial selecionada
-  const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId);
-  const { availableSlots } = branchData;
+  const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId)
+  const { availableSlots } = branchData
 
 
 
-  const watchedServices = watch("serviceIds");
-  const total = useMemo(() => {
-    return (
-      branchData.services
-        .filter((s) => watchedServices?.includes(s.id))
-        .reduce((sum, s) => sum + s.price, 0) || 0
-    );
-  }, [watchedServices, branchData.services]);
+  const watchedServices = watch('serviceIds')
+  const total = useMemo(() => (
+    branchData.services
+      .filter((s) => watchedServices?.includes(s.id))
+      .reduce((sum, s) => sum + s.price, 0) || 0
+  ), [watchedServices, branchData.services])
 
   return (
     <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
@@ -80,10 +81,10 @@ export function AppointmentForm({
             }))}
             value={selectedBranchId}
             onValueChange={(value) => {
-              setValue("branchId", value);
-              setValue("professionalId", "");
-              setValue("clientId", "");
-              setValue("serviceIds", []);
+              setValue('branchId', value)
+              setValue('professionalId', '')
+              setValue('clientId', '')
+              setValue('serviceIds', [])
             }}
             placeholder="Selecione uma filial"
             searchPlaceholder="Pesquisar filial..."
@@ -119,8 +120,8 @@ export function AppointmentForm({
           control={control}
           errors={errors}
           availableSlots={availableSlots}
-          selectedProfessional={selectedProfessional || ""}
-          selectedDate={selectedDate || ""}
+          selectedProfessional={selectedProfessional || ''}
+          selectedDate={selectedDate || ''}
         />
       )}
 
@@ -128,8 +129,8 @@ export function AppointmentForm({
         Total: R$ {total.toFixed(2)}
       </div>
       <Button type="submit" disabled={isSubmitting} className="w-full text-sm h-8">
-        {isSubmitting ? "Salvando..." : initialData ? "Atualizar" : (isScheduled ? "Agendar" : "Finalizar")}
+        {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar' : (isScheduled ? 'Agendar' : 'Finalizar')}
       </Button>
     </form>
-  );
+  )
 }

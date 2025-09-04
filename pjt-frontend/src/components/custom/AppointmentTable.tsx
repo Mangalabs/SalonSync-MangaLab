@@ -1,21 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import {
   Trash2,
   Edit,
@@ -25,10 +9,29 @@ import {
   ChevronDown,
   ChevronRight,
   Filter,
-} from "lucide-react";
-import { useBranch } from "@/contexts/BranchContext";
-import { ScheduledAppointmentCard } from "./ScheduledAppointmentCard";
-import { AppointmentForm } from "./AppointmentForm";
+} from 'lucide-react'
+
+import { ScheduledAppointmentCard } from './ScheduledAppointmentCard'
+import { AppointmentForm } from './AppointmentForm'
+
+import axios from '@/lib/axios'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useBranch } from '@/contexts/BranchContext'
+
 
 interface RawAppointment {
   id: string;
@@ -46,159 +49,157 @@ interface RawAppointment {
 export function AppointmentTable({
   filter,
 }: {
-  filter?: "SCHEDULED" | "COMPLETED";
+  filter?: 'SCHEDULED' | 'COMPLETED';
 }) {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const [selectedProfessional, setSelectedProfessional] =
-    useState<string>("all");
-  const [selectedClient, setSelectedClient] = useState<string>("all");
-  const [selectedService, setSelectedService] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>("");
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-  const [editingAppointment, setEditingAppointment] = useState<RawAppointment | null>(null);
-  const { activeBranch } = useBranch();
+    useState<string>('all')
+  const [selectedClient, setSelectedClient] = useState<string>('all')
+  const [selectedService, setSelectedService] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('')
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
+  const [editingAppointment, setEditingAppointment] = useState<RawAppointment | null>(null)
+  const { activeBranch } = useBranch()
 
   const { data: rawData = [], isLoading } = useQuery<RawAppointment[]>({
-    queryKey: ["appointments", activeBranch?.id],
+    queryKey: ['appointments', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/appointments");
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await axios.get('/api/appointments')
+      return Array.isArray(res.data) ? res.data : []
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data;
+      const res = await axios.get('/api/professionals')
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients", activeBranch?.id],
+    queryKey: ['clients', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/clients");
-      return res.data;
+      const res = await axios.get('/api/clients')
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const { data: services = [] } = useQuery({
-    queryKey: ["services", activeBranch?.id],
+    queryKey: ['services', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/services");
-      return res.data;
+      const res = await axios.get('/api/services')
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/appointments/${id}`);
+      await axios.delete(`/api/appointments/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
-      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
-      queryClient.invalidateQueries({ queryKey: ["professional"] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['professional'] })
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "Erro ao excluir agendamento");
+      alert(error.response?.data?.message || 'Erro ao excluir agendamento')
     },
-  });
+  })
 
   const data = useMemo(
     () => rawData,
-    [rawData]
-  );
+    [rawData],
+  )
 
   const filteredByStatus = useMemo(() => {
-    if (!filter) return data;
-    return data.filter((apt) => apt.status === filter);
-  }, [data, filter]);
+    if (!filter) {return data}
+    return data.filter((apt) => apt.status === filter)
+  }, [data, filter])
 
   const filteredAppointments = useMemo(() => {
-    let filtered = filteredByStatus;
+    let filtered = filteredByStatus
 
-    if (selectedProfessional !== "all") {
+    if (selectedProfessional !== 'all') {
       filtered = filtered.filter(
-        (apt) => apt.professional?.name === selectedProfessional
-      );
+        (apt) => apt.professional?.name === selectedProfessional,
+      )
     }
 
-    if (selectedClient !== "all") {
-      filtered = filtered.filter((apt) => apt.client.name === selectedClient);
+    if (selectedClient !== 'all') {
+      filtered = filtered.filter((apt) => apt.client.name === selectedClient)
     }
 
-    if (selectedService !== "all") {
+    if (selectedService !== 'all') {
       filtered = filtered.filter((apt) =>
         apt.appointmentServices.some(
-          (as) => as.service.name === selectedService
-        )
-      );
+          (as) => as.service.name === selectedService,
+        ),
+      )
     }
 
     if (dateFilter) {
       filtered = filtered.filter(
-        (apt) => apt.scheduledAt && apt.scheduledAt.split("T")[0] === dateFilter
-      );
+        (apt) => apt.scheduledAt && apt.scheduledAt.split('T')[0] === dateFilter,
+      )
     }
 
-    return filtered;
+    return filtered
   }, [
     filteredByStatus,
     selectedProfessional,
     selectedClient,
     selectedService,
     dateFilter,
-  ]);
+  ])
 
-  const groupedData = useMemo(() => {
-    return filteredAppointments.reduce((acc, apt) => {
-      const professionalName = apt.professional?.name || 'Profissional removido';
-      const date = new Date(apt.scheduledAt);
-      const monthKey = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-      ).padStart(2, "0")}`;
-      const monthName = date.toLocaleDateString("pt-BR", {
-        year: "numeric",
-        month: "long",
-      });
+  const groupedData = useMemo(() => filteredAppointments.reduce((acc, apt) => {
+    const professionalName = apt.professional?.name || 'Profissional removido'
+    const date = new Date(apt.scheduledAt)
+    const monthKey = `${date.getFullYear()}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}`
+    const monthName = date.toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+    })
 
-      if (!acc[professionalName]) {
-        acc[professionalName] = { months: {} };
+    if (!acc[professionalName]) {
+      acc[professionalName] = { months: {} }
+    }
+
+    if (!acc[professionalName].months[monthKey]) {
+      acc[professionalName].months[monthKey] = {
+        name: monthName,
+        appointments: [],
+        total: 0,
       }
+    }
 
-      if (!acc[professionalName].months[monthKey]) {
-        acc[professionalName].months[monthKey] = {
-          name: monthName,
-          appointments: [],
-          total: 0,
-        };
-      }
+    acc[professionalName].months[monthKey].appointments.push(apt)
+    acc[professionalName].months[monthKey].total += apt.total
 
-      acc[professionalName].months[monthKey].appointments.push(apt);
-      acc[professionalName].months[monthKey].total += apt.total;
-
-      return acc;
-    }, {} as Record<string, { months: Record<string, { name: string; appointments: any[]; total: number }> }>);
-  }, [filteredAppointments]);
+    return acc
+  }, {} as Record<string, { months: Record<string, { name: string; appointments: any[]; total: number }> }>), [filteredAppointments])
 
   const toggleMonth = (monthKey: string) => {
-    const newExpanded = new Set(expandedMonths);
+    const newExpanded = new Set(expandedMonths)
     if (newExpanded.has(monthKey)) {
-      newExpanded.delete(monthKey);
+      newExpanded.delete(monthKey)
     } else {
-      newExpanded.add(monthKey);
+      newExpanded.add(monthKey)
     }
-    setExpandedMonths(newExpanded);
-  };
+    setExpandedMonths(newExpanded)
+  }
 
-  if (isLoading) return <p className="p-4">Carregando...</p>;
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
 
-  if (filter === "SCHEDULED") {
+  if (filter === 'SCHEDULED') {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -216,7 +217,7 @@ export function AppointmentTable({
               .sort(
                 (a, b) =>
                   new Date(a.scheduledAt).getTime() -
-                  new Date(b.scheduledAt).getTime()
+                  new Date(b.scheduledAt).getTime(),
               )
               .map((appointment) => (
                 <ScheduledAppointmentCard
@@ -227,7 +228,7 @@ export function AppointmentTable({
           </div>
         )}
       </div>
-    );
+    )
   }
 
   return (
@@ -306,18 +307,18 @@ export function AppointmentTable({
           </div>
         </div>
 
-        {(selectedProfessional !== "all" ||
-          selectedClient !== "all" ||
-          selectedService !== "all" ||
+        {(selectedProfessional !== 'all' ||
+          selectedClient !== 'all' ||
+          selectedService !== 'all' ||
           dateFilter) && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              setSelectedProfessional("all");
-              setSelectedClient("all");
-              setSelectedService("all");
-              setDateFilter("");
+              setSelectedProfessional('all')
+              setSelectedClient('all')
+              setSelectedService('all')
+              setDateFilter('')
             }}
           >
             Limpar Filtros
@@ -328,11 +329,11 @@ export function AppointmentTable({
       {Object.keys(groupedData).length === 0 ? (
         <div className="border rounded-lg p-6 text-center text-[#737373]">
           {dateFilter ||
-          selectedProfessional !== "all" ||
-          selectedClient !== "all" ||
-          selectedService !== "all"
-            ? "Nenhum atendimento encontrado com os filtros aplicados."
-            : "Nenhum atendimento realizado encontrado."}
+          selectedProfessional !== 'all' ||
+          selectedClient !== 'all' ||
+          selectedService !== 'all'
+            ? 'Nenhum atendimento encontrado com os filtros aplicados.'
+            : 'Nenhum atendimento realizado encontrado.'}
         </div>
       ) : (
         Object.entries(groupedData).map(
@@ -371,17 +372,17 @@ export function AppointmentTable({
                             </span>
                           </div>
                           {expandedMonths.has(
-                            `${professionalName}-${monthKey}`
+                            `${professionalName}-${monthKey}`,
                           ) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
                         </div>
                       </Button>
 
                       {expandedMonths.has(
-                        `${professionalName}-${monthKey}`
+                        `${professionalName}-${monthKey}`,
                       ) && (
                         <div className="border-t p-4 space-y-3">
                           {monthData.appointments.map((apt) => (
@@ -392,15 +393,15 @@ export function AppointmentTable({
                               <div className="flex justify-between items-start mb-2">
                                 <div className="text-sm font-medium">
                                   {new Date(apt.scheduledAt).toLocaleDateString(
-                                    "pt-BR"
-                                  )}{" "}
-                                  às{" "}
+                                    'pt-BR',
+                                  )}{' '}
+                                  às{' '}
                                   {new Date(apt.scheduledAt).toLocaleTimeString(
-                                    "pt-BR",
+                                    'pt-BR',
                                     {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    }
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    },
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -430,10 +431,10 @@ export function AppointmentTable({
                                 <strong>Cliente:</strong> {apt.client.name}
                               </div>
                               <div className="text-sm">
-                                <strong>Serviços:</strong>{" "}
+                                <strong>Serviços:</strong>{' '}
                                 {apt.appointmentServices
                                   .map((as) => as.service.name)
-                                  .join(", ")}
+                                  .join(', ')}
                               </div>
                             </div>
                           ))}
@@ -443,7 +444,7 @@ export function AppointmentTable({
                   ))}
               </div>
             </div>
-          )
+          ),
         )
       )}
       
@@ -465,5 +466,5 @@ export function AppointmentTable({
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

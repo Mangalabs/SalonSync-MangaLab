@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 const requestResetSchema = z.object({
-  email: z.string().email("Informe um e-mail válido"),
-});
+  email: z.string().email('Informe um e-mail válido'),
+})
 
 type RequestResetData = z.infer<typeof requestResetSchema>;
 
 export default function ResetRequest() {
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState('')
 
   const {
     register,
@@ -21,31 +22,31 @@ export default function ResetRequest() {
     formState: { errors, isSubmitting },
   } = useForm<RequestResetData>({
     resolver: zodResolver(requestResetSchema),
-  });
+  })
 
   const onSubmit = async (data: RequestResetData) => {
     try {
       const res = await fetch(
-        import.meta.env.VITE_API_URL + "/api/reset/generate",
+        import.meta.env.VITE_API_URL + '/api/reset/generate',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
-        }
-      );
+        },
+      )
 
-      const result = await res.json();
+      const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || "Erro ao solicitar reset de senha");
-        return;
+        setErro(result.message || 'Erro ao solicitar reset de senha')
+        return
       }
 
-      window.location.href = "/dashboard";
+      window.location.href = '/dashboard'
     } catch {
-      setErro("Erro de conexão com o servidor");
+      setErro('Erro de conexão com o servidor')
     }
-  };
+  }
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4 md:px-6 md:flex h-screen w-screen">
@@ -69,7 +70,7 @@ export default function ResetRequest() {
                 <Input
                   placeholder="E-mail"
                   type="email"
-                  {...register("email")}
+                  {...register('email')}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500 mt-1">
@@ -79,12 +80,12 @@ export default function ResetRequest() {
               </div>
               {erro && <p className="text-sm text-red-600">{erro}</p>}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Enviando..." : "Confirmar"}
+                {isSubmitting ? 'Enviando...' : 'Confirmar'}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

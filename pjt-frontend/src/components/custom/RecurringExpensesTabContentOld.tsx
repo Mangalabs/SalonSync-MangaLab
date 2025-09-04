@@ -1,27 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, DollarSign, Users, Clock } from "lucide-react";
-import axios from "@/lib/axios";
+import { useQuery } from '@tanstack/react-query'
+import { Calendar, DollarSign, Users, Clock } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import axios from '@/lib/axios'
 
 export function RecurringExpensesTabContent() {
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ["recurring-expenses"],
+    queryKey: ['recurring-expenses'],
     queryFn: async () => {
-      const res = await axios.get("/api/financial/recurring-expenses");
-      return res.data;
+      const res = await axios.get('/api/financial/recurring-expenses')
+      return res.data
     },
-  });
+  })
 
   const { data: salaryExpenses = [] } = useQuery({
-    queryKey: ["salary-expenses-preview"],
+    queryKey: ['salary-expenses-preview'],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      const professionals = res.data;
+      const res = await axios.get('/api/professionals')
+      const professionals = res.data
       
       // Filtrar profissionais com salário configurado
       return professionals.filter((prof: any) => 
-        prof.customRole?.baseSalary || prof.baseSalary
+        prof.customRole?.baseSalary || prof.baseSalary,
       ).map((prof: any) => ({
         id: prof.id,
         name: prof.name,
@@ -29,33 +30,33 @@ export function RecurringExpensesTabContent() {
         baseSalary: prof.customRole?.baseSalary || prof.baseSalary,
         salaryPayDay: prof.customRole?.salaryPayDay || prof.salaryPayDay,
         commissionRate: prof.customRole?.commissionRate || prof.commissionRate,
-      }));
+      }))
     },
-  });
+  })
 
   const getCurrentMonthStatus = (receiptDay: number, dueDay: number) => {
-    const today = new Date().getDate();
+    const today = new Date().getDate()
     
     if (today < receiptDay) {
-      return { status: "upcoming", label: "Próxima", color: "bg-blue-100 text-blue-800" };
+      return { status: 'upcoming', label: 'Próxima', color: 'bg-blue-100 text-blue-800' }
     } else if (today >= receiptDay && today <= dueDay) {
-      return { status: "active", label: "Ativa", color: "bg-orange-100 text-orange-800" };
+      return { status: 'active', label: 'Ativa', color: 'bg-orange-100 text-orange-800' }
     } else {
-      return { status: "overdue", label: "Vencida", color: "bg-red-100 text-red-800" };
+      return { status: 'overdue', label: 'Vencida', color: 'bg-red-100 text-red-800' }
     }
-  };
+  }
 
   const getSalaryStatus = (payDay: number) => {
-    const today = new Date().getDate();
+    const today = new Date().getDate()
     
     if (today < payDay) {
-      return { status: "upcoming", label: "Próximo", color: "bg-blue-100 text-blue-800" };
+      return { status: 'upcoming', label: 'Próximo', color: 'bg-blue-100 text-blue-800' }
     } else if (today === payDay) {
-      return { status: "due", label: "Hoje", color: "bg-green-100 text-green-800" };
+      return { status: 'due', label: 'Hoje', color: 'bg-green-100 text-green-800' }
     } else {
-      return { status: "overdue", label: "Pendente", color: "bg-red-100 text-red-800" };
+      return { status: 'overdue', label: 'Pendente', color: 'bg-red-100 text-red-800' }
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -71,7 +72,7 @@ export function RecurringExpensesTabContent() {
           <CardContent>
             <div className="grid gap-3">
               {salaryExpenses.map((salary: any) => {
-                const status = getSalaryStatus(salary.salaryPayDay);
+                const status = getSalaryStatus(salary.salaryPayDay)
                 
                 return (
                   <div key={salary.id} className="flex items-center justify-between p-3 border rounded-lg bg-purple-50">
@@ -98,7 +99,7 @@ export function RecurringExpensesTabContent() {
                       </div>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
             <p className="text-xs text-gray-500 mt-3">
@@ -124,7 +125,7 @@ export function RecurringExpensesTabContent() {
           ) : (
             <div className="grid gap-3">
               {recurringExpenses.map((expense: any) => {
-                const status = getCurrentMonthStatus(expense.receiptDay, expense.dueDay);
+                const status = getCurrentMonthStatus(expense.receiptDay, expense.dueDay)
                 
                 return (
                   <div key={expense.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -154,12 +155,12 @@ export function RecurringExpensesTabContent() {
                       <p className="text-xs text-gray-600 mt-1">{expense.category.name}</p>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

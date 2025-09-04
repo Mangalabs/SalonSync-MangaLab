@@ -1,57 +1,58 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "@/lib/axios";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Camera, Save } from "lucide-react";
-import { EmployeeManagement } from "@/components/custom/EmployeeManagement";
-import { SubscriptionManagement } from "@/components/custom/SubscriptionManagement";
-import { BranchManagement } from "@/components/custom/BranchManagement";
-import { useUser } from "@/contexts/UserContext";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { User, Camera, Save } from 'lucide-react'
+
+import axios from '@/lib/axios'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EmployeeManagement } from '@/components/custom/EmployeeManagement'
+import { SubscriptionManagement } from '@/components/custom/SubscriptionManagement'
+import { BranchManagement } from '@/components/custom/BranchManagement'
+import { useUser } from '@/contexts/UserContext'
 
 const userSchema = z.object({
   phone: z.string().optional(),
-});
+})
 
 type UserFormData = z.infer<typeof userSchema>;
 
 export default function Settings() {
-  const queryClient = useQueryClient();
-  const { isAdmin } = useUser();
+  const queryClient = useQueryClient()
+  const { isAdmin } = useUser()
 
   const { data: user } = useQuery({
-    queryKey: ["user-profile"],
+    queryKey: ['user-profile'],
     queryFn: async () => {
-      const res = await axios.get("/api/auth/profile");
-      return res.data;
+      const res = await axios.get('/api/auth/profile')
+      return res.data
     },
-  });
+  })
 
   const userForm = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     values: {
-      phone: user?.phone || "",
+      phone: user?.phone || '',
     },
-  });
+  })
 
   const updateUser = useMutation({
     mutationFn: async (data: UserFormData) => {
-      await axios.patch("/api/auth/profile", data);
+      await axios.patch('/api/auth/profile', data)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] })
     },
-  });
+  })
 
   const onUserSubmit = (data: UserFormData) => {
-    updateUser.mutate(data);
-  };
+    updateUser.mutate(data)
+  }
 
   return (
     <div className="space-y-6">
@@ -59,8 +60,8 @@ export default function Settings() {
         <h1 className="text-3xl font-bold">Configurações</h1>
         <p className="text-[#737373]">
           {isAdmin
-            ? "Gerencie seu perfil, filiais e funcionários"
-            : "Gerencie seus dados pessoais"}
+            ? 'Gerencie seu perfil, filiais e funcionários'
+            : 'Gerencie seus dados pessoais'}
         </p>
       </div>
 
@@ -94,7 +95,7 @@ export default function Settings() {
                     <Label htmlFor="phone">Telefone</Label>
                     <Input
                       id="phone"
-                      {...userForm.register("phone")}
+                      {...userForm.register('phone')}
                       placeholder="(11) 99999-9999"
                     />
                     <p className="text-xs text-gray-500 mt-1">
@@ -108,7 +109,7 @@ export default function Settings() {
                     className="flex items-center gap-2"
                   >
                     <Save className="h-4 w-4" />
-                    {updateUser.isPending ? "Salvando..." : "Salvar Alterações"}
+                    {updateUser.isPending ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </form>
 
@@ -118,26 +119,26 @@ export default function Settings() {
                   </h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>
-                      <strong>Nome:</strong> {user?.name || "Não informado"}
+                      <strong>Nome:</strong> {user?.name || 'Não informado'}
                     </p>
                     <p>
                       <strong>Email:</strong> {user?.email}
                     </p>
                     {isAdmin ? (
                       <p>
-                        <strong>Empresa:</strong>{" "}
-                        {user?.businessName || "Não informado"}
+                        <strong>Empresa:</strong>{' '}
+                        {user?.businessName || 'Não informado'}
                       </p>
                     ) : (
                       <p>
-                        <strong>Filial:</strong>{" "}
-                        {user?.branchName || "Não informado"}
+                        <strong>Filial:</strong>{' '}
+                        {user?.branchName || 'Não informado'}
                       </p>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-3">
-                    Para alterar estes dados, entre em contato com o{" "}
-                    {isAdmin ? "suporte" : "administrador"}.
+                    Para alterar estes dados, entre em contato com o{' '}
+                    {isAdmin ? 'suporte' : 'administrador'}.
                   </p>
                 </div>
               </CardContent>
@@ -156,7 +157,7 @@ export default function Settings() {
                     <AvatarFallback className="text-2xl">
                       {user?.name?.charAt(0).toUpperCase() ||
                         user?.email?.charAt(0).toUpperCase() ||
-                        "U"}
+                        'U'}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -195,5 +196,5 @@ export default function Settings() {
         )}
       </Tabs>
     </div>
-  );
+  )
 }

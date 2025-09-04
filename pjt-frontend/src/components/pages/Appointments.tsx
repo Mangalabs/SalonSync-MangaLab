@@ -1,42 +1,43 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react'
+import { Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { AppointmentForm } from "@/components/custom/AppointmentForm";
-import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
-import { Search, Filter } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+} from '@/components/ui/dialog'
+import { AppointmentForm } from '@/components/custom/AppointmentForm'
+import { SchedulingCalendar } from '@/components/custom/SchedulingCalendar'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
 
 export default function Appointments() {
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [professionalFilter, setProfessionalFilter] = useState("all");
-  const { activeBranch } = useBranch();
+  const [showForm, setShowForm] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [professionalFilter, setProfessionalFilter] = useState('all')
+  const { activeBranch } = useBranch()
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data;
+      const res = await axios.get('/api/professionals')
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -134,5 +135,5 @@ export default function Appointments() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

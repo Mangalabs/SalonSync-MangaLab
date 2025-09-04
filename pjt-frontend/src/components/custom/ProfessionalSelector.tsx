@@ -1,8 +1,9 @@
-import { Controller } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Combobox } from "@/components/ui/combobox";
-import { useUser } from "@/contexts/UserContext";
+import { Controller } from 'react-hook-form'
+
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Combobox } from '@/components/ui/combobox'
+import { useUser } from '@/contexts/UserContext'
 
 interface ProfessionalSelectorProps {
   control: any;
@@ -12,7 +13,7 @@ interface ProfessionalSelectorProps {
 }
 
 export function ProfessionalSelector({ control, professionals, errors, branchId }: ProfessionalSelectorProps) {
-  const { user, isProfessional, isAdmin } = useUser();
+  const { user, isProfessional, isAdmin } = useUser()
 
   return (
     <div>
@@ -24,7 +25,7 @@ export function ProfessionalSelector({ control, professionals, errors, branchId 
           (isProfessional && !isAdmin) ? (
             <>
               <Input 
-                value={user?.name || ""} 
+                value={user?.name || ''} 
                 disabled 
                 className="bg-gray-50 h-8 text-sm" 
               />
@@ -51,5 +52,5 @@ export function ProfessionalSelector({ control, professionals, errors, branchId 
         </p>
       )}
     </div>
-  );
+  )
 }

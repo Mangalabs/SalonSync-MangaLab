@@ -1,17 +1,18 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { ClientForm } from "@/components/custom/ClientForm";
-import { ClientTable } from "@/components/custom/ClientTable";
+} from '@/components/ui/dialog'
+import { ClientForm } from '@/components/custom/ClientForm'
+import { ClientTable } from '@/components/custom/ClientTable'
 
 export default function Clients() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -31,5 +32,5 @@ export default function Clients() {
       </div>
       <ClientTable />
     </div>
-  );
+  )
 }

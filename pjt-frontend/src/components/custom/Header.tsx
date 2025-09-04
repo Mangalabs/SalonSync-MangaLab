@@ -1,15 +1,16 @@
-import { useNavigate } from "react-router-dom";
-import { isAuthenticated, logout } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { BranchSelector } from "@/components/custom/BranchSelector";
+import { useNavigate } from 'react-router-dom'
+
+import { isAuthenticated, logout } from '@/lib/auth'
+import { Button } from '@/components/ui/button'
+import { BranchSelector } from '@/components/custom/BranchSelector'
 
 export function Header() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+    logout()
+    navigate('/login')
+  }
 
   return (
     <header className="w-full bg-[#1A1A1A] text-white px-4 py-3 flex justify-between items-center shadow-md">
@@ -27,5 +28,5 @@ export function Header() {
         </div>
       )}
     </header>
-  );
+  )
 }

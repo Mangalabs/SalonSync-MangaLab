@@ -1,44 +1,45 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, DollarSign, Users, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
-import { useFinancial } from "@/contexts/FinancialContext";
-import axios from "@/lib/axios";
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Calendar, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useFinancial } from '@/contexts/FinancialContext'
+import axios from '@/lib/axios'
 
 export function RecurringExpensesTabContent() {
-  const { branchFilter } = useFinancial();
-  const [showFilters, setShowFilters] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const { branchFilter } = useFinancial()
+  const [showFilters, setShowFilters] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ["recurring-expenses", branchFilter],
+    queryKey: ['recurring-expenses', branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      const params = new URLSearchParams()
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
       
-      const res = await axios.get(`/api/financial/recurring-expenses?${params}`);
-      return res.data;
+      const res = await axios.get(`/api/financial/recurring-expenses?${params}`)
+      return res.data
     },
-  });
+  })
 
   const { data: salaryExpenses = [] } = useQuery({
-    queryKey: ["salary-expenses-preview", branchFilter],
+    queryKey: ['salary-expenses-preview', branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      const params = new URLSearchParams()
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
       
-      const res = await axios.get(`/api/professionals?${params}`);
-      const professionals = res.data;
+      const res = await axios.get(`/api/professionals?${params}`)
+      const professionals = res.data
       
       return professionals.filter((prof: any) => 
-        prof.customRole?.baseSalary || prof.baseSalary
+        prof.customRole?.baseSalary || prof.baseSalary,
       ).map((prof: any) => ({
         id: prof.id,
         name: prof.name,
@@ -46,77 +47,77 @@ export function RecurringExpensesTabContent() {
         baseSalary: prof.customRole?.baseSalary || prof.baseSalary,
         salaryPayDay: prof.customRole?.salaryPayDay || prof.salaryPayDay,
         commissionRate: prof.customRole?.commissionRate || prof.commissionRate,
-        type: 'salary'
-      }));
+        type: 'salary',
+      }))
     },
-  });
+  })
 
   const getCurrentMonthStatus = (receiptDay: number, dueDay: number) => {
-    const today = new Date().getDate();
+    const today = new Date().getDate()
     
     if (today < receiptDay) {
-      return { status: "upcoming", label: "Próxima", color: "bg-blue-100 text-blue-800" };
+      return { status: 'upcoming', label: 'Próxima', color: 'bg-blue-100 text-blue-800' }
     } else if (today >= receiptDay && today <= dueDay) {
-      return { status: "active", label: "Ativa", color: "bg-orange-100 text-orange-800" };
+      return { status: 'active', label: 'Ativa', color: 'bg-orange-100 text-orange-800' }
     } else {
-      return { status: "overdue", label: "Vencida", color: "bg-red-100 text-red-800" };
+      return { status: 'overdue', label: 'Vencida', color: 'bg-red-100 text-red-800' }
     }
-  };
+  }
 
   const getSalaryStatus = (payDay: number) => {
-    const today = new Date().getDate();
+    const today = new Date().getDate()
     
     if (today < payDay) {
-      return { status: "upcoming", label: "Próximo", color: "bg-blue-100 text-blue-800" };
+      return { status: 'upcoming', label: 'Próximo', color: 'bg-blue-100 text-blue-800' }
     } else if (today === payDay) {
-      return { status: "due", label: "Hoje", color: "bg-green-100 text-green-800" };
+      return { status: 'due', label: 'Hoje', color: 'bg-green-100 text-green-800' }
     } else {
-      return { status: "overdue", label: "Pendente", color: "bg-red-100 text-red-800" };
+      return { status: 'overdue', label: 'Pendente', color: 'bg-red-100 text-red-800' }
     }
-  };
+  }
 
   // Combinar salários e despesas fixas
   const allExpenses = [
     ...salaryExpenses,
-    ...recurringExpenses.map((expense: any) => ({ ...expense, type: 'recurring' }))
-  ];
+    ...recurringExpenses.map((expense: any) => ({ ...expense, type: 'recurring' })),
+  ]
 
   // Calcular totais
-  const totalSalaries = salaryExpenses.reduce((sum: number, s: any) => sum + Number(s.baseSalary), 0);
-  const totalRecurring = recurringExpenses.reduce((sum: number, e: any) => sum + Number(e.fixedAmount || 0), 0);
-  const grandTotal = totalSalaries + totalRecurring;
+  const totalSalaries = salaryExpenses.reduce((sum: number, s: any) => sum + Number(s.baseSalary), 0)
+  const totalRecurring = recurringExpenses.reduce((sum: number, e: any) => sum + Number(e.fixedAmount || 0), 0)
+  const grandTotal = totalSalaries + totalRecurring
 
   // Filtrar despesas
   const filteredExpenses = allExpenses.filter((expense: any) => {
-    const matchesSearch = searchTerm === "" || expense.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || expense.type === typeFilter;
+    const matchesSearch = searchTerm === '' || expense.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = typeFilter === 'all' || expense.type === typeFilter
     
-    let matchesStatus = true;
-    if (statusFilter !== "all") {
+    let matchesStatus = true
+    if (statusFilter !== 'all') {
       const status = expense.type === 'salary' 
         ? getSalaryStatus(expense.salaryPayDay).status
-        : getCurrentMonthStatus(expense.receiptDay, expense.dueDay).status;
-      matchesStatus = status === statusFilter;
+        : getCurrentMonthStatus(expense.receiptDay, expense.dueDay).status
+      matchesStatus = status === statusFilter
     }
     
-    return matchesSearch && matchesType && matchesStatus;
-  });
+    return matchesSearch && matchesType && matchesStatus
+  })
 
   // Agrupar por status
   const statusSummary = allExpenses.reduce((acc: any, expense: any) => {
     const status = expense.type === 'salary' 
       ? getSalaryStatus(expense.salaryPayDay).status
-      : getCurrentMonthStatus(expense.receiptDay, expense.dueDay).status;
+      : getCurrentMonthStatus(expense.receiptDay, expense.dueDay).status
     
     if (!acc[status]) {
-      acc[status] = { count: 0, total: 0 };
+      acc[status] = { count: 0, total: 0 }
     }
-    acc[status].count += 1;
-    acc[status].total += Number(expense.type === 'salary' ? expense.baseSalary : expense.fixedAmount || 0);
-    return acc;
-  }, {});
+    acc[status].count += 1
+    acc[status].total += Number(expense.type === 'salary' ? expense.baseSalary : expense.fixedAmount || 0)
+    return acc
+  }, {})
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
 
   return (
     <div className="space-y-6">
@@ -179,12 +180,12 @@ export function RecurringExpensesTabContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {Object.entries(statusSummary).map(([status, data]: [string, any]) => {
                 const statusLabels = {
-                  upcoming: { label: "Próximas", color: "bg-blue-50 text-blue-700" },
-                  active: { label: "Ativas", color: "bg-orange-50 text-orange-700" },
-                  due: { label: "Hoje", color: "bg-green-50 text-green-700" },
-                  overdue: { label: "Vencidas", color: "bg-red-50 text-red-700" }
-                };
-                const statusInfo = statusLabels[status as keyof typeof statusLabels] || { label: status, color: "bg-gray-50 text-gray-700" };
+                  upcoming: { label: 'Próximas', color: 'bg-blue-50 text-blue-700' },
+                  active: { label: 'Ativas', color: 'bg-orange-50 text-orange-700' },
+                  due: { label: 'Hoje', color: 'bg-green-50 text-green-700' },
+                  overdue: { label: 'Vencidas', color: 'bg-red-50 text-red-700' },
+                }
+                const statusInfo = statusLabels[status as keyof typeof statusLabels] || { label: status, color: 'bg-gray-50 text-gray-700' }
                 
                 return (
                   <div key={status} className={`p-3 rounded-lg ${statusInfo.color}`}>
@@ -192,7 +193,7 @@ export function RecurringExpensesTabContent() {
                     <div className="text-xs text-gray-600">{data.count} itens</div>
                     <div className="font-semibold">{formatCurrency(data.total)}</div>
                   </div>
-                );
+                )
               })}
             </div>
           </CardContent>
@@ -252,9 +253,9 @@ export function RecurringExpensesTabContent() {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setSearchTerm("");
-                  setTypeFilter("all");
-                  setStatusFilter("all");
+                  setSearchTerm('')
+                  setTypeFilter('all')
+                  setStatusFilter('all')
                 }}
               >
                 Limpar
@@ -282,7 +283,7 @@ export function RecurringExpensesTabContent() {
                 {filteredExpenses.map((expense: any) => {
                   const status = expense.type === 'salary' 
                     ? getSalaryStatus(expense.salaryPayDay)
-                    : getCurrentMonthStatus(expense.receiptDay, expense.dueDay);
+                    : getCurrentMonthStatus(expense.receiptDay, expense.dueDay)
                   
                   return (
                     <TableRow key={`${expense.type}-${expense.id}`}>
@@ -327,7 +328,7 @@ export function RecurringExpensesTabContent() {
                         )}
                       </TableCell>
                     </TableRow>
-                  );
+                  )
                 })}
               </TableBody>
             </Table>
@@ -352,5 +353,5 @@ export function RecurringExpensesTabContent() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

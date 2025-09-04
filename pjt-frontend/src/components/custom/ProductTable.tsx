@@ -1,11 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Edit } from 'lucide-react'
+import { useState } from 'react'
+
+import { AdjustmentStockForm } from './AdjustmentStockForm'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,13 +20,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Trash2, Edit } from "lucide-react";
-import { ProductForm } from "./ProductForm";
-import { AdjustmentStockForm } from "./AdjustmentStockForm";
-import { useState } from "react";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+} from '@/components/ui/alert-dialog'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
 
 interface Product {
   id: string;
@@ -40,42 +41,42 @@ interface Product {
 }
 
 export function ProductTable() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
-  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
-  const { activeBranch } = useBranch();
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null)
+  const { activeBranch } = useBranch()
 
   const { data, isLoading, error } = useQuery<Product[]>({
-    queryKey: ["products", activeBranch?.id],
+    queryKey: ['products', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/products");
-      return res.data;
+      const res = await axios.get('/api/products')
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const deleteProduct = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/products/${id}`);
+      await axios.delete(`/api/products/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products", activeBranch?.id] });
-      setDeletingProductId(null);
+      queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
+      setDeletingProductId(null)
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "Erro ao excluir produto");
-      setDeletingProductId(null);
+      alert(error.response?.data?.message || 'Erro ao excluir produto')
+      setDeletingProductId(null)
     },
-  });
+  })
 
   const handleAdjustment = (product: Product) => {
-    setAdjustingProduct(product);
-  };
+    setAdjustingProduct(product)
+  }
 
-  if (isLoading) return <p className="p-4">Carregando...</p>;
-  if (error) return <p className="p-4 text-red-500">Erro ao carregar produtos</p>;
-  if (!data?.length) return <p className="p-4 text-gray-500">Nenhum produto encontrado</p>;
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
+  if (error) {return <p className="p-4 text-red-500">Erro ao carregar produtos</p>}
+  if (!data?.length) {return <p className="p-4 text-gray-500">Nenhum produto encontrado</p>}
 
   return (
     <div>
@@ -101,7 +102,7 @@ export function ProductTable() {
                     {product.brand && `${product.brand} • `}{product.unit}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-[#737373]">{product.category || "-"}</td>
+                <td className="px-4 py-3 text-sm text-[#737373]">{product.category || '-'}</td>
                 <td className="px-4 py-3 text-right text-sm">
                   {product.costPrice > 0 ? (
                     <span className="text-red-600 font-medium">
@@ -249,5 +250,5 @@ export function ProductTable() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

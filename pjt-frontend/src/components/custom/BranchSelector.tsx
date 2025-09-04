@@ -1,36 +1,37 @@
-import { useState } from "react";
-import { ChevronDown, Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { ChevronDown, Building2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useBranch } from "@/contexts/BranchContext";
-import { useUser } from "@/contexts/UserContext";
+} from '@/components/ui/dropdown-menu'
+import { useBranch } from '@/contexts/BranchContext'
+import { useUser } from '@/contexts/UserContext'
 
 export function BranchSelector() {
-  const { activeBranch, branches, setActiveBranch } = useBranch();
-  const { isAdmin } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
+  const { activeBranch, branches, setActiveBranch } = useBranch()
+  const { isAdmin } = useUser()
+  const [isLoading, setIsLoading] = useState(false)
 
   // Só mostrar para admins com múltiplas filiais
   if (!isAdmin || branches.length <= 1) {
-    return null;
+    return null
   }
 
   const handleBranchChange = async (branchId: string) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const branch = branches.find((b) => b.id === branchId);
+      const branch = branches.find((b) => b.id === branchId)
       if (branch) {
-        setActiveBranch(branch);
+        setActiveBranch(branch)
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <DropdownMenu>
@@ -42,7 +43,7 @@ export function BranchSelector() {
         >
           <Building2 size={16} />
           <span className="hidden sm:inline">
-            {activeBranch?.name || "Selecionar Filial"}
+            {activeBranch?.name || 'Selecionar Filial'}
           </span>
           <ChevronDown size={14} />
         </Button>
@@ -53,7 +54,7 @@ export function BranchSelector() {
             key={branch.id}
             onClick={() => handleBranchChange(branch.id)}
             className={`flex items-center gap-2 ${
-              activeBranch?.id === branch.id ? "bg-primary/10" : ""
+              activeBranch?.id === branch.id ? 'bg-primary/10' : ''
             }`}
           >
             <Building2 size={16} />
@@ -72,5 +73,5 @@ export function BranchSelector() {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

@@ -1,72 +1,72 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Calendar, CreditCard } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Calendar, CreditCard } from 'lucide-react'
+import { toast } from 'sonner'
 
-import axios from "@/lib/axios";
-import { toast } from "sonner";
-import { useFinancial } from "@/contexts/FinancialContext";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import axios from '@/lib/axios'
+import { useFinancial } from '@/contexts/FinancialContext'
 
 interface TransactionListProps {
-  type: "INCOME" | "EXPENSE" | "INVESTMENT";
+  type: 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 }
 
 export function TransactionList({ type }: TransactionListProps) {
-  const queryClient = useQueryClient();
-  const { startDate, endDate, branchFilter } = useFinancial();
+  const queryClient = useQueryClient()
+  const { startDate, endDate, branchFilter } = useFinancial()
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["transactions", type, startDate, endDate, branchFilter],
+    queryKey: ['transactions', type, startDate, endDate, branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append("type", type);
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      const params = new URLSearchParams()
+      params.append('type', type)
+      if (startDate) {params.append('startDate', startDate)}
+      if (endDate) {params.append('endDate', endDate)}
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
 
-      const res = await axios.get(`/api/financial/transactions?${params}`);
-      return res.data;
+      const res = await axios.get(`/api/financial/transactions?${params}`)
+      return res.data
     },
-  });
+  })
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/financial/transactions/${id}`);
+      await axios.delete(`/api/financial/transactions/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-summary"] });
-      toast.success("Transação excluída com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+      toast.success('Transação excluída com sucesso!')
     },
     onError: () => {
-      toast.error("Erro ao excluir transação");
+      toast.error('Erro ao excluir transação')
     },
-  });
+  })
 
   const getTypeColor = () => {
     switch (type) {
-      case "INCOME":
-        return "bg-green-100 text-green-800";
-      case "EXPENSE":
-        return "bg-red-100 text-red-800";
-      case "INVESTMENT":
-        return "bg-blue-100 text-blue-800";
+      case 'INCOME':
+        return 'bg-green-100 text-green-800'
+      case 'EXPENSE':
+        return 'bg-red-100 text-red-800'
+      case 'INVESTMENT':
+        return 'bg-blue-100 text-blue-800'
     }
-  };
+  }
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      CASH: "Dinheiro",
-      CARD: "Cartão",
-      PIX: "PIX",
-      TRANSFER: "Transferência",
-      OTHER: "Outros",
-    };
-    return labels[method as keyof typeof labels] || method;
-  };
+      CASH: 'Dinheiro',
+      CARD: 'Cartão',
+      PIX: 'PIX',
+      TRANSFER: 'Transferência',
+      OTHER: 'Outros',
+    }
+    return labels[method as keyof typeof labels] || method
+  }
 
-  if (isLoading) return <div className="p-4">Carregando...</div>;
+  if (isLoading) {return <div className="p-4">Carregando...</div>}
 
   if (transactions.length === 0) {
     return (
@@ -75,7 +75,7 @@ export function TransactionList({ type }: TransactionListProps) {
           Nenhuma transação encontrada
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -95,7 +95,7 @@ export function TransactionList({ type }: TransactionListProps) {
                 <div className="flex items-center gap-4 text-sm text-[#737373]">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                    {new Date(transaction.date).toLocaleDateString('pt-BR')}
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -112,11 +112,11 @@ export function TransactionList({ type }: TransactionListProps) {
               <div className="flex items-center gap-3">
                 <div
                   className={`text-lg font-semibold ${
-                    type === "INCOME"
-                      ? "text-[#D4AF37]"
-                      : type === "EXPENSE"
-                      ? "text-red-600"
-                      : "text-blue-600"
+                    type === 'INCOME'
+                      ? 'text-[#D4AF37]'
+                      : type === 'EXPENSE'
+                        ? 'text-red-600'
+                        : 'text-blue-600'
                   }`}
                 >
                   R$ {Number(transaction.amount).toFixed(2)}
@@ -150,11 +150,11 @@ export function TransactionList({ type }: TransactionListProps) {
                 <div className="flex items-center gap-2 ml-2">
                   <div
                     className={`text-sm font-semibold ${
-                      type === "INCOME"
-                        ? "text-[#D4AF37]"
-                        : type === "EXPENSE"
-                        ? "text-red-600"
-                        : "text-blue-600"
+                      type === 'INCOME'
+                        ? 'text-[#D4AF37]'
+                        : type === 'EXPENSE'
+                          ? 'text-red-600'
+                          : 'text-blue-600'
                     }`}
                   >
                     R$ {Number(transaction.amount).toFixed(2)}
@@ -175,7 +175,7 @@ export function TransactionList({ type }: TransactionListProps) {
               <div className="flex flex-wrap gap-2 text-xs text-[#737373]">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                  {new Date(transaction.date).toLocaleDateString('pt-BR')}
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -192,5 +192,5 @@ export function TransactionList({ type }: TransactionListProps) {
         </Card>
       ))}
     </div>
-  );
+  )
 }

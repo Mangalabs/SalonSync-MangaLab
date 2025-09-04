@@ -1,29 +1,36 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import axios from "@/lib/axios";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import axios from '@/lib/axios'
 
 const adjustmentSchema = z.object({
   // Dados do produto
-  name: z.string().min(1, "Nome é obrigatório"),
-  category: z.string().min(1, "Categoria é obrigatória"),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
   brand: z.string().optional(),
-  unit: z.string().min(1, "Unidade é obrigatória"),
-  costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0"),
-  salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0"),
-  minStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a 0"),
+  unit: z.string().min(1, 'Unidade é obrigatória'),
+  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0'),
+  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0'),
+  minStock: z.number().min(0, 'Estoque mínimo deve ser maior ou igual a 0'),
   // Ajuste de estoque
-  quantity: z.number().min(0, "Quantidade deve ser maior ou igual a 0"),
-  reason: z.string().min(1, "Informe o motivo do ajuste"),
+  quantity: z.number().min(0, 'Quantidade deve ser maior ou igual a 0'),
+  reason: z.string().min(1, 'Informe o motivo do ajuste'),
   reference: z.string().optional(),
-});
+})
 
 type AdjustmentFormData = z.infer<typeof adjustmentSchema>;
 
@@ -44,8 +51,11 @@ interface AdjustmentStockFormProps {
   onSuccess: () => void;
 }
 
-export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormProps) {
-  const queryClient = useQueryClient();
+export function AdjustmentStockForm({
+  product,
+  onSuccess,
+}: AdjustmentStockFormProps) {
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -55,17 +65,17 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
   } = useForm<AdjustmentFormData>({
     resolver: zodResolver(adjustmentSchema),
     defaultValues: {
-      name: product?.name || "",
-      category: product?.category || "",
-      brand: product?.brand || "",
-      unit: product?.unit || "un",
+      name: product?.name || '',
+      category: product?.category || '',
+      brand: product?.brand || '',
+      unit: product?.unit || 'un',
       costPrice: product?.costPrice || 0,
       salePrice: product?.salePrice || 0,
       minStock: product?.minStock || 0,
       quantity: product?.currentStock || 0,
-      reason: "Ajuste de produto e estoque",
+      reason: 'Ajuste de produto e estoque',
     },
-  });
+  })
 
   const createAdjustment = useMutation({
     mutationFn: async (data: AdjustmentFormData) => {
@@ -78,33 +88,33 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
         costPrice: data.costPrice,
         salePrice: data.salePrice,
         minStock: data.minStock,
-      });
-      
+      })
+
       // Depois faz o ajuste de estoque
       const res = await axios.post(`/api/products/${product?.id}/adjust`, {
-        type: "ADJUSTMENT",
+        type: 'ADJUSTMENT',
         quantity: data.quantity,
         reason: data.reason,
         reference: data.reference,
-      });
-      return res.data;
+      })
+      return res.data
     },
     onSuccess: () => {
-      toast.success("Produto e estoque atualizados com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
-      onSuccess();
+      toast.success('Produto e estoque atualizados com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
+      onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao atualizar produto");
+      toast.error(error.response?.data?.message || 'Erro ao atualizar produto')
     },
-  });
+  })
 
   const onSubmit = (data: AdjustmentFormData) => {
-    createAdjustment.mutate(data);
-  };
+    createAdjustment.mutate(data)
+  }
 
-  if (!product) return null;
+  if (!product) {return null}
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -113,7 +123,7 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
           <Label htmlFor="name">Nome do Produto</Label>
           <Input
             id="name"
-            {...register("name")}
+            {...register('name')}
             placeholder="Nome do produto"
           />
           {errors.name && (
@@ -125,11 +135,13 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
           <Label htmlFor="category">Categoria</Label>
           <Input
             id="category"
-            {...register("category")}
+            {...register('category')}
             placeholder="Categoria do produto"
           />
           {errors.category && (
-            <p className="text-sm text-red-600 mt-1">{errors.category.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.category.message}
+            </p>
           )}
         </div>
 
@@ -137,14 +149,17 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
           <Label htmlFor="brand">Marca (opcional)</Label>
           <Input
             id="brand"
-            {...register("brand")}
+            {...register('brand')}
             placeholder="Marca do produto"
           />
         </div>
 
         <div>
           <Label htmlFor="unit">Unidade</Label>
-          <Select onValueChange={(value) => setValue("unit", value)} defaultValue={product?.unit}>
+          <Select
+            onValueChange={(value) => setValue('unit', value)}
+            defaultValue={product?.unit}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione a unidade" />
             </SelectTrigger>
@@ -167,11 +182,13 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
             type="number"
             step="0.01"
             min="0"
-            {...register("costPrice", { valueAsNumber: true })}
+            {...register('costPrice', { valueAsNumber: true })}
             placeholder="0,00"
           />
           {errors.costPrice && (
-            <p className="text-sm text-red-600 mt-1">{errors.costPrice.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.costPrice.message}
+            </p>
           )}
         </div>
 
@@ -182,11 +199,13 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
             type="number"
             step="0.01"
             min="0"
-            {...register("salePrice", { valueAsNumber: true })}
+            {...register('salePrice', { valueAsNumber: true })}
             placeholder="0,00"
           />
           {errors.salePrice && (
-            <p className="text-sm text-red-600 mt-1">{errors.salePrice.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.salePrice.message}
+            </p>
           )}
         </div>
 
@@ -196,11 +215,13 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
             id="minStock"
             type="number"
             min="0"
-            {...register("minStock", { valueAsNumber: true })}
+            {...register('minStock', { valueAsNumber: true })}
             placeholder="0"
           />
           {errors.minStock && (
-            <p className="text-sm text-red-600 mt-1">{errors.minStock.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.minStock.message}
+            </p>
           )}
         </div>
 
@@ -210,14 +231,16 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
             id="quantity"
             type="number"
             min="0"
-            {...register("quantity", { valueAsNumber: true })}
+            {...register('quantity', { valueAsNumber: true })}
             placeholder="Quantidade atual: {product.currentStock}"
           />
           <p className="text-xs text-gray-500 mt-1">
             Atual: {product.currentStock} {product.unit}
           </p>
           {errors.quantity && (
-            <p className="text-sm text-red-600 mt-1">{errors.quantity.message}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {errors.quantity.message}
+            </p>
           )}
         </div>
       </div>
@@ -226,7 +249,7 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
         <Label htmlFor="reason">Motivo da Alteração</Label>
         <Textarea
           id="reason"
-          {...register("reason")}
+          {...register('reason')}
           placeholder="Descreva o motivo da alteração do produto e estoque"
           rows={3}
         />
@@ -239,14 +262,14 @@ export function AdjustmentStockForm({ product, onSuccess }: AdjustmentStockFormP
         <Label htmlFor="reference">Referência (opcional)</Label>
         <Input
           id="reference"
-          {...register("reference")}
+          {...register('reference')}
           placeholder="Documento, nota, etc."
         />
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+        {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
       </Button>
     </form>
-  );
+  )
 }

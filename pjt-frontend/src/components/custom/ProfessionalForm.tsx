@@ -1,27 +1,28 @@
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Combobox } from "@/components/ui/combobox";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useUser } from "@/contexts/UserContext";
-import { useBranch } from "@/contexts/BranchContext";
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Combobox } from '@/components/ui/combobox'
+import axios from '@/lib/axios'
+import { useUser } from '@/contexts/UserContext'
+import { useBranch } from '@/contexts/BranchContext'
 
 const schema = z.object({
-  name: z.string().min(2, "Informe o nome"),
-  role: z.string().min(2, "Informe a função"),
+  name: z.string().min(2, 'Informe o nome'),
+  role: z.string().min(2, 'Informe a função'),
   commissionRate: z
     .number()
     .min(0)
-    .max(100, "Comissão deve ser entre 0 e 100%"),
+    .max(100, 'Comissão deve ser entre 0 e 100%'),
   roleId: z.string().optional(),
   baseSalary: z.union([z.number(), z.nan()]).optional(),
   salaryPayDay: z.union([z.number(), z.nan()]).optional(),
-  branchId: z.string().min(1, "Selecione uma filial"),
-});
+  branchId: z.string().min(1, 'Selecione uma filial'),
+})
 
 type FormData = z.infer<typeof schema>;
 
@@ -39,19 +40,19 @@ export function ProfessionalForm({
     branchId?: string;
   } | null;
 }) {
-  const queryClient = useQueryClient();
-  const isEditing = !!initialData;
-  const { user, isAdmin } = useUser();
-  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient()
+  const isEditing = !!initialData
+  const { user, isAdmin } = useUser()
+  const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
     enabled: isAdmin,
-  });
+  })
 
   const {
     register,
@@ -63,88 +64,88 @@ export function ProfessionalForm({
     resolver: zodResolver(schema),
     defaultValues: initialData
       ? {
-          name: initialData.name,
-          role: initialData.role,
-          roleId: initialData.roleId || (initialData as any).customRole?.id,
-          commissionRate:
+        name: initialData.name,
+        role: initialData.role,
+        roleId: initialData.roleId || (initialData as any).customRole?.id,
+        commissionRate:
             (initialData as any).customRole?.commissionRate ||
             initialData.commissionRate ||
             0,
-          baseSalary: (initialData as any).baseSalary || undefined,
-          salaryPayDay: (initialData as any).salaryPayDay || undefined,
-          branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
-        }
+        baseSalary: (initialData as any).baseSalary || undefined,
+        salaryPayDay: (initialData as any).salaryPayDay || undefined,
+        branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
+      }
       : {
-          commissionRate: 0,
-          branchId: !isAdmin ? activeBranch?.id : undefined,
-        },
-  });
+        commissionRate: 0,
+        branchId: !isAdmin ? activeBranch?.id : undefined,
+      },
+  })
 
-  const selectedBranchId = watch("branchId");
+  const selectedBranchId = watch('branchId')
 
   const { data: roles = [] } = useQuery({
-    queryKey: ["roles", selectedBranchId],
+    queryKey: ['roles', selectedBranchId],
     queryFn: async () => {
       try {
-        const params = new URLSearchParams();
-        if (selectedBranchId) params.append("branchId", selectedBranchId);
-        const res = await axios.get(`/api/roles?${params}`);
-        return res.data;
+        const params = new URLSearchParams()
+        if (selectedBranchId) {params.append('branchId', selectedBranchId)}
+        const res = await axios.get(`/api/roles?${params}`)
+        return res.data
       } catch (error: any) {
         if (error.response?.status === 404) {
-          return [];
+          return []
         }
-        throw error;
+        throw error
       }
     },
     enabled: !!selectedBranchId,
-  });
+  })
 
-  const selectedRoleId = watch("roleId");
-  const selectedRole = roles.find((role: any) => role.id === selectedRoleId);
-  const isCustomRole = selectedRoleId === "custom" || !selectedRoleId;
+  const selectedRoleId = watch('roleId')
+  const selectedRole = roles.find((role: any) => role.id === selectedRoleId)
+  const isCustomRole = selectedRoleId === 'custom' || !selectedRoleId
 
   const handleRoleChange = (roleId: string) => {
-    setValue("roleId", roleId);
-    const role = roles.find((r: any) => r.id === roleId);
+    setValue('roleId', roleId)
+    const role = roles.find((r: any) => r.id === roleId)
     if (role) {
-      setValue("role", role.title);
-      setValue("commissionRate", role.commissionRate || 0);
-      setValue("baseSalary", role.baseSalary ? Number(role.baseSalary) : undefined);
-      setValue("salaryPayDay", role.salaryPayDay || undefined);
+      setValue('role', role.title)
+      setValue('commissionRate', role.commissionRate || 0)
+      setValue('baseSalary', role.baseSalary ? Number(role.baseSalary) : undefined)
+      setValue('salaryPayDay', role.salaryPayDay || undefined)
     } else {
       // Função personalizada - limpar valores
-      setValue("baseSalary", undefined);
-      setValue("salaryPayDay", undefined);
+      setValue('baseSalary', undefined)
+      setValue('salaryPayDay', undefined)
     }
-  };
+  }
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      console.log("🚀 ProfessionalForm mutation:", { data, isEditing });
+      console.log('🚀 ProfessionalForm mutation:', { data, isEditing })
 
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
         const res = await axios.patch(
           `/api/professionals/${initialData.id}`,
           data,
-          { headers }
-        );
-        return res.data;
+          { headers },
+        )
+        return res.data
       } else {
-        const res = await axios.post("/api/professionals", data, { headers });
-        return res.data;
+        const res = await axios.post('/api/professionals', data, { headers })
+        return res.data
       }
     },
     onSuccess: (result) => {
-      console.log("✅ Professional mutation success:", result);
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      onSuccess();
+      console.log('✅ Professional mutation success:', result)
+      queryClient.invalidateQueries({ queryKey: ['professionals'] })
+      onSuccess()
     },
     onError: (error) => {
-      console.log("❌ Professional mutation error:", error);
+      console.log('❌ Professional mutation error:', error)
     },
-  });
+  })
 
   return (
     <form
@@ -159,8 +160,8 @@ export function ProfessionalForm({
               value: branch.id,
               label: branch.name,
             }))}
-            value={watch("branchId")}
-            onValueChange={(value) => setValue("branchId", value)}
+            value={watch('branchId')}
+            onValueChange={(value) => setValue('branchId', value)}
             placeholder="Selecione uma filial"
             searchPlaceholder="Pesquisar filial..."
           />
@@ -172,7 +173,7 @@ export function ProfessionalForm({
 
       <div>
         <Label htmlFor="name">Nome do Funcionário</Label>
-        <Input placeholder="Nome" {...register("name")} />
+        <Input placeholder="Nome" {...register('name')} />
         {errors.name && (
           <p className="text-sm text-red-500">{errors.name.message}</p>
         )}
@@ -182,20 +183,20 @@ export function ProfessionalForm({
           <>
             <Combobox
               options={[
-                { value: "custom", label: "Função personalizada" },
+                { value: 'custom', label: 'Função personalizada' },
                 ...roles.map((role: any) => ({
                   value: role.id,
-                  label: `${role.title} (${role.commissionRate}%)`
-                }))
+                  label: `${role.title} (${role.commissionRate}%)`,
+                })),
               ]}
-              value={selectedRoleId || "custom"}
+              value={selectedRoleId || 'custom'}
               onValueChange={handleRoleChange}
               placeholder="Selecione uma função"
               searchPlaceholder="Pesquisar função..."
             />
-            {selectedRoleId === "custom" && (
+            {selectedRoleId === 'custom' && (
               <div className="mt-2">
-                <Input placeholder="Nome da função" {...register("role")} />
+                <Input placeholder="Nome da função" {...register('role')} />
                 {errors.role && (
                   <p className="text-sm text-red-500">{errors.role.message}</p>
                 )}
@@ -204,7 +205,7 @@ export function ProfessionalForm({
           </>
         ) : (
           <>
-            <Input placeholder="Função (ex: Barbeiro)" {...register("role")} />
+            <Input placeholder="Função (ex: Barbeiro)" {...register('role')} />
             {errors.role && (
               <p className="text-sm text-red-500">{errors.role.message}</p>
             )}
@@ -228,16 +229,16 @@ export function ProfessionalForm({
               type="number"
               step="0.01"
               min="0"
-              placeholder={selectedRole?.baseSalary ? `Padrão: R$ ${Number(selectedRole.baseSalary).toFixed(2)}` : "Salário base (R$)"}
-              {...register("baseSalary", { valueAsNumber: true })}
+              placeholder={selectedRole?.baseSalary ? `Padrão: R$ ${Number(selectedRole.baseSalary).toFixed(2)}` : 'Salário base (R$)'}
+              {...register('baseSalary', { valueAsNumber: true })}
               disabled={!isCustomRole && selectedRole?.baseSalary}
             />
             <p className="text-xs text-gray-500 mt-1">
               {isCustomRole 
-                ? "Valor fixo mensal personalizado"
+                ? 'Valor fixo mensal personalizado'
                 : selectedRole?.baseSalary 
-                  ? "Definido pela função selecionada"
-                  : "Valor fixo mensal (comissões serão somadas)"
+                  ? 'Definido pela função selecionada'
+                  : 'Valor fixo mensal (comissões serão somadas)'
               }
             </p>
           </div>
@@ -247,16 +248,16 @@ export function ProfessionalForm({
               type="number"
               min="1"
               max="31"
-              placeholder={selectedRole?.salaryPayDay ? `Padrão: Dia ${selectedRole.salaryPayDay}` : "Dia do pagamento"}
-              {...register("salaryPayDay", { valueAsNumber: true })}
+              placeholder={selectedRole?.salaryPayDay ? `Padrão: Dia ${selectedRole.salaryPayDay}` : 'Dia do pagamento'}
+              {...register('salaryPayDay', { valueAsNumber: true })}
               disabled={!isCustomRole && selectedRole?.salaryPayDay}
             />
             <p className="text-xs text-gray-500 mt-1">
               {isCustomRole 
-                ? "Dia do mês personalizado"
+                ? 'Dia do mês personalizado'
                 : selectedRole?.salaryPayDay 
-                  ? "Definido pela função selecionada"
-                  : "Dia do mês para gerar despesa"
+                  ? 'Definido pela função selecionada'
+                  : 'Dia do mês para gerar despesa'
               }
             </p>
           </div>
@@ -276,8 +277,8 @@ export function ProfessionalForm({
             max="100"
             step="0.1"
             placeholder="Comissão (%)"
-            {...register("commissionRate", { valueAsNumber: true })}
-            disabled={selectedRole && selectedRoleId !== "custom"}
+            {...register('commissionRate', { valueAsNumber: true })}
+            disabled={selectedRole && selectedRoleId !== 'custom'}
           />
           <span className="ml-2">%</span>
         </div>
@@ -286,7 +287,7 @@ export function ProfessionalForm({
             {errors.commissionRate.message}
           </p>
         )}
-        {selectedRole && selectedRoleId !== "custom" && (
+        {selectedRole && selectedRoleId !== 'custom' && (
           <p className="text-xs text-[#737373] mt-1">
             Comissão definida pela função selecionada
           </p>
@@ -297,8 +298,8 @@ export function ProfessionalForm({
         disabled={isSubmitting}
         className="w-full bg-primary text-white"
       >
-        {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}
+        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
       </Button>
     </form>
-  );
+  )
 }

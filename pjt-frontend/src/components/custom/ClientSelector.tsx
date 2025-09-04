@@ -1,11 +1,14 @@
-import { Controller } from "react-hook-form";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Combobox } from "@/components/ui/combobox";
-import { Plus } from "lucide-react";
-import { useState } from "react";
-import { ClientForm } from "./ClientForm";
+import { Controller } from 'react-hook-form'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+
+import { ClientForm } from './ClientForm'
+
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Combobox } from '@/components/ui/combobox'
+
 
 interface ClientSelectorProps {
   control: any;
@@ -15,7 +18,7 @@ interface ClientSelectorProps {
 }
 
 export function ClientSelector({ control, clients, errors, branchId }: ClientSelectorProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   return (
     <>
       <div className="flex justify-between items-center">
@@ -58,5 +61,5 @@ export function ClientSelector({ control, clients, errors, branchId }: ClientSel
         <p className="text-xs text-red-500">{errors.clientId.message}</p>
       )}
     </>
-  );
+  )
 }

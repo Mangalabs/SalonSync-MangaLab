@@ -1,39 +1,40 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Combobox } from "@/components/ui/combobox";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { useUser } from "@/contexts/UserContext";
-import { toast } from "sonner";
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Combobox } from '@/components/ui/combobox'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { useUser } from '@/contexts/UserContext'
+
 
 const productSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  category: z.string().min(1, "Categoria é obrigatória"),
-  unit: z.string().min(1, "Unidade é obrigatória"),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
+  unit: z.string().min(1, 'Unidade é obrigatória'),
   brand: z.string().optional().or(z.literal('')),
-  costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0").nullable().optional(),
-  salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0").nullable().optional(),
-  initialStock: z.number().min(0, "Quantidade inicial deve ser maior ou igual a 0").nullable().optional(),
-  branchId: z.string().min(1, "Selecione uma filial"),
-});
+  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0').nullable().optional(),
+  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0').nullable().optional(),
+  initialStock: z.number().min(0, 'Quantidade inicial deve ser maior ou igual a 0').nullable().optional(),
+  branchId: z.string().min(1, 'Selecione uma filial'),
+})
 
 const unitOptions = [
-  { value: "un", label: "Unidade (un)" },
-  { value: "ml", label: "Mililitros (ml)" },
-  { value: "l", label: "Litros (l)" },
-  { value: "g", label: "Gramas (g)" },
-  { value: "kg", label: "Quilogramas (kg)" },
-  { value: "m", label: "Metros (m)" },
-  { value: "cm", label: "Centímetros (cm)" },
-  { value: "pct", label: "Pacote (pct)" },
-  { value: "cx", label: "Caixa (cx)" },
-];
+  { value: 'un', label: 'Unidade (un)' },
+  { value: 'ml', label: 'Mililitros (ml)' },
+  { value: 'l', label: 'Litros (l)' },
+  { value: 'g', label: 'Gramas (g)' },
+  { value: 'kg', label: 'Quilogramas (kg)' },
+  { value: 'm', label: 'Metros (m)' },
+  { value: 'cm', label: 'Centímetros (cm)' },
+  { value: 'pct', label: 'Pacote (pct)' },
+  { value: 'cx', label: 'Caixa (cx)' },
+]
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -50,24 +51,24 @@ interface Product {
 
 export function ProductForm({ 
   onSuccess, 
-  initialData 
+  initialData, 
 }: { 
   onSuccess: () => void;
   initialData?: Product | null;
 }) {
-  const isEditing = !!initialData;
-  const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
-  const { user, isAdmin } = useUser();
+  const isEditing = !!initialData
+  const queryClient = useQueryClient()
+  const { activeBranch } = useBranch()
+  const { user, isAdmin } = useUser()
 
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
     enabled: isAdmin,
-  });
+  })
   
   const {
     register,
@@ -96,10 +97,10 @@ export function ProductForm({
       salePrice: 0,
       initialStock: 0,
       branchId: !isAdmin ? activeBranch?.id : undefined,
-    }
-  });
+    },
+  })
 
-  const selectedUnit = watch('unit');
+  const selectedUnit = watch('unit')
 
   const mutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
@@ -109,31 +110,31 @@ export function ProductForm({
         costPrice: data.costPrice || 0,
         salePrice: data.salePrice || 0,
         initialStock: data.initialStock || 0,
-        brand: data.brand || undefined // Enviar undefined se vazio
-      };
-      console.log('Sending data to API:', payload);
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+        brand: data.brand || undefined, // Enviar undefined se vazio
+      }
+      console.log('Sending data to API:', payload)
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
-        return axios.patch(`/api/products/${initialData.id}`, payload, { headers });
+        return axios.patch(`/api/products/${initialData.id}`, payload, { headers })
       } else {
-        return axios.post("/api/products", payload, { headers });
+        return axios.post('/api/products', payload, { headers })
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products", activeBranch?.id] });
-      toast.success(isEditing ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!");
-      reset();
-      onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
+      toast.success(isEditing ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!')
+      reset()
+      onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || `Erro ao ${isEditing ? 'atualizar' : 'criar'} produto`);
+      toast.error(error.response?.data?.message || `Erro ao ${isEditing ? 'atualizar' : 'criar'} produto`)
     
     },
-  });
+  })
 
   const handleFormSubmit = (data: ProductFormData) => {
-    console.log('=== FORM SUBMIT DEBUG ===');
-    console.log('Raw form data:', data);
+    console.log('=== FORM SUBMIT DEBUG ===')
+    console.log('Raw form data:', data)
     console.log('Form values:', {
       name: data.name,
       category: data.category,
@@ -141,15 +142,15 @@ export function ProductForm({
       unit: data.unit,
       costPrice: data.costPrice,
       salePrice: data.salePrice,
-      initialStock: data.initialStock
-    });
+      initialStock: data.initialStock,
+    })
     console.log('Types:', {
       costPrice: typeof data.costPrice,
       salePrice: typeof data.salePrice,
-      initialStock: typeof data.initialStock
-    });
-    mutation.mutate(data);
-  };
+      initialStock: typeof data.initialStock,
+    })
+    mutation.mutate(data)
+  }
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -161,8 +162,8 @@ export function ProductForm({
               value: branch.id,
               label: branch.name,
             }))}
-            value={watch("branchId")}
-            onValueChange={(value) => setValue("branchId", value)}
+            value={watch('branchId')}
+            onValueChange={(value) => setValue('branchId', value)}
             placeholder="Selecione uma filial"
             searchPlaceholder="Pesquisar filial..."
           />
@@ -174,7 +175,7 @@ export function ProductForm({
 
       <div>
         <Label htmlFor="name">Nome do Produto</Label>
-        <Input id="name" {...register("name")} placeholder="Ex: Shampoo Anticaspa" />
+        <Input id="name" {...register('name')} placeholder="Ex: Shampoo Anticaspa" />
         {errors.name && (
           <p className="text-sm text-red-500">{errors.name.message}</p>
         )}
@@ -183,7 +184,7 @@ export function ProductForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="category">Categoria</Label>
-          <Input id="category" {...register("category")} placeholder="Ex: Cabelo, Barba, Pele" />
+          <Input id="category" {...register('category')} placeholder="Ex: Cabelo, Barba, Pele" />
           {errors.category && (
             <p className="text-sm text-red-500">{errors.category.message}</p>
           )}
@@ -191,7 +192,7 @@ export function ProductForm({
         
         <div>
           <Label htmlFor="brand">Marca</Label>
-          <Input id="brand" {...register("brand")} placeholder="Ex: L'Oréal, Pantene" />
+          <Input id="brand" {...register('brand')} placeholder="Ex: L'Oréal, Pantene" />
         </div>
       </div>
       
@@ -216,9 +217,9 @@ export function ProductForm({
             id="initialStock" 
             type="number" 
             min="0"
-            {...register("initialStock", { 
+            {...register('initialStock', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseInt(value, 10) || 0
+              setValueAs: (value) => value === '' ? 0 : parseInt(value, 10) || 0,
             })} 
             placeholder="0" 
           />
@@ -239,9 +240,9 @@ export function ProductForm({
             type="number" 
             step="0.01" 
             min="0"
-            {...register("costPrice", { 
+            {...register('costPrice', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0
+              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
             })} 
             placeholder="0,00" 
           />
@@ -260,9 +261,9 @@ export function ProductForm({
             type="number" 
             step="0.01" 
             min="0"
-            {...register("salePrice", { 
+            {...register('salePrice', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0
+              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
             })} 
             placeholder="0,00" 
           />
@@ -282,8 +283,8 @@ export function ProductForm({
       </div>
       
       <Button type="submit" disabled={mutation.isPending}>
-        {isSubmitting ? "Salvando..." : isEditing ? "Atualizar Produto" : "Criar Produto"}
+        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Produto' : 'Criar Produto'}
       </Button>
     </form>
-  );
+  )
 }

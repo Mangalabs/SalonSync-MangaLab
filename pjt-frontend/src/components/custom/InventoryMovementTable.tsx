@@ -1,15 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Edit, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { StockMovementForm } from './StockMovementForm'
+
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,13 +23,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { StockMovementForm } from "./StockMovementForm";
-import { toast } from "sonner";
+} from '@/components/ui/alert-dialog'
+
+
 
 interface InventoryMovement {
   id: string;
-  type: "IN" | "OUT" | "ADJUSTMENT" | "LOSS";
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
   quantity: number;
   unitCost?: number;
   totalCost?: number;
@@ -43,60 +47,60 @@ interface InventoryMovement {
 }
 
 export function InventoryMovementTable() {
-  const { activeBranch } = useBranch();
-  const queryClient = useQueryClient();
-  const [editingMovement, setEditingMovement] = useState<InventoryMovement | null>(null);
-  const [deletingMovement, setDeletingMovement] = useState<InventoryMovement | null>(null);
+  const { activeBranch } = useBranch()
+  const queryClient = useQueryClient()
+  const [editingMovement, setEditingMovement] = useState<InventoryMovement | null>(null)
+  const [deletingMovement, setDeletingMovement] = useState<InventoryMovement | null>(null)
 
   const deleteMovement = useMutation({
     mutationFn: async (movementId: string) => {
-      await axios.delete(`/api/inventory/movements/${movementId}`);
+      await axios.delete(`/api/inventory/movements/${movementId}`)
     },
     onSuccess: () => {
-      toast.success("Movimentação excluída com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      setDeletingMovement(null);
+      toast.success('Movimentação excluída com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setDeletingMovement(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao excluir movimentação");
+      toast.error(error.response?.data?.message || 'Erro ao excluir movimentação')
     },
-  });
+  })
 
   const { data, isLoading, error } = useQuery<InventoryMovement[]>({
-    queryKey: ["inventory-movements", activeBranch?.id],
+    queryKey: ['inventory-movements', activeBranch?.id],
     queryFn: async () => {
-      console.log('📈 Fetching inventory movements for branch:', activeBranch?.id);
-      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : '';
-      const res = await axios.get(`/api/inventory/movements${params}`);
-      console.log('📈 Inventory movements response:', res.data);
-      return res.data;
+      console.log('📈 Fetching inventory movements for branch:', activeBranch?.id)
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
+      const res = await axios.get(`/api/inventory/movements${params}`)
+      console.log('📈 Inventory movements response:', res.data)
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
-  if (isLoading) return <p className="p-4">Carregando...</p>;
-  if (error) return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>;
-  if (!data?.length) return (
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
+  if (error) {return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>}
+  if (!data?.length) {return (
     <div className="text-center py-8">
       <p className="text-gray-500">Nenhuma movimentação encontrada</p>
     </div>
-  );
+  )}
 
   const getTypeConfig = (type: string) => {
     switch (type) {
-      case "IN":
-        return { label: "Entrada", color: "bg-green-100 text-green-800" };
-      case "OUT":
-        return { label: "Saída", color: "bg-red-100 text-red-800" };
-      case "ADJUSTMENT":
-        return { label: "Ajuste", color: "bg-blue-100 text-blue-800" };
-      case "LOSS":
-        return { label: "Perda", color: "bg-orange-100 text-orange-800" };
+      case 'IN':
+        return { label: 'Entrada', color: 'bg-green-100 text-green-800' }
+      case 'OUT':
+        return { label: 'Saída', color: 'bg-red-100 text-red-800' }
+      case 'ADJUSTMENT':
+        return { label: 'Ajuste', color: 'bg-blue-100 text-blue-800' }
+      case 'LOSS':
+        return { label: 'Perda', color: 'bg-orange-100 text-orange-800' }
       default:
-        return { label: type, color: "bg-gray-100 text-gray-800" };
+        return { label: type, color: 'bg-gray-100 text-gray-800' }
     }
-  };
+  }
 
   return (
     <div>
@@ -119,12 +123,12 @@ export function InventoryMovementTable() {
           </thead>
           <tbody className="divide-y">
             {data?.map((movement) => {
-              const typeConfig = getTypeConfig(movement.type);
+              const typeConfig = getTypeConfig(movement.type)
               
               return (
                 <tr key={movement.id} className="hover:bg-[#F5F5F0]/50">
                   <td className="px-4 py-3 text-sm">
-                    {new Date(movement.createdAt).toLocaleString("pt-BR")}
+                    {new Date(movement.createdAt).toLocaleString('pt-BR')}
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-[#1A1A1A]">{movement.product.name}</div>
@@ -159,10 +163,10 @@ export function InventoryMovementTable() {
                     {movement.reason}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#737373]">
-                    {movement.reference || "-"}
+                    {movement.reference || '-'}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#737373]">
-                    {movement.user?.name || "-"}
+                    {movement.user?.name || '-'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-center gap-2">
@@ -183,7 +187,7 @@ export function InventoryMovementTable() {
                     </div>
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
@@ -192,7 +196,7 @@ export function InventoryMovementTable() {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {data?.map((movement) => {
-          const typeConfig = getTypeConfig(movement.type);
+          const typeConfig = getTypeConfig(movement.type)
           
           return (
             <div key={movement.id} className="bg-white border rounded-lg p-3">
@@ -200,7 +204,7 @@ export function InventoryMovementTable() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-sm text-[#1A1A1A] truncate">{movement.product.name}</h3>
                   <p className="text-xs text-[#737373]">
-                    {new Date(movement.createdAt).toLocaleString("pt-BR")}
+                    {new Date(movement.createdAt).toLocaleString('pt-BR')}
                   </p>
                 </div>
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeConfig.color} ml-2`}>
@@ -260,7 +264,7 @@ export function InventoryMovementTable() {
                 </Button>
               </div>
             </div>
-          );
+          )
         })}
       </div>
       
@@ -300,5 +304,5 @@ export function InventoryMovementTable() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

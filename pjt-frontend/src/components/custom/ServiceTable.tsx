@@ -1,48 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Edit } from 'lucide-react'
+import { useState } from 'react'
+
+import { ServiceForm } from './ServiceForm'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Trash2, Edit } from "lucide-react";
-import { ServiceForm } from "./ServiceForm";
-import { useState } from "react";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { useUser } from "@/contexts/UserContext";
+} from '@/components/ui/dialog'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { useUser } from '@/contexts/UserContext'
 
 export function ServiceTable() {
-  const queryClient = useQueryClient();
-  const [editingService, setEditingService] = useState<any>(null);
-  const { activeBranch } = useBranch();
-  const { isAdmin } = useUser();
+  const queryClient = useQueryClient()
+  const [editingService, setEditingService] = useState<any>(null)
+  const { activeBranch } = useBranch()
+  const { isAdmin } = useUser()
 
   const { data, isLoading } = useQuery({
-    queryKey: ["services", activeBranch?.id],
+    queryKey: ['services', activeBranch?.id],
     queryFn: async () => {
-      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : "";
-      const res = await axios.get(`/api/services${params}`);
-      return res.data;
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
+      const res = await axios.get(`/api/services${params}`)
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const deleteService = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/services/${id}`);
+      await axios.delete(`/api/services/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ['services'] })
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "Erro ao excluir serviço");
+      alert(error.response?.data?.message || 'Erro ao excluir serviço')
     },
-  });
+  })
 
-  if (isLoading) return <p>Carregando serviços...</p>;
-  if (!Array.isArray(data)) return <p>Nenhum serviço encontrado.</p>;
+  if (isLoading) {return <p>Carregando serviços...</p>}
+  if (!Array.isArray(data)) {return <p>Nenhum serviço encontrado.</p>}
 
   return (
     <div>
@@ -112,5 +114,5 @@ export function ServiceTable() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

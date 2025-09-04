@@ -1,9 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, DollarSign, CheckCircle, XCircle } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { toast } from "sonner";
+import { Calendar, Clock, User, DollarSign, CheckCircle, XCircle } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+
 
 interface ScheduledAppointment {
   id: string;
@@ -18,44 +20,44 @@ interface ScheduledAppointment {
 }
 
 export function ScheduledAppointmentCard({ appointment }: { appointment: ScheduledAppointment }) {
-  const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient()
+  const { activeBranch } = useBranch()
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
-      await axios.post(`/api/appointments/${appointment.id}/confirm`);
+      await axios.post(`/api/appointments/${appointment.id}/confirm`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments", activeBranch?.id] });
-      queryClient.invalidateQueries({ queryKey: ["monthly-commission"] });
-      queryClient.invalidateQueries({ queryKey: ["daily-commission"] });
-      queryClient.invalidateQueries({ queryKey: ["professional"] });
-      toast.success("Agendamento confirmado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] })
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['professional'] })
+      toast.success('Agendamento confirmado com sucesso!')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao confirmar agendamento");
+      toast.error(error.response?.data?.message || 'Erro ao confirmar agendamento')
     
     },
-  });
+  })
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
-      await axios.post(`/api/appointments/${appointment.id}/cancel`);
+      await axios.post(`/api/appointments/${appointment.id}/cancel`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments", activeBranch?.id] });
-      toast.success("Agendamento cancelado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] })
+      toast.success('Agendamento cancelado com sucesso!')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao cancelar agendamento");
+      toast.error(error.response?.data?.message || 'Erro ao cancelar agendamento')
     
     },
-  });
+  })
 
-  const appointmentDate = new Date(appointment.scheduledAt);
-  const today = new Date();
-  const isToday = appointmentDate.toDateString() === today.toDateString();
-  const isPast = appointmentDate < today;
+  const appointmentDate = new Date(appointment.scheduledAt)
+  const today = new Date()
+  const isToday = appointmentDate.toDateString() === today.toDateString()
+  const isPast = appointmentDate < today
 
   return (
     <div className={`border rounded-lg shadow-sm ${
@@ -69,10 +71,10 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
           </h3>
           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 ${
             isPast ? 'bg-red-100 text-red-800' : 
-            isToday ? 'bg-blue-100 text-blue-800' : 
-            'bg-gray-100 text-gray-800'
+              isToday ? 'bg-blue-100 text-blue-800' : 
+                'bg-gray-100 text-gray-800'
           }`}>
-            {isPast ? "Atrasado" : isToday ? "Hoje" : "Agendado"}
+            {isPast ? 'Atrasado' : isToday ? 'Hoje' : 'Agendado'}
           </span>
         </div>
       </div>
@@ -136,5 +138,5 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
         </div>
       </div>
     </div>
-  );
+  )
 }

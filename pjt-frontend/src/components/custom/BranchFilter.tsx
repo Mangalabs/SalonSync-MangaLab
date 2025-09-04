@@ -1,5 +1,5 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBranch } from "@/contexts/BranchContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useBranch } from '@/contexts/BranchContext'
 
 interface BranchFilterProps {
   value: string;
@@ -7,9 +7,9 @@ interface BranchFilterProps {
 }
 
 export function BranchFilter({ value, onValueChange }: BranchFilterProps) {
-  const { branches } = useBranch();
+  const { branches } = useBranch()
 
-  if (branches.length <= 1) return null;
+  if (branches.length <= 1) {return null}
 
   return (
     <div className="flex items-center gap-2">
@@ -28,5 +28,5 @@ export function BranchFilter({ value, onValueChange }: BranchFilterProps) {
         </SelectContent>
       </Select>
     </div>
-  );
+  )
 }

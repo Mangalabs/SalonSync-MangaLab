@@ -1,9 +1,10 @@
-import { Controller } from "react-hook-form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Controller } from 'react-hook-form'
+import { Search } from 'lucide-react'
+import { useState, useMemo } from 'react'
+
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface ServiceSelectorProps {
   control: any;
@@ -12,14 +13,14 @@ interface ServiceSelectorProps {
 }
 
 export function ServiceSelector({ control, services, errors }: ServiceSelectorProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('')
   
   const filteredServices = useMemo(() => {
-    if (!searchTerm) return services;
+    if (!searchTerm) {return services}
     return services.filter(service => 
-      service.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [services, searchTerm]);
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [services, searchTerm])
   
   return (
     <div>
@@ -44,7 +45,7 @@ export function ServiceSelector({ control, services, errors }: ServiceSelectorPr
           <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
             {filteredServices.length === 0 ? (
               <p className="text-xs text-gray-500 text-center py-4">
-                {searchTerm ? "Nenhum serviço encontrado" : "Nenhum serviço disponível"}
+                {searchTerm ? 'Nenhum serviço encontrado' : 'Nenhum serviço disponível'}
               </p>
             ) : (
               filteredServices.map((s) => (
@@ -52,9 +53,9 @@ export function ServiceSelector({ control, services, errors }: ServiceSelectorPr
                   <Checkbox
                     checked={field.value.includes(s.id)}
                     onCheckedChange={(checked) => {
-                      const set = new Set(field.value);
-                      checked ? set.add(s.id) : set.delete(s.id);
-                      field.onChange(Array.from(set));
+                      const set = new Set(field.value)
+                      checked ? set.add(s.id) : set.delete(s.id)
+                      field.onChange(Array.from(set))
                     }}
                     className="flex-shrink-0"
                   />
@@ -74,5 +75,5 @@ export function ServiceSelector({ control, services, errors }: ServiceSelectorPr
         <p className="text-xs text-red-500">{errors.serviceIds.message}</p>
       )}
     </div>
-  );
+  )
 }

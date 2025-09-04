@@ -1,22 +1,23 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { Shield, User } from 'lucide-react'
 
-import { Shield, User } from "lucide-react";
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 
 const loginSchema = z.object({
-  email: z.string().email("Informe um e-mail válido"),
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-});
+  email: z.string().email('Informe um e-mail válido'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+})
 
 type LoginData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState('')
 
   const {
     register,
@@ -24,29 +25,29 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
-  });
+  })
 
   const onSubmit = async (data: LoginData) => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + "/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      });
+      })
 
-      const result = await res.json();
+      const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || "Erro ao fazer login");
-        return;
+        setErro(result.message || 'Erro ao fazer login')
+        return
       }
 
-      localStorage.setItem("token", result.token);
-      window.location.href = "/dashboard";
+      localStorage.setItem('token', result.token)
+      window.location.href = '/dashboard'
     } catch (err) {
-      setErro("Erro de conexão com o servidor");
+      setErro('Erro de conexão com o servidor')
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
@@ -60,13 +61,13 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Input placeholder="E-mail" type="email" {...register("email")} />
+              <Input placeholder="E-mail" type="email" {...register('email')} />
               {errors.email && (
                 <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
               )}
             </div>
             <div>
-              <Input placeholder="Senha" type="password" {...register("password")} />
+              <Input placeholder="Senha" type="password" {...register('password')} />
               {errors.password && (
                 <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
               )}
@@ -77,7 +78,7 @@ export function LoginForm() {
               className="w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Entrando..." : "Entrar"}
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
           
@@ -107,5 +108,5 @@ export function LoginForm() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

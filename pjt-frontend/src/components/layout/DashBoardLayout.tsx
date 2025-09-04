@@ -1,26 +1,28 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Outlet } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
-import { FirstTimeSetup } from "@/components/custom/FirstTimeSetup";
-import { SidebarProvider, useSidebar } from "@/contexts/SidebarContext";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { Outlet } from 'react-router-dom'
+import { Menu } from 'lucide-react'
+import { useState } from 'react'
+
+import { Sidebar } from '@/components/layout/Sidebar'
+import { useUser } from '@/contexts/UserContext'
+import { FirstTimeSetup } from '@/components/custom/FirstTimeSetup'
+import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext'
+import { Button } from '@/components/ui/button'
+
 
 function DashboardContent() {
-  const { toggle } = useSidebar();
-  const { user, isAdmin } = useUser();
-  const [showSetup, setShowSetup] = useState(false);
+  const { toggle } = useSidebar()
+  const { user, isAdmin } = useUser()
+  const [showSetup, setShowSetup] = useState(false)
 
   // Verificar se é primeiro acesso (admin sem businessName)
-  const isFirstTime = isAdmin && user && !user.businessName;
+  const isFirstTime = isAdmin && user && !user.businessName
 
   if (isFirstTime && !showSetup) {
-    setShowSetup(true);
+    setShowSetup(true)
   }
 
   if (showSetup) {
-    return <FirstTimeSetup onComplete={() => setShowSetup(false)} />;
+    return <FirstTimeSetup onComplete={() => setShowSetup(false)} />
   }
 
   return (
@@ -45,7 +47,7 @@ function DashboardContent() {
         </div>
       </main>
     </div>
-  );
+  )
 }
 
 export function DashboardLayout() {
@@ -53,5 +55,5 @@ export function DashboardLayout() {
     <SidebarProvider>
       <DashboardContent />
     </SidebarProvider>
-  );
+  )
 }

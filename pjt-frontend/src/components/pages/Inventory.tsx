@@ -1,22 +1,23 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { Package, TrendingUp } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { ProductForm } from "@/components/custom/ProductForm";
-import { ProductTable } from "@/components/custom/ProductTable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InventoryMovementTable } from "@/components/custom/InventoryMovementTable";
-import { StockMovementForm } from "@/components/custom/StockMovementForm";
-import { Package, TrendingUp } from "lucide-react";
+} from '@/components/ui/dialog'
+import { ProductForm } from '@/components/custom/ProductForm'
+import { ProductTable } from '@/components/custom/ProductTable'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { InventoryMovementTable } from '@/components/custom/InventoryMovementTable'
+import { StockMovementForm } from '@/components/custom/StockMovementForm'
 
 export default function Inventory() {
-  const [productOpen, setProductOpen] = useState(false);
-  const [movementOpen, setMovementOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false)
+  const [movementOpen, setMovementOpen] = useState(false)
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -70,5 +71,5 @@ export default function Inventory() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

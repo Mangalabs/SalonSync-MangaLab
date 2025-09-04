@@ -1,29 +1,31 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "@/components/pages/Home";
-import ResetPasswordRequest from "@/components/pages/ResetPasswordRequest";
-import ResetPassword from "@/components/pages/ResetPassword";
-import Dashboard from "@/components/pages/Dashboard";
-import Professionals from "@/components/pages/Professionals";
-import Settings from "@/components/pages/Settings";
-import { PrivateRoute } from "@/lib/PrivateRoute";
-import { DashboardLayout } from "./components/layout/DashBoardLayout";
-import Services from "./components/pages/Services";
-import Clients from "./components/pages/Clients";
-import Scheduling from "./components/pages/Scheduling";
-import Appointments from "./components/pages/Appointments";
-import Treatments from "./components/pages/Treatments";
-import Inventory from "./components/pages/Inventory";
-import CheckoutPage from "./components/pages/CheckoutPage";
-import Register from "./components/pages/Register";
-import Reports from "./pages/Reports";
-import Financial from "./pages/Financial";
-import WhatsApp from "./components/pages/WhatsApp";
-import TestBranch from "./pages/TestBranch";
-import { BranchProvider } from "@/contexts/BranchContext";
-import { UserProvider } from "@/contexts/UserContext";
-import { RoleGuard } from "@/components/auth/RoleGuard";
-import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
-import { Toaster } from "@/components/ui/sonner";
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+import { DashboardLayout } from './components/layout/DashBoardLayout'
+import Services from './components/pages/Services'
+import Clients from './components/pages/Clients'
+import Scheduling from './components/pages/Scheduling'
+import Appointments from './components/pages/Appointments'
+import Treatments from './components/pages/Treatments'
+import Inventory from './components/pages/Inventory'
+import CheckoutPage from './components/pages/CheckoutPage'
+import Register from './components/pages/Register'
+import Reports from './pages/Reports'
+import Financial from './pages/Financial'
+import WhatsApp from './components/pages/WhatsApp'
+import TestBranch from './pages/TestBranch'
+
+import { PrivateRoute } from '@/lib/PrivateRoute'
+import Settings from '@/components/pages/Settings'
+import Professionals from '@/components/pages/Professionals'
+import Dashboard from '@/components/pages/Dashboard'
+import ResetPasswordRequest from '@/components/pages/ResetPasswordRequest'
+import ResetPassword from '@/components/pages/ResetPassword'
+import Home from '@/components/pages/Home'
+import { BranchProvider } from '@/contexts/BranchContext'
+import { UserProvider } from '@/contexts/UserContext'
+import { RoleGuard } from '@/components/auth/RoleGuard'
+import { SubscriptionGuard } from '@/components/auth/SubscriptionGuard'
+import { Toaster } from '@/components/ui/sonner'
 
 export default function App() {
   return (
@@ -59,7 +61,7 @@ export default function App() {
               <Route
                 path="professionals"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN"]}>
+                  <RoleGuard allowedRoles={['ADMIN']}>
                     <SubscriptionGuard>
                       <Professionals />
                     </SubscriptionGuard>
@@ -69,7 +71,7 @@ export default function App() {
               <Route
                 path="services"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <SubscriptionGuard>
                       <Services />
                     </SubscriptionGuard>
@@ -79,7 +81,7 @@ export default function App() {
               <Route
                 path="clients"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <SubscriptionGuard>
                       <Clients />
                     </SubscriptionGuard>
@@ -115,7 +117,7 @@ export default function App() {
               <Route
                 path="inventory"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <SubscriptionGuard>
                       <Inventory />
                     </SubscriptionGuard>
@@ -125,7 +127,7 @@ export default function App() {
               <Route
                 path="reports"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN"]}>
+                  <RoleGuard allowedRoles={['ADMIN']}>
                     <SubscriptionGuard>
                       <Reports />
                     </SubscriptionGuard>
@@ -135,7 +137,7 @@ export default function App() {
               <Route
                 path="financial"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN"]}>
+                  <RoleGuard allowedRoles={['ADMIN']}>
                     <SubscriptionGuard>
                       <Financial />
                     </SubscriptionGuard>
@@ -145,7 +147,7 @@ export default function App() {
               <Route
                 path="whatsapp"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN"]}>
+                  <RoleGuard allowedRoles={['ADMIN']}>
                     <SubscriptionGuard>
                       <WhatsApp />
                     </SubscriptionGuard>
@@ -155,7 +157,7 @@ export default function App() {
               <Route
                 path="settings"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN", "PROFESSIONAL"]}>
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <Settings />
                   </RoleGuard>
                 }
@@ -163,7 +165,7 @@ export default function App() {
               <Route
                 path="test-branch"
                 element={
-                  <RoleGuard allowedRoles={["ADMIN"]}>
+                  <RoleGuard allowedRoles={['ADMIN']}>
                     <SubscriptionGuard>
                       <TestBranch />
                     </SubscriptionGuard>
@@ -178,5 +180,5 @@ export default function App() {
         <Toaster />
       </UserProvider>
     </>
-  );
+  )
 }

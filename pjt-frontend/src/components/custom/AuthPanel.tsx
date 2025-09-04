@@ -1,21 +1,22 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
-import { Shield, User } from "lucide-react";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { Shield, User } from 'lucide-react'
+
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const loginSchema = z.object({
-  email: z.string().email("Informe um e-mail válido"),
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-});
+  email: z.string().email('Informe um e-mail válido'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+})
 
 type LoginData = z.infer<typeof loginSchema>;
 
 export function AuthPanel() {
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState('')
 
   const {
     register,
@@ -23,32 +24,32 @@ export function AuthPanel() {
     formState: { errors, isSubmitting },
   } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
-  });
+  })
 
   const onSubmit = async (data: LoginData) => {
     try {
       const res = await fetch(
-        import.meta.env.VITE_API_URL + "/api/auth/login",
+        import.meta.env.VITE_API_URL + '/api/auth/login',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
-        }
-      );
+        },
+      )
 
-      const result = await res.json();
+      const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || "Erro ao fazer login");
-        return;
+        setErro(result.message || 'Erro ao fazer login')
+        return
       }
 
-      localStorage.setItem("token", result.token);
-      window.location.href = "/dashboard";
+      localStorage.setItem('token', result.token)
+      window.location.href = '/dashboard'
     } catch (err) {
-      setErro("Erro de conexão com o servidor");
+      setErro('Erro de conexão com o servidor')
     }
-  };
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-4 md:space-y-6 px-4 md:px-6">
@@ -72,7 +73,7 @@ export function AuthPanel() {
                 <Input
                   placeholder="E-mail"
                   type="email"
-                  {...register("email")}
+                  {...register('email')}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500 mt-1">
@@ -84,7 +85,7 @@ export function AuthPanel() {
                 <Input
                   placeholder="Senha"
                   type="password"
-                  {...register("password")}
+                  {...register('password')}
                 />
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">
@@ -94,7 +95,7 @@ export function AuthPanel() {
               </div>
               {erro && <p className="text-sm text-red-600">{erro}</p>}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Entrando..." : "Entrar"}
+                {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
           </CardContent>
@@ -133,5 +134,5 @@ export function AuthPanel() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

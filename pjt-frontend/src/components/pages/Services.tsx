@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -7,12 +8,12 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { ServiceForm } from "@/components/custom/ServiceForm";
-import { ServiceTable } from "@/components/custom/ServiceTable";
+} from '@/components/ui/dialog'
+import { ServiceForm } from '@/components/custom/ServiceForm'
+import { ServiceTable } from '@/components/custom/ServiceTable'
 
 export default function Services() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -36,5 +37,5 @@ export default function Services() {
 
       <ServiceTable />
     </div>
-  );
+  )
 }

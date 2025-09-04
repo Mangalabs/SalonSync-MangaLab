@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import type { ReactNode } from "react";
-import axios from "@/lib/axios";
+import { createContext, useContext, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+
+import axios from '@/lib/axios'
 
 interface User {
   id: string;
@@ -22,41 +23,41 @@ interface UserContextType {
   logout: () => void;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token')
     if (token) {
-      fetchUser();
+      fetchUser()
     } else {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get("/api/auth/profile");
-      setUser(res.data);
+      const res = await axios.get('/api/auth/profile')
+      setUser(res.data)
     } catch {
-      localStorage.removeItem("token");
+      localStorage.removeItem('token')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("activeBranchId");
-    setUser(null);
-    window.location.href = "/login";
-  };
+    localStorage.removeItem('token')
+    localStorage.removeItem('activeBranchId')
+    setUser(null)
+    window.location.href = '/login'
+  }
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
-  const isProfessional = user?.role === "PROFESSIONAL";
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
+  const isProfessional = user?.role === 'PROFESSIONAL'
 
   return (
     <UserContext.Provider value={{
@@ -64,17 +65,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAdmin,
       isProfessional,
-      logout
+      logout,
     }}>
       {children}
     </UserContext.Provider>
-  );
+  )
 }
 
 export function useUser() {
-  const context = useContext(UserContext);
+  const context = useContext(UserContext)
   if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider");
+    throw new Error('useUser must be used within a UserProvider')
   }
-  return context;
+  return context
 }

@@ -1,15 +1,8 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { 
   TrendingUp, 
-  DollarSign, 
-  Users, 
-  Calendar,
+  Users,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -20,63 +13,69 @@ import {
   RefreshCw,
   FileText,
   CreditCard,
-  TrendingDown
-} from "lucide-react";
-import { useBranch } from "@/contexts/BranchContext";
-import { PendingExpensesNotification } from "@/components/custom/PendingExpensesNotification";
-import { toast } from "sonner";
-import axios from "@/lib/axios";
+  TrendingDown,
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useBranch } from '@/contexts/BranchContext'
+import { PendingExpensesNotification } from '@/components/custom/PendingExpensesNotification'
+import axios from '@/lib/axios'
 
 export default function AdminDashboard() {
-  const { activeBranch } = useBranch();
-  const queryClient = useQueryClient();
-  const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const { activeBranch } = useBranch()
+  const queryClient = useQueryClient()
+  const [selectedPeriod, setSelectedPeriod] = useState('today')
   
-  const today = new Date().toISOString().split('T')[0];
-  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0]
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
   
   const getDateRange = () => {
     switch (selectedPeriod) {
-      case "today":
-        return { startDate: today, endDate: today };
-      case "week":
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return { startDate: weekAgo.toISOString().split('T')[0], endDate: today };
-      case "month":
-        return { startDate: startOfMonth, endDate: today };
+      case 'today':
+        return { startDate: today, endDate: today }
+      case 'week':
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        return { startDate: weekAgo.toISOString().split('T')[0], endDate: today }
+      case 'month':
+        return { startDate: startOfMonth, endDate: today }
       default:
-        return { startDate: today, endDate: today };
+        return { startDate: today, endDate: today }
     }
-  };
+  }
 
-  const { startDate, endDate } = getDateRange();
+  const { startDate, endDate } = getDateRange()
 
   // Dashboard Summary Data
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ["dashboard-summary", startDate, endDate, activeBranch?.id],
+    queryKey: ['dashboard-summary', startDate, endDate, activeBranch?.id],
     queryFn: async () => {
-      const params = new URLSearchParams({ startDate, endDate });
-      if (activeBranch?.id) params.append("branchId", activeBranch.id);
+      const params = new URLSearchParams({ startDate, endDate })
+      if (activeBranch?.id) {params.append('branchId', activeBranch.id)}
 
       const [financialRes, appointmentsRes, professionalsRes, recurringRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
         axios.get(`/api/appointments?status=COMPLETED&${params}`),
         axios.get(`/api/professionals?${activeBranch?.id ? `branchId=${activeBranch.id}` : ''}`),
-        axios.get(`/api/financial/recurring-expenses/pending`)
-      ]);
+        axios.get('/api/financial/recurring-expenses/pending'),
+      ])
 
       // Calculate commissions for each professional
       const commissionPromises = professionalsRes.data.map(async (prof: any) => {
         try {
-          const res = await axios.get(`/api/professionals/${prof.id}/commission?${params}`);
-          return { ...prof, commission: res.data.summary };
+          const res = await axios.get(`/api/professionals/${prof.id}/commission?${params}`)
+          return { ...prof, commission: res.data.summary }
         } catch {
-          return { ...prof, commission: { totalCommission: 0, totalAppointments: 0, totalRevenue: 0 } };
+          return { ...prof, commission: { totalCommission: 0, totalAppointments: 0, totalRevenue: 0 } }
         }
-      });
+      })
 
-      const professionalsWithCommissions = await Promise.all(commissionPromises);
+      const professionalsWithCommissions = await Promise.all(commissionPromises)
 
       return {
         financial: financialRes.data,
@@ -84,12 +83,12 @@ export default function AdminDashboard() {
         professionals: professionalsWithCommissions,
         pendingExpenses: recurringRes.data,
         totalProfessionals: professionalsRes.data.length,
-        activeProfessionals: professionalsWithCommissions.filter(p => p.commission.totalAppointments > 0).length
-      };
+        activeProfessionals: professionalsWithCommissions.filter(p => p.commission.totalAppointments > 0).length,
+      }
     },
     enabled: !!activeBranch,
     refetchInterval: 300000, // 5 minutes
-  });
+  })
 
   if (isLoading) {
     return (
@@ -111,31 +110,31 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
-    );
+    )
   }
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
-      case "today": return "Hoje";
-      case "week": return "Últimos 7 dias";
-      case "month": return "Este mês";
-      default: return "Hoje";
+      case 'today': return 'Hoje'
+      case 'week': return 'Últimos 7 dias'
+      case 'month': return 'Este mês'
+      default: return 'Hoje'
     }
-  };
+  }
 
   // Calculate metrics
-  const totalRevenue = dashboardData?.financial?.totalIncome || 0;
-  const totalExpenses = dashboardData?.financial?.totalExpenses || 0;
-  const netProfit = totalRevenue - totalExpenses;
-  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  const totalRevenue = dashboardData?.financial?.totalIncome || 0
+  const totalExpenses = dashboardData?.financial?.totalExpenses || 0
+  const netProfit = totalRevenue - totalExpenses
+  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
 
   // Top performing professional
   const topProfessional = dashboardData?.professionals?.length > 0 
     ? dashboardData.professionals.reduce((prev: any, current: any) => 
-        (current.commission.totalRevenue > prev.commission.totalRevenue) ? current : prev
-      )
-    : null;
+      (current.commission.totalRevenue > prev.commission.totalRevenue) ? current : prev,
+    )
+    : null
 
   return (
     <div className="space-y-6">
@@ -188,7 +187,7 @@ export default function AdminDashboard() {
               {formatCurrency(netProfit)}
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={profitMargin >= 20 ? "default" : profitMargin >= 10 ? "secondary" : "destructive"} className="text-xs">
+              <Badge variant={profitMargin >= 20 ? 'default' : profitMargin >= 10 ? 'secondary' : 'destructive'} className="text-xs">
                 {profitMargin.toFixed(1)}% margem
               </Badge>
             </div>
@@ -371,8 +370,8 @@ export default function AdminDashboard() {
               title="Atualizar Dados"
               description="Recarregar informações"
               onClick={() => {
-                queryClient.invalidateQueries();
-                toast.success("Dados atualizados!");
+                queryClient.invalidateQueries()
+                toast.success('Dados atualizados!')
               }}
               className="hover:bg-blue-50 hover:border-blue-200"
             />
@@ -396,15 +395,15 @@ export default function AdminDashboard() {
                   receita: formatCurrency(totalRevenue),
                   despesas: formatCurrency(totalExpenses),
                   lucro: formatCurrency(netProfit),
-                  atendimentos: dashboardData?.appointments?.length || 0
-                };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `relatorio-${today}.json`;
-                a.click();
-                toast.success("Relatório exportado!");
+                  atendimentos: dashboardData?.appointments?.length || 0,
+                }
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `relatorio-${today}.json`
+                a.click()
+                toast.success('Relatório exportado!')
               }}
               className="hover:bg-purple-50 hover:border-purple-200"
             />
@@ -417,9 +416,9 @@ export default function AdminDashboard() {
                 const analysis = {
                   margemLucro: `${profitMargin.toFixed(1)}%`,
                   custoOperacional: `${((totalExpenses/totalRevenue)*100 || 0).toFixed(1)}%`,
-                  recomendacao: profitMargin < 20 ? 'Revisar custos' : 'Margem saudável'
-                };
-                toast.info(`Margem: ${analysis.margemLucro} | ${analysis.recomendacao}`);
+                  recomendacao: profitMargin < 20 ? 'Revisar custos' : 'Margem saudável',
+                }
+                toast.info(`Margem: ${analysis.margemLucro} | ${analysis.recomendacao}`)
               }}
               className="hover:bg-orange-50 hover:border-orange-200"
             />
@@ -427,7 +426,7 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
 function QuickActionButton({ icon, title, description, onClick, className, disabled = false }: {
@@ -449,5 +448,5 @@ function QuickActionButton({ icon, title, description, onClick, className, disab
       <span className="text-sm font-medium">{title}</span>
       <span className="text-xs text-muted-foreground text-center">{description}</span>
     </Button>
-  );
+  )
 }

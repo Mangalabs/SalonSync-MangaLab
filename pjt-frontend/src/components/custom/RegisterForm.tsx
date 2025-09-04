@@ -1,51 +1,52 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, X } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const registerSchema = z
   .object({
-    name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
-    email: z.string().email("Informe um e-mail válido"),
+    name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+    email: z.string().email('Informe um e-mail válido'),
     businessName: z
       .string()
-      .min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
-    city: z.string().min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
+      .min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
+    city: z.string().min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
     country: z
       .string()
-      .min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
-    line1: z.string().min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
+      .min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
+    line1: z.string().min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
     postal_code: z
       .string()
-      .min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
-    state: z.string().min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
+      .min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
+    state: z.string().min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
     branches: z
       .array(
         z.object({
           name: z
             .string()
-            .min(2, "Nome da filial deve ter no mínimo 2 caracteres"),
-        })
+            .min(2, 'Nome da filial deve ter no mínimo 2 caracteres'),
+        }),
       )
-      .min(1, "Deve ter pelo menos uma filial"),
-    password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
+      .min(1, 'Deve ter pelo menos uma filial'),
+    password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "As senhas não coincidem",
-  });
+    path: ['confirmPassword'],
+    message: 'As senhas não coincidem',
+  })
 
 type RegisterData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const navigate = useNavigate();
-  const [erro, setErro] = useState("");
-  const [branches, setBranches] = useState([{ name: "" }]);
+  const navigate = useNavigate()
+  const [erro, setErro] = useState('')
+  const [branches, setBranches] = useState([{ name: '' }])
 
   const {
     register,
@@ -55,31 +56,31 @@ export function RegisterForm() {
   } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      branches: [{ name: "" }],
+      branches: [{ name: '' }],
     },
-  });
+  })
 
   const addBranch = () => {
-    const newBranches = [...branches, { name: "" }];
-    setBranches(newBranches);
-    setValue("branches", newBranches);
-  };
+    const newBranches = [...branches, { name: '' }]
+    setBranches(newBranches)
+    setValue('branches', newBranches)
+  }
 
   const removeBranch = (index: number) => {
     if (branches.length > 1) {
-      const newBranches = branches.filter((_, i) => i !== index);
-      setBranches(newBranches);
-      setValue("branches", newBranches);
+      const newBranches = branches.filter((_, i) => i !== index)
+      setBranches(newBranches)
+      setValue('branches', newBranches)
     }
-  };
+  }
 
   const onSubmit = async (data: RegisterData) => {
     try {
       const res = await fetch(
-        import.meta.env.VITE_API_URL + "/api/auth/create-admin",
+        import.meta.env.VITE_API_URL + '/api/auth/create-admin',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: data.email,
             password: data.password,
@@ -87,22 +88,22 @@ export function RegisterForm() {
             businessName: data.businessName,
             branches: data.branches,
           }),
-        }
-      );
+        },
+      )
 
-      const result = await res.json();
+      const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || "Erro ao registrar");
-        return;
+        setErro(result.message || 'Erro ao registrar')
+        return
       }
 
-      localStorage.setItem("token", result.token);
-      navigate(`/checkout?userId=${result.id}`);
+      localStorage.setItem('token', result.token)
+      navigate(`/checkout?userId=${result.id}`)
     } catch {
-      setErro("Erro de conexão com o servidor");
+      setErro('Erro de conexão com o servidor')
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -131,14 +132,14 @@ export function RegisterForm() {
           <h3 className="font-semibold text-[#2C2C2C]">Dados Pessoais</h3>
 
           <div>
-            <Input placeholder="Seu nome completo" {...register("name")} />
+            <Input placeholder="Seu nome completo" {...register('name')} />
             {errors.name && (
               <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
             )}
           </div>
 
           <div>
-            <Input placeholder="E-mail" type="email" {...register("email")} />
+            <Input placeholder="E-mail" type="email" {...register('email')} />
             {errors.email && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.email.message}
@@ -153,7 +154,7 @@ export function RegisterForm() {
           <div>
             <Input
               placeholder="Nome do seu negócio"
-              {...register("businessName")}
+              {...register('businessName')}
             />
             {errors.businessName && (
               <p className="text-sm text-red-500 mt-1">
@@ -162,13 +163,13 @@ export function RegisterForm() {
             )}
           </div>
           <div>
-            <Input placeholder="Cidade" {...register("city")} />
+            <Input placeholder="Cidade" {...register('city')} />
             {errors.city && (
               <p className="text-sm text-red-500 mt-1">{errors.city.message}</p>
             )}
           </div>
           <div>
-            <Input placeholder="Estado" {...register("state")} />
+            <Input placeholder="Estado" {...register('state')} />
             {errors.state && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.state.message}
@@ -176,7 +177,7 @@ export function RegisterForm() {
             )}
           </div>
           <div>
-            <Input placeholder="Pais" {...register("country")} />
+            <Input placeholder="Pais" {...register('country')} />
             {errors.country && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.country.message}
@@ -184,7 +185,7 @@ export function RegisterForm() {
             )}
           </div>
           <div>
-            <Input placeholder="Endereço" {...register("line1")} />
+            <Input placeholder="Endereço" {...register('line1')} />
             {errors.line1 && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.line1.message}
@@ -192,7 +193,7 @@ export function RegisterForm() {
             )}
           </div>
           <div>
-            <Input placeholder="CEP" {...register("postal_code")} />
+            <Input placeholder="CEP" {...register('postal_code')} />
             {errors.postal_code && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.postal_code.message}
@@ -221,7 +222,7 @@ export function RegisterForm() {
               <div key={index} className="flex gap-2">
                 <div className="flex-1">
                   <Input
-                    placeholder={index === 0 ? "Matriz" : `Filial ${index + 1}`}
+                    placeholder={index === 0 ? 'Matriz' : `Filial ${index + 1}`}
                     {...register(`branches.${index}.name` as const)}
                   />
                   {errors.branches?.[index]?.name && (
@@ -253,7 +254,7 @@ export function RegisterForm() {
             <Input
               placeholder="Senha"
               type="password"
-              {...register("password")}
+              {...register('password')}
             />
             {errors.password && (
               <p className="text-sm text-red-500 mt-1">
@@ -266,7 +267,7 @@ export function RegisterForm() {
             <Input
               placeholder="Confirmar senha"
               type="password"
-              {...register("confirmPassword")}
+              {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
               <p className="text-sm text-red-500 mt-1">
@@ -279,9 +280,9 @@ export function RegisterForm() {
         {erro && <p className="text-sm text-red-600 text-center">{erro}</p>}
 
         <Button type="submit" className="w-full mb-4" disabled={isSubmitting}>
-          {isSubmitting ? "Criando conta..." : "Criar Conta"}
+          {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
         </Button>
       </form>
     </div>
-  );
+  )
 }

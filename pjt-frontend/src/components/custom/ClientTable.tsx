@@ -1,11 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Edit } from 'lucide-react'
+import { useState } from 'react'
+
+import { ClientForm } from './ClientForm'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,13 +20,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Trash2, Edit } from "lucide-react";
-import { ClientForm } from "./ClientForm";
-import { useState } from "react";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { useUser } from "@/contexts/UserContext";
+} from '@/components/ui/alert-dialog'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { useUser } from '@/contexts/UserContext'
 
 interface Client {
   id: string;
@@ -32,39 +34,39 @@ interface Client {
 }
 
 export function ClientTable() {
-  const queryClient = useQueryClient();
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
-  const { activeBranch } = useBranch();
-  const { isAdmin } = useUser();
+  const queryClient = useQueryClient()
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
+  const { activeBranch } = useBranch()
+  const { isAdmin } = useUser()
 
   const { data, isLoading, error } = useQuery<Client[]>({
-    queryKey: ["clients", activeBranch?.id],
+    queryKey: ['clients', activeBranch?.id],
     queryFn: async () => {
-      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : "";
-      const res = await axios.get(`/api/clients${params}`);
-      return res.data;
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
+      const res = await axios.get(`/api/clients${params}`)
+      return res.data
     },
     enabled: !!activeBranch,
-  });
+  })
 
   const deleteClient = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/clients/${id}`);
+      await axios.delete(`/api/clients/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients", activeBranch?.id] });
-      setDeletingClientId(null);
+      queryClient.invalidateQueries({ queryKey: ['clients', activeBranch?.id] })
+      setDeletingClientId(null)
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || "Erro ao excluir cliente");
-      setDeletingClientId(null);
+      alert(error.response?.data?.message || 'Erro ao excluir cliente')
+      setDeletingClientId(null)
     },
-  });
+  })
 
-  if (isLoading) return <p className="p-4">Carregando...</p>;
-  if (error) return <p className="p-4 text-red-500">Erro ao carregar clientes</p>;
-  if (!data?.length) return <p className="p-4 text-gray-500">Nenhum cliente encontrado</p>;
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
+  if (error) {return <p className="p-4 text-red-500">Erro ao carregar clientes</p>}
+  if (!data?.length) {return <p className="p-4 text-gray-500">Nenhum cliente encontrado</p>}
 
   return (
     <div>
@@ -141,5 +143,5 @@ export function ClientTable() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

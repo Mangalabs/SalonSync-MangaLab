@@ -1,10 +1,11 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { DollarSign, Calendar, BarChart3, RefreshCw } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { DollarSign, Calendar, BarChart3, RefreshCw } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useUser } from '@/contexts/UserContext'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
 
 interface ProfessionalCommissionCardProps {
   professionalId?: string;
@@ -13,72 +14,72 @@ interface ProfessionalCommissionCardProps {
 export function ProfessionalCommissionCard({
   professionalId,
 }: ProfessionalCommissionCardProps) {
-  const { user } = useUser();
-  const { activeBranch } = useBranch();
-  const queryClient = useQueryClient();
+  const { user } = useUser()
+  const { activeBranch } = useBranch()
+  const queryClient = useQueryClient()
 
   const { data: professional } = useQuery({
-    queryKey: ["professional", professionalId || user?.id, activeBranch?.id],
+    queryKey: ['professional', professionalId || user?.id, activeBranch?.id],
     queryFn: async () => {
       if (professionalId) {
-        const res = await axios.get(`/api/professionals/${professionalId}`);
-        return res.data;
+        const res = await axios.get(`/api/professionals/${professionalId}`)
+        return res.data
       }
-      const res = await axios.get("/api/professionals");
+      const res = await axios.get('/api/professionals')
       return (
         res.data.find((prof: any) => prof.name === user?.name) || res.data[0]
-      );
+      )
     },
-    enabled: !!(professionalId || (user && user.role === "PROFESSIONAL")),
-  });
+    enabled: !!(professionalId || (user && user.role === 'PROFESSIONAL')),
+  })
 
   const { data: monthlyCommission } = useQuery({
-    queryKey: ["monthly-commission", professional?.id, activeBranch?.id],
+    queryKey: ['monthly-commission', professional?.id, activeBranch?.id],
     queryFn: async () => {
-      const now = new Date();
+      const now = new Date()
       const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
         .toISOString()
-        .split("T")[0];
+        .split('T')[0]
       const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
         .toISOString()
-        .split("T")[0];
+        .split('T')[0]
 
       const res = await axios.get(
-        `/api/professionals/${professional.id}/commission?startDate=${startDate}&endDate=${endDate}`
-      );
-      return res.data;
+        `/api/professionals/${professional.id}/commission?startDate=${startDate}&endDate=${endDate}`,
+      )
+      return res.data
     },
     enabled: !!professional,
     staleTime: 0,
     gcTime: 0, // Don't cache at all
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-  });
+  })
 
   const { data: dailyCommission } = useQuery({
-    queryKey: ["daily-commission", professional?.id, activeBranch?.id],
+    queryKey: ['daily-commission', professional?.id, activeBranch?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split('T')[0]
 
       const res = await axios.get(
-        `/api/professionals/${professional.id}/commission?startDate=${today}&endDate=${today}`
-      );
-      return res.data;
+        `/api/professionals/${professional.id}/commission?startDate=${today}&endDate=${today}`,
+      )
+      return res.data
     },
     enabled: !!professional,
     staleTime: 0,
     gcTime: 0, // Don't cache at all
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-  });
+  })
 
   const handleRefresh = () => {
     if (professional) {
-      queryClient.invalidateQueries({ queryKey: ["monthly-commission", professional.id] });
-      queryClient.invalidateQueries({ queryKey: ["daily-commission", professional.id] });
-      queryClient.invalidateQueries({ queryKey: ["professional", professional.id] });
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission', professional.id] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission', professional.id] })
+      queryClient.invalidateQueries({ queryKey: ['professional', professional.id] })
     }
-  };
+  }
 
   if (!professional) {
     return (
@@ -87,7 +88,7 @@ export function ProfessionalCommissionCard({
           <p className="text-[#737373]">Carregando dados...</p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -114,9 +115,9 @@ export function ProfessionalCommissionCard({
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
-              R${" "}
+              R${' '}
               {monthlyCommission?.summary?.totalCommission?.toFixed(2) ||
-                "0,00"}
+                '0,00'}
             </div>
             <p className="text-xs text-[#737373]">
               {monthlyCommission?.summary?.totalAppointments || 0} atendimentos
@@ -126,9 +127,9 @@ export function ProfessionalCommissionCard({
               <div className="flex justify-between">
                 <span className="text-[#737373]">Receita gerada:</span>
                 <span>
-                  R${" "}
+                  R${' '}
                   {monthlyCommission?.summary?.totalRevenue?.toFixed(2) ||
-                    "0,00"}
+                    '0,00'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -148,8 +149,8 @@ export function ProfessionalCommissionCard({
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
-              R${" "}
-              {dailyCommission?.summary?.totalCommission?.toFixed(2) || "0,00"}
+              R${' '}
+              {dailyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
             </div>
             <p className="text-xs text-[#737373]">
               {dailyCommission?.summary?.totalAppointments || 0} atendimentos
@@ -159,20 +160,20 @@ export function ProfessionalCommissionCard({
               <div className="flex justify-between">
                 <span className="text-[#737373]">Receita gerada:</span>
                 <span>
-                  R${" "}
-                  {dailyCommission?.summary?.totalRevenue?.toFixed(2) || "0,00"}
+                  R${' '}
+                  {dailyCommission?.summary?.totalRevenue?.toFixed(2) || '0,00'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#737373]">Média/atendimento:</span>
                 <span>
-                  R${" "}
+                  R${' '}
                   {dailyCommission?.summary?.totalAppointments > 0
                     ? (
-                        dailyCommission.summary.totalRevenue /
+                      dailyCommission.summary.totalRevenue /
                         dailyCommission.summary.totalAppointments
-                      ).toFixed(2)
-                    : "0,00"}
+                    ).toFixed(2)
+                    : '0,00'}
                 </span>
               </div>
             </div>
@@ -190,18 +191,18 @@ export function ProfessionalCommissionCard({
         <CardContent>
           <div className="space-y-3">
             {monthlyCommission?.dailyCommissions?.slice(-7).map((day: any) => {
-              const date = new Date(day.date);
-              const dayName = date.toLocaleDateString("pt-BR", {
-                weekday: "short",
-              });
-              const dayNumber = date.getDate();
+              const date = new Date(day.date)
+              const dayName = date.toLocaleDateString('pt-BR', {
+                weekday: 'short',
+              })
+              const dayNumber = date.getDate()
               const maxCommission = Math.max(
                 ...(monthlyCommission?.dailyCommissions || []).map(
-                  (d: any) => d.commission
-                )
-              );
+                  (d: any) => d.commission,
+                ),
+              )
               const percentage =
-                maxCommission > 0 ? (day.commission / maxCommission) * 100 : 0;
+                maxCommission > 0 ? (day.commission / maxCommission) * 100 : 0
 
               return (
                 <div
@@ -228,7 +229,7 @@ export function ProfessionalCommissionCard({
                     </div>
                   </div>
                 </div>
-              );
+              )
             }) || (
               <p className="text-[#737373] text-center py-4">
                 Nenhum dado disponível
@@ -238,5 +239,5 @@ export function ProfessionalCommissionCard({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

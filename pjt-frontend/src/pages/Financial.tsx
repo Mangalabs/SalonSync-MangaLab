@@ -1,57 +1,55 @@
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import {
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+} from 'lucide-react'
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  PiggyBank,
-  ChevronDown,
-} from "lucide-react";
-import { TransactionForm } from "@/components/custom/TransactionForm";
-import { RecurringExpenseForm } from "@/components/custom/RecurringExpenseForm";
-import { RecurringExpensesTabContent } from "@/components/custom/RecurringExpensesTabContent";
-import { FinancialSummary } from "@/components/custom/FinancialSummary";
-import { FinancialTabContent } from "@/components/custom/FinancialTabContent";
-import { FinancialProvider } from "@/contexts/FinancialContext";
+} from '@/components/ui/select'
+import { TransactionForm } from '@/components/custom/TransactionForm'
+import { RecurringExpenseForm } from '@/components/custom/RecurringExpenseForm'
+import { RecurringExpensesTabContent } from '@/components/custom/RecurringExpensesTabContent'
+import { FinancialSummary } from '@/components/custom/FinancialSummary'
+import { FinancialTabContent } from '@/components/custom/FinancialTabContent'
+import { FinancialProvider } from '@/contexts/FinancialContext'
 
 export default function Financial() {
-  const [activeTab, setActiveTab] = useState("summary");
-  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
-  const [recurringExpenseDialogOpen, setRecurringExpenseDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('summary')
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false)
+  const [recurringExpenseDialogOpen, setRecurringExpenseDialogOpen] = useState(false)
   const [transactionType, setTransactionType] = useState<
-    "INCOME" | "EXPENSE" | "INVESTMENT"
-  >("EXPENSE");
+    'INCOME' | 'EXPENSE' | 'INVESTMENT'
+  >('EXPENSE')
 
-  const handleNewTransaction = (type: "INCOME" | "EXPENSE" | "INVESTMENT") => {
-    setTransactionType(type);
-    setTransactionDialogOpen(true);
-  };
+  const handleNewTransaction = (type: 'INCOME' | 'EXPENSE' | 'INVESTMENT') => {
+    setTransactionType(type)
+    setTransactionDialogOpen(true)
+  }
 
   const getTabLabel = (tab: string) => {
     const labels = {
-      summary: "Resumo",
-      income: "Receitas",
-      expenses: "Despesas",
-      investments: "Investimentos",
-    };
-    return labels[tab as keyof typeof labels] || tab;
-  };
+      summary: 'Resumo',
+      income: 'Receitas',
+      expenses: 'Despesas',
+      investments: 'Investimentos',
+    }
+    return labels[tab as keyof typeof labels] || tab
+  }
 
   return (
     <FinancialProvider>
@@ -95,7 +93,7 @@ export default function Financial() {
                 Receitas
               </h2>
               <Button
-                onClick={() => handleNewTransaction("INCOME")}
+                onClick={() => handleNewTransaction('INCOME')}
                 className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A] w-full sm:w-auto text-sm h-8"
               >
                 <span className="hidden sm:inline">+ Nova Receita</span>
@@ -112,7 +110,7 @@ export default function Financial() {
                 Despesas
               </h2>
               <Button
-                onClick={() => handleNewTransaction("EXPENSE")}
+                onClick={() => handleNewTransaction('EXPENSE')}
                 className="bg-red-600 hover:bg-red-700 w-full sm:w-auto text-sm h-8"
               >
                 <span className="hidden sm:inline">+ Nova Despesa</span>
@@ -155,7 +153,7 @@ export default function Financial() {
                 Investimentos
               </h2>
               <Button
-                onClick={() => handleNewTransaction("INVESTMENT")}
+                onClick={() => handleNewTransaction('INVESTMENT')}
                 className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm h-8"
               >
                 <span className="hidden sm:inline">+ Novo Investimento</span>
@@ -173,12 +171,12 @@ export default function Financial() {
           <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                Nova{" "}
-                {transactionType === "INCOME"
-                  ? "Receita"
-                  : transactionType === "EXPENSE"
-                  ? "Despesa"
-                  : "Investimento"}
+                Nova{' '}
+                {transactionType === 'INCOME'
+                  ? 'Receita'
+                  : transactionType === 'EXPENSE'
+                    ? 'Despesa'
+                    : 'Investimento'}
               </DialogTitle>
             </DialogHeader>
             <TransactionForm
@@ -189,5 +187,5 @@ export default function Financial() {
         </Dialog>
       </div>
     </FinancialProvider>
-  );
+  )
 }

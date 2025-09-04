@@ -1,7 +1,8 @@
-import { Controller } from "react-hook-form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Controller } from 'react-hook-form'
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 interface SchedulingFieldsProps {
   control: any;
@@ -16,7 +17,7 @@ export function SchedulingFields({
   errors, 
   availableSlots, 
   selectedProfessional, 
-  selectedDate 
+  selectedDate, 
 }: SchedulingFieldsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -59,7 +60,7 @@ export function SchedulingFields({
                   ))
                 ) : (
                   <div className="px-2 py-1.5 text-xs text-[#737373]">
-                    {selectedProfessional && selectedDate ? "Nenhum horário disponível" : "Selecione profissional e data"}
+                    {selectedProfessional && selectedDate ? 'Nenhum horário disponível' : 'Selecione profissional e data'}
                   </div>
                 )}
               </SelectContent>
@@ -71,5 +72,5 @@ export function SchedulingFields({
         )}
       </div>
     </div>
-  );
+  )
 }

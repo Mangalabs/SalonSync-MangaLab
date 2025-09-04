@@ -1,15 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Calendar,
   DollarSign,
@@ -17,105 +7,116 @@ import {
   TrendingUp,
   TrendingDown,
   PiggyBank,
-} from "lucide-react";
-import axios from "@/lib/axios";
+} from 'lucide-react'
 
-type PeriodType = "today" | "week" | "month" | "year";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import axios from '@/lib/axios'
+
+type PeriodType = 'today' | 'week' | 'month' | 'year';
 
 export default function Reports() {
-  const [selectedProfessional, setSelectedProfessional] = useState<string>("");
-  const [periodType, setPeriodType] = useState<PeriodType>("month");
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('')
+  const [periodType, setPeriodType] = useState<PeriodType>('month')
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    new Date().toISOString().slice(0, 7)
-  );
+    new Date().toISOString().slice(0, 7),
+  )
   const [selectedYear, setSelectedYear] = useState<string>(
-    new Date().getFullYear().toString()
-  );
+    new Date().getFullYear().toString(),
+  )
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals"],
+    queryKey: ['professionals'],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data;
+      const res = await axios.get('/api/professionals')
+      return res.data
     },
-  });
+  })
 
   const getDateRange = () => {
-    const now = new Date();
-    let startDate: string, endDate: string;
+    const now = new Date()
+    let startDate: string, endDate: string
 
     switch (periodType) {
-      case "today":
-        startDate = endDate = now.toISOString().split("T")[0];
-        break;
-      case "week":
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        startDate = weekStart.toISOString().split("T")[0];
-        endDate = weekEnd.toISOString().split("T")[0];
-        break;
-      case "month":
-        const [year, month] = selectedMonth.split("-");
-        startDate = `${year}-${month}-01`;
-        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-        endDate = `${year}-${month}-${lastDay.toString().padStart(2, "0")}`;
-        break;
-      case "year":
-        startDate = `${selectedYear}-01-01`;
-        endDate = `${selectedYear}-12-31`;
-        break;
+      case 'today':
+        startDate = endDate = now.toISOString().split('T')[0]
+        break
+      case 'week':
+        const weekStart = new Date(now)
+        weekStart.setDate(now.getDate() - now.getDay())
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        startDate = weekStart.toISOString().split('T')[0]
+        endDate = weekEnd.toISOString().split('T')[0]
+        break
+      case 'month':
+        const [year, month] = selectedMonth.split('-')
+        startDate = `${year}-${month}-01`
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
+        endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`
+        break
+      case 'year':
+        startDate = `${selectedYear}-01-01`
+        endDate = `${selectedYear}-12-31`
+        break
       default:
-        startDate = endDate = now.toISOString().split("T")[0];
+        startDate = endDate = now.toISOString().split('T')[0]
     }
 
-    return { startDate, endDate };
-  };
+    return { startDate, endDate }
+  }
 
   const { data: commissionData, refetch: refetchCommission } = useQuery({
     queryKey: [
-      "commission",
+      'commission',
       selectedProfessional,
       periodType,
       selectedMonth,
       selectedYear,
     ],
     queryFn: async () => {
-      if (!selectedProfessional) return null;
+      if (!selectedProfessional) {return null}
 
-      const { startDate, endDate } = getDateRange();
-      const params = new URLSearchParams();
-      params.append("startDate", startDate);
-      params.append("endDate", endDate);
+      const { startDate, endDate } = getDateRange()
+      const params = new URLSearchParams()
+      params.append('startDate', startDate)
+      params.append('endDate', endDate)
 
       const res = await axios.get(
-        `/api/professionals/${selectedProfessional}/commission?${params}`
-      );
-      return res.data;
+        `/api/professionals/${selectedProfessional}/commission?${params}`,
+      )
+      return res.data
     },
     enabled: !!selectedProfessional,
-  });
+  })
 
   const { data: financialData, refetch: refetchFinancial } = useQuery({
-    queryKey: ["financial-report", periodType, selectedMonth, selectedYear],
+    queryKey: ['financial-report', periodType, selectedMonth, selectedYear],
     queryFn: async () => {
-      const { startDate, endDate } = getDateRange();
-      const params = new URLSearchParams();
-      params.append("startDate", startDate);
-      params.append("endDate", endDate);
+      const { startDate, endDate } = getDateRange()
+      const params = new URLSearchParams()
+      params.append('startDate', startDate)
+      params.append('endDate', endDate)
 
-      const res = await axios.get(`/api/financial/summary?${params}`);
-      return res.data;
+      const res = await axios.get(`/api/financial/summary?${params}`)
+      return res.data
     },
-  });
+  })
 
   const handleGenerateReport = () => {
     if (selectedProfessional) {
-      refetchCommission();
+      refetchCommission()
     }
-    refetchFinancial();
-  };
+    refetchFinancial()
+  }
 
   return (
     <div className="space-y-6">
@@ -169,7 +170,7 @@ export default function Reports() {
               </Select>
             </div>
 
-            {periodType === "month" && (
+            {periodType === 'month' && (
               <div>
                 <Label htmlFor="month">Mês/Ano</Label>
                 <input
@@ -182,7 +183,7 @@ export default function Reports() {
               </div>
             )}
 
-            {periodType === "year" && (
+            {periodType === 'year' && (
               <div>
                 <Label htmlFor="year">Ano</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -191,12 +192,12 @@ export default function Reports() {
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - i;
+                      const year = new Date().getFullYear() - i
                       return (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
                         </SelectItem>
-                      );
+                      )
                     })}
                   </SelectContent>
                 </Select>
@@ -228,32 +229,32 @@ export default function Reports() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Relatório{" "}
-                  {periodType === "today"
-                    ? "Diário"
-                    : periodType === "week"
-                    ? "Semanal"
-                    : periodType === "month"
-                    ? "Mensal"
-                    : "Anual"}
+                  Relatório{' '}
+                  {periodType === 'today'
+                    ? 'Diário'
+                    : periodType === 'week'
+                      ? 'Semanal'
+                      : periodType === 'month'
+                        ? 'Mensal'
+                        : 'Anual'}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Período:{" "}
-                  {periodType === "month"
-                    ? new Date(selectedMonth + "-01").toLocaleDateString(
-                        "pt-BR",
-                        { month: "long", year: "numeric" }
-                      )
-                    : periodType === "year"
-                    ? selectedYear
-                    : periodType === "today"
-                    ? "Hoje"
-                    : "Esta Semana"}
+                  Período:{' '}
+                  {periodType === 'month'
+                    ? new Date(selectedMonth + '-01').toLocaleDateString(
+                      'pt-BR',
+                      { month: 'long', year: 'numeric' },
+                    )
+                    : periodType === 'year'
+                      ? selectedYear
+                      : periodType === 'today'
+                        ? 'Hoje'
+                        : 'Esta Semana'}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">
-                  Gerado em: {new Date().toLocaleDateString("pt-BR")}
+                  Gerado em: {new Date().toLocaleDateString('pt-BR')}
                 </p>
                 {selectedProfessional && commissionData && (
                   <p className="text-sm font-medium text-gray-700">
@@ -277,11 +278,11 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-[#D4AF37]">
-                  R$ {financialData.totalIncome?.toFixed(2) || "0,00"}
+                  R$ {financialData.totalIncome?.toFixed(2) || '0,00'}
                 </div>
                 <p className="text-xs text-[#737373]">
-                  Atendimentos: R${" "}
-                  {financialData.appointmentRevenue?.toFixed(2) || "0,00"}
+                  Atendimentos: R${' '}
+                  {financialData.appointmentRevenue?.toFixed(2) || '0,00'}
                 </p>
               </CardContent>
             </Card>
@@ -293,7 +294,7 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  R$ {financialData.totalExpenses?.toFixed(2) || "0,00"}
+                  R$ {financialData.totalExpenses?.toFixed(2) || '0,00'}
                 </div>
                 <p className="text-xs text-[#737373]">Gastos operacionais</p>
               </CardContent>
@@ -308,7 +309,7 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  R$ {financialData.totalInvestments?.toFixed(2) || "0,00"}
+                  R$ {financialData.totalInvestments?.toFixed(2) || '0,00'}
                 </div>
                 <p className="text-xs text-[#737373]">
                   Melhorias e equipamentos
@@ -324,8 +325,8 @@ export default function Reports() {
                 <DollarSign
                   className={`h-4 w-4 ${
                     (financialData.netProfit || 0) >= 0
-                      ? "text-[#D4AF37]"
-                      : "text-red-600"
+                      ? 'text-[#D4AF37]'
+                      : 'text-red-600'
                   }`}
                 />
               </CardHeader>
@@ -333,11 +334,11 @@ export default function Reports() {
                 <div
                   className={`text-2xl font-bold ${
                     (financialData.netProfit || 0) >= 0
-                      ? "text-[#D4AF37]"
-                      : "text-red-600"
+                      ? 'text-[#D4AF37]'
+                      : 'text-red-600'
                   }`}
                 >
-                  R$ {financialData.netProfit?.toFixed(2) || "0,00"}
+                  R$ {financialData.netProfit?.toFixed(2) || '0,00'}
                 </div>
                 <p className="text-xs text-[#737373]">
                   Receitas - Despesas - Investimentos
@@ -422,17 +423,17 @@ export default function Reports() {
                     <span
                       className={`font-medium ${
                         (financialData.netProfit || 0) >= 0
-                          ? "text-[#D4AF37]"
-                          : "text-red-600"
+                          ? 'text-[#D4AF37]'
+                          : 'text-red-600'
                       }`}
                     >
                       {financialData.totalIncome
                         ? (
-                            (financialData.netProfit /
+                          (financialData.netProfit /
                               financialData.totalIncome) *
                             100
-                          ).toFixed(1)
-                        : "0"}
+                        ).toFixed(1)
+                        : '0'}
                       %
                     </span>
                   </div>
@@ -442,11 +443,11 @@ export default function Reports() {
                     <span className="font-medium">
                       {financialData.totalIncome && financialData.totalExpenses
                         ? (
-                            (financialData.totalIncome /
+                          (financialData.totalIncome /
                               financialData.totalExpenses) *
                             100
-                          ).toFixed(0)
-                        : "0"}
+                        ).toFixed(0)
+                        : '0'}
                       %
                     </span>
                   </div>
@@ -457,11 +458,11 @@ export default function Reports() {
                       {financialData.totalInvestments &&
                       financialData.totalInvestments > 0
                         ? (
-                            (financialData.netProfit /
+                          (financialData.netProfit /
                               financialData.totalInvestments) *
                             100
-                          ).toFixed(1)
-                        : "0"}
+                        ).toFixed(1)
+                        : '0'}
                       %
                     </span>
                   </div>
@@ -483,11 +484,11 @@ export default function Reports() {
                     <span className="font-medium">
                       {financialData.appointmentRevenue
                         ? (
-                            (commissionData.summary.totalCommission /
+                          (commissionData.summary.totalCommission /
                               financialData.appointmentRevenue) *
                             100
-                          ).toFixed(1)
-                        : "0"}
+                        ).toFixed(1)
+                        : '0'}
                       %
                     </span>
                   </div>
@@ -495,13 +496,13 @@ export default function Reports() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Receita por Atendimento</span>
                     <span className="font-medium">
-                      R${" "}
+                      R${' '}
                       {commissionData.summary.totalAppointments > 0
                         ? (
-                            commissionData.summary.totalRevenue /
+                          commissionData.summary.totalRevenue /
                             commissionData.summary.totalAppointments
-                          ).toFixed(2)
-                        : "0,00"}
+                        ).toFixed(2)
+                        : '0,00'}
                     </span>
                   </div>
                 </div>
@@ -528,7 +529,7 @@ export default function Reports() {
                 >
                   <div>
                     <div className="font-medium">
-                      {new Date(day.date).toLocaleDateString("pt-BR")}
+                      {new Date(day.date).toLocaleDateString('pt-BR')}
                     </div>
                     <div className="text-sm text-[#737373]">
                       {day.appointments} atendimento(s)
@@ -549,5 +550,5 @@ export default function Reports() {
         </Card>
       )}
     </div>
-  );
+  )
 }

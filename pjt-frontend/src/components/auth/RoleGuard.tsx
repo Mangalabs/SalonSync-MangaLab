@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
-import { useUser } from "@/contexts/UserContext";
-import { Navigate } from "react-router-dom";
+import type { ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
+
+import { useUser } from '@/contexts/UserContext'
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -9,19 +10,19 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) {
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useUser()
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
-  if (!allowedRoles.includes(user.role) && user.role !== "SUPERADMIN") {
+  if (!allowedRoles.includes(user.role) && user.role !== 'SUPERADMIN') {
     if (fallback) {
-      return <>{fallback}</>;
+      return <>{fallback}</>
     }
     return (
       <div className="flex items-center justify-center h-64">
@@ -30,8 +31,8 @@ export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) 
           <p className="text-gray-500 mt-2">Você não tem permissão para acessar esta página.</p>
         </div>
       </div>
-    );
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

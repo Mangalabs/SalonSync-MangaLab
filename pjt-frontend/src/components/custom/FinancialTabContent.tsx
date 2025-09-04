@@ -1,108 +1,107 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, CreditCard, User, Scissors, Filter, ChevronDown, ChevronUp } from "lucide-react";
-import { useFinancial } from "@/contexts/FinancialContext";
-import axios from "@/lib/axios";
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Filter, ChevronDown, ChevronUp } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useFinancial } from '@/contexts/FinancialContext'
+import axios from '@/lib/axios'
 
 interface FinancialTabContentProps {
-  type: "INCOME" | "EXPENSE" | "INVESTMENT";
+  type: 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 }
 
 export function FinancialTabContent({ type }: FinancialTabContentProps) {
-  const { startDate, endDate, branchFilter } = useFinancial();
-  const [showFilters, setShowFilters] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const { startDate, endDate, branchFilter } = useFinancial()
+  const [showFilters, setShowFilters] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { data: summary, isLoading, error } = useQuery({
-    queryKey: ["financial-tab-data", type, startDate, endDate, branchFilter],
+    queryKey: ['financial-tab-data', type, startDate, endDate, branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      params.append("branchId", branchFilter); // Sempre passar branchFilter, mesmo se for "all"
+      const params = new URLSearchParams()
+      if (startDate) {params.append('startDate', startDate)}
+      if (endDate) {params.append('endDate', endDate)}
+      params.append('branchId', branchFilter) // Sempre passar branchFilter, mesmo se for "all"
 
       const [summaryRes, transactionsRes, appointmentsRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
         axios.get(`/api/financial/transactions?type=${type}&${params}`),
-        type === "INCOME"
+        type === 'INCOME'
           ? axios.get(`/api/appointments?status=COMPLETED&${params}`)
           : Promise.resolve({ data: [] }),
-      ]);
+      ])
 
       return {
         summary: summaryRes.data,
         transactions: transactionsRes.data,
         appointments: appointmentsRes.data,
-      };
+      }
     },
-  });
+  })
 
   // Memoizar cálculos complexos
   const calculations = useMemo(() => {
-    if (!summary) return { totalFromTransactions: 0, totalFromAppointments: 0, stockRevenue: 0, stockExpenses: 0, grandTotal: 0, categorySummary: {}, categories: [], paymentMethods: [] };
+    if (!summary) {return { totalFromTransactions: 0, totalFromAppointments: 0, stockRevenue: 0, stockExpenses: 0, grandTotal: 0, categorySummary: {}, categories: [], paymentMethods: [] }}
     
-    const totalFromTransactions = summary.transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
-    const totalFromAppointments = type === "INCOME" ? summary.appointments?.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) || 0 : 0;
-    const stockRevenue = type === "INCOME" ? summary.summary?.stockRevenue || 0 : 0;
-    const stockExpenses = type === "EXPENSE" ? summary.summary?.stockLosses || 0 : type === "INVESTMENT" ? summary.summary?.stockExpenses || 0 : 0;
-    const grandTotal = totalFromTransactions + totalFromAppointments + stockRevenue + stockExpenses;
+    const totalFromTransactions = summary.transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0
+    const totalFromAppointments = type === 'INCOME' ? summary.appointments?.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) || 0 : 0
+    const stockRevenue = type === 'INCOME' ? summary.summary?.stockRevenue || 0 : 0
+    const stockExpenses = type === 'EXPENSE' ? summary.summary?.stockLosses || 0 : type === 'INVESTMENT' ? summary.summary?.stockExpenses || 0 : 0
+    const grandTotal = totalFromTransactions + totalFromAppointments + stockRevenue + stockExpenses
 
     const categorySummary = summary.transactions?.reduce((acc: any, t: any) => {
-      const categoryName = t.category.name;
+      const categoryName = t.category.name
       if (!acc[categoryName]) {
-        acc[categoryName] = { total: 0, count: 0, color: t.category.color };
+        acc[categoryName] = { total: 0, count: 0, color: t.category.color }
       }
-      acc[categoryName].total += Number(t.amount);
-      acc[categoryName].count += 1;
-      return acc;
-    }, {}) || {};
+      acc[categoryName].total += Number(t.amount)
+      acc[categoryName].count += 1
+      return acc
+    }, {}) || {}
 
-    const categories = [...new Set(summary.transactions?.map((t: any) => t.category.name) || [])];
-    const paymentMethods = [...new Set(summary.transactions?.map((t: any) => t.paymentMethod) || [])];
+    const categories = [...new Set(summary.transactions?.map((t: any) => t.category.name) || [])]
+    const paymentMethods = [...new Set(summary.transactions?.map((t: any) => t.paymentMethod) || [])]
 
-    return { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods };
-  }, [summary, type]);
+    return { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods }
+  }, [summary, type])
 
   // Memoizar transações filtradas
-  const filteredTransactions = useMemo(() => {
-    return summary?.transactions?.filter((t: any) => {
-      const matchesCategory = categoryFilter === "all" || t.category.name === categoryFilter;
-      const matchesPayment = paymentMethodFilter === "all" || t.paymentMethod === paymentMethodFilter;
-      const matchesSearch = searchTerm === "" || t.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesPayment && matchesSearch;
-    }) || [];
-  }, [summary?.transactions, categoryFilter, paymentMethodFilter, searchTerm]);
+  const filteredTransactions = useMemo(() => summary?.transactions?.filter((t: any) => {
+    const matchesCategory = categoryFilter === 'all' || t.category.name === categoryFilter
+    const matchesPayment = paymentMethodFilter === 'all' || t.paymentMethod === paymentMethodFilter
+    const matchesSearch = searchTerm === '' || t.description.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesCategory && matchesPayment && matchesSearch
+  }) || [], [summary?.transactions, categoryFilter, paymentMethodFilter, searchTerm])
 
-  if (isLoading) return <div className="p-4">Carregando...</div>;
-  if (error) return <div className="p-4 text-red-600">Erro ao carregar dados financeiros</div>;
+  if (isLoading) {return <div className="p-4">Carregando...</div>}
+  if (error) {return <div className="p-4 text-red-600">Erro ao carregar dados financeiros</div>}
 
-  const { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods } = calculations;
+  const { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods } = calculations
 
   const getTypeColor = () => {
     switch (type) {
-      case "INCOME": return "text-green-600";
-      case "EXPENSE": return "text-red-600";
-      case "INVESTMENT": return "text-blue-600";
+      case 'INCOME': return 'text-green-600'
+      case 'EXPENSE': return 'text-red-600'
+      case 'INVESTMENT': return 'text-blue-600'
     }
-  };
+  }
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      CASH: "Dinheiro", CARD: "Cartão", PIX: "PIX",
-      TRANSFER: "Transferência", OTHER: "Outros",
-    };
-    return labels[method as keyof typeof labels] || method;
-  };
+      CASH: 'Dinheiro', CARD: 'Cartão', PIX: 'PIX',
+      TRANSFER: 'Transferência', OTHER: 'Outros',
+    }
+    return labels[method as keyof typeof labels] || method
+  }
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
 
   return (
     <div className="space-y-6">
@@ -115,20 +114,20 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           <CardContent>
             <div className={`text-2xl font-bold ${getTypeColor()}`}>
               {formatCurrency(
-                type === "INCOME" ? summary?.summary?.totalIncome || 0 :
-                type === "EXPENSE" ? summary?.summary?.totalExpenses || 0 :
-                summary?.summary?.totalInvestments || 0
+                type === 'INCOME' ? summary?.summary?.totalIncome || 0 :
+                  type === 'EXPENSE' ? summary?.summary?.totalExpenses || 0 :
+                    summary?.summary?.totalInvestments || 0,
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {(() => {
                 try {
-                  const start = new Date(startDate + 'T00:00:00');
-                  const end = new Date(endDate + 'T00:00:00');
-                  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Período inválido';
-                  return `${start.toLocaleDateString("pt-BR")} - ${end.toLocaleDateString("pt-BR")}`;
+                  const start = new Date(startDate + 'T00:00:00')
+                  const end = new Date(endDate + 'T00:00:00')
+                  if (isNaN(start.getTime()) || isNaN(end.getTime())) {return 'Período inválido'}
+                  return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`
                 } catch {
-                  return 'Período inválido';
+                  return 'Período inválido'
                 }
               })()} 
             </p>
@@ -147,7 +146,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           </CardContent>
         </Card>
 
-        {type === "INCOME" && (
+        {type === 'INCOME' && (
           <>
             <Card>
               <CardHeader className="pb-2">
@@ -175,7 +174,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           </>
         )}
 
-        {type === "EXPENSE" && (
+        {type === 'EXPENSE' && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Perdas de Estoque</CardTitle>
@@ -190,7 +189,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           </Card>
         )}
 
-        {type === "INVESTMENT" && (
+        {type === 'INVESTMENT' && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Compra de Produtos</CardTitle>
@@ -291,9 +290,9 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setSearchTerm("");
-                  setCategoryFilter("all");
-                  setPaymentMethodFilter("all");
+                  setSearchTerm('')
+                  setCategoryFilter('all')
+                  setPaymentMethodFilter('all')
                 }}
               >
                 Limpar
@@ -319,16 +318,16 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               </TableHeader>
               <TableBody>
                 {filteredTransactions.map((transaction: any) => {
-                  const isStockRelated = transaction.reference?.startsWith('Estoque-') || transaction.reference?.startsWith('Produto-');
+                  const isStockRelated = transaction.reference?.startsWith('Estoque-') || transaction.reference?.startsWith('Produto-')
                   return (
                     <TableRow key={transaction.id}>
                       <TableCell className="text-sm">
                         {(() => {
                           try {
-                            const date = new Date(transaction.date);
-                            return isNaN(date.getTime()) ? 'Data inválida' : date.toLocaleDateString("pt-BR");
+                            const date = new Date(transaction.date)
+                            return isNaN(date.getTime()) ? 'Data inválida' : date.toLocaleDateString('pt-BR')
                           } catch {
-                            return 'Data inválida';
+                            return 'Data inválida'
                           }
                         })()}
                       </TableCell>
@@ -362,7 +361,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                         {formatCurrency(Number(transaction.amount))}
                       </TableCell>
                     </TableRow>
-                  );
+                  )
                 })}
               </TableBody>
             </Table>
@@ -373,17 +372,17 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           <CardContent className="p-6 text-center text-gray-500">
             <div className="space-y-2">
               <p>Nenhuma transação encontrada com os filtros aplicados</p>
-              {type === "INVESTMENT" && (
+              {type === 'INVESTMENT' && (
                 <p className="text-xs text-blue-600">
                   💡 Dica: Transações de investimento são criadas automaticamente ao cadastrar produtos com estoque inicial
                 </p>
               )}
-              {type === "INCOME" && (
+              {type === 'INCOME' && (
                 <p className="text-xs text-green-600">
                   💡 Dica: Receitas são geradas automaticamente por atendimentos e vendas de produtos
                 </p>
               )}
-              {type === "EXPENSE" && (
+              {type === 'EXPENSE' && (
                 <p className="text-xs text-red-600">
                   💡 Dica: Despesas incluem perdas de estoque registradas automaticamente
                 </p>
@@ -393,5 +392,5 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         </Card>
       )}
     </div>
-  );
+  )
 }

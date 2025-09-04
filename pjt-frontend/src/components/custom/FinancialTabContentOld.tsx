@@ -1,92 +1,93 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, CreditCard, User, Scissors } from "lucide-react";
-import { useFinancial } from "@/contexts/FinancialContext";
-import axios from "@/lib/axios";
+import { useQuery } from '@tanstack/react-query'
+import { Calendar, CreditCard, User, Scissors } from 'lucide-react'
+
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { useFinancial } from '@/contexts/FinancialContext'
+import axios from '@/lib/axios'
 
 interface FinancialTabContentProps {
-  type: "INCOME" | "EXPENSE" | "INVESTMENT";
+  type: 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 }
 
 export function FinancialTabContent({ type }: FinancialTabContentProps) {
-  const { startDate, endDate, branchFilter } = useFinancial();
+  const { startDate, endDate, branchFilter } = useFinancial()
 
   const { data: summary, isLoading } = useQuery({
-    queryKey: ["financial-tab-data", type, startDate, endDate, branchFilter],
+    queryKey: ['financial-tab-data', type, startDate, endDate, branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (branchFilter !== "all") params.append("branchId", branchFilter);
+      const params = new URLSearchParams()
+      if (startDate) {params.append('startDate', startDate)}
+      if (endDate) {params.append('endDate', endDate)}
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
 
       const [summaryRes, transactionsRes, appointmentsRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
         axios.get(`/api/financial/transactions?type=${type}&${params}`),
-        type === "INCOME"
+        type === 'INCOME'
           ? axios.get(`/api/appointments?status=COMPLETED&${params}`)
           : Promise.resolve({ data: [] }),
-      ]);
+      ])
 
       return {
         summary: summaryRes.data,
         transactions: transactionsRes.data,
         appointments: appointmentsRes.data,
-      };
+      }
     },
-  });
+  })
 
-  if (isLoading) return <div className="p-4">Carregando...</div>;
+  if (isLoading) {return <div className="p-4">Carregando...</div>}
 
   const getTypeColor = () => {
     switch (type) {
-      case "INCOME":
-        return "bg-green-100 text-green-800";
-      case "EXPENSE":
-        return "bg-red-100 text-red-800";
-      case "INVESTMENT":
-        return "bg-blue-100 text-blue-800";
+      case 'INCOME':
+        return 'bg-green-100 text-green-800'
+      case 'EXPENSE':
+        return 'bg-red-100 text-red-800'
+      case 'INVESTMENT':
+        return 'bg-blue-100 text-blue-800'
     }
-  };
+  }
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      CASH: "Dinheiro",
-      CARD: "Cartão",
-      PIX: "PIX",
-      TRANSFER: "Transferência",
-      OTHER: "Outros",
-    };
-    return labels[method as keyof typeof labels] || method;
-  };
+      CASH: 'Dinheiro',
+      CARD: 'Cartão',
+      PIX: 'PIX',
+      TRANSFER: 'Transferência',
+      OTHER: 'Outros',
+    }
+    return labels[method as keyof typeof labels] || method
+  }
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
 
   const totalFromTransactions =
     summary?.transactions?.reduce(
       (sum: number, t: any) => sum + Number(t.amount),
-      0
-    ) || 0;
+      0,
+    ) || 0
   const totalFromAppointments =
-    type === "INCOME"
+    type === 'INCOME'
       ? summary?.appointments?.reduce(
-          (sum: number, apt: any) => sum + Number(apt.total),
-          0
-        ) || 0
-      : 0;
+        (sum: number, apt: any) => sum + Number(apt.total),
+        0,
+      ) || 0
+      : 0
   const stockRevenue =
-    type === "INCOME" ? summary?.summary?.stockRevenue || 0 : 0;
+    type === 'INCOME' ? summary?.summary?.stockRevenue || 0 : 0
   const stockExpenses =
-    type === "EXPENSE"
+    type === 'EXPENSE'
       ? (summary?.summary?.stockExpenses || 0) +
         (summary?.summary?.stockLosses || 0)
-      : 0;
+      : 0
 
   const grandTotal =
     totalFromTransactions +
     totalFromAppointments +
     stockRevenue +
-    stockExpenses;
+    stockExpenses
 
   return (
     <div className="space-y-4">
@@ -96,17 +97,17 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
             <div>
               <h3 className="font-medium">Total do Período</h3>
               <p className="text-sm text-gray-500">
-                {new Date(startDate + 'T00:00:00').toLocaleDateString("pt-BR")} -{" "}
-                {new Date(endDate + 'T00:00:00').toLocaleDateString("pt-BR")}
+                {new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR')} -{' '}
+                {new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR')}
               </p>
             </div>
             <div
               className={`text-2xl font-bold ${
-                type === "INCOME"
-                  ? "text-green-600"
-                  : type === "EXPENSE"
-                  ? "text-red-600"
-                  : "text-blue-600"
+                type === 'INCOME'
+                  ? 'text-green-600'
+                  : type === 'EXPENSE'
+                    ? 'text-red-600'
+                    : 'text-blue-600'
               }`}
             >
               {formatCurrency(grandTotal)}
@@ -137,7 +138,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                        {new Date(transaction.date).toLocaleDateString('pt-BR')}
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -165,11 +166,11 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
                   <div
                     className={`text-sm font-semibold ${
-                      type === "INCOME"
-                        ? "text-green-600"
-                        : type === "EXPENSE"
-                        ? "text-red-600"
-                        : "text-blue-600"
+                      type === 'INCOME'
+                        ? 'text-green-600'
+                        : type === 'EXPENSE'
+                          ? 'text-red-600'
+                          : 'text-blue-600'
                     }`}
                   >
                     {formatCurrency(Number(transaction.amount))}
@@ -207,7 +208,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         </div>
       )}
 
-      {type === "INCOME" && summary?.appointments?.length > 0 && (
+      {type === 'INCOME' && summary?.appointments?.length > 0 && (
         <div className="space-y-3">
           <h4 className="font-medium text-sm text-gray-700">
             Atendimentos ({summary.appointments.length})
@@ -231,7 +232,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(appointment.scheduledAt).toLocaleDateString(
-                          "pt-BR"
+                          'pt-BR',
                         )}
                       </div>
 
@@ -244,7 +245,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                     <div className="text-xs text-gray-500 mt-1">
                       {appointment.appointmentServices
                         ?.map((as: any) => as.service.name)
-                        .join(", ")}
+                        .join(', ')}
                     </div>
                   </div>
 
@@ -258,22 +259,22 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         </div>
       )}
 
-      {((type === "INCOME" && stockRevenue > 0) ||
-        (type === "EXPENSE" && stockExpenses > 0)) && (
+      {((type === 'INCOME' && stockRevenue > 0) ||
+        (type === 'EXPENSE' && stockExpenses > 0)) && (
         <div className="space-y-3">
           <h4 className="font-medium text-sm text-gray-700">
-            {type === "INCOME"
-              ? "Vendas de Produtos"
-              : "Compras/Perdas de Produtos"}
+            {type === 'INCOME'
+              ? 'Vendas de Produtos'
+              : 'Compras/Perdas de Produtos'}
           </h4>
           <Card>
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-sm">
-                    {type === "INCOME"
-                      ? "Total de Vendas"
-                      : "Total de Compras/Perdas"}
+                    {type === 'INCOME'
+                      ? 'Total de Vendas'
+                      : 'Total de Compras/Perdas'}
                   </h3>
                   <p className="text-xs text-gray-500">
                     Movimentações de estoque no período
@@ -281,11 +282,11 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 </div>
                 <div
                   className={`text-sm font-semibold ${
-                    type === "INCOME" ? "text-green-600" : "text-red-600"
+                    type === 'INCOME' ? 'text-green-600' : 'text-red-600'
                   }`}
                 >
                   {formatCurrency(
-                    type === "INCOME" ? stockRevenue : stockExpenses
+                    type === 'INCOME' ? stockRevenue : stockExpenses,
                   )}
                 </div>
               </div>
@@ -297,16 +298,16 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       {grandTotal === 0 && (
         <Card>
           <CardContent className="p-6 text-center text-gray-500">
-            Zero{" "}
-            {type === "INCOME"
-              ? "receita"
-              : type === "EXPENSE"
-              ? "despesa"
-              : "investimento"}{" "}
+            Zero{' '}
+            {type === 'INCOME'
+              ? 'receita'
+              : type === 'EXPENSE'
+                ? 'despesa'
+                : 'investimento'}{' '}
             encontrada no período selecionado
           </CardContent>
         </Card>
       )}
     </div>
-  );
+  )
 }

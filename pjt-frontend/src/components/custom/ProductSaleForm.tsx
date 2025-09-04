@@ -1,29 +1,30 @@
-import { useForm } from "react-hook-form";
-import { useMemo, useEffect } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import axios from "@/lib/axios";
-import { useUser } from "@/contexts/UserContext";
-import { useBranch } from "@/contexts/BranchContext";
+import { useForm } from 'react-hook-form'
+import { useMemo, useEffect } from 'react'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { ShoppingCart } from 'lucide-react'
 
-import { ShoppingCart } from "lucide-react";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import axios from '@/lib/axios'
+import { useUser } from '@/contexts/UserContext'
+import { useBranch } from '@/contexts/BranchContext'
+
 
 const saleSchema = z.object({
-  productId: z.string().min(1, "Selecione um produto"),
-  quantity: z.number().min(1, "Quantidade deve ser maior que 0"),
-  unitPrice: z.number().min(0.01, "Preço deve ser maior que 0"),
+  productId: z.string().min(1, 'Selecione um produto'),
+  quantity: z.number().min(1, 'Quantidade deve ser maior que 0'),
+  unitPrice: z.number().min(0.01, 'Preço deve ser maior que 0'),
   clientId: z.string().optional(),
   notes: z.string().optional(),
   soldById: z.string().optional(),
-  branchId: z.string().min(1, "Selecione uma filial"),
-});
+  branchId: z.string().min(1, 'Selecione uma filial'),
+})
 
 type SaleFormData = z.infer<typeof saleSchema>;
 
@@ -32,18 +33,18 @@ interface ProductSaleFormProps {
 }
 
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
-  const queryClient = useQueryClient();
-  const { user, isAdmin, isProfessional } = useUser();
-  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient()
+  const { user, isAdmin, isProfessional } = useUser()
+  const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
     enabled: isAdmin,
-  });
+  })
 
   const {
     register,
@@ -56,132 +57,132 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     defaultValues: {
       branchId: !isAdmin ? activeBranch?.id : undefined,
     },
-  });
+  })
 
-  const selectedBranchId = watch("branchId");
+  const selectedBranchId = watch('branchId')
   
   // Log para debug da seleção de filial
   useEffect(() => {
-    console.log("🏢 ProductSaleForm: selectedBranchId changed to:", selectedBranchId);
-  }, [selectedBranchId]);
+    console.log('🏢 ProductSaleForm: selectedBranchId changed to:', selectedBranchId)
+  }, [selectedBranchId])
 
   const { data: products = [] } = useQuery({
-    queryKey: ["products", selectedBranchId],
+    queryKey: ['products', selectedBranchId],
     queryFn: async () => {
-      if (!selectedBranchId) return [];
-      console.log("📝 ProductSaleForm: Loading products for branch:", selectedBranchId);
-      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
-      console.log("📝 ProductSaleForm: Loaded products:", res.data.length, "products");
-      return res.data;
+      if (!selectedBranchId) {return []}
+      console.log('📝 ProductSaleForm: Loading products for branch:', selectedBranchId)
+      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`)
+      console.log('📝 ProductSaleForm: Loaded products:', res.data.length, 'products')
+      return res.data
     },
     enabled: !!selectedBranchId,
-  });
+  })
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients", selectedBranchId],
+    queryKey: ['clients', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {
-        console.log("⚠️ ProductSaleForm: No selectedBranchId for clients");
-        return [];
+        console.log('⚠️ ProductSaleForm: No selectedBranchId for clients')
+        return []
       }
-      console.log("📝 ProductSaleForm: Loading clients for branch:", selectedBranchId);
-      const res = await axios.get(`/api/clients?branchId=${selectedBranchId}`);
-      console.log("📝 ProductSaleForm: Loaded clients:", res.data.length, "clients", res.data.map(c => c.name));
-      return res.data;
+      console.log('📝 ProductSaleForm: Loading clients for branch:', selectedBranchId)
+      const res = await axios.get(`/api/clients?branchId=${selectedBranchId}`)
+      console.log('📝 ProductSaleForm: Loaded clients:', res.data.length, 'clients', res.data.map(c => c.name))
+      return res.data
     },
     enabled: !!selectedBranchId,
-  });
+  })
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals", selectedBranchId],
+    queryKey: ['professionals', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {
-        console.log("⚠️ ProductSaleForm: No selectedBranchId for professionals");
-        return [];
+        console.log('⚠️ ProductSaleForm: No selectedBranchId for professionals')
+        return []
       }
-      console.log("📝 ProductSaleForm: Loading professionals for branch:", selectedBranchId);
-      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
-      console.log("📝 ProductSaleForm: Loaded professionals:", res.data.length, "professionals", res.data.map(p => p.name));
-      return res.data;
+      console.log('📝 ProductSaleForm: Loading professionals for branch:', selectedBranchId)
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`)
+      console.log('📝 ProductSaleForm: Loaded professionals:', res.data.length, 'professionals', res.data.map(p => p.name))
+      return res.data
     },
     enabled: !!selectedBranchId,
-  });
+  })
 
   // Auto-selecionar profissional se for funcionário (não admin)
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
-      const currentProfessional = professionals.find(p => p.name === user.name);
-      return currentProfessional?.id || "";
+      const currentProfessional = professionals.find(p => p.name === user.name)
+      return currentProfessional?.id || ''
     }
-    return "";
-  }, [isProfessional, isAdmin, user?.name, professionals]);
+    return ''
+  }, [isProfessional, isAdmin, user?.name, professionals])
   
   useEffect(() => {
     if (currentProfessionalId) {
-      setValue('soldById', currentProfessionalId);
+      setValue('soldById', currentProfessionalId)
     }
-  }, [currentProfessionalId, setValue]);
+  }, [currentProfessionalId, setValue])
 
-  const selectedProductId = watch("productId");
-  const quantity = watch("quantity") || 0;
-  const unitPrice = watch("unitPrice") || 0;
-  const total = quantity * unitPrice;
+  const selectedProductId = watch('productId')
+  const quantity = watch('quantity') || 0
+  const unitPrice = watch('unitPrice') || 0
+  const total = quantity * unitPrice
 
-  const selectedProduct = products.find((p: any) => p.id === selectedProductId);
+  const selectedProduct = products.find((p: any) => p.id === selectedProductId)
 
   const handleProductChange = (productId: string) => {
-    setValue("productId", productId);
-    const product = products.find((p: any) => p.id === productId);
+    setValue('productId', productId)
+    const product = products.find((p: any) => p.id === productId)
     if (product?.salePrice) {
-      setValue("unitPrice", Number(product.salePrice));
+      setValue('unitPrice', Number(product.salePrice))
     } else {
-      setValue("unitPrice", 0);
+      setValue('unitPrice', 0)
     }
-  };
+  }
 
   const createSale = useMutation({
     mutationFn: async (data: SaleFormData) => {
-      const selectedClient = data.clientId ? clients.find((c: any) => c.id === data.clientId) : null;
-      const clientName = selectedClient?.name;
+      const selectedClient = data.clientId ? clients.find((c: any) => c.id === data.clientId) : null
+      const clientName = selectedClient?.name
       
       const saleData = {
-        type: "OUT",
+        type: 'OUT',
         quantity: data.quantity,
         unitCost: data.unitPrice,
-        reason: `Venda de produto${clientName ? ` - Cliente: ${clientName}` : ""}${data.notes ? ` - ${data.notes}` : ""}`,
+        reason: `Venda de produto${clientName ? ` - Cliente: ${clientName}` : ''}${data.notes ? ` - ${data.notes}` : ''}`,
         reference: clientName ? `Cliente: ${clientName}` : undefined,
         soldById: data.soldById || undefined, // undefined se não selecionado
-      };
+      }
       
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
-      const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData, { headers });
-      return res.data;
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
+      const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData, { headers })
+      return res.data
     },
     onSuccess: () => {
-      toast.success("Venda registrada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-summary"] });
-      onSuccess();
+      toast.success('Venda registrada com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+      onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao registrar venda");
+      toast.error(error.response?.data?.message || 'Erro ao registrar venda')
     },
-  });
+  })
 
   const onSubmit = (data: SaleFormData) => {
     if (!selectedProduct) {
-      toast.error("Produto não encontrado");
-      return;
+      toast.error('Produto não encontrado')
+      return
     }
     
     if (data.quantity > selectedProduct.currentStock) {
-      toast.error(`Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`);
-      return;
+      toast.error(`Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`)
+      return
     }
     
-    createSale.mutate(data);
-  };
+    createSale.mutate(data)
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -193,7 +194,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       {isAdmin && (
         <div>
           <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue("branchId", value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
+          <Select onValueChange={(value) => setValue('branchId', value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma filial" />
             </SelectTrigger>
@@ -238,7 +239,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
             type="number"
             min="1"
             max={selectedProduct?.currentStock || 999}
-            {...register("quantity", { valueAsNumber: true })}
+            {...register('quantity', { valueAsNumber: true })}
             placeholder="Quantos foram vendidos"
           />
           {errors.quantity && (
@@ -258,7 +259,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
             type="number"
             step="0.01"
             min="0.01"
-            {...register("unitPrice", { valueAsNumber: true })}
+            {...register('unitPrice', { valueAsNumber: true })}
             placeholder="Selecione um produto"
             readOnly
             className="bg-[#F5F5F0] cursor-not-allowed"
@@ -290,7 +291,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       {isAdmin && (
         <div>
           <Label htmlFor="soldById">Vendedor (opcional)</Label>
-          <Select onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)} defaultValue={currentProfessionalId || "none"}>
+          <Select onValueChange={(value) => setValue('soldById', value === 'none' ? undefined : value)} defaultValue={currentProfessionalId || 'none'}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione o vendedor" />
             </SelectTrigger>
@@ -313,7 +314,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         <div>
           <Label>Vendedor</Label>
           <Input
-            value={professionals.find(p => p.id === currentProfessionalId)?.name || user?.name || ""}
+            value={professionals.find(p => p.id === currentProfessionalId)?.name || user?.name || ''}
             readOnly
             className="bg-[#F5F5F0] cursor-not-allowed"
           />
@@ -322,7 +323,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
       <div>
         <Label htmlFor="clientId">Cliente (opcional)</Label>
-        <Select onValueChange={(value) => setValue("clientId", value)}>
+        <Select onValueChange={(value) => setValue('clientId', value)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione um cliente" />
           </SelectTrigger>
@@ -340,7 +341,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         <Label htmlFor="notes">Observações (opcional)</Label>
         <Textarea
           id="notes"
-          {...register("notes")}
+          {...register('notes')}
           placeholder="Observações sobre a venda"
           rows={2}
         />
@@ -351,8 +352,8 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         disabled={isSubmitting || !selectedProduct || quantity <= 0 || unitPrice <= 0} 
         className="w-full bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
       >
-        {isSubmitting ? "Registrando..." : `Registrar Venda - R$ ${total.toFixed(2)}`}
+        {isSubmitting ? 'Registrando...' : `Registrar Venda - R$ ${total.toFixed(2)}`}
       </Button>
     </form>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import CheckoutForm from "@/components/pages/CheckoutForm";
+import CheckoutForm from '@/components/pages/CheckoutForm'
 
 export default function CheckoutPage() {
   return (
@@ -8,5 +8,5 @@ export default function CheckoutPage() {
       </div>
       <CheckoutForm />
     </div>
-  );
+  )
 }

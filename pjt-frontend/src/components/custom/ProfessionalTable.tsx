@@ -1,11 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Edit, DollarSign } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+
+import { ProfessionalForm } from './ProfessionalForm'
+import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +22,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Trash2, Edit, DollarSign } from "lucide-react";
-import { ProfessionalForm } from "./ProfessionalForm";
-import { ProfessionalCommissionCard } from "./ProfessionalCommissionCard";
-import { useState, useEffect } from "react";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { toast } from "sonner";
+} from '@/components/ui/alert-dialog'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+
 
 type Professional = {
   id: string;
@@ -42,51 +45,51 @@ type Professional = {
 };
 
 export function ProfessionalTable() {
-  const queryClient = useQueryClient();
-  const [editingProfessional, setEditingProfessional] = useState<any>(null);
-  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
-  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null);
-  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient()
+  const [editingProfessional, setEditingProfessional] = useState<any>(null)
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null)
+  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null)
+  const { activeBranch } = useBranch()
 
   const { data: professionals = [], isLoading } = useQuery({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get("/api/professionals");
-      return res.data.filter((prof: Professional) => prof.branchId === activeBranch?.id);
+      const res = await axios.get('/api/professionals')
+      return res.data.filter((prof: Professional) => prof.branchId === activeBranch?.id)
     },
     enabled: !!activeBranch,
-  });
+  })
 
   // Reset selected professional when branch changes
   useEffect(() => {
-    setSelectedProfessional(null);
-  }, [activeBranch?.id]);
+    setSelectedProfessional(null)
+  }, [activeBranch?.id])
 
   // Force refetch commission data when professional is selected
   useEffect(() => {
     if (selectedProfessional) {
-      queryClient.invalidateQueries({ queryKey: ["monthly-commission", selectedProfessional] });
-      queryClient.invalidateQueries({ queryKey: ["daily-commission", selectedProfessional] });
-      queryClient.invalidateQueries({ queryKey: ["professional", selectedProfessional] });
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission', selectedProfessional] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission', selectedProfessional] })
+      queryClient.invalidateQueries({ queryKey: ['professional', selectedProfessional] })
     }
-  }, [selectedProfessional, queryClient]);
+  }, [selectedProfessional, queryClient])
 
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/professionals/${id}`);
+      await axios.delete(`/api/professionals/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast.success("Profissional excluído com sucesso!");
-      setDeletingProfessional(null);
+      queryClient.invalidateQueries({ queryKey: ['professionals'] })
+      toast.success('Profissional excluído com sucesso!')
+      setDeletingProfessional(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao excluir profissional");
-      setDeletingProfessional(null);
+      toast.error(error.response?.data?.message || 'Erro ao excluir profissional')
+      setDeletingProfessional(null)
     },
-  });
+  })
 
-  if (isLoading) return <p>Carregando...</p>;
+  if (isLoading) {return <p>Carregando...</p>}
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -138,8 +141,8 @@ export function ProfessionalTable() {
                             variant="outline"
                             size="sm"
                             onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingProfessional(prof);
+                              e.stopPropagation()
+                              setEditingProfessional(prof)
                             }}
                             className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10"
                           >
@@ -149,8 +152,8 @@ export function ProfessionalTable() {
                             variant="destructive"
                             size="sm"
                             onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingProfessional(prof);
+                              e.stopPropagation()
+                              setDeletingProfessional(prof)
                             }}
                             disabled={deleteProfessional.isPending}
                             className="bg-[#DC2626] hover:bg-[#DC2626]/90"
@@ -222,5 +225,5 @@ export function ProfessionalTable() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

@@ -1,29 +1,31 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import axios from "@/lib/axios";
-import { useUser } from "@/contexts/UserContext";
-import { useBranch } from "@/contexts/BranchContext";
-import { useEffect } from "react";
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { useEffect } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import axios from '@/lib/axios'
+import { useUser } from '@/contexts/UserContext'
+import { useBranch } from '@/contexts/BranchContext'
+
 
 
 const movementSchema = z.object({
-  productId: z.string().min(1, "Selecione um produto"),
-  type: z.enum(["IN", "OUT", "ADJUSTMENT", "LOSS"]),
-  quantity: z.number().min(1, "Quantidade deve ser maior que 0"),
+  productId: z.string().min(1, 'Selecione um produto'),
+  type: z.enum(['IN', 'OUT', 'ADJUSTMENT', 'LOSS']),
+  quantity: z.number().min(1, 'Quantidade deve ser maior que 0'),
   unitCost: z.number().optional(),
-  reason: z.string().min(1, "Informe o motivo"),
+  reason: z.string().min(1, 'Informe o motivo'),
   reference: z.string().optional(),
-  branchId: z.string().min(1, "Selecione uma filial"),
+  branchId: z.string().min(1, 'Selecione uma filial'),
   soldById: z.string().optional(),
-});
+})
 
 type MovementFormData = z.infer<typeof movementSchema>;
 
@@ -34,7 +36,7 @@ interface StockMovementFormProps {
 
 interface InventoryMovement {
   id: string;
-  type: "IN" | "OUT" | "ADJUSTMENT" | "LOSS";
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
   quantity: number;
   unitCost?: number;
   totalCost?: number;
@@ -52,19 +54,19 @@ interface InventoryMovement {
 }
 
 export function StockMovementForm({ onSuccess, initialData }: StockMovementFormProps) {
-  const isEditing = !!initialData;
-  const queryClient = useQueryClient();
-  const { user, isAdmin } = useUser();
-  const { activeBranch } = useBranch();
+  const isEditing = !!initialData
+  const queryClient = useQueryClient()
+  const { user, isAdmin } = useUser()
+  const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
     enabled: isAdmin,
-  });
+  })
 
   const {
     register,
@@ -76,40 +78,40 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
     resolver: zodResolver(movementSchema),
     defaultValues: {
       branchId: !isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined),
-      productId: initialData?.product.id || "",
+      productId: initialData?.product.id || '',
       type: initialData?.type || undefined,
       quantity: initialData?.quantity || 0,
       unitCost: initialData?.unitCost || undefined,
-      reason: initialData?.reason || "",
-      reference: initialData?.reference || "",
+      reason: initialData?.reason || '',
+      reference: initialData?.reference || '',
     },
-  });
+  })
 
-  const selectedBranchId = watch("branchId");
+  const selectedBranchId = watch('branchId')
 
   const { data: products = [] } = useQuery({
-    queryKey: ["products", selectedBranchId],
+    queryKey: ['products', selectedBranchId],
     queryFn: async () => {
-      if (!selectedBranchId) return [];
-      console.log('📈 Loading products for branch:', selectedBranchId);
-      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`);
-      console.log('📈 Products loaded:', res.data.length, 'products');
-      return res.data;
+      if (!selectedBranchId) {return []}
+      console.log('📈 Loading products for branch:', selectedBranchId)
+      const res = await axios.get(`/api/products?branchId=${selectedBranchId}`)
+      console.log('📈 Products loaded:', res.data.length, 'products')
+      return res.data
     },
     enabled: !!selectedBranchId,
-  });
+  })
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals", selectedBranchId],
+    queryKey: ['professionals', selectedBranchId],
     queryFn: async () => {
-      if (!selectedBranchId) return [];
-      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`);
-      return res.data;
+      if (!selectedBranchId) {return []}
+      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`)
+      return res.data
     },
     enabled: !!selectedBranchId && isAdmin,
-  });
+  })
 
-  const movementType = watch("type");
+  const movementType = watch('type')
 
   // Garantir que os valores sejam definidos quando editando
   useEffect(() => {
@@ -118,41 +120,41 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         productId: initialData.product.id,
         productName: initialData.product.name,
         type: initialData.type,
-        quantity: initialData.quantity
-      });
+        quantity: initialData.quantity,
+      })
       
-      setValue("productId", initialData.product.id);
-      setValue("type", initialData.type);
-      setValue("quantity", initialData.quantity);
-      setValue("unitCost", initialData.unitCost || undefined);
-      setValue("reason", initialData.reason);
-      setValue("reference", initialData.reference || "");
-      setValue("soldById", initialData.user?.id || undefined);
+      setValue('productId', initialData.product.id)
+      setValue('type', initialData.type)
+      setValue('quantity', initialData.quantity)
+      setValue('unitCost', initialData.unitCost || undefined)
+      setValue('reason', initialData.reason)
+      setValue('reference', initialData.reference || '')
+      setValue('soldById', initialData.user?.id || undefined)
     }
-  }, [initialData, isEditing, setValue]);
+  }, [initialData, isEditing, setValue])
 
   // Definir produto quando os produtos forem carregados
   useEffect(() => {
     if (initialData && isEditing && products.length > 0) {
-      const productExists = products.find(p => p.id === initialData.product.id);
+      const productExists = products.find(p => p.id === initialData.product.id)
       console.log('🔧 Product check:', {
         searchingFor: initialData.product.id,
         productName: initialData.product.name,
         foundInList: !!productExists,
         productsCount: products.length,
-        currentValue: watch("productId")
-      });
+        currentValue: watch('productId'),
+      })
       
       if (productExists) {
-        setValue("productId", initialData.product.id);
-        console.log('🔧 Product set successfully');
+        setValue('productId', initialData.product.id)
+        console.log('🔧 Product set successfully')
       }
     }
-  }, [initialData, isEditing, products, setValue, watch]);
+  }, [initialData, isEditing, products, setValue, watch])
 
   const createMovement = useMutation({
     mutationFn: async (data: MovementFormData) => {
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {};
+      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       const payload = {
         ...(isEditing && { productId: data.productId }),
         type: data.type,
@@ -161,31 +163,31 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         reason: data.reason,
         reference: data.reference,
         soldById: data.soldById,
-      };
+      }
       
       if (isEditing) {
-        const res = await axios.patch(`/api/inventory/movements/${initialData!.id}`, payload, { headers });
-        return res.data;
+        const res = await axios.patch(`/api/inventory/movements/${initialData!.id}`, payload, { headers })
+        return res.data
       } else {
-        const res = await axios.post(`/api/products/${data.productId}/adjust`, payload, { headers });
-        return res.data;
+        const res = await axios.post(`/api/products/${data.productId}/adjust`, payload, { headers })
+        return res.data
       }
     },
     onSuccess: () => {
-      toast.success(isEditing ? "Movimentação atualizada com sucesso!" : "Movimentação registrada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-movements"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
-      onSuccess();
+      toast.success(isEditing ? 'Movimentação atualizada com sucesso!' : 'Movimentação registrada com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-transactions'] })
+      onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || (isEditing ? "Erro ao atualizar movimentação" : "Erro ao registrar movimentação"));
+      toast.error(error.response?.data?.message || (isEditing ? 'Erro ao atualizar movimentação' : 'Erro ao registrar movimentação'))
     },
-  });
+  })
 
   const onSubmit = (data: MovementFormData) => {
-    createMovement.mutate(data);
-  };
+    createMovement.mutate(data)
+  }
 
 
 
@@ -195,7 +197,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         <div>
           <Label htmlFor="branchId">Filial</Label>
           <Select 
-            onValueChange={(value) => setValue("branchId", value)} 
+            onValueChange={(value) => setValue('branchId', value)} 
             defaultValue={!isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined)}
             disabled={isEditing}
           >
@@ -225,8 +227,8 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         <Label htmlFor="productId">Produto</Label>
         <Select 
           key={`product-${initialData?.product.id || 'new'}-${products.length}`}
-          onValueChange={(value) => setValue("productId", value)}
-          value={watch("productId") || ""}
+          onValueChange={(value) => setValue('productId', value)}
+          value={watch('productId') || ''}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione um produto" />
@@ -247,7 +249,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
       <div>
         <Label htmlFor="type">Tipo de Movimentação</Label>
         <Select 
-          onValueChange={(value) => setValue("type", value as any)}
+          onValueChange={(value) => setValue('type', value as any)}
           defaultValue={initialData?.type}
         >
           <SelectTrigger>
@@ -271,7 +273,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
           id="quantity"
           type="number"
           min="1"
-          {...register("quantity", { valueAsNumber: true })}
+          {...register('quantity', { valueAsNumber: true })}
           placeholder="Digite a quantidade"
         />
         {errors.quantity && (
@@ -279,7 +281,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         )}
       </div>
 
-      {(movementType === "IN" || movementType === "OUT") && (
+      {(movementType === 'IN' || movementType === 'OUT') && (
         <div>
           <Label htmlFor="unitCost">Custo Unitário (R$)</Label>
           <Input
@@ -287,11 +289,11 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
             type="number"
             step="0.01"
             min="0"
-            {...register("unitCost", { valueAsNumber: true })}
+            {...register('unitCost', { valueAsNumber: true })}
             placeholder="0,00"
           />
           <p className="text-xs text-[#737373] mt-1">
-            {movementType === "IN" ? "Custo de compra do produto" : "Valor de venda do produto"}
+            {movementType === 'IN' ? 'Custo de compra do produto' : 'Valor de venda do produto'}
           </p>
         </div>
       )}
@@ -300,7 +302,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         <Label htmlFor="reason">Motivo</Label>
         <Textarea
           id="reason"
-          {...register("reason")}
+          {...register('reason')}
           placeholder="Descreva o motivo da movimentação"
           rows={3}
         />
@@ -313,7 +315,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         <Label htmlFor="reference">Referência (opcional)</Label>
         <Input
           id="reference"
-          {...register("reference")}
+          {...register('reference')}
           placeholder="Nota fiscal, pedido, etc."
         />
       </div>
@@ -322,8 +324,8 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
         <div>
           <Label htmlFor="soldById">Usuário Responsável (opcional)</Label>
           <Select 
-            onValueChange={(value) => setValue("soldById", value === "none" ? undefined : value)}
-            defaultValue={initialData?.user?.id || "none"}
+            onValueChange={(value) => setValue('soldById', value === 'none' ? undefined : value)}
+            defaultValue={initialData?.user?.id || 'none'}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o usuário responsável" />
@@ -344,8 +346,8 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
       )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? (isEditing ? "Atualizando..." : "Registrando...") : (isEditing ? "Atualizar Movimentação" : "Registrar Movimentação")}
+        {isSubmitting ? (isEditing ? 'Atualizando...' : 'Registrando...') : (isEditing ? 'Atualizar Movimentação' : 'Registrar Movimentação')}
       </Button>
     </form>
-  );
+  )
 }

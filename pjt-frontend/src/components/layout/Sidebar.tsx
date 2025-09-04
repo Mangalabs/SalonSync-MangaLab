@@ -6,124 +6,123 @@ import {
   Warehouse,
   BarChart2,
   Settings,
-  LogOut,
   Calendar,
   CheckSquare,
   DollarSign,
   ShoppingCart,
   MessageSquare,
   X,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-
-import { AppointmentForm } from "@/components/custom/AppointmentForm";
-import { ProductSaleForm } from "@/components/custom/ProductSaleForm";
-import { UserMenu } from "@/components/custom/UserMenu";
-import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
-import { useSidebar } from "@/contexts/SidebarContext";
+} from '@/components/ui/dialog'
+import { AppointmentForm } from '@/components/custom/AppointmentForm'
+import { ProductSaleForm } from '@/components/custom/ProductSaleForm'
+import { UserMenu } from '@/components/custom/UserMenu'
+import { useUser } from '@/contexts/UserContext'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 const getNavItems = (userRole: string) => {
   const baseItems = [
     {
-      to: "/dashboard",
+      to: '/dashboard',
       icon: Home,
-      label: "Dashboard",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Dashboard',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
     {
-      to: "/dashboard/clients",
+      to: '/dashboard/clients',
       icon: User,
-      label: "Clientes",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Clientes',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
     {
-      to: "/dashboard/services",
+      to: '/dashboard/services',
       icon: ClipboardList,
-      label: "Serviços",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Serviços',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
     {
-      to: "/dashboard/inventory",
+      to: '/dashboard/inventory',
       icon: Warehouse,
-      label: "Estoque",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Estoque',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
     {
-      to: "/dashboard/appointments",
+      to: '/dashboard/appointments',
       icon: Calendar,
-      label: "Agendamentos",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Agendamentos',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
     {
-      to: "/dashboard/treatments",
+      to: '/dashboard/treatments',
       icon: CheckSquare,
-      label: "Agendamentos",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Agendamentos',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
-  ];
+  ]
 
   const adminItems = [
     {
-      to: "/dashboard/professionals",
+      to: '/dashboard/professionals',
       icon: Users,
-      label: "Profissionais",
-      roles: ["ADMIN"],
+      label: 'Profissionais',
+      roles: ['ADMIN'],
     },
     {
-      to: "/dashboard/whatsapp",
+      to: '/dashboard/whatsapp',
       icon: MessageSquare,
-      label: "WhatsApp",
-      roles: ["ADMIN"],
+      label: 'WhatsApp',
+      roles: ['ADMIN'],
     },
     {
-      to: "/dashboard/financial",
+      to: '/dashboard/financial',
       icon: DollarSign,
-      label: "Financeiro",
-      roles: ["ADMIN"],
+      label: 'Financeiro',
+      roles: ['ADMIN'],
     },
     {
-      to: "/dashboard/reports",
+      to: '/dashboard/reports',
       icon: BarChart2,
-      label: "Relatórios",
-      roles: ["ADMIN"],
+      label: 'Relatórios',
+      roles: ['ADMIN'],
     },
     {
-      to: "/dashboard/settings",
+      to: '/dashboard/settings',
       icon: Settings,
-      label: "Configurações",
-      roles: ["ADMIN", "PROFESSIONAL"],
+      label: 'Configurações',
+      roles: ['ADMIN', 'PROFESSIONAL'],
     },
-  ];
+  ]
 
-  const allItems = [...baseItems, ...adminItems];
+  const allItems = [...baseItems, ...adminItems]
   return allItems.filter((item) => {
-    if (userRole === "SUPERADMIN") {
-      return true;
+    if (userRole === 'SUPERADMIN') {
+      return true
     }
-    return item.roles.includes(userRole);
-  });
-};
+    return item.roles.includes(userRole)
+  })
+}
 
 export function Sidebar() {
-  const [showScheduledForm, setShowScheduledForm] = useState(false);
-  const [showImmediateForm, setShowImmediateForm] = useState(false);
-  const [showSaleForm, setShowSaleForm] = useState(false);
-  const { user, logout, isAdmin } = useUser();
-  const { isOpen, close } = useSidebar();
+  const [showScheduledForm, setShowScheduledForm] = useState(false)
+  const [showImmediateForm, setShowImmediateForm] = useState(false)
+  const [showSaleForm, setShowSaleForm] = useState(false)
+  const { user, logout, isAdmin } = useUser()
+  const { isOpen, close } = useSidebar()
 
-  const navItems = getNavItems(user?.role || "ADMIN");
+  const navItems = getNavItems(user?.role || 'ADMIN')
 
   const handleNavClick = () => {
-    close();
-  };
+    close()
+  }
 
   return (
     <>
@@ -136,7 +135,7 @@ export function Sidebar() {
 
       <aside
         className={`w-64 h-screen bg-[#1A1A1A] text-white flex flex-col px-4 py-6 fixed left-0 top-0 z-50 transition-transform duration-300 overflow-y-auto ${
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         <div className="flex items-center justify-between mb-6">
@@ -156,11 +155,11 @@ export function Sidebar() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/dashboard"}
+              end={to === '/dashboard'}
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                  isActive ? "bg-white/20 font-semibold" : ""
+                  isActive ? 'bg-white/20 font-semibold' : ''
                 }`
               }
             >
@@ -236,5 +235,5 @@ export function Sidebar() {
         </div>
       </aside>
     </>
-  );
+  )
 }

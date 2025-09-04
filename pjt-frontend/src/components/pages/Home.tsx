@@ -1,44 +1,45 @@
-import { AuthPanel } from "@/components/custom/AuthPanel";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
+
+import { AuthPanel } from '@/components/custom/AuthPanel'
 
 const carouselItems = [
   {
-    title: "Este é um produto",
-    subtitle: "MangaLab",
+    title: 'Este é um produto',
+    subtitle: 'MangaLab',
     description:
-      "Desenvolvemos soluções tecnológicas inovadoras para transformar seu negócio",
+      'Desenvolvemos soluções tecnológicas inovadoras para transformar seu negócio',
   },
   {
-    title: "Inovação e",
-    subtitle: "Tecnologia",
+    title: 'Inovação e',
+    subtitle: 'Tecnologia',
     description:
-      "Criamos sistemas modernos e eficientes para impulsionar o crescimento da sua empresa",
+      'Criamos sistemas modernos e eficientes para impulsionar o crescimento da sua empresa',
   },
   {
-    title: "Experiência e",
-    subtitle: "Qualidade",
+    title: 'Experiência e',
+    subtitle: 'Qualidade',
     description:
-      "Nossa equipe especializada entrega soluções robustas e confiáveis para seu sucesso",
+      'Nossa equipe especializada entrega soluções robustas e confiáveis para seu sucesso',
   },
-];
+]
 
 function MobileCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsAnimating(true);
+      setIsAnimating(true)
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % carouselItems.length);
-        setIsAnimating(false);
-      }, 150);
-    }, 3000);
+        setCurrentIndex((prev) => (prev + 1) % carouselItems.length)
+        setIsAnimating(false)
+      }, 150)
+    }, 3000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
-  const currentItem = carouselItems[currentIndex];
+  const currentItem = carouselItems[currentIndex]
 
   return (
     <div className="space-y-3">
@@ -46,8 +47,8 @@ function MobileCarousel() {
         <div
           className={`transition-all duration-300 transform ${
             isAnimating
-              ? "opacity-0 translate-y-1"
-              : "opacity-100 translate-y-0"
+              ? 'opacity-0 translate-y-1'
+              : 'opacity-100 translate-y-0'
           }`}
         >
           <h2 className="text-lg font-bold text-[#D4AF37]">
@@ -63,42 +64,42 @@ function MobileCarousel() {
           <div
             key={index}
             className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              index === currentIndex ? "bg-[#D4AF37]" : "bg-white/30"
+              index === currentIndex ? 'bg-[#D4AF37]' : 'bg-white/30'
             }`}
           />
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function CarouselSection() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsAnimating(true);
+      setIsAnimating(true)
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % carouselItems.length);
-        setIsAnimating(false);
-      }, 150);
-    }, 4000);
+        setCurrentIndex((prev) => (prev + 1) % carouselItems.length)
+        setIsAnimating(false)
+      }, 150)
+    }, 4000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
   const handleDotClick = (index: number) => {
     if (index !== currentIndex) {
-      setIsAnimating(true);
+      setIsAnimating(true)
       setTimeout(() => {
-        setCurrentIndex(index);
-        setIsAnimating(false);
-      }, 150);
+        setCurrentIndex(index)
+        setIsAnimating(false)
+      }, 150)
     }
-  };
+  }
 
-  const currentItem = carouselItems[currentIndex];
+  const currentItem = carouselItems[currentIndex]
 
   return (
     <div className="space-y-4">
@@ -106,8 +107,8 @@ function CarouselSection() {
         <div
           className={`transition-all duration-300 transform ${
             isAnimating
-              ? "opacity-0 translate-y-2"
-              : "opacity-100 translate-y-0"
+              ? 'opacity-0 translate-y-2'
+              : 'opacity-100 translate-y-0'
           }`}
         >
           <h1 className="text-3xl font-bold text-white">{currentItem.title}</h1>
@@ -127,14 +128,14 @@ function CarouselSection() {
             onClick={() => handleDotClick(index)}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
               index === currentIndex
-                ? "bg-[#D4AF37] scale-125"
-                : "bg-white/30 hover:bg-white/50 hover:scale-110"
+                ? 'bg-[#D4AF37] scale-125'
+                : 'bg-white/30 hover:bg-white/50 hover:scale-110'
             }`}
           />
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 export default function Home() {
@@ -177,5 +178,5 @@ export default function Home() {
         </div>
       </div>
     </>
-  );
+  )
 }

@@ -1,17 +1,20 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { Calendar } from 'lucide-react'
+
+import { SchedulingForm } from './SchedulingForm'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { SchedulingForm } from "./SchedulingForm";
-import { Calendar } from "lucide-react";
+} from '@/components/ui/dialog'
+
 
 export function SchedulingPanel() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <div>
@@ -35,5 +38,5 @@ export function SchedulingPanel() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
