@@ -32,7 +32,7 @@ interface RecurringExpenseFormProps {
 
 export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
   const queryClient = useQueryClient()
-  const { user, isAdmin } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({

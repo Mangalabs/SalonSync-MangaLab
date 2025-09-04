@@ -42,7 +42,7 @@ export function ProfessionalForm({
 }) {
   const queryClient = useQueryClient()
   const isEditing = !!initialData
-  const { user, isAdmin } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
@@ -114,7 +114,6 @@ export function ProfessionalForm({
       setValue('baseSalary', role.baseSalary ? Number(role.baseSalary) : undefined)
       setValue('salaryPayDay', role.salaryPayDay || undefined)
     } else {
-      // Função personalizada - limpar valores
       setValue('baseSalary', undefined)
       setValue('salaryPayDay', undefined)
     }
@@ -122,7 +121,6 @@ export function ProfessionalForm({
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      console.log('🚀 ProfessionalForm mutation:', { data, isEditing })
 
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
@@ -137,13 +135,11 @@ export function ProfessionalForm({
         return res.data
       }
     },
-    onSuccess: (result) => {
-      console.log('✅ Professional mutation success:', result)
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['professionals'] })
       onSuccess()
     },
-    onError: (error) => {
-      console.log('❌ Professional mutation error:', error)
+    onError: () => {
     },
   })
 

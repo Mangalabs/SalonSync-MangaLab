@@ -44,7 +44,7 @@ export function LoginForm() {
 
       localStorage.setItem('token', result.token)
       window.location.href = '/dashboard'
-    } catch (err) {
+    } catch {
       setErro('Erro de conexão com o servidor')
     }
   }

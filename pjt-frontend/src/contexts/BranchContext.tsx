@@ -38,18 +38,12 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    console.log('🔍 BranchContext useEffect:', {
-      branchesLength: branches.length,
-      activeBranch: activeBranch?.name,
-      savedBranchId: localStorage.getItem('activeBranchId'),
-    })
 
     if (branches.length > 0 && !activeBranch) {
       const savedBranchId = localStorage.getItem('activeBranchId')
       const savedBranch = branches.find((b: Branch) => b.id === savedBranchId)
       const selectedBranch = savedBranch || branches[0]
 
-      console.log('✅ Setting active branch:', selectedBranch)
       setActiveBranchState(selectedBranch)
 
       if (!savedBranchId) {
@@ -59,11 +53,9 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   }, [branches, activeBranch])
 
   const setActiveBranch = (branch: Branch) => {
-    console.log('🔄 Changing active branch to:', branch)
     setActiveBranchState(branch)
     localStorage.setItem('activeBranchId', branch.id)
 
-    // Invalidar todas as queries relacionadas à filial
     queryClient.invalidateQueries({ queryKey: ['professionals'] })
     queryClient.invalidateQueries({ queryKey: ['services'] })
     queryClient.invalidateQueries({ queryKey: ['clients'] })
@@ -78,7 +70,6 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
     queryClient.invalidateQueries({ queryKey: ['roles'] })
 
-    console.log('✅ Branch changed and queries invalidated')
   }
 
   return (

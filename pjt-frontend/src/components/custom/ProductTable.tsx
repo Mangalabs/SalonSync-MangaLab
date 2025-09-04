@@ -2,8 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, Edit } from 'lucide-react'
 import { useState } from 'react'
 
-import { AdjustmentStockForm } from './AdjustmentStockForm'
-
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -23,6 +21,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+
+import { AdjustmentStockForm } from './AdjustmentStockForm'
 
 interface Product {
   id: string;
@@ -65,6 +65,7 @@ export function ProductTable() {
       setDeletingProductId(null)
     },
     onError: (error: any) => {
+      // eslint-disable-next-line no-alert
       alert(error.response?.data?.message || 'Erro ao excluir produto')
       setDeletingProductId(null)
     },

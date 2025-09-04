@@ -264,6 +264,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
                     checked={field.value.includes(s.id)}
                     onCheckedChange={(checked) => {
                       const set = new Set(field.value)
+                      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                       checked ? set.add(s.id) : set.delete(s.id)
                       field.onChange(Array.from(set))
                     }}

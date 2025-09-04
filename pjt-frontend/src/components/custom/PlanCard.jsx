@@ -33,15 +33,15 @@ export function PlanCard({ product, selectedPlan, setSelectedPlan }) {
         <Button
           type="submit"
           className="w-8/12 m-auto"
-          disabled={selectedPlan?.id == product.id}
+          disabled={selectedPlan?.id === product.id}
           onClick={() => setSelectedPlan(product)}
         >
-          {selectedPlan?.id == product.id
+          {selectedPlan?.id === product.id
             ? 'Plano Selecionado'
             : 'Escolher plano'}
         </Button>
 
-        {selectedPlan?.id == product.id && (
+        {selectedPlan?.id === product.id && (
           <div className="absolute bottom-0 left-0 w-full h-3 bg-gradient-to-r from-green-500 to-emerald-500" />
         )}
       </Card>

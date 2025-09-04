@@ -16,7 +16,7 @@ const requestResetSchema = z.object({
 type RequestResetData = z.infer<typeof requestResetSchema>;
 
 export default function ResetPassword() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
 
   const [erro, setErro] = useState('')
@@ -50,6 +50,7 @@ export default function ResetPassword() {
         return
       }
 
+      // eslint-disable-next-line no-alert
       alert('Email de redefinição de senha enviado')
 
       window.location.href = '/dashboard'

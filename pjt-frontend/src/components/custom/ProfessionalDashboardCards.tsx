@@ -7,9 +7,10 @@ import {
   ChevronUp,
 } from 'lucide-react'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface ProfessionalDashboardCardsProps {
   todayRevenue: number;

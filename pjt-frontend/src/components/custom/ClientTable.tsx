@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, Edit } from 'lucide-react'
 import { useState } from 'react'
 
-import { ClientForm } from './ClientForm'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +22,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
-import { useUser } from '@/contexts/UserContext'
+
+import { ClientForm } from './ClientForm'
 
 interface Client {
   id: string;
@@ -38,7 +38,6 @@ export function ClientTable() {
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const { activeBranch } = useBranch()
-  const { isAdmin } = useUser()
 
   const { data, isLoading, error } = useQuery<Client[]>({
     queryKey: ['clients', activeBranch?.id],
@@ -59,6 +58,7 @@ export function ClientTable() {
       setDeletingClientId(null)
     },
     onError: (error: any) => {
+      // eslint-disable-next-line no-alert
       alert(error.response?.data?.message || 'Erro ao excluir cliente')
       setDeletingClientId(null)
     },

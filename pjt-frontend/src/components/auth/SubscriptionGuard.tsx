@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
-// import { Navigate } from "react-router-dom";
 import axios from '@/lib/axios'
 
 interface SubscriptionGuardProps {
@@ -29,8 +28,7 @@ export function SubscriptionGuard({
     try {
       const res = await axios.get('/api/payment/user-has-active-subscription')
       setUserHasAccess(res.data)
-    } catch (e) {
-      console.log(e)
+    } catch {
       // TODO: Redirect to subscription page
       // localStorage.removeItem("token");
     } finally {

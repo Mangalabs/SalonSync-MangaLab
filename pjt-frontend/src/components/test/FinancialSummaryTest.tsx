@@ -22,9 +22,7 @@ export function FinancialSummaryTest() {
       if (endDate) {params.append('endDate', endDate)}
       if (selectedBranch !== 'all') {params.append('branchId', selectedBranch)}
 
-      console.log('Fazendo requisição com parâmetros:', params.toString())
       const res = await axios.get(`/api/financial/summary?${params}`)
-      console.log('Resposta recebida:', res.data)
       return res.data
     },
   })

@@ -3,8 +3,6 @@ import { Trash2, Edit, DollarSign } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
-import { ProfessionalForm } from './ProfessionalForm'
-import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +24,8 @@ import {
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 
+import { ProfessionalForm } from './ProfessionalForm'
+import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
 
 type Professional = {
   id: string;

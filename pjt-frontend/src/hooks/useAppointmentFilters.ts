@@ -24,15 +24,12 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
   const { mode, searchTerm = '', statusFilter = 'all', dateFilter = 'all', professionalFilter = 'all' } = filters
 
   return useMemo(() => {
-    // Filtrar por modo
     let filtered = mode === 'completed'
       ? appointments.filter((apt) => apt.status === 'COMPLETED')
       : appointments.filter((apt) => apt.status === 'SCHEDULED')
 
-    // Aplicar filtros apenas quando mode está definido
     if (!mode) {return filtered}
 
-    // Filtro de busca
     if (searchTerm) {
       filtered = filtered.filter(
         (apt) =>
@@ -41,7 +38,6 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
       )
     }
 
-    // Filtro de status (apenas para agendamentos)
     if (mode === 'scheduled' && statusFilter !== 'all') {
       const now = new Date()
       if (statusFilter === 'overdue') {
@@ -49,7 +45,6 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
       }
     }
 
-    // Filtro de data
     if (dateFilter !== 'all') {
       const now = new Date()
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -60,28 +55,29 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
         switch (dateFilter) {
           case 'today':
             return aptDate.toDateString() === today.toDateString()
-          case 'week':
+          case 'week':{
             const weekStart = new Date(today)
             weekStart.setDate(today.getDate() - today.getDay())
             const weekEnd = new Date(weekStart)
             weekEnd.setDate(weekStart.getDate() + 6)
             return aptDate >= weekStart && aptDate <= weekEnd
+          }
           case 'month':
             return (
               aptDate.getMonth() === today.getMonth() &&
               aptDate.getFullYear() === today.getFullYear()
             )
-          case 'last-month':
+          case 'last-month':{
             const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
             const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
             return aptDate >= lastMonth && aptDate <= lastMonthEnd
+          }
           default:
             return true
         }
       })
     }
 
-    // Filtro de profissional
     if (professionalFilter !== 'all') {
       filtered = filtered.filter((apt) => apt.professional.name === professionalFilter)
     }

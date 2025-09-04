@@ -14,7 +14,6 @@ export default function WhatsApp() {
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['whatsapp-messages'],
     queryFn: async () => {
-      console.log(activeBranch)
       const headers = activeBranch ? { 'x-branch-id': activeBranch.id } : {}
       const response = await api.get('/api/whatsapp/messages', { headers })
       return response.data

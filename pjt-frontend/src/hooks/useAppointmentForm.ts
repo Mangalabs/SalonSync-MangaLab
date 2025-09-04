@@ -72,7 +72,6 @@ export function useAppointmentForm(
     defaultValues: getDefaultValues(),
   })
 
-  // Auto-selecionar profissional se for funcionário (não admin)
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(p => p.name === user.name)

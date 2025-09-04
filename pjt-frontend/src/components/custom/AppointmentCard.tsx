@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { Calendar, User, DollarSign, X, Check, Edit, Trash2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { AppointmentForm } from './AppointmentForm'
-
 import { Button } from '@/components/ui/button'
 import axios from '@/lib/axios'
 import {
@@ -23,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
+import { AppointmentForm } from './AppointmentForm'
 
 interface Appointment {
   id: string;

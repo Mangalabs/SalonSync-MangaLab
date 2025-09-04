@@ -11,11 +11,6 @@ import {
   ChevronUp,
 } from 'lucide-react'
 
-import { ProfessionalDashboardCards } from './ProfessionalDashboardCards'
-import { DashboardStats } from './DashboardStats'
-import { AppointmentCard } from './AppointmentCard'
-import { AppointmentStats } from './AppointmentStats'
-
 import axios from '@/lib/axios'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -32,6 +27,11 @@ import {
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
 import { useAppointmentFilters } from '@/hooks/useAppointmentFilters'
+
+import { ProfessionalDashboardCards } from './ProfessionalDashboardCards'
+import { DashboardStats } from './DashboardStats'
+import { AppointmentCard } from './AppointmentCard'
+import { AppointmentStats } from './AppointmentStats'
 
 
 interface Appointment {

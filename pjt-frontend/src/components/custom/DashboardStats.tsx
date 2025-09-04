@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 
-import { ProfessionalCommissionSummary } from './ProfessionalCommissionSummary'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+import { ProfessionalCommissionSummary } from './ProfessionalCommissionSummary'
 
 interface DashboardStatsProps {
   todayRevenue: number;

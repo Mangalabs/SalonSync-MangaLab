@@ -63,16 +63,13 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   
   // Log para debug da seleção de filial
   useEffect(() => {
-    console.log('🏢 ProductSaleForm: selectedBranchId changed to:', selectedBranchId)
   }, [selectedBranchId])
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {return []}
-      console.log('📝 ProductSaleForm: Loading products for branch:', selectedBranchId)
       const res = await axios.get(`/api/products?branchId=${selectedBranchId}`)
-      console.log('📝 ProductSaleForm: Loaded products:', res.data.length, 'products')
       return res.data
     },
     enabled: !!selectedBranchId,
@@ -82,12 +79,9 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     queryKey: ['clients', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {
-        console.log('⚠️ ProductSaleForm: No selectedBranchId for clients')
         return []
       }
-      console.log('📝 ProductSaleForm: Loading clients for branch:', selectedBranchId)
       const res = await axios.get(`/api/clients?branchId=${selectedBranchId}`)
-      console.log('📝 ProductSaleForm: Loaded clients:', res.data.length, 'clients', res.data.map(c => c.name))
       return res.data
     },
     enabled: !!selectedBranchId,
@@ -97,12 +91,9 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     queryKey: ['professionals', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {
-        console.log('⚠️ ProductSaleForm: No selectedBranchId for professionals')
         return []
       }
-      console.log('📝 ProductSaleForm: Loading professionals for branch:', selectedBranchId)
       const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`)
-      console.log('📝 ProductSaleForm: Loaded professionals:', res.data.length, 'professionals', res.data.map(p => p.name))
       return res.data
     },
     enabled: !!selectedBranchId,

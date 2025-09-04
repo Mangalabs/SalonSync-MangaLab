@@ -49,7 +49,7 @@ export default function Reports() {
       case 'today':
         startDate = endDate = now.toISOString().split('T')[0]
         break
-      case 'week':
+      case 'week':{
         const weekStart = new Date(now)
         weekStart.setDate(now.getDate() - now.getDay())
         const weekEnd = new Date(weekStart)
@@ -57,16 +57,19 @@ export default function Reports() {
         startDate = weekStart.toISOString().split('T')[0]
         endDate = weekEnd.toISOString().split('T')[0]
         break
-      case 'month':
+      }
+      case 'month':{
         const [year, month] = selectedMonth.split('-')
         startDate = `${year}-${month}-01`
         const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
         endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`
         break
-      case 'year':
+      }
+      case 'year':{
         startDate = `${selectedYear}-01-01`
         endDate = `${selectedYear}-12-31`
         break
+      }
       default:
         startDate = endDate = now.toISOString().split('T')[0]
     }

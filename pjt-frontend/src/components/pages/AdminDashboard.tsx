@@ -38,10 +38,11 @@ export default function AdminDashboard() {
     switch (selectedPeriod) {
       case 'today':
         return { startDate: today, endDate: today }
-      case 'week':
+      case 'week':{
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
         return { startDate: weekAgo.toISOString().split('T')[0], endDate: today }
+      }
       case 'month':
         return { startDate: startOfMonth, endDate: today }
       default:

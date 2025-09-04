@@ -29,10 +29,11 @@ export default function ProfessionalDashboard() {
     switch (selectedPeriod) {
       case 'today':
         return { startDate: today, endDate: today }
-      case 'week':
+      case 'week':{
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
         return { startDate: weekAgo.toISOString().split('T')[0], endDate: today }
+      }
       case 'month':
         return { startDate: startOfMonth, endDate: today }
       default:
@@ -42,34 +43,25 @@ export default function ProfessionalDashboard() {
 
   const { startDate, endDate } = getDateRange()
 
-  // Primeiro buscar o Professional correto baseado no User
   const { data: professionalInfo, isLoading: professionalLoading } = useQuery({
     queryKey: ['user-professional', user?.id, activeBranch?.id],
     queryFn: async () => {
       if (!user?.id || !activeBranch?.id) {return null}
       
-      console.log('🔍 Searching for professional with user:', user.id, 'in branch:', activeBranch.id)
-      
       try {
-        // Buscar todos os profissionais da filial
         const res = await axios.get(`/api/professionals?branchId=${activeBranch.id}`)
-        console.log('📊 Found professionals:', res.data.length)
         
-        // Procurar o profissional que corresponde ao usuário logado (por nome ou email)
         const professional = res.data.find((prof: any) => 
           prof.name.toLowerCase() === user.name?.toLowerCase() ||
           prof.id === user.id,
         )
         
         if (professional) {
-          console.log('✅ Found matching professional:', professional.id, professional.name)
           return professional
         } else {
-          console.warn('⚠️ No matching professional found for user:', user.name)
           return null
         }
-      } catch (error) {
-        console.error('❌ Error finding professional:', error)
+      } catch {
         return null
       }
     },
@@ -77,12 +69,10 @@ export default function ProfessionalDashboard() {
     staleTime: 60000,
   })
 
-  // Dados de comissão usando o Professional ID correto
   const { data: commissionData, isLoading: commissionLoading, error: commissionError } = useQuery({
     queryKey: ['professional-commission', professionalInfo?.id, startDate, endDate, activeBranch?.id],
     queryFn: async () => {
       if (!professionalInfo?.id) {
-        console.log('❌ Commission: No professional ID found')
         return {
           professional: { id: user?.id, name: user?.name, commissionRate: 0 },
           summary: { totalAppointments: 0, totalRevenue: 0, totalCommission: 0 },
@@ -90,16 +80,12 @@ export default function ProfessionalDashboard() {
         }
       }
       
-      console.log('💰 Loading commission for professional:', professionalInfo.id, 'period:', { startDate, endDate })
       
       try {
         const res = await axios.get(`/api/professionals/${professionalInfo.id}/commission?startDate=${startDate}&endDate=${endDate}`)
-        console.log('✅ Commission loaded:', res.data)
         return res.data
       } catch (error: any) {
-        console.error('❌ Commission error:', error)
         if (error.response?.status === 404) {
-          console.warn('⚠️ Professional commission not found, returning empty data')
           return {
             professional: { id: professionalInfo.id, name: professionalInfo.name, commissionRate: professionalInfo.commissionRate || 0 },
             summary: { totalAppointments: 0, totalRevenue: 0, totalCommission: 0 },
@@ -114,12 +100,10 @@ export default function ProfessionalDashboard() {
     retry: 2,
   })
 
-  // Dados de agendamentos usando o Professional ID correto
   const { data: appointmentsData, isLoading: appointmentsLoading, error: appointmentsError } = useQuery({
     queryKey: ['professional-appointments', professionalInfo?.id, startDate, today, activeBranch?.id],
     queryFn: async () => {
       if (!professionalInfo?.id) {
-        console.log('❌ Appointments: No professional ID found')
         return {
           all: [],
           today: [],
@@ -127,11 +111,9 @@ export default function ProfessionalDashboard() {
         }
       }
       
-      console.log('📋 Loading appointments for professional:', professionalInfo.id, 'period:', { startDate, endDate: today })
       
       try {
         const res = await axios.get(`/api/appointments?professionalId=${professionalInfo.id}&startDate=${startDate}&endDate=${today}`)
-        console.log('✅ Appointments loaded:', res.data.length, 'appointments')
         
         const allAppointments = res.data
         const todayAppointments = allAppointments.filter((apt: any) => {
@@ -144,19 +126,12 @@ export default function ProfessionalDashboard() {
           return aptDate >= startDate && aptDate <= endDate
         })
 
-        console.log('📊 Filtered appointments:', {
-          total: allAppointments.length,
-          today: todayAppointments.length,
-          period: periodAppointments.length,
-        })
-
         return {
           all: allAppointments,
           today: todayAppointments,
           period: periodAppointments,
         }
-      } catch (error) {
-        console.error('❌ Appointments error:', error)
+      } catch {
         return {
           all: [],
           today: [],
@@ -172,7 +147,6 @@ export default function ProfessionalDashboard() {
   const isLoading = professionalLoading || commissionLoading || appointmentsLoading
   const error = commissionError || appointmentsError
   
-  // Combinar dados
   const professionalData = {
     commission: commissionData,
     appointments: appointmentsData?.period || [],
@@ -206,7 +180,6 @@ export default function ProfessionalDashboard() {
   }
 
   if (error) {
-    console.error('❌ ProfessionalDashboard: Query error:', error)
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Meu Dashboard</h1>
@@ -240,16 +213,6 @@ export default function ProfessionalDashboard() {
 
   const formatCurrency = (value: number) => `R$ ${(value || 0).toFixed(2)}`
   
-  console.log('📊 ProfessionalDashboard: Rendering with data:', {
-    user: user?.id,
-    branch: activeBranch?.id,
-    commissionLoading,
-    appointmentsLoading,
-    commissionData: commissionData ? 'loaded' : 'null',
-    appointmentsData: appointmentsData ? `${appointmentsData.all?.length || 0} total` : 'null',
-    commission: commissionData?.summary,
-    appointmentsCount: professionalData?.appointments?.length || 0,
-  })
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
       case 'today': return 'Hoje'
@@ -265,7 +228,6 @@ export default function ProfessionalDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Olá, {user?.name}! 👋</h1>
@@ -283,7 +245,6 @@ export default function ProfessionalDashboard() {
         </Tabs>
       </div>
 
-      {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -340,7 +301,6 @@ export default function ProfessionalDashboard() {
         </Card>
       </div>
 
-      {/* Agendamentos de Hoje */}
       {todayScheduled.length > 0 && (
         <Card>
           <CardHeader>
@@ -377,7 +337,6 @@ export default function ProfessionalDashboard() {
         </Card>
       )}
 
-      {/* Resumo Rápido */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -460,7 +419,6 @@ export default function ProfessionalDashboard() {
         </Card>
       </div>
 
-      {/* Meta de Performance */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

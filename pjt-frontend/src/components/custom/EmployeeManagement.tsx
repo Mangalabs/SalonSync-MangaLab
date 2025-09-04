@@ -6,8 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { UserPlus, Settings, Edit } from 'lucide-react'
 
-import { RoleForm } from './RoleForm'
-
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
@@ -17,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
-
+import { RoleForm } from './RoleForm'
 
 const employeeSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -52,8 +50,7 @@ export function EmployeeManagement() {
         return res.data
       } catch (error: any) {
         if (error.response?.status === 404) {
-          console.warn('⚠️ Rotas /api/roles não implementadas no backend')
-          return [] // Retorna array vazio até backend implementar
+          return []
         }
         throw error
       }
@@ -75,7 +72,6 @@ export function EmployeeManagement() {
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
-      // Buscar dados da função selecionada
       const selectedRole = roles.find((role: any) => role.id === data.roleId)
       const employeeData = {
         ...data,
@@ -88,7 +84,6 @@ export function EmployeeManagement() {
       toast.success('Funcionário criado com sucesso!')
       reset()
       setOpen(false)
-      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       queryClient.invalidateQueries({ queryKey: ['professionals'] })
       queryClient.invalidateQueries({ queryKey: ['roles'] })

@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, Edit } from 'lucide-react'
 import { useState } from 'react'
 
-import { ServiceForm } from './ServiceForm'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +13,8 @@ import {
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
+
+import { ServiceForm } from './ServiceForm'
 
 export function ServiceTable() {
   const queryClient = useQueryClient()
@@ -39,6 +40,7 @@ export function ServiceTable() {
       queryClient.invalidateQueries({ queryKey: ['services'] })
     },
     onError: (error: any) => {
+      // eslint-disable-next-line no-alert
       alert(error.response?.data?.message || 'Erro ao excluir serviço')
     },
   })

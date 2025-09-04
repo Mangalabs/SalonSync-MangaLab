@@ -59,7 +59,7 @@ export function ProductForm({
   const isEditing = !!initialData
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
-  const { user, isAdmin } = useUser()
+  const { isAdmin } = useUser()
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
@@ -104,15 +104,13 @@ export function ProductForm({
 
   const mutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      // Garantir que os valores numéricos sejam enviados corretamente
       const payload = {
         ...data,
         costPrice: data.costPrice || 0,
         salePrice: data.salePrice || 0,
         initialStock: data.initialStock || 0,
-        brand: data.brand || undefined, // Enviar undefined se vazio
+        brand: data.brand || undefined,
       }
-      console.log('Sending data to API:', payload)
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
         return axios.patch(`/api/products/${initialData.id}`, payload, { headers })
@@ -133,22 +131,6 @@ export function ProductForm({
   })
 
   const handleFormSubmit = (data: ProductFormData) => {
-    console.log('=== FORM SUBMIT DEBUG ===')
-    console.log('Raw form data:', data)
-    console.log('Form values:', {
-      name: data.name,
-      category: data.category,
-      brand: data.brand,
-      unit: data.unit,
-      costPrice: data.costPrice,
-      salePrice: data.salePrice,
-      initialStock: data.initialStock,
-    })
-    console.log('Types:', {
-      costPrice: typeof data.costPrice,
-      salePrice: typeof data.salePrice,
-      initialStock: typeof data.initialStock,
-    })
     mutation.mutate(data)
   }
 

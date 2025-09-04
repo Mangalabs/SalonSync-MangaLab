@@ -115,7 +115,7 @@ export function Sidebar() {
   const [showScheduledForm, setShowScheduledForm] = useState(false)
   const [showImmediateForm, setShowImmediateForm] = useState(false)
   const [showSaleForm, setShowSaleForm] = useState(false)
-  const { user, logout, isAdmin } = useUser()
+  const { user } = useUser()
   const { isOpen, close } = useSidebar()
 
   const navItems = getNavItems(user?.role || 'ADMIN')

@@ -30,7 +30,6 @@ export function ProfessionalCommissionSummary() {
   const { user, isAdmin } = useUser()
   const today = new Date().toISOString().split('T')[0]
   
-  // Buscar todos os profissionais
   const { data: professionals = [], isLoading: loadingProfessionals } = useQuery<Professional[]>({
     queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
@@ -40,11 +39,9 @@ export function ProfessionalCommissionSummary() {
     enabled: !!activeBranch,
   })
 
-  // Buscar comissões do dia para cada profissional ou apenas do usuário logado
   const { data: commissions = [], isLoading: loadingCommissions } = useQuery<CommissionSummary[]>({
     queryKey: ['daily-commissions', today, activeBranch?.id, user?.id],
     queryFn: async () => {
-      // Se não for admin, buscar apenas do profissional logado
       const profsToQuery = isAdmin ? professionals : professionals.filter(p => p.name === user?.name)
       
       const promises = profsToQuery.map(async (prof) => {
@@ -53,7 +50,7 @@ export function ProfessionalCommissionSummary() {
             `/api/professionals/${prof.id}/commission?startDate=${today}&endDate=${today}`,
           )
           return res.data
-        } catch (error) {
+        } catch {
           return {
             professional: {
               id: prof.id,
@@ -74,7 +71,6 @@ export function ProfessionalCommissionSummary() {
     enabled: !!activeBranch && professionals.length > 0,
   })
 
-  // Calcular total de comissões
   const totalCommission = commissions.reduce(
     (sum, item) => sum + item.summary.totalCommission,
     0,
@@ -94,12 +90,10 @@ export function ProfessionalCommissionSummary() {
     )
   }
 
-  // Ordenar por maior comissão
   const sortedCommissions = [...commissions].sort(
     (a, b) => b.summary.totalCommission - a.summary.totalCommission,
   )
 
-  // Pegar o profissional com maior comissão
   const topCommission = sortedCommissions[0]
 
   return (

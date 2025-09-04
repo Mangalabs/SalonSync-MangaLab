@@ -1,12 +1,6 @@
 import React, { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-
-import { ProfessionalSelector } from './ProfessionalSelector'
-import { ClientSelector } from './ClientSelector'
-import { ServiceSelector } from './ServiceSelector'
-import { SchedulingFields } from './SchedulingFields'
-
 import { useFormQueries } from '@/hooks/useFormQueries'
 import { Label } from '@/components/ui/label'
 import { useAppointmentForm } from '@/hooks/useAppointmentForm'
@@ -16,7 +10,10 @@ import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
 
-
+import { ProfessionalSelector } from './ProfessionalSelector'
+import { ClientSelector } from './ClientSelector'
+import { ServiceSelector } from './ServiceSelector'
+import { SchedulingFields } from './SchedulingFields'
 
 export function AppointmentForm({ 
   onSuccess, 
@@ -40,13 +37,11 @@ export function AppointmentForm({
     enabled: isAdmin,
   })
   
-  // Primeiro buscar os dados básicos
-  const { professionals, clients, services } = useFormQueries()
+  const { professionals } = useFormQueries()
   const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess, initialData)
   
   const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form
   
-  // Definir branchId padrão para não-admins usando useEffect
   React.useEffect(() => {
     if (!isAdmin && activeBranch?.id && !watch('branchId')) {
       setValue('branchId', activeBranch.id)
@@ -56,11 +51,8 @@ export function AppointmentForm({
   const selectedProfessional = watch('professionalId')
   const selectedDate = isScheduled ? watch('scheduledDate' as any) : undefined
   
-  // Buscar dados da filial selecionada
   const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId)
   const { availableSlots } = branchData
-
-
 
   const watchedServices = watch('serviceIds')
   const total = useMemo(() => (

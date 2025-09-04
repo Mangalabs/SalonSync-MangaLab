@@ -29,7 +29,7 @@ interface RoleFormProps {
 
 export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
   const queryClient = useQueryClient()
-  const { user, isAdmin } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({

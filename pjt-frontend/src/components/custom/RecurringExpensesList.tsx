@@ -10,7 +10,6 @@ export function RecurringExpensesList() {
     queryKey: ['recurring-expenses'],
     queryFn: async () => {
       const res = await axios.get('/api/financial/recurring-expenses')
-      console.log('🔍 Recurring expenses from API:', res.data)
       return res.data
     },
   })

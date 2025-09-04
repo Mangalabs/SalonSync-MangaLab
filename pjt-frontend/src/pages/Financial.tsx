@@ -41,15 +41,15 @@ export default function Financial() {
     setTransactionDialogOpen(true)
   }
 
-  const getTabLabel = (tab: string) => {
-    const labels = {
-      summary: 'Resumo',
-      income: 'Receitas',
-      expenses: 'Despesas',
-      investments: 'Investimentos',
-    }
-    return labels[tab as keyof typeof labels] || tab
-  }
+  // const getTabLabel = (tab: string) => {
+  //   const labels = {
+  //     summary: 'Resumo',
+  //     income: 'Receitas',
+  //     expenses: 'Despesas',
+  //     investments: 'Investimentos',
+  //   }
+  //   return labels[tab as keyof typeof labels] || tab
+  // }
 
   return (
     <FinancialProvider>

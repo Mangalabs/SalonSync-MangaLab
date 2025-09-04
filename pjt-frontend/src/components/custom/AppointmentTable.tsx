@@ -11,9 +11,6 @@ import {
   Filter,
 } from 'lucide-react'
 
-import { ScheduledAppointmentCard } from './ScheduledAppointmentCard'
-import { AppointmentForm } from './AppointmentForm'
-
 import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +29,8 @@ import {
 } from '@/components/ui/dialog'
 import { useBranch } from '@/contexts/BranchContext'
 
+import { ScheduledAppointmentCard } from './ScheduledAppointmentCard'
+import { AppointmentForm } from './AppointmentForm'
 
 interface RawAppointment {
   id: string;
@@ -108,6 +107,7 @@ export function AppointmentTable({
       queryClient.invalidateQueries({ queryKey: ['professional'] })
     },
     onError: (error: any) => {
+      // eslint-disable-next-line no-alert
       alert(error.response?.data?.message || 'Erro ao excluir agendamento')
     },
   })

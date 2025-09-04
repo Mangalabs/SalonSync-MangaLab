@@ -1,23 +1,21 @@
-// eslint.config.js
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import { configs, config } from 'typescript-eslint'
 import eslintPluginImport from 'eslint-plugin-import'
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports'
 import { FlatCompat } from '@eslint/eslintrc'
 
 const compat = new FlatCompat()
 
-export default tseslint.config(
+export default config(
   { ignores: ['dist', 'build', 'coverage', 'node_modules'] },
-
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     extends: [
       js.configs.recommended,
-      ...tseslint.configs.recommended,
+      ...configs.recommended,
       ...compat.extends('plugin:import/recommended'),
       ...compat.extends('plugin:import/typescript'),
     ],
@@ -75,9 +73,28 @@ export default tseslint.config(
       'space-before-blocks': 'error',
       'keyword-spacing': ['error', { before: true, after: true }],
       'comma-dangle': ['error', 'always-multiline'],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn', 
+        {
+          vars: 'all',
+          args: 'all',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^$',
+          argsIgnorePattern: '^$',
+        },
+      ],
+      'unused-imports/no-unused-vars': 'off', 
+      'react-refresh/only-export-components': 'off',
     },
     settings: {
       react: { version: 'detect' },
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
     },
   },
 )

@@ -58,8 +58,6 @@ export function ServiceForm({
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
-      console.log('🔧 ServiceForm: Submitting data:', data)
-      
       const payload = {
         name: data.name,
         price: data.price,
@@ -68,8 +66,6 @@ export function ServiceForm({
       const config = {
         headers: data.branchId ? { 'x-branch-id': data.branchId } : { 'x-skip-branch-header': 'true' },
       }
-      
-      console.log('🔧 ServiceForm: Config:', config)
       
       if (isEditing) {
         const res = await axios.patch(`/api/services/${initialData.id}`, payload, config)
@@ -84,8 +80,7 @@ export function ServiceForm({
       reset()
       onSuccess()
     },
-    onError: (error) => {
-      console.log('❌ Service mutation error:', error)
+    onError: () => {
     },
   })
 

@@ -28,7 +28,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       const params = new URLSearchParams()
       if (startDate) {params.append('startDate', startDate)}
       if (endDate) {params.append('endDate', endDate)}
-      params.append('branchId', branchFilter) // Sempre passar branchFilter, mesmo se for "all"
+      params.append('branchId', branchFilter)
 
       const [summaryRes, transactionsRes, appointmentsRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
@@ -46,7 +46,6 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     },
   })
 
-  // Memoizar cálculos complexos
   const calculations = useMemo(() => {
     if (!summary) {return { totalFromTransactions: 0, totalFromAppointments: 0, stockRevenue: 0, stockExpenses: 0, grandTotal: 0, categorySummary: {}, categories: [], paymentMethods: [] }}
     
@@ -72,7 +71,6 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     return { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods }
   }, [summary, type])
 
-  // Memoizar transações filtradas
   const filteredTransactions = useMemo(() => summary?.transactions?.filter((t: any) => {
     const matchesCategory = categoryFilter === 'all' || t.category.name === categoryFilter
     const matchesPayment = paymentMethodFilter === 'all' || t.paymentMethod === paymentMethodFilter
@@ -83,7 +81,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   if (isLoading) {return <div className="p-4">Carregando...</div>}
   if (error) {return <div className="p-4 text-red-600">Erro ao carregar dados financeiros</div>}
 
-  const { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, grandTotal, categorySummary, categories, paymentMethods } = calculations
+  const { totalFromTransactions, totalFromAppointments, stockRevenue, stockExpenses, categorySummary, categories, paymentMethods } = calculations
 
   const getTypeColor = () => {
     switch (type) {

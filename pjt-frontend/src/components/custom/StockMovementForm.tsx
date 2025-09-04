@@ -56,7 +56,7 @@ interface InventoryMovement {
 export function StockMovementForm({ onSuccess, initialData }: StockMovementFormProps) {
   const isEditing = !!initialData
   const queryClient = useQueryClient()
-  const { user, isAdmin } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
@@ -93,9 +93,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
     queryKey: ['products', selectedBranchId],
     queryFn: async () => {
       if (!selectedBranchId) {return []}
-      console.log('📈 Loading products for branch:', selectedBranchId)
       const res = await axios.get(`/api/products?branchId=${selectedBranchId}`)
-      console.log('📈 Products loaded:', res.data.length, 'products')
       return res.data
     },
     enabled: !!selectedBranchId,
@@ -113,16 +111,8 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
 
   const movementType = watch('type')
 
-  // Garantir que os valores sejam definidos quando editando
   useEffect(() => {
     if (initialData && isEditing) {
-      console.log('🔧 Setting form values for editing:', {
-        productId: initialData.product.id,
-        productName: initialData.product.name,
-        type: initialData.type,
-        quantity: initialData.quantity,
-      })
-      
       setValue('productId', initialData.product.id)
       setValue('type', initialData.type)
       setValue('quantity', initialData.quantity)
@@ -133,21 +123,13 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
     }
   }, [initialData, isEditing, setValue])
 
-  // Definir produto quando os produtos forem carregados
   useEffect(() => {
     if (initialData && isEditing && products.length > 0) {
       const productExists = products.find(p => p.id === initialData.product.id)
-      console.log('🔧 Product check:', {
-        searchingFor: initialData.product.id,
-        productName: initialData.product.name,
-        foundInList: !!productExists,
-        productsCount: products.length,
-        currentValue: watch('productId'),
-      })
+
       
       if (productExists) {
         setValue('productId', initialData.product.id)
-        console.log('🔧 Product set successfully')
       }
     }
   }, [initialData, isEditing, products, setValue, watch])

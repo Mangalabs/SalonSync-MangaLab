@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
 
-import { SchedulingForm } from './SchedulingForm'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -12,6 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
+import { SchedulingForm } from './SchedulingForm'
 
 export function SchedulingPanel() {
   const [open, setOpen] = useState(false)

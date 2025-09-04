@@ -107,7 +107,6 @@ const sendMessage = async (to, message) => {
     });
     return result;
   } catch (error) {
-    console.error('WhatsApp Error:', error);
     throw error;
   }
 };

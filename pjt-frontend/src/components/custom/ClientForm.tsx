@@ -89,7 +89,7 @@ export function ClientForm({
         return axios.post('/api/clients', payload, { headers })
       }
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] })
       reset()
       onSuccess()

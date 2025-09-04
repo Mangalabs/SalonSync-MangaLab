@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { StockMovementForm } from './StockMovementForm'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
@@ -25,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-
+import { StockMovementForm } from './StockMovementForm'
 
 interface InventoryMovement {
   id: string;
@@ -70,10 +69,8 @@ export function InventoryMovementTable() {
   const { data, isLoading, error } = useQuery<InventoryMovement[]>({
     queryKey: ['inventory-movements', activeBranch?.id],
     queryFn: async () => {
-      console.log('📈 Fetching inventory movements for branch:', activeBranch?.id)
       const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
       const res = await axios.get(`/api/inventory/movements${params}`)
-      console.log('📈 Inventory movements response:', res.data)
       return res.data
     },
     enabled: !!activeBranch,
