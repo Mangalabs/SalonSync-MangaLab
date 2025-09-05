@@ -11,15 +11,12 @@ import {
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
 
-export function BranchSelector() {
+export function BranchSelector({ className }: { className?: string }) {
   const { activeBranch, branches, setActiveBranch } = useBranch()
   const { isAdmin } = useUser()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Só mostrar para admins com múltiplas filiais
-  if (!isAdmin || branches.length <= 1) {
-    return null
-  }
+  if (!isAdmin || branches.length <= 1) {return null}
 
   const handleBranchChange = async (branchId: string) => {
     setIsLoading(true)
@@ -38,7 +35,7 @@ export function BranchSelector() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center gap-2 bg-white/5 border-white/20 text-white hover:bg-white/10"
+          className={`flex items-center gap-2 ${className || ''}`}
           disabled={isLoading}
         >
           <Building2 size={16} />
@@ -61,14 +58,10 @@ export function BranchSelector() {
             <div className="flex-1">
               <div className="font-medium">{branch.name}</div>
               {branch.address && (
-                <div className="text-xs text-muted-foreground">
-                  {branch.address}
-                </div>
+                <div className="text-xs text-muted-foreground">{branch.address}</div>
               )}
             </div>
-            {activeBranch?.id === branch.id && (
-              <div className="w-2 h-2 bg-primary rounded-full" />
-            )}
+            {activeBranch?.id === branch.id && <div className="w-2 h-2 bg-primary rounded-full" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
