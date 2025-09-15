@@ -1,60 +1,43 @@
+import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
-
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 import { StockMovementForm } from '../forms/StockMovementForm'
 
 interface InventoryMovement {
-  id: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
-  quantity: number;
-  unitCost?: number;
-  totalCost?: number;
-  reason: string;
-  reference?: string;
-  createdAt: string;
-  product: {
-    id: string;
-    name: string;
-  };
-  user?: {
-    id: string;
-    name: string;
-  };
+  id: string
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'TRANSFER'
+  quantity: number
+  unitCost?: number
+  totalCost?: number
+  reason: string
+  reference?: string
+  createdAt: string
+  product: { id: string; name: string }
+  user?: { id: string; name: string }
 }
 
-export function InventoryMovementTable() {
+interface Props {
+  searchTerm: string
+  filter: 'all' | 'entrada' | 'saida' | 'ajuste' | 'transferencia' | 'perda'
+  dateRange: { start: string; end: string }
+}
+
+export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props) {
   const { activeBranch } = useBranch()
   const queryClient = useQueryClient()
   const [editingMovement, setEditingMovement] = useState<InventoryMovement | null>(null)
   const [deletingMovement, setDeletingMovement] = useState<InventoryMovement | null>(null)
 
   const deleteMovement = useMutation({
-    mutationFn: async (movementId: string) => {
-      await axios.delete(`/api/inventory/movements/${movementId}`)
-    },
+    mutationFn: async (movementId: string) => axios.delete(`/api/inventory/movements/${movementId}`),
     onSuccess: () => {
       toast.success('Movimentação excluída com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
@@ -76,211 +59,125 @@ export function InventoryMovementTable() {
     enabled: !!activeBranch,
   })
 
-  if (isLoading) {return <p className="p-4">Carregando...</p>}
-  if (error) {return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>}
-  if (!data?.length) {return (
-    <div className="text-center py-8">
-      <p className="text-gray-500">Nenhuma movimentação encontrada</p>
-    </div>
-  )}
+  const filteredData = data?.filter(m => {
+    const term = searchTerm.toLowerCase()
+    const matchesSearch =
+      m.product.name.toLowerCase().includes(term) ||
+      m.reason.toLowerCase().includes(term) ||
+      (m.user?.name?.toLowerCase().includes(term) ?? false)
+
+    const matchesType =
+      filter === 'all'
+        ? true
+        : (filter === 'entrada' && m.type === 'IN') ||
+        (filter === 'saida' && m.type === 'OUT') ||
+        (filter === 'ajuste' && m.type === 'ADJUSTMENT') ||
+        (filter === 'transferencia' && m.type === 'TRANSFER') ||
+        (filter === 'perda' && m.type === 'LOSS')
+
+    const movementDate = new Date(m.createdAt)
+    const startDate = dateRange.start ? new Date(dateRange.start) : null
+    const endDate = dateRange.end ? new Date(dateRange.end) : null
+
+    const matchesDate =
+      (!startDate || movementDate >= startDate) &&
+      (!endDate || movementDate <= endDate)
+
+    return matchesSearch && matchesType && matchesDate
+  })
 
   const getTypeConfig = (type: string) => {
     switch (type) {
-      case 'IN':
-        return { label: 'Entrada', color: 'bg-green-100 text-green-800' }
-      case 'OUT':
-        return { label: 'Saída', color: 'bg-red-100 text-red-800' }
-      case 'ADJUSTMENT':
-        return { label: 'Ajuste', color: 'bg-blue-100 text-blue-800' }
-      case 'LOSS':
-        return { label: 'Perda', color: 'bg-orange-100 text-orange-800' }
-      default:
-        return { label: type, color: 'bg-gray-100 text-gray-800' }
+      case 'IN': return { label: 'Entrada', color: 'text-green-600 bg-green-100', icon: ArrowDown }
+      case 'OUT': return { label: 'Saída', color: 'text-red-600 bg-red-100', icon: ArrowUp }
+      case 'ADJUSTMENT': return { label: 'Ajuste', color: 'text-yellow-600 bg-yellow-100', icon: RefreshCw }
+      case 'LOSS': return { label: 'Perda', color: 'text-orange-600 bg-orange-100', icon: RefreshCw }
+      case 'TRANSFER': return { label: 'Transferência', color: 'text-blue-600 bg-blue-100', icon: RefreshCw }
+      default: return { label: type, color: 'text-gray-600 bg-gray-100', icon: RefreshCw }
     }
   }
 
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
+  if (error) {return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>}
+
   return (
-    <div>
-      {/* Desktop Table */}
-      <div className="hidden md:block border rounded-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F0]">
-            <tr>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Data</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Produto</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Tipo</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Qtd</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Valor Unit.</th>
-              <th className="px-4 py-2 text-right text-sm font-medium text-[#1A1A1A]">Total</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Motivo</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Referência</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-[#1A1A1A]">Usuário</th>
-              <th className="px-4 py-2 text-center text-sm font-medium text-[#1A1A1A]">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {data?.map((movement) => {
-              const typeConfig = getTypeConfig(movement.type)
-              
-              return (
-                <tr key={movement.id} className="hover:bg-[#F5F5F0]/50">
-                  <td className="px-4 py-3 text-sm">
-                    {new Date(movement.createdAt).toLocaleString('pt-BR')}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-[#1A1A1A]">{movement.product.name}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeConfig.color}`}>
-                      {typeConfig.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {movement.quantity}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm">
-                    {movement.unitCost ? (
-                      <span className="text-[#D4AF37] font-medium">
-                        R$ {Number(movement.unitCost).toFixed(2)}
+    <div className="space-y-4">
+      <div className="overflow-x-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        {filteredData?.length ? (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Data/Hora</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Produto</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Tipo</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-700">Qtd</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Unit.</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Motivo</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Usuário</th>
+                <th className="text-center py-3 px-4 font-semibold text-gray-700">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((movement) => {
+                const config = getTypeConfig(movement.type)
+                const Icon = config.icon
+                return (
+                  <tr key={movement.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-4 text-sm text-gray-800">{new Date(movement.createdAt).toLocaleString('pt-BR')}</td>
+                    <td className="py-3 px-4 text-gray-800">{movement.product.name}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+                        <Icon className="w-3 h-3 mr-1" />
+                        {config.label}
                       </span>
-                    ) : (
-                      <span className="text-[#737373]">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm">
-                    {movement.totalCost ? (
-                      <span className="text-[#D4AF37] font-semibold">
-                        R$ {Number(movement.totalCost).toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="text-[#737373]">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm max-w-xs truncate text-[#737373]">
-                    {movement.reason}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#737373]">
-                    {movement.reference || '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#737373]">
-                    {movement.user?.name || '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingMovement(movement)}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeletingMovement(movement)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold">{movement.quantity}</td>
+                    <td className="py-3 px-4 text-right text-gray-800">
+                      {movement.unitCost ? `R$ ${Number(movement.unitCost).toFixed(2)}` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-right text-gray-800">
+                      {movement.totalCost ? `R$ ${Number(movement.totalCost).toFixed(2)}` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">{movement.reason}</td>
+                    <td className="py-3 px-4 text-gray-600">{movement.user?.name || '-'}</td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setEditingMovement(movement)}>
+                          <Edit size={14} />
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => setDeletingMovement(movement)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma movimentação encontrada</h3>
+            <p className="text-gray-500">Tente buscar com outro termo, período ou filtro de tipo.</p>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Cards */}
-      <div className="md:hidden space-y-3">
-        {data?.map((movement) => {
-          const typeConfig = getTypeConfig(movement.type)
-          
-          return (
-            <div key={movement.id} className="bg-white border rounded-lg p-3">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm text-[#1A1A1A] truncate">{movement.product.name}</h3>
-                  <p className="text-xs text-[#737373]">
-                    {new Date(movement.createdAt).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeConfig.color} ml-2`}>
-                  {typeConfig.label}
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div className="text-center">
-                  <div className="text-sm font-medium">{movement.quantity}</div>
-                  <div className="text-xs text-[#737373]">Quantidade</div>
-                </div>
-                
-                {movement.totalCost && (
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-[#D4AF37]">
-                      R$ {Number(movement.totalCost).toFixed(2)}
-                    </div>
-                    <div className="text-xs text-[#737373]">Total</div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-xs text-[#737373] mb-1">
-                <strong>Motivo:</strong> <span className="break-words">{movement.reason.length > 50 ? `${movement.reason.substring(0, 50)}...` : movement.reason}</span>
-              </div>
-              
-              <div className="flex justify-between items-center text-xs text-[#737373] mb-2">
-                <div className="flex gap-4">
-                  {movement.reference && (
-                    <span><strong>Ref:</strong> {movement.reference}</span>
-                  )}
-                  {movement.user?.name && (
-                    <span><strong>Por:</strong> {movement.user.name}</span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingMovement(movement)}
-                  className="flex-1"
-                >
-                  <Edit size={12} className="mr-1" />
-                  Editar
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setDeletingMovement(movement)}
-                  className="flex-1"
-                >
-                  <Trash2 size={12} className="mr-1" />
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      
-      {/* Dialog de Edição */}
       <Dialog open={!!editingMovement} onOpenChange={() => setEditingMovement(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Movimentação</DialogTitle>
           </DialogHeader>
           {editingMovement && (
-            <StockMovementForm
-              initialData={editingMovement}
-              onSuccess={() => setEditingMovement(null)}
-            />
+            <StockMovementForm onSuccess={() => setEditingMovement(null)} />
           )}
         </DialogContent>
       </Dialog>
-      
-      {/* Dialog de Exclusão */}
+
       <AlertDialog open={!!deletingMovement} onOpenChange={() => setDeletingMovement(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -291,10 +188,7 @@ export function InventoryMovementTable() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deletingMovement && deleteMovement.mutate(deletingMovement.id)}
-              disabled={deleteMovement.isPending}
-            >
+            <AlertDialogAction onClick={() => deletingMovement && deleteMovement.mutate(deletingMovement.id)} disabled={deleteMovement.isPending}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

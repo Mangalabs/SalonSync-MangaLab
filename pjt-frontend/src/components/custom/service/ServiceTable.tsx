@@ -1,9 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Edit } from 'lucide-react'
+import { PlusCircle, Scissors, Sparkles, Heart, Edit, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
-
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -16,13 +14,37 @@ import { useUser } from '@/contexts/UserContext'
 
 import { ServiceForm } from './ServiceForm'
 
+interface Service {
+  id: string
+  name: string
+  description?: string
+  price: number
+  duration?: string
+  icon?: string
+  color?: string
+  branchId?: string
+}
+
+const getServiceIcon = (iconType?: string) => {
+  switch (iconType) {
+    case 'scissors':
+      return <Scissors className="w-8 h-8 text-white" />
+    case 'sparkles':
+      return <Sparkles className="w-8 h-8 text-white" />
+    case 'heart':
+      return <Heart className="w-8 h-8 text-white" />
+    default:
+      return <Scissors className="w-8 h-8 text-white" />
+  }
+}
+
 export function ServiceTable() {
   const queryClient = useQueryClient()
-  const [editingService, setEditingService] = useState<any>(null)
   const { activeBranch } = useBranch()
   const { isAdmin } = useUser()
+  const [editingService, setEditingService] = useState<Service | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data: services, isLoading, error } = useQuery<Service[]>({
     queryKey: ['services', activeBranch?.id],
     queryFn: async () => {
       const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
@@ -37,7 +59,7 @@ export function ServiceTable() {
       await axios.delete(`/api/services/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] })
+      queryClient.invalidateQueries({ queryKey: ['services', activeBranch?.id] })
     },
     onError: (error: any) => {
       // eslint-disable-next-line no-alert
@@ -46,71 +68,110 @@ export function ServiceTable() {
   })
 
   if (isLoading) {return <p>Carregando serviços...</p>}
-  if (!Array.isArray(data)) {return <p>Nenhum serviço encontrado.</p>}
+  if (error) {return <p className="text-red-500">Erro ao carregar serviços</p>}
+  if (!Array.isArray(services) || services.length === 0) {
+    return <p>Nenhum serviço encontrado.</p>
+  }
 
   return (
-    <div>
-      <div className="border rounded-md p-2 md:p-4 bg-white overflow-x-auto">
-        <table className="w-full text-xs md:text-sm min-w-full">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="py-2 text-left">Nome</th>
-              <th className="py-2 text-right">Preço</th>
-              {isAdmin && <th className="py-2 text-center mobile-hidden">Escopo</th>}
-              <th className="py-2 text-center">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((service: any) => (
-              <tr key={service.id} className="border-t">
-                <td className="py-2 font-medium">{service.name}</td>
-                <td className="py-2 text-right font-semibold">R$ {Number(service.price).toFixed(2)}</td>
-                {isAdmin && (
-                  <td className="py-2 text-center mobile-hidden">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                    }`}>
-                      {service.branchId ? 'Filial' : 'Global'}
-                    </span>
-                  </td>
-                )}
-                <td className="py-2">
-                  <div className="flex gap-1 md:gap-2 justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingService(service)}
-                      className="p-2"
-                    >
-                      <Edit size={12} className="md:w-4 md:h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteService.mutate(service.id)}
-                      disabled={deleteService.isPending}
-                      className="p-2"
-                    >
-                      <Trash2 size={12} className="md:w-4 md:h-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-semibold text-gray-800">Catálogo de Serviços</h3>
+        <Dialog open={!!editingService && !editingService.id} onOpenChange={() => setEditingService(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Novo Serviço</DialogTitle>
+            </DialogHeader>
+            <ServiceForm onSuccess={() => setEditingService(null)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Dialog
-        open={!!editingService}
-        onOpenChange={() => setEditingService(null)}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {services.map((service) => (
+          <div
+            key={service.id}
+            className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+          >
+            <div className={`h-32 bg-gradient-to-br ${service.color || 'from-purple-400 to-pink-400'} flex items-center justify-center`}>
+              {getServiceIcon(service.icon)}
+            </div>
+            <div className="p-6">
+              <h4 className="font-semibold text-gray-800 mb-2">{service.name}</h4>
+              {service.description && <p className="text-gray-600 text-sm mb-4">{service.description}</p>}
+
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-lg font-bold text-purple-600">
+                  R$ {Number(service.price).toFixed(2).replace('.', ',')}
+                </span>
+                {service.duration && (
+                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    {service.duration}
+                  </span>
+                )}
+              </div>
+
+              {isAdmin && (
+                <p className="text-xs mb-3">
+                  <span
+                    className={`px-2 py-1 rounded-full ${service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {service.branchId ? 'Filial' : 'Global'}
+                  </span>
+                </p>
+              )}
+
+              <div className="mt-4 flex space-x-2">
+                <button
+                  onClick={() => setEditingService(service)}
+                  className="flex-1 bg-purple-100 text-purple-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Edit className="w-3 h-3" />
+                  Editar
+                </button>
+                <button
+                  onClick={() => deleteService.mutate(service.id)}
+                  disabled={deleteService.isPending}
+                  className="flex-1 bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6">
+        <button
+          onClick={() => setEditingService({ id: '', name: '', price: 0 })}
+          className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300 group"
+        >
+          <div className="text-center">
+            <PlusCircle className="w-12 h-12 text-gray-400 group-hover:text-purple-500 mx-auto mb-3 transition-colors" />
+            <h4 className="font-medium text-gray-600 group-hover:text-purple-600 mb-1">
+              Adicionar Novo Serviço
+            </h4>
+            <p className="text-sm text-gray-500">
+              Expanda seu catálogo com novos serviços
+            </p>
+          </div>
+        </button>
+      </div>
+
+      <Dialog open={!!editingService && !!editingService.id} onOpenChange={() => setEditingService(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Serviço</DialogTitle>
           </DialogHeader>
           <ServiceForm
-            initialData={editingService}
+            initialData={
+              editingService
+                ? { ...editingService, price: String(editingService.price) }
+                : undefined
+            }
             onSuccess={() => setEditingService(null)}
           />
         </DialogContent>
