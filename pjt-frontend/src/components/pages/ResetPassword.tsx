@@ -1,24 +1,25 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useSearchParams } from "react-router-dom";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 const requestResetSchema = z.object({
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-  confirmPassword: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-});
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  confirmPassword: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+})
 
 type RequestResetData = z.infer<typeof requestResetSchema>;
 
 export default function ResetPassword() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token')
 
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState('')
 
   const {
     register,
@@ -26,36 +27,37 @@ export default function ResetPassword() {
     formState: { errors, isSubmitting },
   } = useForm<RequestResetData>({
     resolver: zodResolver(requestResetSchema),
-  });
+  })
 
   const onSubmit = async (data: RequestResetData) => {
     try {
       const res = await fetch(
-        import.meta.env.VITE_API_URL + "/api/reset/reset",
+        import.meta.env.VITE_API_URL + '/api/reset/reset',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...data,
             token,
           }),
-        }
-      );
+        },
+      )
 
-      const result = await res.json();
+      const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || "Erro ao resetar de senha");
-        return;
+        setErro(result.message || 'Erro ao resetar de senha')
+        return
       }
 
-      alert("Email de redefinição de senha enviado");
+      // eslint-disable-next-line no-alert
+      alert('Email de redefinição de senha enviado')
 
-      window.location.href = "/dashboard";
+      window.location.href = '/dashboard'
     } catch {
-      setErro("Erro de conexão com o servidor");
+      setErro('Erro de conexão com o servidor')
     }
-  };
+  }
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4 md:px-6 md:flex h-screen w-screen">
@@ -79,7 +81,7 @@ export default function ResetPassword() {
                 <Input
                   placeholder="Senha"
                   type="password"
-                  {...register("password")}
+                  {...register('password')}
                 />
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">
@@ -91,7 +93,7 @@ export default function ResetPassword() {
                 <Input
                   placeholder="Confirmar Senha"
                   type="password"
-                  {...register("confirmPassword")}
+                  {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-500 mt-1">
@@ -101,12 +103,12 @@ export default function ResetPassword() {
               </div>
               {erro && <p className="text-sm text-red-600">{erro}</p>}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Enviando..." : "Confirmar"}
+                {isSubmitting ? 'Enviando...' : 'Confirmar'}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

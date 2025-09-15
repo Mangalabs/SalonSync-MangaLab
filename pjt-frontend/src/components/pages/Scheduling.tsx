@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -8,23 +9,23 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AppointmentForm } from "@/components/custom/AppointmentForm";
-import { AppointmentTable } from "@/components/custom/AppointmentTable";
+} from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { AppointmentTable } from '@/components/custom/appointment/AppointmentTable'
 
 export default function Scheduling() {
-  const [searchParams] = useSearchParams();
-  const [scheduledOpen, setScheduledOpen] = useState(false);
-  const [immediateOpen, setImmediateOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("scheduled");
+  const [searchParams] = useSearchParams()
+  const [scheduledOpen, setScheduledOpen] = useState(false)
+  const [immediateOpen, setImmediateOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>('scheduled')
   
   useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab === "scheduled" || tab === "completed") {
-      setActiveTab(tab);
+    const tab = searchParams.get('tab')
+    if (tab === 'scheduled' || tab === 'completed') {
+      setActiveTab(tab)
     }
-  }, [searchParams]);
+  }, [searchParams])
 
   return (
     <div className="space-y-6">
@@ -75,5 +76,5 @@ export default function Scheduling() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

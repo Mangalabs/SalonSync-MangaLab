@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import type { ReactNode } from "react";
-// import { Navigate } from "react-router-dom";
-import axios from "@/lib/axios";
+import { useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+
+import axios from '@/lib/axios'
 
 interface SubscriptionGuardProps {
   children: ReactNode;
@@ -12,42 +12,41 @@ export function SubscriptionGuard({
   children,
   fallback,
 }: SubscriptionGuardProps) {
-  const [userHasAccess, setUserHasAccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [userHasAccess, setUserHasAccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token')
     if (token) {
-      fetchSubscription();
+      fetchSubscription()
     } else {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   const fetchSubscription = async () => {
     try {
-      const res = await axios.get("/api/payment/user-has-active-subscription");
-      setUserHasAccess(res.data);
-    } catch (e) {
-      console.log(e);
+      const res = await axios.get('/api/payment/user-has-active-subscription')
+      setUserHasAccess(res.data)
+    } catch {
       // TODO: Redirect to subscription page
       // localStorage.removeItem("token");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         Carregando...
       </div>
-    );
+    )
   }
 
   if (!userHasAccess) {
     if (fallback) {
-      return <>{fallback}</>;
+      return <>{fallback}</>
     }
     return (
       <div className="flex items-center justify-center h-64">
@@ -59,8 +58,8 @@ export function SubscriptionGuard({
           </p>
         </div>
       </div>
-    );
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

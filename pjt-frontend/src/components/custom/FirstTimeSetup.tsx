@@ -1,20 +1,21 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "@/lib/axios";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { CheckCircle, Building2, User } from "lucide-react";
+import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+import { CheckCircle, Building2, User } from 'lucide-react'
+
+import axios from '@/lib/axios'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const setupSchema = z.object({
-  businessName: z.string().min(2, "Nome do negócio deve ter no mínimo 2 caracteres"),
+  businessName: z.string().min(2, 'Nome do negócio deve ter no mínimo 2 caracteres'),
   phone: z.string().optional(),
-});
+})
 
 type SetupFormData = z.infer<typeof setupSchema>;
 
@@ -23,8 +24,8 @@ interface FirstTimeSetupProps {
 }
 
 export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
-  const [step, setStep] = useState(1);
-  const queryClient = useQueryClient();
+  const [step, setStep] = useState(1)
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -32,25 +33,25 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
     formState: { errors, isSubmitting },
   } = useForm<SetupFormData>({
     resolver: zodResolver(setupSchema),
-  });
+  })
 
   const updateProfile = useMutation({
     mutationFn: async (data: SetupFormData) => {
-      await axios.patch("/api/auth/profile", data);
+      await axios.patch('/api/auth/profile', data)
     },
     onSuccess: () => {
-      toast.success("Configuração inicial concluída!");
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      onComplete();
+      toast.success('Configuração inicial concluída!')
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] })
+      onComplete()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao salvar configurações");
+      toast.error(error.response?.data?.message || 'Erro ao salvar configurações')
     },
-  });
+  })
 
   const onSubmit = (data: SetupFormData) => {
-    updateProfile.mutate(data);
-  };
+    updateProfile.mutate(data)
+  }
 
   if (step === 1) {
     return (
@@ -87,7 +88,7 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -110,7 +111,7 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
               <Label htmlFor="businessName">Nome do Negócio</Label>
               <Input 
                 id="businessName" 
-                {...register("businessName")} 
+                {...register('businessName')} 
                 placeholder="Ex: Barbearia do João"
               />
               {errors.businessName && (
@@ -122,7 +123,7 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
               <Label htmlFor="phone">Telefone (Opcional)</Label>
               <Input 
                 id="phone" 
-                {...register("phone")} 
+                {...register('phone')} 
                 placeholder="(11) 99999-9999"
               />
             </div>
@@ -132,11 +133,11 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
               disabled={isSubmitting} 
               className="w-full"
             >
-              {isSubmitting ? "Salvando..." : "Concluir Configuração"}
+              {isSubmitting ? 'Salvando...' : 'Concluir Configuração'}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

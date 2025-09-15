@@ -1,22 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Bell, X, DollarSign } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Bell, DollarSign } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Card,
   CardContent,
-} from "@/components/ui/card";
-import { toast } from "sonner";
-import axios from "@/lib/axios";
+} from '@/components/ui/card'
+import axios from '@/lib/axios'
 
 interface PaymentFormData {
   amount: number;
@@ -25,58 +26,58 @@ interface PaymentFormData {
 }
 
 export function PendingExpensesNotification() {
-  const [selectedExpense, setSelectedExpense] = useState<any>(null);
+  const [selectedExpense, setSelectedExpense] = useState<any>(null)
   const [paymentData, setPaymentData] = useState<PaymentFormData>({
     amount: 0,
-    paymentMethod: "CASH",
-    reference: "",
-  });
-  const queryClient = useQueryClient();
+    paymentMethod: 'CASH',
+    reference: '',
+  })
+  const queryClient = useQueryClient()
 
   const { data: pendingExpenses = [] } = useQuery({
-    queryKey: ["pending-recurring-expenses"],
+    queryKey: ['pending-recurring-expenses'],
     queryFn: async () => {
-      const res = await axios.get("/api/financial/recurring-expenses/pending");
-      return res.data;
+      const res = await axios.get('/api/financial/recurring-expenses/pending')
+      return res.data
     },
     refetchInterval: 5 * 60 * 1000, // Verifica a cada 5 minutos
-  });
+  })
 
   const payExpense = useMutation({
     mutationFn: async ({ expenseId, data }: { expenseId: string; data: PaymentFormData }) => {
-      const res = await axios.post(`/api/financial/recurring-expenses/${expenseId}/pay`, data);
-      return res.data;
+      const res = await axios.post(`/api/financial/recurring-expenses/${expenseId}/pay`, data)
+      return res.data
     },
     onSuccess: () => {
-      toast.success("Despesa paga com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["pending-recurring-expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-tab-data"] });
-      setSelectedExpense(null);
+      toast.success('Despesa paga com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['pending-recurring-expenses'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-tab-data'] })
+      setSelectedExpense(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao pagar despesa");
+      toast.error(error.response?.data?.message || 'Erro ao pagar despesa')
     },
-  });
+  })
 
   const handlePayExpense = (expense: any) => {
-    setSelectedExpense(expense);
+    setSelectedExpense(expense)
     setPaymentData({
       amount: expense.fixedAmount ? Number(expense.fixedAmount) : 0,
-      paymentMethod: "CASH",
-      reference: "",
-    });
-  };
+      paymentMethod: 'CASH',
+      reference: '',
+    })
+  }
 
   const submitPayment = () => {
-    if (!selectedExpense || paymentData.amount <= 0) return;
+    if (!selectedExpense || paymentData.amount <= 0) {return}
     
     payExpense.mutate({
       expenseId: selectedExpense.id,
       data: paymentData,
-    });
-  };
+    })
+  }
 
-  if (pendingExpenses.length === 0) return null;
+  if (pendingExpenses.length === 0) {return null}
 
   return (
     <>
@@ -191,12 +192,12 @@ export function PendingExpensesNotification() {
                 disabled={payExpense.isPending || paymentData.amount <= 0}
                 className="flex-1"
               >
-                {payExpense.isPending ? "Pagando..." : "Confirmar Pagamento"}
+                {payExpense.isPending ? 'Pagando...' : 'Confirmar Pagamento'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

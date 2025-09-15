@@ -1,240 +1,176 @@
 import {
   Home,
   Users,
-  ClipboardList,
   User,
-  Warehouse,
-  BarChart2,
+  Package,
+  TrendingUp,
+  FileText,
+  MessageCircle,
   Settings,
-  LogOut,
   Calendar,
-  CheckSquare,
-  DollarSign,
+  PlusCircle,
+  Scissors,
   ShoppingCart,
-  MessageSquare,
   X,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+} from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
 
-import { AppointmentForm } from "@/components/custom/AppointmentForm";
-import { ProductSaleForm } from "@/components/custom/ProductSaleForm";
-import { UserMenu } from "@/components/custom/UserMenu";
-import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
-import { useSidebar } from "@/contexts/SidebarContext";
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
+import { useUser } from '@/contexts/UserContext'
+import { useSidebar } from '@/contexts/SidebarContext'
 
-const getNavItems = (userRole: string) => {
-  const baseItems = [
-    {
-      to: "/dashboard",
-      icon: Home,
-      label: "Dashboard",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-    {
-      to: "/dashboard/clients",
-      icon: User,
-      label: "Clientes",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-    {
-      to: "/dashboard/services",
-      icon: ClipboardList,
-      label: "Serviços",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-    {
-      to: "/dashboard/inventory",
-      icon: Warehouse,
-      label: "Estoque",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-    {
-      to: "/dashboard/appointments",
-      icon: Calendar,
-      label: "Agendamentos",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-    {
-      to: "/dashboard/treatments",
-      icon: CheckSquare,
-      label: "Agendamentos",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-  ];
+const menuSections = [
+  {
+    title: 'Principal',
+    items: [{ to: '/dashboard', icon: Home, label: 'Dashboard', roles: ['ADMIN', 'PROFESSIONAL'] }],
+  },
+  {
+    title: 'Atendimento',
+    items: [
+      { to: '/dashboard/appointments', icon: Calendar, label: 'Agenda', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/treatments', icon: PlusCircle, label: 'Novo Atendimento', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/clients', icon: Users, label: 'Clientes', roles: ['ADMIN', 'PROFESSIONAL'] },
+    ],
+  },
+  {
+    title: 'Negócio',
+    items: [
+      { to: '/dashboard/services', icon: Scissors, label: 'Serviços', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'PROFESSIONAL'], opensSaleForm: true },
+      { to: '/dashboard/inventory', icon: Package, label: 'Estoque', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/professionals', icon: User, label: 'Profissionais', roles: ['ADMIN'] },
+    ],
+  },
+  {
+    title: 'Gestão',
+    items: [
+      { to: '/dashboard/financial', icon: TrendingUp, label: 'Financeiro', roles: ['ADMIN'] },
+      { to: '/dashboard/reports', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
+      { to: '/dashboard/whatsapp', icon: MessageCircle, label: 'WhatsApp', roles: ['ADMIN'] },
+    ],
+  },
+  {
+    title: 'Sistema',
+    items: [{ to: '/dashboard/settings', icon: Settings, label: 'Configurações', roles: ['ADMIN', 'PROFESSIONAL'] }],
+  },
+]
 
-  const adminItems = [
-    {
-      to: "/dashboard/professionals",
-      icon: Users,
-      label: "Profissionais",
-      roles: ["ADMIN"],
-    },
-    {
-      to: "/dashboard/whatsapp",
-      icon: MessageSquare,
-      label: "WhatsApp",
-      roles: ["ADMIN"],
-    },
-    {
-      to: "/dashboard/financial",
-      icon: DollarSign,
-      label: "Financeiro",
-      roles: ["ADMIN"],
-    },
-    {
-      to: "/dashboard/reports",
-      icon: BarChart2,
-      label: "Relatórios",
-      roles: ["ADMIN"],
-    },
-    {
-      to: "/dashboard/settings",
-      icon: Settings,
-      label: "Configurações",
-      roles: ["ADMIN", "PROFESSIONAL"],
-    },
-  ];
+const getNavItems = (userRole: string) =>
+  menuSections.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => (userRole === 'SUPERADMIN' ? true : item.roles.includes(userRole))),
+  }))
 
-  const allItems = [...baseItems, ...adminItems];
-  return allItems.filter((item) => {
-    if (userRole === "SUPERADMIN") {
-      return true;
-    }
-    return item.roles.includes(userRole);
-  });
-};
+const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
+  <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+    <div className="flex items-center space-x-3">
+      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+        <Scissors className="text-white w-5 h-5" />
+      </div>
+      <div>
+        <h1 className="text-xl font-bold text-gray-800">SalonSync</h1>
+        <p className="text-xs text-gray-500">Sistema de Gestão</p>
+      </div>
+    </div>
+    {onClose && (
+      <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-600 hover:bg-gray-100 p-1">
+        <X size={20} />
+      </Button>
+    )}
+  </div>
+)
+
+const NavItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
+  const { to, icon: Icon, label, opensSaleForm } = item
+  const baseClass =
+    'w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-500 hover:translate-x-1 hover:shadow-lg'
+  return opensSaleForm ? (
+    <button key={label} onClick={onClick} className={`${baseClass} text-gray-600`}>
+      <Icon className="w-5 h-5" />
+      <span>{label}</span>
+    </button>
+  ) : (
+    <NavLink
+      key={to}
+      to={to}
+      end={to === '/dashboard'}
+      onClick={onClick}
+      className={({ isActive }) =>
+        `${baseClass} ${isActive ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg' : 'text-gray-600'}`
+      }
+    >
+      <Icon className="w-5 h-5" />
+      <span>{label}</span>
+    </NavLink>
+  )
+}
 
 export function Sidebar() {
-  const [showScheduledForm, setShowScheduledForm] = useState(false);
-  const [showImmediateForm, setShowImmediateForm] = useState(false);
-  const [showSaleForm, setShowSaleForm] = useState(false);
-  const { user, logout, isAdmin } = useUser();
-  const { isOpen, close } = useSidebar();
+  const [showSaleForm, setShowSaleForm] = useState(false)
+  const { user } = useUser()
+  const { isOpen, close } = useSidebar()
+  const navSections = getNavItems(user?.role || 'ADMIN')
 
-  const navItems = getNavItems(user?.role || "ADMIN");
+  const handleNavClick = (item?: any) => {
+    if (item?.opensSaleForm) {setShowSaleForm(true)}
+    else {close()}
+  }
 
-  const handleNavClick = () => {
-    close();
-  };
+  const SidebarContent = () => (
+    <>
+      <SidebarHeader onClose={isOpen ? close : undefined} />
+      <nav className="p-4 flex-1 overflow-y-auto overscroll-contain space-y-3">
+        {navSections.map(
+          (section, idx) =>
+            section.items.length > 0 && (
+              <div key={idx} className="mb-4">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 px-4">
+                  {section.title}
+                </div>
+                <div className="space-y-1">
+                  {section.items.map((item) => (
+                    <NavItem key={item.label} item={item} onClick={() => handleNavClick(item)} />
+                  ))}
+                </div>
+              </div>
+            ),
+        )}
+      </nav>
+    </>
+  )
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={close}
-        />
-      )}
-
-      <aside
-        className={`w-64 h-screen bg-[#1A1A1A] text-white flex flex-col px-4 py-6 fixed left-0 top-0 z-50 transition-transform duration-300 overflow-y-auto ${
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      <div
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#D4AF37]">SalonSync</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={close}
-            className="md:hidden text-white hover:bg-white/10 p-1"
-          >
-            <X size={20} />
-          </Button>
-        </div>
+        <div className="absolute inset-0 bg-black/40" onClick={close} />
+        <aside
+          className={`absolute left-0 top-0 w-64 h-full bg-white text-gray-700 flex flex-col shadow-xl border-r border-gray-200 transform transition-transform duration-300 ${
+            isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <SidebarContent />
+        </aside>
+      </div>
 
-        <div className="flex flex-col gap-1 flex-grow overflow-y-auto">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/dashboard"}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10 ${
-                  isActive ? "bg-white/20 font-semibold" : ""
-                }`
-              }
-            >
-              <Icon size={18} />
-              {label}
-            </NavLink>
-          ))}
-        </div>
-
-        <div className="mt-4 space-y-2">
-          <Button
-            onClick={() => setShowScheduledForm(true)}
-            className="w-full bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#B8941F] text-xs sm:text-sm py-2 h-8"
-          >
-            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Novo Agendamento</span>
-            <span className="sm:hidden">Agendar</span>
-          </Button>
-          <Button
-            onClick={() => setShowImmediateForm(true)}
-            className="w-full bg-[#8B4513] text-white hover:bg-[#7A3E11] text-xs sm:text-sm py-2 h-8"
-          >
-            <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Novo Atendimento</span>
-            <span className="sm:hidden">Atender</span>
-          </Button>
-
-          <Button
-            onClick={() => setShowSaleForm(true)}
-            className="w-full bg-green-600 text-white hover:bg-green-700 text-xs sm:text-sm py-2 h-8"
-          >
-            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Vender Produto</span>
-            <span className="sm:hidden">Vender</span>
-          </Button>
-        </div>
-
-        <Dialog open={showScheduledForm} onOpenChange={setShowScheduledForm}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo Agendamento</DialogTitle>
-            </DialogHeader>
-            <AppointmentForm
-              mode="scheduled"
-              onSuccess={() => setShowScheduledForm(false)}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showImmediateForm} onOpenChange={setShowImmediateForm}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo Atendimento</DialogTitle>
-            </DialogHeader>
-            <AppointmentForm
-              mode="immediate"
-              onSuccess={() => setShowImmediateForm(false)}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showSaleForm} onOpenChange={setShowSaleForm}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Venda de Produto</DialogTitle>
-            </DialogHeader>
-            <ProductSaleForm onSuccess={() => setShowSaleForm(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <div className="mt-3 border-t border-white/20 pt-3">
-          <UserMenu />
-        </div>
+      <aside className="hidden lg:flex w-64 h-screen bg-white text-gray-700 flex-col fixed left-0 top-0 shadow-xl border-r border-gray-200">
+        <SidebarContent />
       </aside>
+
+      <Dialog open={showSaleForm} onOpenChange={setShowSaleForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Venda de Produto</DialogTitle>
+          </DialogHeader>
+          <ProductSaleForm onSuccess={() => setShowSaleForm(false)} />
+        </DialogContent>
+      </Dialog>
     </>
-  );
+  )
 }

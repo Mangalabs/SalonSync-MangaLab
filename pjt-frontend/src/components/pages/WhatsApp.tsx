@@ -1,25 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Settings, Bell } from "lucide-react";
-import { WhatsAppConfig } from "@/components/custom/WhatsAppConfig";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
+import { MessageSquare, Settings, Bell } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { WhatsAppConfig } from '@/components/custom/WhatsAppConfig'
+import api from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
 
 export default function WhatsApp() {
-  const { activeBranch } = useBranch();
+  const { activeBranch } = useBranch()
 
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["whatsapp-messages"],
+    queryKey: ['whatsapp-messages'],
     queryFn: async () => {
-      console.log(activeBranch)
-      const headers = activeBranch ? { "x-branch-id": activeBranch.id } : {};
-      const response = await api.get("/api/whatsapp/messages", { headers });
-      return response.data;
+      const headers = activeBranch ? { 'x-branch-id': activeBranch.id } : {}
+      const response = await api.get('/api/whatsapp/messages', { headers })
+      return response.data
     },
     refetchInterval: 5000,
-  });
+  })
 
   return (
     <div className="space-y-6">
@@ -71,10 +71,10 @@ export default function WhatsApp() {
                   {messages
                     .filter(
                       (message: any) =>
-                        message.direction === "inbound" &&
-                        (message.body.toLowerCase().includes("agendamento") ||
-                          message.body.toLowerCase().includes("novo") ||
-                          message.body.toLowerCase().includes("solicitou"))
+                        message.direction === 'inbound' &&
+                        (message.body.toLowerCase().includes('agendamento') ||
+                          message.body.toLowerCase().includes('novo') ||
+                          message.body.toLowerCase().includes('solicitou')),
                     )
                     .map((message: any) => (
                       <div
@@ -97,8 +97,8 @@ export default function WhatsApp() {
                         </div>
 
                         <div className="text-sm text-[#737373] mb-3">
-                          📞 Cliente: {message.from.replace("whatsapp:", "")} •{" "}
-                          {new Date(message.createdAt).toLocaleString("pt-BR")}
+                          📞 Cliente: {message.from.replace('whatsapp:', '')} •{' '}
+                          {new Date(message.createdAt).toLocaleString('pt-BR')}
                         </div>
 
                         <div className="bg-white p-3 rounded-lg border border-blue-200">
@@ -121,20 +121,20 @@ export default function WhatsApp() {
 
                   {messages.filter(
                     (message: any) =>
-                      message.direction === "inbound" &&
+                      message.direction === 'inbound' &&
                       !(
-                        message.body.toLowerCase().includes("agendamento") ||
-                        message.body.toLowerCase().includes("novo") ||
-                        message.body.toLowerCase().includes("solicitou")
-                      )
+                        message.body.toLowerCase().includes('agendamento') ||
+                        message.body.toLowerCase().includes('novo') ||
+                        message.body.toLowerCase().includes('solicitou')
+                      ),
                   ).length === 0 &&
                     messages.length > 0 && (
-                      <div className="text-center py-4">
-                        <p className="text-[#737373] text-sm">
+                    <div className="text-center py-4">
+                      <p className="text-[#737373] text-sm">
                           Apenas agendamentos completos são exibidos aqui.
-                        </p>
-                      </div>
-                    )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -146,5 +146,5 @@ export default function WhatsApp() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

@@ -1,39 +1,40 @@
-import { useState } from "react";
-import { ChevronDown, Shield, UserCheck, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { ChevronDown, Shield, UserCheck, Settings, LogOut } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useBranch } from "@/contexts/BranchContext";
-import { useUser } from "@/contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+} from '@/components/ui/dropdown-menu'
+import { useBranch } from '@/contexts/BranchContext'
+import { useUser } from '@/contexts/UserContext'
 
 export function UserMenu() {
-  const { activeBranch, branches, setActiveBranch } = useBranch();
-  const { user, isAdmin, logout } = useUser();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { activeBranch, branches, setActiveBranch } = useBranch()
+  const { user, isAdmin, logout } = useUser()
+  const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleBranchChange = async (branchId: string) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const branch = branches.find((b) => b.id === branchId);
+      const branch = branches.find((b) => b.id === branchId)
       if (branch) {
-        setActiveBranch(branch);
+        setActiveBranch(branch)
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
       window.location.reload()
     }
-  };
+  }
 
   const handleSettings = () => {
-    navigate("/dashboard/settings");
-  };
+    navigate('/dashboard/settings')
+  }
 
   return (
     <DropdownMenu>
@@ -52,11 +53,11 @@ export function UserMenu() {
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p className="text-xs sm:text-sm font-medium text-white truncate">
-              {user?.name || user?.email || "Usuário"}
+              {user?.name || user?.email || 'Usuário'}
             </p>
             <p className="text-xs text-white/60 truncate">
-              {isAdmin ? "Admin" : "Prof."} •{" "}
-              {activeBranch?.name || "Sem filial"}
+              {isAdmin ? 'Admin' : 'Prof.'} •{' '}
+              {activeBranch?.name || 'Sem filial'}
             </p>
           </div>
           <ChevronDown size={14} className="text-white/60" />
@@ -85,7 +86,7 @@ export function UserMenu() {
                 key={branch.id}
                 onClick={() => handleBranchChange(branch.id)}
                 className={`flex items-center gap-2 ${
-                  activeBranch?.id === branch.id ? "bg-primary/10" : ""
+                  activeBranch?.id === branch.id ? 'bg-primary/10' : ''
                 }`}
               >
                 <div className="flex-1">
@@ -114,5 +115,5 @@ export function UserMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

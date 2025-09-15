@@ -1,28 +1,29 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react'
+import { Search } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { AppointmentForm } from "@/components/custom/AppointmentForm";
-import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
-import { Search } from "lucide-react";
+} from '@/components/ui/dialog'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { SchedulingCalendar } from '@/components/custom/scheduling/SchedulingCalendar'
 
 export default function Treatments() {
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [professionalFilter, setProfessionalFilter] = useState("all");
+  const [showForm, setShowForm] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [professionalFilter, setProfessionalFilter] = useState('all')
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -104,5 +105,5 @@ export default function Treatments() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

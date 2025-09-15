@@ -1,47 +1,46 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Settings,
   Eye,
   EyeOff,
   CheckCircle,
-  AlertCircle,
-  Send,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { useBranch } from "@/contexts/BranchContext";
-import api from "@/lib/axios";
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { useBranch } from '@/contexts/BranchContext'
+import api from '@/lib/axios'
 
 const configSchema = z.object({
-  accountSid: z.string().min(1, "Account SID é obrigatório"),
-  authToken: z.string().min(1, "Auth Token é obrigatório"),
-  whatsappNumber: z.string().min(10, "Número WhatsApp é obrigatório"),
-});
+  accountSid: z.string().min(1, 'Account SID é obrigatório'),
+  authToken: z.string().min(1, 'Auth Token é obrigatório'),
+  whatsappNumber: z.string().min(10, 'Número WhatsApp é obrigatório'),
+})
 
 type ConfigFormData = z.infer<typeof configSchema>;
 type testPayload = { to: string };
 
 export function WhatsAppConfig() {
-  const [showToken, setShowToken] = useState(false);
-  const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
+  const [showToken, setShowToken] = useState(false)
+  const queryClient = useQueryClient()
+  const { activeBranch } = useBranch()
 
   const { data: config, isLoading: configLoading } = useQuery({
-    queryKey: ["whatsapp-config"],
+    queryKey: ['whatsapp-config'],
     queryFn: async () => {
-      const headers = activeBranch ? { "x-branch-id": activeBranch.id } : {};
-      const response = await api.get("/api/whatsapp/config", { headers });
-      return response.data;
+      const headers = activeBranch ? { 'x-branch-id': activeBranch.id } : {}
+      const response = await api.get('/api/whatsapp/config', { headers })
+      return response.data
     },
-  });
+  })
 
   const {
     register,
@@ -50,42 +49,42 @@ export function WhatsAppConfig() {
     formState: { errors },
   } = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
-  });
+  })
 
   const saveConfig = useMutation({
     mutationFn: async (data: ConfigFormData) => {
-      const response = await api.post("/api/whatsapp/config", data);
-      return response.data;
+      const response = await api.post('/api/whatsapp/config', data)
+      return response.data
     },
     onSuccess: () => {
-      toast.success("Configuração salva com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["whatsapp-config"] });
-      reset();
+      toast.success('Configuração salva com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-config'] })
+      reset()
     },
     onError: () => {
-      toast.error("Erro ao salvar configuração");
+      toast.error('Erro ao salvar configuração')
     },
-  });
+  })
 
   const testMessage = useMutation({
     mutationFn: async (data: testPayload) => {
-      const response = await api.post("/api/whatsapp/test", data);
-      return response.data;
+      const response = await api.post('/api/whatsapp/test', data)
+      return response.data
     },
     onSuccess: () => {
-      toast.success("Mensagem de teste enviada!");
+      toast.success('Mensagem de teste enviada!')
     },
     onError: () => {
-      toast.error("Erro ao enviar mensagem de teste");
+      toast.error('Erro ao enviar mensagem de teste')
     },
-  });
+  })
 
   const onSubmit = (data: ConfigFormData) => {
-    saveConfig.mutate(data);
-  };
+    saveConfig.mutate(data)
+  }
 
   if (configLoading) {
-    return <div className="p-4">Carregando...</div>;
+    return <div className="p-4">Carregando...</div>
   }
 
   return (
@@ -113,7 +112,7 @@ export function WhatsAppConfig() {
                   disabled={testMessage.isPending}
                   className="text-[#D4AF37] border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#1A1A1A]"
                 >
-                  {testMessage.isPending ? "Enviando..." : "Testar"}
+                  {testMessage.isPending ? 'Enviando...' : 'Testar'}
                 </Button>
                 <Badge
                   variant="outline"
@@ -140,7 +139,7 @@ export function WhatsAppConfig() {
               <Label htmlFor="accountSid">Account SID</Label>
               <Input
                 id="accountSid"
-                {...register("accountSid")}
+                {...register('accountSid')}
                 placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 className="font-mono text-sm"
               />
@@ -156,8 +155,8 @@ export function WhatsAppConfig() {
               <div className="relative">
                 <Input
                   id="authToken"
-                  type={showToken ? "text" : "password"}
-                  {...register("authToken")}
+                  type={showToken ? 'text' : 'password'}
+                  {...register('authToken')}
                   placeholder="••••••••••••••••••••••••••••••••"
                   className="font-mono text-sm pr-10"
                 />
@@ -186,7 +185,7 @@ export function WhatsAppConfig() {
               <Label htmlFor="whatsappNumber">Número WhatsApp</Label>
               <Input
                 id="whatsappNumber"
-                {...register("whatsappNumber")}
+                {...register('whatsappNumber')}
                 placeholder="+5511999999999"
                 className="font-mono text-sm"
               />
@@ -206,10 +205,10 @@ export function WhatsAppConfig() {
               className="w-full bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
             >
               {saveConfig.isPending
-                ? "Salvando..."
+                ? 'Salvando...'
                 : config?.configured
-                ? "Atualizar Configuração"
-                : "Salvar Configuração"}
+                  ? 'Atualizar Configuração'
+                  : 'Salvar Configuração'}
             </Button>
           </form>
 
@@ -225,5 +224,5 @@ export function WhatsAppConfig() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

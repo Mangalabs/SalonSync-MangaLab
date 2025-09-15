@@ -1,7 +1,6 @@
-import { SchedulingCalendar } from "@/components/custom/SchedulingCalendar";
-import { ProfessionalCommissionSummary } from "@/components/custom/ProfessionalCommissionSummary";
-import { PendingExpensesNotification } from "@/components/custom/PendingExpensesNotification";
-import { RecurringExpensesList } from "@/components/custom/RecurringExpensesList";
+import { SchedulingCalendar } from '@/components/custom/scheduling/SchedulingCalendar'
+import { PendingExpensesNotification } from '@/components/custom/PendingExpensesNotification'
+import { RecurringExpensesList } from '@/components/custom/recurring/RecurringExpensesList'
 
 export default function Dashboard() {
   return (
@@ -19,5 +18,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  );
+  )
 }

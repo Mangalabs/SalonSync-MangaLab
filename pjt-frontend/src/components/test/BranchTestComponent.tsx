@@ -1,49 +1,50 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TransactionForm } from "@/components/custom/TransactionForm";
-import { SchedulingForm } from "@/components/custom/SchedulingForm";
-import { FinancialSummaryTest } from "@/components/test/FinancialSummaryTest";
-import { FinancialTabContent } from "@/components/custom/FinancialTabContent";
-import { FinancialProvider } from "@/contexts/FinancialContext";
-import { useUser } from "@/contexts/UserContext";
-import { useBranch } from "@/contexts/BranchContext";
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { TransactionForm } from '@/components/custom/transaction/TransactionForm'
+import { SchedulingForm } from '@/components/custom/scheduling/SchedulingForm'
+import { FinancialSummaryTest } from '@/components/test/FinancialSummaryTest'
+import { FinancialTabContent } from '@/components/custom/financial/FinancialTabContent'
+import { FinancialProvider } from '@/contexts/FinancialContext'
+import { useUser } from '@/contexts/UserContext'
+import { useBranch } from '@/contexts/BranchContext'
 
 export function BranchTestComponent() {
-  const [activeTest, setActiveTest] = useState<string | null>(null);
-  const { user, isAdmin } = useUser();
-  const { activeBranch, branches } = useBranch();
+  const [activeTest, setActiveTest] = useState<string | null>(null)
+  const { user, isAdmin } = useUser()
+  const { activeBranch, branches } = useBranch()
 
   const tests = [
     {
-      id: "transaction-form",
-      title: "Teste TransactionForm",
-      description: "Testa criação de transação com seleção de filial para admin",
-      component: <TransactionForm type="EXPENSE" onSuccess={() => setActiveTest(null)} />
+      id: 'transaction-form',
+      title: 'Teste TransactionForm',
+      description: 'Testa criação de transação com seleção de filial para admin',
+      component: <TransactionForm type="EXPENSE" onSuccess={() => setActiveTest(null)} />,
     },
     {
-      id: "scheduling-form", 
-      title: "Teste SchedulingForm",
-      description: "Testa agendamento com seleção de filial para admin",
-      component: <SchedulingForm onSuccess={() => setActiveTest(null)} />
+      id: 'scheduling-form', 
+      title: 'Teste SchedulingForm',
+      description: 'Testa agendamento com seleção de filial para admin',
+      component: <SchedulingForm onSuccess={() => setActiveTest(null)} />,
     },
     {
-      id: "financial-summary",
-      title: "Teste Resumo Financeiro",
-      description: "Testa filtro de filial no resumo financeiro",
-      component: <FinancialSummaryTest />
+      id: 'financial-summary',
+      title: 'Teste Resumo Financeiro',
+      description: 'Testa filtro de filial no resumo financeiro',
+      component: <FinancialSummaryTest />,
     },
     {
-      id: "financial-tab-new",
-      title: "Teste Nova Aba Financeira",
-      description: "Testa nova organização da aba de receitas/despesas",
+      id: 'financial-tab-new',
+      title: 'Teste Nova Aba Financeira',
+      description: 'Testa nova organização da aba de receitas/despesas',
       component: (
         <FinancialProvider>
           <FinancialTabContent type="INCOME" />
         </FinancialProvider>
-      )
-    }
-  ];
+      ),
+    },
+  ]
 
   return (
     <div className="p-6 space-y-6">
@@ -53,7 +54,7 @@ export function BranchTestComponent() {
         </CardHeader>
         <CardContent className="space-y-2">
           <p><strong>Usuário:</strong> {user?.name} ({user?.role})</p>
-          <p><strong>É Admin:</strong> {isAdmin ? "Sim" : "Não"}</p>
+          <p><strong>É Admin:</strong> {isAdmin ? 'Sim' : 'Não'}</p>
           <p><strong>Filial Ativa:</strong> {activeBranch?.name}</p>
           <p><strong>Total de Filiais:</strong> {branches.length}</p>
         </CardContent>
@@ -99,5 +100,5 @@ export function BranchTestComponent() {
         </Card>
       )}
     </div>
-  );
+  )
 }

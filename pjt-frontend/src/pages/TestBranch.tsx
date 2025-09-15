@@ -1,4 +1,4 @@
-import { BranchTestComponent } from "@/components/test/BranchTestComponent";
+import { BranchTestComponent } from '@/components/test/BranchTestComponent'
 
 export default function TestBranch() {
   return (
@@ -6,5 +6,5 @@ export default function TestBranch() {
       <h1 className="text-2xl font-bold mb-6">Teste de Implementações Branch</h1>
       <BranchTestComponent />
     </div>
-  );
+  )
 }

@@ -1,117 +1,118 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { FileText, Bot } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { FileText, Calendar, Bot } from "lucide-react";
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { ExportButton } from "@/components/custom/ExportButton";
-import { ExportService } from "@/services/exportService";
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { ExportButton } from '@/components/custom/ExportButton'
+import { ExportService } from '@/services/exportService'
 
 export default function Reports() {
   const [startDate, setStartDate] = useState<string>(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
-      .split("T")[0]
-  );
+      .split('T')[0],
+  )
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
-  const [selectedBranch, setSelectedBranch] = useState<string>("all");
-  const { branches } = useBranch();
+    new Date().toISOString().split('T')[0],
+  )
+  const [selectedBranch, setSelectedBranch] = useState<string>('all')
+  const { branches } = useBranch()
 
   const formatPeriodLabel = () => {
-    const start = new Date(startDate + "T00:00:00");
-    const end = new Date(endDate + "T00:00:00");
-    return `${start.toLocaleDateString("pt-BR")} - ${end.toLocaleDateString(
-      "pt-BR"
-    )}`;
-  };
+    const start = new Date(startDate + 'T00:00:00')
+    const end = new Date(endDate + 'T00:00:00')
+    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString(
+      'pt-BR',
+    )}`
+  }
 
   const {
     data: reportData,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["consolidated-report", startDate, endDate, selectedBranch],
+    queryKey: ['consolidated-report', startDate, endDate, selectedBranch],
     queryFn: async () => {
       // Buscar dados financeiros
       const financialParams = new URLSearchParams({
         startDate,
         endDate,
-      });
-      if (selectedBranch !== "all") {
-        financialParams.append("branchId", selectedBranch);
+      })
+      if (selectedBranch !== 'all') {
+        financialParams.append('branchId', selectedBranch)
       }
       const financialRes = await axios.get(
-        `/api/financial/summary?${financialParams}`
-      );
+        `/api/financial/summary?${financialParams}`,
+      )
 
       // Buscar movimentações de estoque
       const stockParams = new URLSearchParams({
         startDate,
         endDate,
-      });
-      if (selectedBranch !== "all") {
-        stockParams.append("branchId", selectedBranch);
+      })
+      if (selectedBranch !== 'all') {
+        stockParams.append('branchId', selectedBranch)
       }
       const stockRes = await axios.get(
-        `/api/inventory/movements?${stockParams}`
-      );
+        `/api/inventory/movements?${stockParams}`,
+      )
 
       // Buscar profissionais
-      const professionalsParams = new URLSearchParams();
-      if (selectedBranch !== "all") {
-        professionalsParams.append("branchId", selectedBranch);
+      const professionalsParams = new URLSearchParams()
+      if (selectedBranch !== 'all') {
+        professionalsParams.append('branchId', selectedBranch)
       }
       const professionalsRes = await axios.get(
-        `/api/professionals?${professionalsParams}`
-      );
+        `/api/professionals?${professionalsParams}`,
+      )
       
-      const filteredProfessionals = professionalsRes.data;
+      const filteredProfessionals = professionalsRes.data
 
       // Buscar comissões dos profissionais filtrados
       const commissionsPromises = filteredProfessionals.map((prof: any) =>
         axios
           .get(
-            `/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`
+            `/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`,
           )
           .then((res) => ({ professional: prof, commission: res.data }))
-          .catch(() => ({ professional: prof, commission: null }))
-      );
+          .catch(() => ({ professional: prof, commission: null })),
+      )
 
-      const commissionsData = await Promise.all(commissionsPromises);
+      const commissionsData = await Promise.all(commissionsPromises)
 
       // Processar movimentações de estoque
-      const stockMovements = stockRes.data || [];
+      const stockMovements = stockRes.data || []
       const stockSummary = {
         totalPurchases: stockMovements
-          .filter((m: any) => m.type === "IN")
+          .filter((m: any) => m.type === 'IN')
           .reduce(
             (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
-            0
+            0,
           ),
         totalSales: stockMovements
-          .filter((m: any) => m.type === "OUT")
+          .filter((m: any) => m.type === 'OUT')
           .reduce(
             (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
-            0
+            0,
           ),
         totalMovements: stockMovements.length,
-      };
+      }
 
       const branch =
-        selectedBranch === "all"
-          ? { name: "Todas as Filiais" }
-          : branches.find((b) => b.id === selectedBranch);
+        selectedBranch === 'all'
+          ? { name: 'Todas as Filiais' }
+          : branches.find((b) => b.id === selectedBranch)
 
       return {
         financial: financialRes.data,
@@ -120,74 +121,74 @@ export default function Reports() {
           summary: stockSummary,
         },
         professionals: commissionsData.filter((item) => item.commission),
-        branchName: branch?.name || "Filial Selecionada",
+        branchName: branch?.name || 'Filial Selecionada',
         period: {
           startDate,
           endDate,
           label: formatPeriodLabel(),
         },
-      };
+      }
     },
     enabled: false,
-  });
+  })
 
   const {
     data: insights,
     isLoading: isLoadingInsights,
     refetch: refetchInsights,
   } = useQuery({
-    queryKey: ["insight-query", startDate, endDate, selectedBranch],
+    queryKey: ['insight-query', startDate, endDate, selectedBranch],
     queryFn: async () => {
       const insightsParams = new URLSearchParams({
         startDate,
         endDate,
-      });
-      if (selectedBranch !== "all") {
-        insightsParams.append("branchId", selectedBranch);
+      })
+      if (selectedBranch !== 'all') {
+        insightsParams.append('branchId', selectedBranch)
       }
       const insightsResponse = await axios.get(
-        `/api/ai/insights?${insightsParams}`
-      );
+        `/api/ai/insights?${insightsParams}`,
+      )
 
       const insights = insightsResponse.data.map((insightResponse: string) => {
-        const insightInformation = insightResponse.split(":");
+        const insightInformation = insightResponse.split(':')
         return {
           title: insightInformation[0],
           description: insightInformation[1],
-        };
-      });
+        }
+      })
 
-      return insights;
+      return insights
     },
     enabled: false,
-  });
+  })
 
   const handleGenerateReport = () => {
-    refetch();
-  };
+    refetch()
+  }
 
   const handleGenerateInsight = () => {
-    refetchInsights();
-  };
+    refetchInsights()
+  }
 
-  const handleExportReport = (format: "json" | "pdf" | "csv" | "excel") => {
-    if (!reportData) return;
+  const handleExportReport = (format: 'json' | 'pdf' | 'csv' | 'excel') => {
+    if (!reportData) {return}
 
     switch (format) {
-      case "json":
-        ExportService.exportJSON(reportData);
-        break;
-      case "pdf":
-        ExportService.exportPDF(reportData);
-        break;
-      case "csv":
-        ExportService.exportCSV(reportData);
-        break;
-      case "excel":
-        ExportService.exportExcel(reportData);
-        break;
+      case 'json':
+        ExportService.exportJSON(reportData)
+        break
+      case 'pdf':
+        ExportService.exportPDF(reportData)
+        break
+      case 'csv':
+        ExportService.exportCSV(reportData)
+        break
+      case 'excel':
+        ExportService.exportExcel(reportData)
+        break
     }
-  };
+  }
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -262,7 +263,7 @@ export default function Reports() {
                 disabled={isLoading || reportData}
                 className="text-sm"
               >
-                {isLoading ? "Gerando..." : "Gerar Relatório"}
+                {isLoading ? 'Gerando...' : 'Gerar Relatório'}
               </Button>
 
               {reportData && (
@@ -272,7 +273,7 @@ export default function Reports() {
                   className="text-sm bg-blue-700"
                 >
                   {isLoadingInsights ? (
-                    "Gerando..."
+                    'Gerando...'
                   ) : (
                     <>
                       <Bot size={44} />
@@ -308,7 +309,7 @@ export default function Reports() {
                       {insight.description}
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
           </CardContent>
@@ -327,7 +328,7 @@ export default function Reports() {
               <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 text-center">
                 <div className="bg-white border rounded-lg p-3">
                   <div className="text-lg md:text-2xl font-bold text-[#D4AF37] truncate">
-                    R$ {reportData.financial.totalIncome?.toFixed(2) || "0,00"}
+                    R$ {reportData.financial.totalIncome?.toFixed(2) || '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Receitas
@@ -335,8 +336,8 @@ export default function Reports() {
                 </div>
                 <div className="bg-white border rounded-lg p-3">
                   <div className="text-lg md:text-2xl font-bold text-red-600 truncate">
-                    R${" "}
-                    {reportData.financial.totalExpenses?.toFixed(2) || "0,00"}
+                    R${' '}
+                    {reportData.financial.totalExpenses?.toFixed(2) || '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Despesas
@@ -344,9 +345,9 @@ export default function Reports() {
                 </div>
                 <div className="bg-white border rounded-lg p-3">
                   <div className="text-lg md:text-2xl font-bold text-blue-600 truncate">
-                    R${" "}
+                    R${' '}
                     {reportData.financial.totalInvestments?.toFixed(2) ||
-                      "0,00"}
+                      '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Investimentos
@@ -356,11 +357,11 @@ export default function Reports() {
                   <div
                     className={`text-lg md:text-2xl font-bold truncate ${
                       (reportData.financial.netProfit || 0) >= 0
-                        ? "text-[#D4AF37]"
-                        : "text-red-600"
+                        ? 'text-[#D4AF37]'
+                        : 'text-red-600'
                     }`}
                   >
-                    R$ {reportData.financial.netProfit?.toFixed(2) || "0,00"}
+                    R$ {reportData.financial.netProfit?.toFixed(2) || '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Lucro Líquido
@@ -368,9 +369,9 @@ export default function Reports() {
                 </div>
                 <div className="bg-white border rounded-lg p-3">
                   <div className="text-lg md:text-2xl font-bold text-purple-600 truncate">
-                    R${" "}
+                    R${' '}
                     {reportData.financial.appointmentRevenue?.toFixed(2) ||
-                      "0,00"}
+                      '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Atendimentos
@@ -388,9 +389,9 @@ export default function Reports() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-center mb-4 md:mb-6">
                 <div>
                   <div className="text-lg md:text-2xl font-bold text-red-600">
-                    R${" "}
+                    R${' '}
                     {reportData.stock.summary.totalPurchases?.toFixed(2) ||
-                      "0,00"}
+                      '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Compras
@@ -398,8 +399,8 @@ export default function Reports() {
                 </div>
                 <div>
                   <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">
-                    R${" "}
-                    {reportData.stock.summary.totalSales?.toFixed(2) || "0,00"}
+                    R${' '}
+                    {reportData.stock.summary.totalSales?.toFixed(2) || '0,00'}
                   </div>
                   <div className="text-xs md:text-sm text-[#737373]">
                     Vendas
@@ -437,8 +438,8 @@ export default function Reports() {
                             <tr key={movement.id} className="border-b">
                               <td className="p-2 text-sm">
                                 {new Date(
-                                  movement.createdAt
-                                ).toLocaleDateString("pt-BR")}
+                                  movement.createdAt,
+                                ).toLocaleDateString('pt-BR')}
                               </td>
                               <td className="p-2 font-medium">
                                 {movement.product.name}
@@ -446,12 +447,12 @@ export default function Reports() {
                               <td className="p-2 text-center">
                                 <span
                                   className={`px-2 py-1 rounded text-xs ${
-                                    movement.type === "IN"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-green-100 text-green-800"
+                                    movement.type === 'IN'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-green-100 text-green-800'
                                   }`}
                                 >
-                                  {movement.type === "IN" ? "Entrada" : "Saída"}
+                                  {movement.type === 'IN' ? 'Entrada' : 'Saída'}
                                 </span>
                               </td>
                               <td className="p-2 text-right">
@@ -461,7 +462,7 @@ export default function Reports() {
                                 R$ {Number(movement.unitCost).toFixed(2)}
                               </td>
                               <td className="p-2 text-right font-medium">
-                                R${" "}
+                                R${' '}
                                 {(
                                   movement.quantity * Number(movement.unitCost)
                                 ).toFixed(2)}
@@ -492,18 +493,18 @@ export default function Reports() {
                               </h4>
                               <p className="text-xs text-[#737373]">
                                 {new Date(
-                                  movement.createdAt
-                                ).toLocaleDateString("pt-BR")}
+                                  movement.createdAt,
+                                ).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
                             <span
                               className={`px-2 py-1 rounded text-xs ${
-                                movement.type === "IN"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-green-100 text-green-800"
+                                movement.type === 'IN'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-green-100 text-green-800'
                               }`}
                             >
-                              {movement.type === "IN" ? "Entrada" : "Saída"}
+                              {movement.type === 'IN' ? 'Entrada' : 'Saída'}
                             </span>
                           </div>
 
@@ -521,7 +522,7 @@ export default function Reports() {
                               Total:
                             </span>
                             <span className="font-medium text-sm text-[#D4AF37]">
-                              R${" "}
+                              R${' '}
                               {(
                                 movement.quantity * Number(movement.unitCost)
                               ).toFixed(2)}
@@ -529,7 +530,7 @@ export default function Reports() {
                           </div>
 
                           <div className="text-xs text-[#737373]">
-                            <strong>Motivo:</strong>{" "}
+                            <strong>Motivo:</strong>{' '}
                             {movement.reason.length > 40
                               ? `${movement.reason.substring(0, 40)}...`
                               : movement.reason}
@@ -540,8 +541,8 @@ export default function Reports() {
 
                   {reportData.stock.movements.length > 10 && (
                     <p className="text-sm text-[#737373] mt-2 text-center">
-                      Mostrando{" "}
-                      {reportData.stock.movements.length > 5 ? "10" : "5"} de{" "}
+                      Mostrando{' '}
+                      {reportData.stock.movements.length > 5 ? '10' : '5'} de{' '}
                       {reportData.stock.movements.length} movimentações
                     </p>
                   )}
@@ -560,7 +561,7 @@ export default function Reports() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-2">Profissional</th>
-                      {selectedBranch === "all" && (
+                      {selectedBranch === 'all' && (
                         <th className="text-left p-2">Filial</th>
                       )}
                       <th className="text-right p-2">Atendimentos</th>
@@ -572,16 +573,16 @@ export default function Reports() {
                   <tbody>
                     {reportData.professionals.map((item: any) => {
                       const professionalBranch = branches.find(
-                        (b) => b.id === item.professional.branchId
-                      );
+                        (b) => b.id === item.professional.branchId,
+                      )
                       return (
                         <tr key={item.professional.id} className="border-b">
                           <td className="p-2 font-medium">
                             {item.professional.name}
                           </td>
-                          {selectedBranch === "all" && (
+                          {selectedBranch === 'all' && (
                             <td className="p-2 text-sm text-[#737373]">
-                              {professionalBranch?.name || "N/A"}
+                              {professionalBranch?.name || 'N/A'}
                             </td>
                           )}
                           <td className="p-2 text-right">
@@ -591,14 +592,14 @@ export default function Reports() {
                             R$ {item.commission.summary.totalRevenue.toFixed(2)}
                           </td>
                           <td className="p-2 text-right">
-                            R${" "}
+                            R${' '}
                             {item.commission.summary.totalCommission.toFixed(2)}
                           </td>
                           <td className="p-2 text-right">
                             {item.commission.professional.commissionRate}%
                           </td>
                         </tr>
-                      );
+                      )
                     })}
                   </tbody>
                 </table>
@@ -607,8 +608,8 @@ export default function Reports() {
               <div className="md:hidden space-y-3">
                 {reportData.professionals.map((item: any) => {
                   const professionalBranch = branches.find(
-                    (b) => b.id === item.professional.branchId
-                  );
+                    (b) => b.id === item.professional.branchId,
+                  )
                   return (
                     <div
                       key={item.professional.id}
@@ -619,9 +620,9 @@ export default function Reports() {
                           <h4 className="font-medium text-sm">
                             {item.professional.name}
                           </h4>
-                          {selectedBranch === "all" && (
+                          {selectedBranch === 'all' && (
                             <p className="text-xs text-[#737373]">
-                              {professionalBranch?.name || "N/A"}
+                              {professionalBranch?.name || 'N/A'}
                             </p>
                           )}
                         </div>
@@ -647,14 +648,14 @@ export default function Reports() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-green-600">
-                            R${" "}
+                            R${' '}
                             {item.commission.summary.totalCommission.toFixed(2)}
                           </div>
                           <div className="text-xs text-[#737373]">Comissão</div>
                         </div>
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </CardContent>
@@ -662,5 +663,5 @@ export default function Reports() {
         </div>
       )}
     </div>
-  );
+  )
 }

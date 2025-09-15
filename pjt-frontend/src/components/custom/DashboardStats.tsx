@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, ChevronDown, ChevronUp } from "lucide-react";
-import { ProfessionalCommissionSummary } from "./ProfessionalCommissionSummary";
+import { useState } from 'react'
+import { DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+import { ProfessionalCommissionSummary } from './professional/ProfessionalCommissionSummary'
 
 interface DashboardStatsProps {
   todayRevenue: number;
@@ -14,20 +16,20 @@ export function DashboardStats({
   todayAppointments,
   monthlyRevenue,
 }: DashboardStatsProps) {
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
 
   const toggleCard = (cardId: string) => {
-    setExpandedCard(expandedCard === cardId ? null : cardId);
-  };
+    setExpandedCard(expandedCard === cardId ? null : cardId)
+  }
 
   return (
     <div className="space-y-3">
-      <Card className="cursor-pointer" onClick={() => toggleCard("revenue")}>
+      <Card className="cursor-pointer" onClick={() => toggleCard('revenue')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Receitas</CardTitle>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-[#D4AF37]" />
-            {expandedCard === "revenue" ? (
+            {expandedCard === 'revenue' ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
               <ChevronDown className="h-4 w-4" />
@@ -40,7 +42,7 @@ export function DashboardStats({
           </div>
           <p className="text-xs text-[#737373]">Total geral</p>
         </CardContent>
-        {expandedCard === "revenue" && (
+        {expandedCard === 'revenue' && (
           <CardContent className="pt-0">
             <div className="space-y-3">
               <div className="border rounded-lg p-3">
@@ -64,9 +66,9 @@ export function DashboardStats({
                   R$ {monthlyRevenue.toFixed(2)}
                 </div>
                 <p className="text-xs text-[#737373]">
-                  {new Date().toLocaleDateString("pt-BR", {
-                    month: "long",
-                    year: "numeric",
+                  {new Date().toLocaleDateString('pt-BR', {
+                    month: 'long',
+                    year: 'numeric',
                   })}
                 </p>
               </div>
@@ -77,5 +79,5 @@ export function DashboardStats({
 
       <ProfessionalCommissionSummary />
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
 interface FinancialContextType {
   startDate: string;
@@ -10,45 +10,39 @@ interface FinancialContextType {
   resetToToday: () => void;
 }
 
-const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
+const FinancialContext = createContext<FinancialContextType | undefined>(undefined)
 
 export function FinancialProvider({ children }: { children: ReactNode }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0]
   
-  const [startDate, setStartDateState] = useState(() => {
-    return localStorage.getItem('financial-start-date') || today;
-  });
+  const [startDate, setStartDateState] = useState(() => localStorage.getItem('financial-start-date') || today)
   
-  const [endDate, setEndDateState] = useState(() => {
-    return localStorage.getItem('financial-end-date') || today;
-  });
+  const [endDate, setEndDateState] = useState(() => localStorage.getItem('financial-end-date') || today)
   
   const [branchFilter, setBranchFilterState] = useState(() => {
-    const saved = localStorage.getItem('financial-branch-filter') || 'all';
-    console.log('FinancialContext initial branchFilter:', saved);
-    return saved;
-  });
+    const saved = localStorage.getItem('financial-branch-filter') || 'all'
+    return saved
+  })
 
   const setStartDate = (date: string) => {
-    setStartDateState(date);
-    localStorage.setItem('financial-start-date', date);
-  };
+    setStartDateState(date)
+    localStorage.setItem('financial-start-date', date)
+  }
 
   const setEndDate = (date: string) => {
-    setEndDateState(date);
-    localStorage.setItem('financial-end-date', date);
-  };
+    setEndDateState(date)
+    localStorage.setItem('financial-end-date', date)
+  }
 
   const setBranchFilter = (branch: string) => {
-    console.log('FinancialContext setBranchFilter:', branch);
-    setBranchFilterState(branch);
-    localStorage.setItem('financial-branch-filter', branch);
-  };
+    setBranchFilterState(branch)
+    localStorage.setItem('financial-branch-filter', branch)
+  }
 
   const resetToToday = () => {
-    setStartDate(today);
-    setEndDate(today);
-  };
+    setStartDate(today)
+    setEndDate(today)
+  }
 
   return (
     <FinancialContext.Provider
@@ -64,13 +58,13 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </FinancialContext.Provider>
-  );
+  )
 }
 
 export function useFinancial() {
-  const context = useContext(FinancialContext);
+  const context = useContext(FinancialContext)
   if (context === undefined) {
-    throw new Error("useFinancial must be used within a FinancialProvider");
+    throw new Error('useFinancial must be used within a FinancialProvider')
   }
-  return context;
+  return context
 }

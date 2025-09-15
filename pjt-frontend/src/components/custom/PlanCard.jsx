@@ -1,11 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 
 export function PlanCard({ product, selectedPlan, setSelectedPlan }) {
-  const unitAmount = product.default_price.unit_amount_decimal;
+  const unitAmount = product.default_price.unit_amount_decimal
   const formattedUnitedAmount =
-    unitAmount.slice(0, -2) + "," + unitAmount.slice(-2);
+    unitAmount.slice(0, -2) + ',' + unitAmount.slice(-2)
     
   return (
     <div>
@@ -32,18 +33,18 @@ export function PlanCard({ product, selectedPlan, setSelectedPlan }) {
         <Button
           type="submit"
           className="w-8/12 m-auto"
-          disabled={selectedPlan?.id == product.id}
+          disabled={selectedPlan?.id === product.id}
           onClick={() => setSelectedPlan(product)}
         >
-          {selectedPlan?.id == product.id
-            ? "Plano Selecionado"
-            : "Escolher plano"}
+          {selectedPlan?.id === product.id
+            ? 'Plano Selecionado'
+            : 'Escolher plano'}
         </Button>
 
-        {selectedPlan?.id == product.id && (
+        {selectedPlan?.id === product.id && (
           <div className="absolute bottom-0 left-0 w-full h-3 bg-gradient-to-r from-green-500 to-emerald-500" />
         )}
       </Card>
     </div>
-  );
+  )
 }
