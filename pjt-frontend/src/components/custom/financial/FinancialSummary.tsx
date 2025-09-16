@@ -1,29 +1,38 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from "@tanstack/react-query";
 import {
   TrendingUp,
   TrendingDown,
   DollarSign,
   PiggyBank,
   Calendar,
-} from 'lucide-react'
+  Plus,
+} from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useBranch } from '@/contexts/BranchContext'
-import { useFinancial } from '@/contexts/FinancialContext'
-import axios from '@/lib/axios'
+} from "@/components/ui/select";
+import { useBranch } from "@/contexts/BranchContext";
+import { useFinancial } from "@/contexts/FinancialContext";
+import axios from "@/lib/axios";
 
-export function FinancialSummary() {
-  const { branches } = useBranch()
+interface FinancialSummaryProps {
+  onNewTransaction?: (type: "INCOME" | "EXPENSE" | "INVESTMENT") => void;
+  onNewRecurringExpense?: () => void;
+}
+
+export function FinancialSummary({
+  onNewTransaction,
+  onNewRecurringExpense,
+}: FinancialSummaryProps) {
+  const { branches } = useBranch();
   const {
     startDate,
     endDate,
@@ -32,26 +41,83 @@ export function FinancialSummary() {
     setEndDate,
     setBranchFilter,
     resetToToday,
-  } = useFinancial()
+  } = useFinancial();
 
-  const { data: summary, isLoading, error } = useQuery({
-    queryKey: ['financial-summary', startDate, endDate, branchFilter],
+  const {
+    data: summary,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["financial-summary", startDate, endDate, branchFilter],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (startDate) {params.append('startDate', startDate)}
-      if (endDate) {params.append('endDate', endDate)}
-      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
+      const params = new URLSearchParams();
+      if (startDate) {
+        params.append("startDate", startDate);
+      }
+      if (endDate) {
+        params.append("endDate", endDate);
+      }
+      if (branchFilter !== "all") {
+        params.append("branchId", branchFilter);
+      }
 
-      const res = await axios.get(`/api/financial/summary?${params}`)
-      return res.data
+      const res = await axios.get(`/api/financial/summary?${params}`);
+      return res.data;
     },
-  })
+  });
 
-  if (isLoading) {return <div className="p-4">Carregando resumo...</div>}
-  if (error) {return <div className="p-4 text-red-600">Erro ao carregar resumo financeiro</div>}
+  if (isLoading) {
+    return <div className="p-4">Carregando resumo...</div>;
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-red-600">Erro ao carregar resumo financeiro</div>
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 mt-4">
+      {/* Ações Rápidas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+            Ações Rápidas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Button
+              onClick={() => onNewTransaction?.("INCOME")}
+              className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A] text-sm h-10"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Nova Receita
+            </Button>
+            <Button
+              onClick={() => onNewTransaction?.("EXPENSE")}
+              className="bg-red-600 hover:bg-red-700 text-sm h-10"
+            >
+              <TrendingDown className="h-4 w-4 mr-2" />
+              Nova Despesa
+            </Button>
+            <Button
+              onClick={() => onNewTransaction?.("INVESTMENT")}
+              className="bg-blue-600 hover:bg-blue-700 text-sm h-10"
+            >
+              <PiggyBank className="h-4 w-4 mr-2" />
+              Investimento
+            </Button>
+            <Button
+              onClick={onNewRecurringExpense}
+              className="bg-purple-600 hover:bg-purple-700 text-sm h-10"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Despesa Fixa
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
@@ -129,17 +195,17 @@ export function FinancialSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">
-              R$ {summary?.totalIncome?.toFixed(2) || '0,00'}
+              R$ {summary?.totalIncome?.toFixed(2) || "0,00"}
             </div>
             <div className="text-xs text-[#737373] space-y-1">
               <p>
-                Atendimentos: R${' '}
-                {summary?.appointmentRevenue?.toFixed(2) || '0,00'}
+                Atendimentos: R${" "}
+                {summary?.appointmentRevenue?.toFixed(2) || "0,00"}
               </p>
               {summary?.stockRevenue > 0 && (
                 <p>
-                  Vendas Estoque: R${' '}
-                  {summary?.stockRevenue?.toFixed(2) || '0,00'}
+                  Vendas Estoque: R${" "}
+                  {summary?.stockRevenue?.toFixed(2) || "0,00"}
                 </p>
               )}
             </div>
@@ -155,20 +221,20 @@ export function FinancialSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-lg md:text-2xl font-bold text-red-600">
-              R$ {summary?.totalExpenses?.toFixed(2) || '0,00'}
+              R$ {summary?.totalExpenses?.toFixed(2) || "0,00"}
             </div>
             <div className="text-xs text-[#737373] space-y-1">
               <p>Gastos operacionais</p>
               {summary?.stockExpenses > 0 && (
                 <p>
-                  Compras Estoque: R${' '}
-                  {summary?.stockExpenses?.toFixed(2) || '0,00'}
+                  Compras Estoque: R${" "}
+                  {summary?.stockExpenses?.toFixed(2) || "0,00"}
                 </p>
               )}
               {summary?.stockLosses > 0 && (
                 <p>
-                  Perdas Estoque: R${' '}
-                  {summary?.stockLosses?.toFixed(2) || '0,00'}
+                  Perdas Estoque: R${" "}
+                  {summary?.stockLosses?.toFixed(2) || "0,00"}
                 </p>
               )}
             </div>
@@ -184,7 +250,7 @@ export function FinancialSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-lg md:text-2xl font-bold text-blue-600">
-              R$ {summary?.totalInvestments?.toFixed(2) || '0,00'}
+              R$ {summary?.totalInvestments?.toFixed(2) || "0,00"}
             </div>
             <p className="text-xs text-[#737373]">Melhorias e equipamentos</p>
           </CardContent>
@@ -198,8 +264,8 @@ export function FinancialSummary() {
             <DollarSign
               className={`h-4 w-4 ${
                 (summary?.netProfit || 0) >= 0
-                  ? 'text-[#D4AF37]'
-                  : 'text-red-600'
+                  ? "text-[#D4AF37]"
+                  : "text-red-600"
               }`}
             />
           </CardHeader>
@@ -207,11 +273,11 @@ export function FinancialSummary() {
             <div
               className={`text-lg md:text-2xl font-bold ${
                 (summary?.netProfit || 0) >= 0
-                  ? 'text-[#D4AF37]'
-                  : 'text-red-600'
+                  ? "text-[#D4AF37]"
+                  : "text-red-600"
               }`}
             >
-              R$ {summary?.netProfit?.toFixed(2) || '0,00'}
+              R$ {summary?.netProfit?.toFixed(2) || "0,00"}
             </div>
             <p className="text-xs text-[#737373]">
               Receitas - Despesas - Investimentos
@@ -282,13 +348,13 @@ export function FinancialSummary() {
                 <span className="font-medium text-[#D4AF37]">
                   {summary?.totalIncome
                     ? (
-                      (summary.totalIncome /
+                        (summary.totalIncome /
                           (summary.totalIncome +
                             summary.totalExpenses +
                             summary.totalInvestments)) *
                         100
-                    ).toFixed(1)
-                    : '0'}
+                      ).toFixed(1)
+                    : "0"}
                   %
                 </span>
               </div>
@@ -298,13 +364,13 @@ export function FinancialSummary() {
                 <span className="font-medium text-red-600">
                   {summary?.totalExpenses
                     ? (
-                      (summary.totalExpenses /
+                        (summary.totalExpenses /
                           (summary.totalIncome +
                             summary.totalExpenses +
                             summary.totalInvestments)) *
                         100
-                    ).toFixed(1)
-                    : '0'}
+                      ).toFixed(1)
+                    : "0"}
                   %
                 </span>
               </div>
@@ -314,13 +380,13 @@ export function FinancialSummary() {
                 <span className="font-medium text-blue-600">
                   {summary?.totalInvestments
                     ? (
-                      (summary.totalInvestments /
+                        (summary.totalInvestments /
                           (summary.totalIncome +
                             summary.totalExpenses +
                             summary.totalInvestments)) *
                         100
-                    ).toFixed(1)
-                    : '0'}
+                      ).toFixed(1)
+                    : "0"}
                   %
                 </span>
               </div>
@@ -339,15 +405,15 @@ export function FinancialSummary() {
                 <span
                   className={`font-medium ${
                     (summary?.netProfit || 0) >= 0
-                      ? 'text-[#D4AF37]'
-                      : 'text-red-600'
+                      ? "text-[#D4AF37]"
+                      : "text-red-600"
                   }`}
                 >
                   {summary?.totalIncome
                     ? ((summary.netProfit / summary.totalIncome) * 100).toFixed(
-                      1,
-                    )
-                    : '0'}
+                        1
+                      )
+                    : "0"}
                   %
                 </span>
               </div>
@@ -357,10 +423,10 @@ export function FinancialSummary() {
                 <span className="font-medium text-blue-600">
                   {summary?.totalInvestments && summary?.totalInvestments > 0
                     ? (
-                      (summary.netProfit / summary.totalInvestments) *
+                        (summary.netProfit / summary.totalInvestments) *
                         100
-                    ).toFixed(1)
-                    : '0'}
+                      ).toFixed(1)
+                    : "0"}
                   %
                 </span>
               </div>
@@ -370,10 +436,10 @@ export function FinancialSummary() {
                 <span className="font-medium">
                   {summary?.totalIncome && summary?.totalExpenses
                     ? (
-                      (summary.totalIncome / summary.totalExpenses) *
+                        (summary.totalIncome / summary.totalExpenses) *
                         100
-                    ).toFixed(0)
-                    : '0'}
+                      ).toFixed(0)
+                    : "0"}
                   %
                 </span>
               </div>
@@ -382,5 +448,5 @@ export function FinancialSummary() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
