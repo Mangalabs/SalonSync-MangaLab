@@ -25,6 +25,7 @@ import Register from './components/pages/Register'
 import Reports from './pages/Reports'
 import Financial from './pages/Financial'
 import WhatsApp from './components/pages/WhatsApp'
+import Fidelity from './components/pages/Fidelity'
 import TestBranch from './pages/TestBranch'
 
 export default function App() {
@@ -34,12 +35,12 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="*" element={<Home />} />
             <Route path="/request-reset" element={<ResetPasswordRequest />} />
             <Route path="/resetpassword" element={<ResetPassword />} />
             <Route path="/register" element={<Register />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             
-
             <Route
               path="/dashboard"
               element={
@@ -113,7 +114,6 @@ export default function App() {
                   </SubscriptionGuard>
                 }
               />
-
               <Route
                 path="inventory"
                 element={
@@ -163,6 +163,14 @@ export default function App() {
                 }
               />
               <Route
+                path="fidelity"
+                element={
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                    <Fidelity />
+                  </RoleGuard>
+                }
+              />
+              <Route
                 path="test-branch"
                 element={
                   <RoleGuard allowedRoles={['ADMIN']}>
@@ -174,7 +182,6 @@ export default function App() {
               />
             </Route>
 
-            <Route path="*" element={<Home />} />
           </Routes>
         </BrowserRouter>
         <Toaster />

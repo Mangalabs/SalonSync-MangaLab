@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -9,6 +9,7 @@ import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Header } from '../custom/Header'
 
 function DashboardContent() {
+  const navigate = useNavigate()
   const { user, isAdmin } = useUser()
   const [showSetup, setShowSetup] = useState(false)
 
@@ -20,6 +21,10 @@ function DashboardContent() {
 
   if (showSetup) {
     return <FirstTimeSetup onComplete={() => setShowSetup(false)} />
+  }
+
+  if (!user) {
+    navigate('/')
   }
 
   return (

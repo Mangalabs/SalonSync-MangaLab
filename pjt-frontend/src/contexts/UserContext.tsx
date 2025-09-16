@@ -43,7 +43,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const res = await axios.get('/api/auth/profile')
       setUser(res.data)
     } catch {
-      localStorage.removeItem('token')
+      logout()
     } finally {
       setIsLoading(false)
     }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { AuthPanel } from '@/components/custom/auth/AuthPanel'
+import { useUser } from '@/contexts/UserContext'
 
 const carouselItems = [
   {
@@ -24,6 +26,9 @@ const carouselItems = [
 ]
 
 function MobileCarousel() {
+  const navigate = useNavigate()
+  const { user } = useUser()
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
 
@@ -40,6 +45,11 @@ function MobileCarousel() {
   }, [])
 
   const currentItem = carouselItems[currentIndex]
+
+  
+  if (user) {
+    navigate('/dashboard')
+  }
 
   return (
     <div className="space-y-3">
