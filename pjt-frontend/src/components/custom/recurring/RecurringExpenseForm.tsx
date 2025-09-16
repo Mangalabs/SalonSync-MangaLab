@@ -28,9 +28,10 @@ type RecurringExpenseFormData = z.infer<typeof recurringExpenseSchema>;
 
 interface RecurringExpenseFormProps {
   onSuccess: () => void;
+  initialData?: any;
 }
 
-export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
+export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpenseFormProps) {
   const queryClient = useQueryClient()
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
@@ -52,7 +53,16 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<RecurringExpenseFormData>({
     resolver: zodResolver(recurringExpenseSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      name: initialData.name || '',
+      description: initialData.description || '',
+      categoryId: initialData.categoryId || '',
+      fixedAmount: initialData.fixedAmount ? Number(initialData.fixedAmount) : undefined,
+      receiptDay: initialData.receiptDay || 1,
+      dueDay: initialData.dueDay || 1,
+      professionalId: initialData.professionalId || '',
+      branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
+    } : {
       branchId: !isAdmin ? activeBranch?.id : undefined,
     },
   })
@@ -70,38 +80,13 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
     enabled: !!selectedBranchId,
   })
 
-  const { data: professionals = [] } = useQuery({
-    queryKey: ['professionals', selectedBranchId],
-    queryFn: async () => {
-      if (!selectedBranchId) {return []}
-      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`)
-      return res.data
-    },
-    enabled: !!selectedBranchId,
-  })
+
 
   const selectedCategoryId = watch('categoryId')
   
   const selectedCategory = categories.find((cat: any) => cat.id === selectedCategoryId)
-  const isSalaryCategory = selectedCategory?.name === 'Salários'
   
-  const handleProfessionalChange = (professionalId: string) => {
-    setValue('professionalId', professionalId)
-    const professional = professionals.find((p: any) => p.id === professionalId)
-    if (professional) {
-      setValue('name', `Salário: ${professional.name}`)
-      const baseSalary = professional.customRole?.baseSalary || professional.baseSalary
-      const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay
-      
-      if (baseSalary) {
-        setValue('fixedAmount', Number(baseSalary))
-      }
-      if (payDay) {
-        setValue('receiptDay', payDay - 2 > 0 ? payDay - 2 : 1)
-        setValue('dueDay', payDay)
-      }
-    }
-  }
+
 
   const createRecurringExpense = useMutation({
     mutationFn: async (data: RecurringExpenseFormData) => {
@@ -115,16 +100,22 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
         professionalId: data.professionalId,
       }
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
-      const res = await axios.post('/api/financial/recurring-expenses', payload, { headers })
-      return res.data
+      
+      if (initialData) {
+        const res = await axios.put(`/api/financial/recurring-expenses/${initialData.id}`, payload, { headers })
+        return res.data
+      } else {
+        const res = await axios.post('/api/financial/recurring-expenses', payload, { headers })
+        return res.data
+      }
     },
     onSuccess: () => {
-      toast.success('Despesa fixa criada com sucesso!')
+      toast.success(initialData ? 'Despesa fixa atualizada com sucesso!' : 'Despesa fixa criada com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
       onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar despesa fixa')
+      toast.error(error.response?.data?.message || (initialData ? 'Erro ao atualizar despesa fixa' : 'Erro ao criar despesa fixa'))
     },
   })
 
@@ -163,7 +154,7 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
         <Input
           id="name"
           {...register('name')}
-          placeholder="Ex: Conta de Luz, Aluguel, etc."
+          placeholder="Ex: Conta de Luz, Aluguel, Plano de Saúde, etc."
         />
         {errors.name && (
           <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
@@ -195,31 +186,10 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
         {errors.categoryId && (
           <p className="text-sm text-red-600 mt-1">{errors.categoryId.message}</p>
         )}
+
       </div>
 
-      {isSalaryCategory && (
-        <div>
-          <Label htmlFor="professionalId">Funcionário</Label>
-          <Combobox
-            options={professionals.map((professional: any) => {
-              const baseSalary = professional.customRole?.baseSalary || professional.baseSalary
-              const payDay = professional.customRole?.salaryPayDay || professional.salaryPayDay
-              
-              return {
-                value: professional.id,
-                label: `${professional.name}${baseSalary ? ` (R$ ${Number(baseSalary).toFixed(2)})` : ''}${payDay ? ` - Dia ${payDay}` : ''}`,
-              }
-            })}
-            value={watch('professionalId')}
-            onValueChange={handleProfessionalChange}
-            placeholder="Selecione um funcionário"
-            searchPlaceholder="Pesquisar funcionário..."
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Selecione o funcionário para puxar automaticamente os dados de salário
-          </p>
-        </div>
-      )}
+
 
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -264,28 +234,22 @@ export function RecurringExpenseForm({ onSuccess }: RecurringExpenseFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="fixedAmount">
-          {isSalaryCategory ? 'Salário Base' : 'Valor Fixo (opcional)'}
-        </Label>
+        <Label htmlFor="fixedAmount">Valor Estimado (opcional)</Label>
         <Input
           id="fixedAmount"
           type="number"
           step="0.01"
           min="0"
           {...register('fixedAmount', { valueAsNumber: true })}
-          placeholder={isSalaryCategory ? 'Salário base do funcionário' : 'Deixe vazio se o valor varia mensalmente'}
-          disabled={isSalaryCategory}
+          placeholder="Valor estimado da despesa"
         />
         <p className="text-xs text-gray-500 mt-1">
-          {isSalaryCategory 
-            ? 'Valor preenchido automaticamente com base no funcionário selecionado (comissões serão somadas)'
-            : 'Para despesas como aluguel que têm valor fixo. Deixe vazio para contas que variam como luz/água.'
-          }
+          Valor estimado para controle. Deixe vazio se o valor varia muito.
         </p>
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Criando...' : 'Criar Despesa Fixa'}
+        {isSubmitting ? (initialData ? 'Atualizando...' : 'Criando...') : (initialData ? 'Atualizar Despesa Fixa' : 'Criar Despesa Fixa')}
       </Button>
     </form>
   )
