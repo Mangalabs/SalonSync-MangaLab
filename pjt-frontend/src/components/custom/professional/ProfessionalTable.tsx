@@ -1,16 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Edit, DollarSign } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { PlusCircle, Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
-
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,58 +17,39 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import axios from '@/lib/axios'
-import { useBranch } from '@/contexts/BranchContext'
 
 import { ProfessionalForm } from './ProfessionalForm'
 import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
 
 type Professional = {
-  id: string;
-  name: string;
-  role: string;
-  roleId?: string;
-  commissionRate?: number;
-  branchId: string;
-  branch?: {
-    name: string;
-  };
+  id: string
+  name: string
+  role: string
+  commissionRate: number
+  branchId: string
   customRole?: {
-    id: string;
-    title: string;
-    commissionRate: number;
-  };
-};
+    title: string
+    commissionRate: number
+  }
+}
 
 export function ProfessionalTable() {
   const queryClient = useQueryClient()
-  const [editingProfessional, setEditingProfessional] = useState<any>(null)
-  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null)
-  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null)
   const { activeBranch } = useBranch()
+  const [expandedProfessional, setExpandedProfessional] = useState<string | null>(null)
+  const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null)
+  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null)
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null)
+  const [creatingNew, setCreatingNew] = useState(false)
 
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get('/api/professionals')
-      return res.data.filter((prof: Professional) => prof.branchId === activeBranch?.id)
+      return res.data.filter((p: Professional) => p.branchId === activeBranch?.id)
     },
     enabled: !!activeBranch,
   })
-
-  // Reset selected professional when branch changes
-  useEffect(() => {
-    setSelectedProfessional(null)
-  }, [activeBranch?.id])
-
-  // Force refetch commission data when professional is selected
-  useEffect(() => {
-    if (selectedProfessional) {
-      queryClient.invalidateQueries({ queryKey: ['monthly-commission', selectedProfessional] })
-      queryClient.invalidateQueries({ queryKey: ['daily-commission', selectedProfessional] })
-      queryClient.invalidateQueries({ queryKey: ['professional', selectedProfessional] })
-    }
-  }, [selectedProfessional, queryClient])
 
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {
@@ -89,123 +66,114 @@ export function ProfessionalTable() {
     },
   })
 
+  const toggleExpanded = (id: string) => setExpandedProfessional(expandedProfessional === id ? null : id)
+
   if (isLoading) {return <p>Carregando...</p>}
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <div className="border rounded-md bg-white">
-          <div className="border-b p-4">
-            <h3 className="text-lg font-semibold text-[#1A1A1A]">{activeBranch?.name}</h3>
-            <p className="text-sm text-[#737373]">{professionals.length} profissional(is)</p>
-          </div>
-          
-          {professionals.length === 0 ? (
-            <div className="p-4 text-center text-[#737373]">
-              Nenhum profissional cadastrado nesta filial
-            </div>
-          ) : (
-            <div className="p-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b">
-                    <th className="py-2">Nome</th>
-                    <th className="py-2">Função</th>
-                    <th className="py-2">Comissão</th>
-                    <th className="py-2">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {professionals.map((prof: Professional) => (
-                    <tr 
-                      key={prof.id} 
-                      className={`border-t cursor-pointer hover:bg-gray-50 ${selectedProfessional === prof.id ? 'bg-[#D4AF37]/10' : ''}`}
-                      onClick={() => setSelectedProfessional(prof.id)}
-                    >
-                      <td className="py-2 font-medium">{prof.name}</td>
-                      <td className="py-2">
-                        {prof.customRole ? (
-                          <span className="text-[#D4AF37] font-medium">
-                            {prof.customRole.title}
-                          </span>
-                        ) : (
-                          prof.role || 'N/A'
-                        )}
-                      </td>
-                      <td className="py-2">
-                        {prof.customRole ? prof.customRole.commissionRate : (prof.commissionRate || 0)}%
-                      </td>
-                      <td className="py-2">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingProfessional(prof)
-                            }}
-                            className="border-[#D4AF37]/20 hover:bg-[#D4AF37]/10"
-                          >
-                            <Edit size={14} />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDeletingProfessional(prof)
-                            }}
-                            disabled={deleteProfessional.isPending}
-                            className="bg-[#DC2626] hover:bg-[#DC2626]/90"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">{activeBranch?.name}</h3>
+          <Button
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+            onClick={() => setCreatingNew(true)}
+          >
+            <PlusCircle className="w-4 h-4" />
+            Novo Profissional
+          </Button>
         </div>
-      </div>
-      
-      <div>
-        {selectedProfessional ? (
-          <ProfessionalCommissionCard professionalId={selectedProfessional} />
-        ) : (
-          <div className="border rounded-md p-6 text-center text-gray-500">
-            <DollarSign className="mx-auto h-8 w-8 mb-2 text-gray-400" />
-            <p>Selecione um profissional para ver as comissões</p>
+
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
+          <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700">
+            <div>Nome</div>
+            <div>Função</div>
+            <div>Comissão</div>
+            <div>Ações</div>
           </div>
-        )}
+        </div>
+
+        <div className="divide-y divide-gray-100">
+          {professionals.map((prof) => (
+            <div key={prof.id}>
+              <div
+                className={`px-6 py-4 hover:bg-purple-50 transition-colors cursor-pointer grid grid-cols-4 gap-4 items-center ${selectedProfessional === prof.id ? 'bg-[#D4AF37]/10' : ''}`}
+                onClick={() => {
+                  toggleExpanded(prof.id)
+                  setSelectedProfessional(prof.id)
+                  queryClient.invalidateQueries({ queryKey: ['monthly-commission', prof.id] })
+                  queryClient.invalidateQueries({ queryKey: ['daily-commission', prof.id] })
+                  queryClient.invalidateQueries({ queryKey: ['professional', prof.id] })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
+                    {prof.name[0]}
+                  </div>
+                  <div className="font-medium text-gray-800">{prof.name}</div>
+                  <div className="ml-auto">
+                    {expandedProfessional === prof.id ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  </div>
+                </div>
+                <div className="text-gray-700">{prof.customRole?.title || prof.role}</div>
+                <div className="font-semibold text-purple-600">{prof.customRole?.commissionRate || prof.commissionRate}%</div>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingProfessional(prof)
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeletingProfessional(prof)
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {expandedProfessional === prof.id && <ProfessionalCommissionCard professionalId={prof.id} />}
+            </div>
+          ))}
+        </div>
       </div>
 
       <Dialog
-        open={!!editingProfessional}
-        onOpenChange={() => setEditingProfessional(null)}
+        open={!!editingProfessional || creatingNew}
+        onOpenChange={() => {
+          setEditingProfessional(null)
+          setCreatingNew(false)
+        }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Profissional</DialogTitle>
+            <DialogTitle>{creatingNew ? 'Novo Profissional' : 'Editar Profissional'}</DialogTitle>
           </DialogHeader>
           <ProfessionalForm
             initialData={editingProfessional}
-            onSuccess={() => setEditingProfessional(null)}
+            onSuccess={() => {
+              setEditingProfessional(null)
+              setCreatingNew(false)
+            }}
           />
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={!!deletingProfessional}
-        onOpenChange={() => setDeletingProfessional(null)}
-      >
+      <AlertDialog open={!!deletingProfessional} onOpenChange={() => setDeletingProfessional(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Profissional</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o profissional "{deletingProfessional?.name}"?
+              Tem certeza que deseja excluir "{deletingProfessional?.name}"?
               <br /><br />
               Esta ação não pode ser desfeita e irá:
               <br />• Remover o profissional do sistema
@@ -216,8 +184,8 @@ export function ProfessionalTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingProfessional && deleteProfessional.mutate(deletingProfessional.id)}
               className="bg-[#DC2626] hover:bg-[#DC2626]/90"
+              onClick={() => deletingProfessional && deleteProfessional.mutate(deletingProfessional.id)}
             >
               Excluir
             </AlertDialogAction>

@@ -36,19 +36,22 @@ export function ExportButton({ onExport, disabled }: ExportButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={disabled || isExporting} className="text-sm">
-          <Download className="h-4 w-4 mr-2" />
+        <Button
+          disabled={disabled || isExporting}
+          className="w-full bg-gradient-to-r from-black to-gray-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm"
+        >
+          <Download className="h-4 w-4" />
           {isExporting ? 'Exportando...' : 'Exportar'}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="w-44">
         {exportOptions.map(({ format, label, icon: Icon }) => (
           <DropdownMenuItem
             key={format}
             onClick={() => handleExport(format)}
-            className="cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer"
           >
-            <Icon className="h-4 w-4 mr-2" />
+            <Icon className="h-4 w-4" />
             {label}
           </DropdownMenuItem>
         ))}

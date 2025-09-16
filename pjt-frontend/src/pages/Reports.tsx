@@ -1,17 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Bot } from 'lucide-react'
+import { Search, Bot } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { ExportButton } from '@/components/custom/ExportButton'
@@ -23,645 +13,207 @@ export default function Reports() {
       .toISOString()
       .split('T')[0],
   )
-  const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0],
-  )
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const { branches } = useBranch()
+  const [loadingReport, setLoadingReport] = useState(false)
+  const [loadingInsight, setLoadingInsight] = useState(false)
 
   const formatPeriodLabel = () => {
     const start = new Date(startDate + 'T00:00:00')
     const end = new Date(endDate + 'T00:00:00')
-    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString(
-      'pt-BR',
-    )}`
+    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`
   }
 
-  const {
-    data: reportData,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: reportData, refetch } = useQuery({
     queryKey: ['consolidated-report', startDate, endDate, selectedBranch],
     queryFn: async () => {
-      // Buscar dados financeiros
-      const financialParams = new URLSearchParams({
-        startDate,
-        endDate,
-      })
-      if (selectedBranch !== 'all') {
-        financialParams.append('branchId', selectedBranch)
-      }
-      const financialRes = await axios.get(
-        `/api/financial/summary?${financialParams}`,
-      )
+      setLoadingReport(true)
+      try {
+        const params = new URLSearchParams({ startDate, endDate })
+        if (selectedBranch !== 'all') { params.append('branchId', selectedBranch) }
 
-      // Buscar movimentações de estoque
-      const stockParams = new URLSearchParams({
-        startDate,
-        endDate,
-      })
-      if (selectedBranch !== 'all') {
-        stockParams.append('branchId', selectedBranch)
-      }
-      const stockRes = await axios.get(
-        `/api/inventory/movements?${stockParams}`,
-      )
+        const [financialRes, appointmentsRes, professionalsRes, stockRes] = await Promise.all([
+          axios.get(`/api/financial/summary?${params}`),
+          axios.get(`/api/appointments?${params}`),
+          axios.get(`/api/professionals${selectedBranch !== 'all' ? `?branchId=${selectedBranch}` : ''}`),
+          axios.get(`/api/inventory/movements?${params}`),
+        ])
 
-      // Buscar profissionais
-      const professionalsParams = new URLSearchParams()
-      if (selectedBranch !== 'all') {
-        professionalsParams.append('branchId', selectedBranch)
-      }
-      const professionalsRes = await axios.get(
-        `/api/professionals?${professionalsParams}`,
-      )
-      
-      const filteredProfessionals = professionalsRes.data
+        const filteredProfessionals = professionalsRes.data
+        const commissionsPromises = filteredProfessionals.map((prof: any) =>
+          axios
+            .get(`/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`)
+            .then((res) => ({ professional: prof, commission: res.data }))
+            .catch(() => ({ professional: prof, commission: null })),
+        )
+        const commissionsData = await Promise.all(commissionsPromises)
 
-      // Buscar comissões dos profissionais filtrados
-      const commissionsPromises = filteredProfessionals.map((prof: any) =>
-        axios
-          .get(
-            `/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`,
-          )
-          .then((res) => ({ professional: prof, commission: res.data }))
-          .catch(() => ({ professional: prof, commission: null })),
-      )
+        const stockMovements = stockRes.data || []
+        const stockSummary = {
+          totalPurchases: stockMovements.filter((m: any) => m.type === 'IN').reduce((sum: number, m: any) => sum + m.quantity * Number(m.unitCost), 0),
+          totalSales: stockMovements.filter((m: any) => m.type === 'OUT').reduce((sum: number, m: any) => sum + m.quantity * Number(m.unitCost), 0),
+          totalMovements: stockMovements.length,
+        }
 
-      const commissionsData = await Promise.all(commissionsPromises)
+        const branch =
+          selectedBranch === 'all' ? { name: 'Todas as Filiais' } : branches.find((b) => b.id === selectedBranch)
 
-      // Processar movimentações de estoque
-      const stockMovements = stockRes.data || []
-      const stockSummary = {
-        totalPurchases: stockMovements
-          .filter((m: any) => m.type === 'IN')
-          .reduce(
-            (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
-            0,
-          ),
-        totalSales: stockMovements
-          .filter((m: any) => m.type === 'OUT')
-          .reduce(
-            (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
-            0,
-          ),
-        totalMovements: stockMovements.length,
-      }
+        const servicesCount: Record<string, number> = {}
+        appointmentsRes.data.forEach((a: any) => {
+          if (selectedBranch !== 'all' && a.branchId !== selectedBranch) { return }
+          a.appointmentServices?.forEach((s: any) => {
+            const name = s.service?.name || 'Desconhecido'
+            servicesCount[name] = (servicesCount[name] || 0) + 1
+          })
+        })
+        const topServices = Object.entries(servicesCount)
+          .map(([name, appointments]) => ({ name, appointments }))
+          .sort((a, b) => b.appointments - a.appointments)
+          .slice(0, 5)
 
-      const branch =
-        selectedBranch === 'all'
-          ? { name: 'Todas as Filiais' }
-          : branches.find((b) => b.id === selectedBranch)
-
-      return {
-        financial: financialRes.data,
-        stock: {
-          movements: stockMovements,
-          summary: stockSummary,
-        },
-        professionals: commissionsData.filter((item) => item.commission),
-        branchName: branch?.name || 'Filial Selecionada',
-        period: {
-          startDate,
-          endDate,
-          label: formatPeriodLabel(),
-        },
+        return {
+          financial: financialRes.data,
+          stock: { movements: stockMovements, summary: stockSummary },
+          professionals: commissionsData.filter((item) => item.commission),
+          branchName: branch?.name || 'Filial Selecionada',
+          period: { startDate, endDate, label: formatPeriodLabel() },
+          appointments: appointmentsRes.data,
+          topServices,
+        }
+      } finally {
+        setLoadingReport(false)
       }
     },
     enabled: false,
   })
 
-  const {
-    data: insights,
-    isLoading: isLoadingInsights,
-    refetch: refetchInsights,
-  } = useQuery({
+  const { data: insights, refetch: refetchInsights } = useQuery({
     queryKey: ['insight-query', startDate, endDate, selectedBranch],
     queryFn: async () => {
-      const insightsParams = new URLSearchParams({
-        startDate,
-        endDate,
-      })
-      if (selectedBranch !== 'all') {
-        insightsParams.append('branchId', selectedBranch)
+      setLoadingInsight(true)
+      try {
+        const params = new URLSearchParams({ startDate, endDate })
+        if (selectedBranch !== 'all') { params.append('branchId', selectedBranch) }
+        const res = await axios.get(`/api/ai/insights?${params}`)
+        return res.data.map((item: string) => {
+          const [title, description] = item.split(':')
+          return { title, description }
+        })
+      } finally {
+        setLoadingInsight(false)
       }
-      const insightsResponse = await axios.get(
-        `/api/ai/insights?${insightsParams}`,
-      )
-
-      const insights = insightsResponse.data.map((insightResponse: string) => {
-        const insightInformation = insightResponse.split(':')
-        return {
-          title: insightInformation[0],
-          description: insightInformation[1],
-        }
-      })
-
-      return insights
     },
     enabled: false,
   })
 
-  const handleGenerateReport = () => {
-    refetch()
-  }
-
-  const handleGenerateInsight = () => {
-    refetchInsights()
-  }
+  const handleGenerateReport = () => refetch()
+  const handleGenerateInsight = () => refetchInsights()
 
   const handleExportReport = (format: 'json' | 'pdf' | 'csv' | 'excel') => {
-    if (!reportData) {return}
-
+    if (!reportData) { return }
     switch (format) {
-      case 'json':
-        ExportService.exportJSON(reportData)
-        break
-      case 'pdf':
-        ExportService.exportPDF(reportData)
-        break
-      case 'csv':
-        ExportService.exportCSV(reportData)
-        break
-      case 'excel':
-        ExportService.exportExcel(reportData)
-        break
+      case 'json': ExportService.exportJSON(reportData); break
+      case 'pdf': ExportService.exportPDF(reportData); break
+      case 'csv': ExportService.exportCSV(reportData); break
+      case 'excel': ExportService.exportExcel(reportData); break
     }
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-3xl font-bold">
-          Relatórios Consolidados
-        </h1>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filtros de Relatório</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl mt-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filial</label>
+            <select className="w-full p-3 border border-gray-200 rounded-xl" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <option value="all">Todas as Filiais</option>
+              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+          <button
+            className={'w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2'}
+            onClick={handleGenerateReport}
+            disabled={loadingReport}
+          >
+            {loadingReport ? 'Gerando...' : <><Search className="w-4 h-4" /> Gerar Relatório</>}
+          </button>
+          {reportData && (
+            <button
+              className="w-full bg-blue-700 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 mt-2"
+              onClick={handleGenerateInsight}
+              disabled={loadingInsight}
+            >
+              {loadingInsight ? 'Gerando Insight...' : <><Bot size={20} /> Gerar Insights de IA</>}
+            </button>
+          )}
+          {reportData && <ExportButton onExport={handleExportReport} />}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Gerar Relatório
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="branch" className="text-sm">
-                  Filial
-                </Label>
-                <Select
-                  value={selectedBranch}
-                  onValueChange={setSelectedBranch}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as Filiais</SelectItem>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="startDate" className="text-sm">
-                  Data Inicial
-                </Label>
-                <input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="endDate" className="text-sm">
-                  Data Final
-                </Label>
-                <input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#737373] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
+      {reportData && (
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{reportData.branchName} - {reportData.period.label}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div className="bg-green-50 border-green-200 p-4 rounded-xl border">
+              <p className="text-green-600 font-semibold">Receitas</p>
+              <p className="text-2xl font-bold text-green-700">R$ {reportData.financial.totalIncome?.toFixed(2) || '0,00'}</p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                onClick={handleGenerateReport}
-                disabled={isLoading || reportData}
-                className="text-sm"
-              >
-                {isLoading ? 'Gerando...' : 'Gerar Relatório'}
-              </Button>
-
-              {reportData && (
-                <Button
-                  onClick={handleGenerateInsight}
-                  disabled={isLoadingInsights || insights}
-                  className="text-sm bg-blue-700"
-                >
-                  {isLoadingInsights ? (
-                    'Gerando...'
-                  ) : (
-                    <>
-                      <Bot size={44} />
-                      Gerar Insights de IA
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {reportData && <ExportButton onExport={handleExportReport} />}
+            <div className="bg-red-50 border-red-200 p-4 rounded-xl border">
+              <p className="text-red-600 font-semibold">Despesas</p>
+              <p className="text-2xl font-bold text-red-700">R$ {reportData.financial.totalExpenses?.toFixed(2) || '0,00'}</p>
+            </div>
+            <div className="bg-blue-50 border-blue-200 p-4 rounded-xl border">
+              <p className="text-blue-600 font-semibold">Investimentos</p>
+              <p className="text-2xl font-bold text-blue-700">R$ {reportData.financial.totalInvestments?.toFixed(2) || '0,00'}</p>
+            </div>
+            <div className="bg-purple-50 border-purple-200 p-4 rounded-xl border">
+              <p className="text-purple-600 font-semibold">Lucro Líquido</p>
+              <p className={`text-2xl font-bold ${reportData.financial.netProfit >= 0 ? 'text-[#D4AF37]' : 'text-red-600'}`}>R$ {reportData.financial.netProfit?.toFixed(2) || '0,00'}</p>
+            </div>
+            <div className="bg-orange-50 border-orange-200 p-4 rounded-xl border">
+              <p className="text-orange-600 font-semibold">Atendimentos</p>
+              <p className="text-2xl font-bold text-orange-700">{reportData.appointments?.length || 0}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {insights && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 text-center">
-              {insights.map(
-                (insight: { title: string; description: string }) => (
-                  <div
-                    key={insight.title}
-                    className="bg-white border wrap-anywhere rounded-lg p-3"
-                  >
-                    <div className="text-lg md:text-lg font-bold text-blue-700 mb-5">
-                      {insight.title}
-                    </div>
-                    <div className="text-xs md:text-sm text-justify text-stone-900">
-                      {insight.description}
-                    </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-3">Top 5 Serviços Mais Realizados</h4>
+            <div className="space-y-2">
+              {reportData.topServices.map((service, i) => (
+                <div key={i} className="flex justify-between items-center py-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-semibold">{i + 1}</span>
+                    <span className="text-gray-600">{service.name}</span>
                   </div>
-                ),
-              )}
+                  <span className="font-semibold text-gray-800">{service.appointments} atendimentos</span>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {reportData && (
-        <div className="space-y-4 md:space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base md:text-lg">
-                {reportData.branchName} - {reportData.period.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 text-center">
-                <div className="bg-white border rounded-lg p-3">
-                  <div className="text-lg md:text-2xl font-bold text-[#D4AF37] truncate">
-                    R$ {reportData.financial.totalIncome?.toFixed(2) || '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Receitas
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg p-3">
-                  <div className="text-lg md:text-2xl font-bold text-red-600 truncate">
-                    R${' '}
-                    {reportData.financial.totalExpenses?.toFixed(2) || '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Despesas
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg p-3">
-                  <div className="text-lg md:text-2xl font-bold text-blue-600 truncate">
-                    R${' '}
-                    {reportData.financial.totalInvestments?.toFixed(2) ||
-                      '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Investimentos
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg p-3">
-                  <div
-                    className={`text-lg md:text-2xl font-bold truncate ${
-                      (reportData.financial.netProfit || 0) >= 0
-                        ? 'text-[#D4AF37]'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    R$ {reportData.financial.netProfit?.toFixed(2) || '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Lucro Líquido
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg p-3">
-                  <div className="text-lg md:text-2xl font-bold text-purple-600 truncate">
-                    R${' '}
-                    {reportData.financial.appointmentRevenue?.toFixed(2) ||
-                      '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Atendimentos
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Movimentação de Estoque</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-center mb-4 md:mb-6">
-                <div>
-                  <div className="text-lg md:text-2xl font-bold text-red-600">
-                    R${' '}
-                    {reportData.stock.summary.totalPurchases?.toFixed(2) ||
-                      '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Compras
-                  </div>
-                </div>
-                <div>
-                  <div className="text-lg md:text-2xl font-bold text-[#D4AF37]">
-                    R${' '}
-                    {reportData.stock.summary.totalSales?.toFixed(2) || '0,00'}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Vendas
-                  </div>
-                </div>
-                <div>
-                  <div className="text-lg md:text-2xl font-bold text-blue-600">
-                    {reportData.stock.summary.totalMovements || 0}
-                  </div>
-                  <div className="text-xs md:text-sm text-[#737373]">
-                    Movimentações
-                  </div>
-                </div>
-              </div>
-
-              {reportData.stock.movements.length > 0 && (
-                <>
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-2">Data</th>
-                          <th className="text-left p-2">Produto</th>
-                          <th className="text-center p-2">Tipo</th>
-                          <th className="text-right p-2">Qtd</th>
-                          <th className="text-right p-2">Valor Unit.</th>
-                          <th className="text-right p-2">Total</th>
-                          <th className="text-left p-2">Motivo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {reportData.stock.movements
-                          .slice(0, 10)
-                          .map((movement: any) => (
-                            <tr key={movement.id} className="border-b">
-                              <td className="p-2 text-sm">
-                                {new Date(
-                                  movement.createdAt,
-                                ).toLocaleDateString('pt-BR')}
-                              </td>
-                              <td className="p-2 font-medium">
-                                {movement.product.name}
-                              </td>
-                              <td className="p-2 text-center">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs ${
-                                    movement.type === 'IN'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-green-100 text-green-800'
-                                  }`}
-                                >
-                                  {movement.type === 'IN' ? 'Entrada' : 'Saída'}
-                                </span>
-                              </td>
-                              <td className="p-2 text-right">
-                                {movement.quantity}
-                              </td>
-                              <td className="p-2 text-right">
-                                R$ {Number(movement.unitCost).toFixed(2)}
-                              </td>
-                              <td className="p-2 text-right font-medium">
-                                R${' '}
-                                {(
-                                  movement.quantity * Number(movement.unitCost)
-                                ).toFixed(2)}
-                              </td>
-                              <td className="p-2 text-sm text-[#737373]">
-                                {movement.reason.length > 30
-                                  ? `${movement.reason.substring(0, 30)}...`
-                                  : movement.reason}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="md:hidden space-y-3">
-                    {reportData.stock.movements
-                      .slice(0, 5)
-                      .map((movement: any) => (
-                        <div
-                          key={movement.id}
-                          className="bg-white border rounded-lg p-3"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">
-                                {movement.product.name}
-                              </h4>
-                              <p className="text-xs text-[#737373]">
-                                {new Date(
-                                  movement.createdAt,
-                                ).toLocaleDateString('pt-BR')}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${
-                                movement.type === 'IN'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-green-100 text-green-800'
-                              }`}
-                            >
-                              {movement.type === 'IN' ? 'Entrada' : 'Saída'}
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs text-[#737373]">
-                              Quantidade:
-                            </span>
-                            <span className="font-medium text-sm">
-                              {movement.quantity}
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs text-[#737373]">
-                              Total:
-                            </span>
-                            <span className="font-medium text-sm text-[#D4AF37]">
-                              R${' '}
-                              {(
-                                movement.quantity * Number(movement.unitCost)
-                              ).toFixed(2)}
-                            </span>
-                          </div>
-
-                          <div className="text-xs text-[#737373]">
-                            <strong>Motivo:</strong>{' '}
-                            {movement.reason.length > 40
-                              ? `${movement.reason.substring(0, 40)}...`
-                              : movement.reason}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {reportData.stock.movements.length > 10 && (
-                    <p className="text-sm text-[#737373] mt-2 text-center">
-                      Mostrando{' '}
-                      {reportData.stock.movements.length > 5 ? '10' : '5'} de{' '}
-                      {reportData.stock.movements.length} movimentações
-                    </p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance dos Profissionais</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Profissional</th>
-                      {selectedBranch === 'all' && (
-                        <th className="text-left p-2">Filial</th>
-                      )}
-                      <th className="text-right p-2">Atendimentos</th>
-                      <th className="text-right p-2">Receita</th>
-                      <th className="text-right p-2">Comissão</th>
-                      <th className="text-right p-2">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reportData.professionals.map((item: any) => {
-                      const professionalBranch = branches.find(
-                        (b) => b.id === item.professional.branchId,
-                      )
-                      return (
-                        <tr key={item.professional.id} className="border-b">
-                          <td className="p-2 font-medium">
-                            {item.professional.name}
-                          </td>
-                          {selectedBranch === 'all' && (
-                            <td className="p-2 text-sm text-[#737373]">
-                              {professionalBranch?.name || 'N/A'}
-                            </td>
-                          )}
-                          <td className="p-2 text-right">
-                            {item.commission.summary.totalAppointments}
-                          </td>
-                          <td className="p-2 text-right">
-                            R$ {item.commission.summary.totalRevenue.toFixed(2)}
-                          </td>
-                          <td className="p-2 text-right">
-                            R${' '}
-                            {item.commission.summary.totalCommission.toFixed(2)}
-                          </td>
-                          <td className="p-2 text-right">
-                            {item.commission.professional.commissionRate}%
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="md:hidden space-y-3">
-                {reportData.professionals.map((item: any) => {
-                  const professionalBranch = branches.find(
-                    (b) => b.id === item.professional.branchId,
-                  )
-                  return (
-                    <div
-                      key={item.professional.id}
-                      className="bg-white border rounded-lg p-3"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">
-                            {item.professional.name}
-                          </h4>
-                          {selectedBranch === 'all' && (
-                            <p className="text-xs text-[#737373]">
-                              {professionalBranch?.name || 'N/A'}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded">
-                          {item.commission.professional.commissionRate}%
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <div className="text-sm font-medium">
-                            {item.commission.summary.totalAppointments}
-                          </div>
-                          <div className="text-xs text-[#737373]">
-                            Atendimentos
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-[#D4AF37]">
-                            R$ {item.commission.summary.totalRevenue.toFixed(2)}
-                          </div>
-                          <div className="text-xs text-[#737373]">Receita</div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-green-600">
-                            R${' '}
-                            {item.commission.summary.totalCommission.toFixed(2)}
-                          </div>
-                          <div className="text-xs text-[#737373]">Comissão</div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       )}
+
+      {insights && (
+        <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Insights de IA</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {insights.map((insight) => (
+              <div key={insight.title} className="bg-purple-50 border-purple-200 border rounded-xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div className="text-sm font-semibold text-purple-700 mb-2">{insight.title}</div>
+                <div className="text-xs text-gray-700 flex-1">{insight.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
