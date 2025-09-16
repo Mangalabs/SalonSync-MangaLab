@@ -69,9 +69,6 @@ export function ServiceTable() {
 
   if (isLoading) {return <p>Carregando serviços...</p>}
   if (error) {return <p className="text-red-500">Erro ao carregar serviços</p>}
-  if (!Array.isArray(services) || services.length === 0) {
-    return <p>Nenhum serviço encontrado.</p>
-  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -88,66 +85,70 @@ export function ServiceTable() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((service) => (
-          <div
-            key={service.id}
-            className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-          >
-            <div className={`h-32 bg-gradient-to-br ${service.color || 'from-purple-400 to-pink-400'} flex items-center justify-center`}>
-              {getServiceIcon(service.icon)}
-            </div>
-            <div className="p-6">
-              <h4 className="font-semibold text-gray-800 mb-2">{service.name}</h4>
-              {service.description && <p className="text-gray-600 text-sm mb-4">{service.description}</p>}
-
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-lg font-bold text-purple-600">
-                  R$ {Number(service.price).toFixed(2).replace('.', ',')}
-                </span>
-                {service.duration && (
-                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    {service.duration}
-                  </span>
+        {services && services.length > 0
+          ? services.map((service) => (
+            <div
+              key={service.id}
+              className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+            >
+              <div
+                className={`h-32 bg-gradient-to-br ${service.color || 'from-purple-400 to-pink-400'} flex items-center justify-center`}
+              >
+                {getServiceIcon(service.icon)}
+              </div>
+              <div className="p-6">
+                <h4 className="font-semibold text-gray-800 mb-2">{service.name}</h4>
+                {service.description && (
+                  <p className="text-gray-600 text-sm mb-4">{service.description}</p>
                 )}
-              </div>
 
-              {isAdmin && (
-                <p className="text-xs mb-3">
-                  <span
-                    className={`px-2 py-1 rounded-full ${service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                    }`}
-                  >
-                    {service.branchId ? 'Filial' : 'Global'}
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-lg font-bold text-purple-600">
+                    R$ {Number(service.price).toFixed(2).replace('.', ',')}
                   </span>
-                </p>
-              )}
+                  {service.duration && (
+                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                      {service.duration}
+                    </span>
+                  )}
+                </div>
 
-              <div className="mt-4 flex space-x-2">
-                <button
-                  onClick={() => setEditingService(service)}
-                  className="flex-1 bg-purple-100 text-purple-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-1"
-                >
-                  <Edit className="w-3 h-3" />
-                  Editar
-                </button>
-                <button
-                  onClick={() => deleteService.mutate(service.id)}
-                  disabled={deleteService.isPending}
-                  className="flex-1 bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Excluir
-                </button>
+                {isAdmin && (
+                  <p className="text-xs mb-3">
+                    <span
+                      className={`px-2 py-1 rounded-full ${service.branchId ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}
+                    >
+                      {service.branchId ? 'Filial' : 'Global'}
+                    </span>
+                  </p>
+                )}
+
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => setEditingService(service)}
+                    className="flex-1 bg-purple-100 text-purple-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => deleteService.mutate(service.id)}
+                    disabled={deleteService.isPending}
+                    className="flex-1 bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Excluir
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))
+          : null}
 
-      <div className="mt-6">
-        <button
+        <div
+          className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-all duration-300 group cursor-pointer"
           onClick={() => setEditingService({ id: '', name: '', price: 0 })}
-          className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300 group"
         >
           <div className="text-center">
             <PlusCircle className="w-12 h-12 text-gray-400 group-hover:text-purple-500 mx-auto mb-3 transition-colors" />
@@ -158,7 +159,7 @@ export function ServiceTable() {
               Expanda seu catálogo com novos serviços
             </p>
           </div>
-        </button>
+        </div>
       </div>
 
       <Dialog open={!!editingService && !!editingService.id} onOpenChange={() => setEditingService(null)}>
