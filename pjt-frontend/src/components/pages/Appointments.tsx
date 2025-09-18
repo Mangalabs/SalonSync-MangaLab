@@ -18,8 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
-import NewAppointmentForm from '@/components/custom/appointment/NewAppointment'
+import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
+import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,7 +75,7 @@ export default function Appointments() {
   const { data: appointments = [], isLoading } = useQuery({
     queryKey: ['appointments', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get('/api/appointments', { params: { branchId: activeBranch?.id } })
+      const res = await axios.get('/api/appointments')
       return res.data.map((a: any) => {
         const scheduledDate = new Date(a.scheduledAt)
         return {
@@ -139,24 +139,29 @@ export default function Appointments() {
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
     .slice(0, 5)
 
-  const updateAppointmentStatus = useMutation({
-    mutationFn: async (appointment: Appointment) => {
-      await axios.patch(`/api/appointments/${appointment.id}`, {
-        clientId: appointment.clientId,
-        professionalId: appointment.professionalId,
-        serviceIds: [appointment.serviceId],
-        scheduledAt: appointment.scheduledAt.toISOString(),
-        status: appointment.status,
-      })
+  const confirmAppointment = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      await axios.post(`/api/appointments/${appointmentId}/confirm`)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
+      queryClient.invalidateQueries({ queryKey: ['professional'] })
+      queryClient.invalidateQueries({ queryKey: ['financial'] })
+    },
   })
 
   const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
       await axios.delete(`/api/appointments/${id}`)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+    },
   })
 
   return (
@@ -242,7 +247,7 @@ export default function Appointments() {
                   </button>
                   <button
                     className='p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors'
-                    onClick={() => updateAppointmentStatus.mutate({ ...appointment, status: 'COMPLETED' })}
+                    onClick={() => confirmAppointment.mutate(appointment.id)}
                   >
                     <Check className='w-4 h-4' />
                   </button>
@@ -336,17 +341,17 @@ export default function Appointments() {
       </div>
 
       <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditingAppointment(null) }}>
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+        <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className='text-base sm:text-lg'>
               {editingAppointment ? 'Editar Agendamento' : 'Novo Agendamento'}
             </DialogTitle>
           </DialogHeader>
-          <AppointmentForm
-            mode='scheduled'
+          <ScheduledAppointmentForm
             initialData={editingAppointment}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] })
+              queryClient.invalidateQueries({ queryKey: ['appointments'] })
+              queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
               setShowForm(false)
               setEditingAppointment(null)
             }}
@@ -356,7 +361,10 @@ export default function Appointments() {
 
       <Dialog open={showRegisterForm} onOpenChange={(open) => setShowRegisterForm(open)}>
         <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
-          <NewAppointmentForm />
+          <DialogHeader>
+            <DialogTitle>Registrar Atendimento</DialogTitle>
+          </DialogHeader>
+          <ImmediateAppointmentForm onSuccess={() => setShowRegisterForm(false)} />
         </DialogContent>
       </Dialog>
 

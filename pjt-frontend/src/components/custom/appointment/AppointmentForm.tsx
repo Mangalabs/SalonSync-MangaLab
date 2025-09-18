@@ -52,7 +52,14 @@ export function AppointmentForm({
   const selectedDate = isScheduled ? watch('scheduledDate' as any) : undefined
   
   const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId)
-  const { availableSlots } = branchData
+  const { availableSlots, refetchAvailableSlots } = branchData
+  
+  // Refetch horários quando profissional ou data mudar
+  React.useEffect(() => {
+    if (selectedProfessional && selectedDate && isScheduled) {
+      refetchAvailableSlots?.()
+    }
+  }, [selectedProfessional, selectedDate, isScheduled, refetchAvailableSlots])
 
   const watchedServices = watch('serviceIds')
   const total = useMemo(() => (
