@@ -129,7 +129,7 @@ export default function AdminDashboard() {
   const quickActions = [
     { id: 'appointments', icon: Calendar, label: 'Agendar Atendimento', openForm: true, color: 'blue' },
     { id: 'register-appointment', icon: PlusCircle, label: 'Registrar Atendimento', openRegisterForm: true, color: 'purple' },
-    { id: 'sell-product', icon: ShoppingBag, label: 'Vender Produto', openSaleForm: true, color: 'green' },
+    { id: 'sell-product', icon: ShoppingBag, label: 'Vender Produto', route: '/dashboard/sales', color: 'green' },
     { id: 'clients', icon: UserPlus, label: 'Novo Cliente', route: '/dashboard/clients', color: 'orange' },
   ]
 

@@ -38,7 +38,7 @@ const menuSections = [
     title: 'Negócio',
     items: [
       { to: '/dashboard/services', icon: Scissors, label: 'Serviços', roles: ['ADMIN', 'PROFESSIONAL'] },
-      { to: '', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'PROFESSIONAL'], opensSaleForm: true },
+      { to: '/dashboard/sales', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'PROFESSIONAL']},
       { to: '/dashboard/inventory', icon: Package, label: 'Estoque', roles: ['ADMIN', 'PROFESSIONAL'] },
       { to: '/dashboard/professionals', icon: User, label: 'Profissionais', roles: ['ADMIN'] },
     ],
