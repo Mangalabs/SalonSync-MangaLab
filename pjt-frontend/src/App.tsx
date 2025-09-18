@@ -24,6 +24,7 @@ import Financial from './pages/Financial'
 import WhatsApp from './components/pages/WhatsApp'
 import TestBranch from './pages/TestBranch'
 import NewAppointment from './components/pages/NewAppointments'
+import Help from './components/pages/Help'
 import Sales from './components/pages/Sales'
 
 export default function App() {
@@ -165,6 +166,10 @@ export default function App() {
                     </SubscriptionGuard>
                   </RoleGuard>
                 }
+              />
+              <Route
+                path="help"
+                element={<Help />}
               />
             </Route>
 

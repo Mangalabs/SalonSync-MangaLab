@@ -247,10 +247,50 @@ export class AppointmentsService extends BaseDataService {
         },
       });
 
+      // Criar transação de receita
+      await this.createRevenueTransaction(updatedAppointment, tx);
+      
       // Criar transação de comissão
       await this.createCommissionTransaction(updatedAppointment, tx);
 
       return updatedAppointment;
+    });
+  }
+
+  private async createRevenueTransaction(appointment: any, tx: any) {
+    // Buscar ou criar categoria de serviços
+    let servicesCategory = await tx.expenseCategory.findFirst({
+      where: {
+        branchId: appointment.branchId,
+        name: 'Serviços',
+        type: 'INCOME',
+      },
+    });
+
+    if (!servicesCategory) {
+      servicesCategory = await tx.expenseCategory.create({
+        data: {
+          name: 'Serviços',
+          type: 'INCOME',
+          color: '#10B981',
+          branchId: appointment.branchId,
+        },
+      });
+    }
+
+    // Criar transação de receita
+    await tx.financialTransaction.create({
+      data: {
+        description: `Atendimento: ${appointment.professional.name} - ${appointment.client.name}`,
+        amount: Number(appointment.total),
+        type: 'INCOME',
+        categoryId: servicesCategory.id,
+        paymentMethod: 'CASH',
+        reference: `Atendimento-${appointment.id}`,
+        appointmentId: appointment.id,
+        date: appointment.scheduledAt,
+        branchId: appointment.branchId,
+      },
     });
   }
 
