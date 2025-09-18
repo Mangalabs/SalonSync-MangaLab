@@ -538,4 +538,70 @@ export class ProfessionalsService extends BaseDataService {
       ),
     };
   }
+
+  async getSalaryCommissionData(id: string, user: UserContext) {
+    const professional = await this.prisma.professional.findUnique({
+      where: { id },
+      include: {
+        customRole: true,
+      },
+    });
+
+    if (!professional) {
+      throw new NotFoundException('Profissional não encontrado');
+    }
+
+    // Verificar acesso
+    const branchIds = await this.getUserBranchIds(user);
+    if (!branchIds.includes(professional.branchId)) {
+      throw new Error('Acesso negado');
+    }
+
+    // Buscar salário base (apenas no customRole)
+    const baseSalary = professional.customRole?.baseSalary || 0;
+
+    // Calcular comissões do mês atual
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        professionalId: id,
+        status: 'COMPLETED',
+        scheduledAt: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      },
+    });
+
+    // Calcular comissões diretamente dos atendimentos confirmados
+    const commissionRate = Number(professional.customRole?.commissionRate || professional.commissionRate || 0) / 100;
+    const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+    const currentMonthCommissions = totalRevenue * commissionRate;
+
+    console.log('🔍 Debug getSalaryCommissionData:', {
+      professionalId: id,
+      professionalName: professional.name,
+      baseSalary: Number(baseSalary),
+      commissionRate: commissionRate * 100,
+      appointmentsCount: appointments.length,
+      totalRevenue,
+      currentMonthCommissions,
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString(),
+    });
+    const totalEstimated = Number(baseSalary) + currentMonthCommissions;
+
+    return {
+      professionalId: id,
+      professionalName: professional.name,
+      baseSalary: Number(baseSalary),
+      commissionRate: Number(professional.customRole?.commissionRate || professional.commissionRate || 0),
+      currentMonthCommissions,
+      totalEstimated,
+      appointmentsCount: appointments.length,
+    };
+  }
 }

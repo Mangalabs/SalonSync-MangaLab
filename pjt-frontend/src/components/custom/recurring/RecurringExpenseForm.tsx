@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
@@ -69,22 +70,57 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
 
   const selectedBranchId = watch('branchId')
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories', 'EXPENSE', selectedBranchId],
-    queryFn: async () => {
-      const params = new URLSearchParams({ type: 'EXPENSE' })
-      if (selectedBranchId) {params.append('branchId', selectedBranchId)}
-      const res = await axios.get(`/api/financial/categories?${params}`)
-      return res.data
-    },
-    enabled: !!selectedBranchId,
-  })
+  // Categorias específicas para despesas fixas/recorrentes
+  const recurringExpenseCategories = [
+    { id: 'aluguel', name: 'Aluguel', color: '#EF4444' },
+    { id: 'energia', name: 'Energia Elétrica', color: '#DC2626' },
+    { id: 'agua', name: 'Água', color: '#B91C1C' },
+    { id: 'internet', name: 'Internet/Telefone', color: '#991B1B' },
+    { id: 'salarios-comissoes', name: 'Salários/Comissões', color: '#F97316' },
+    { id: 'beneficios', name: 'Benefícios', color: '#C2410C' },
+    { id: 'impostos', name: 'Impostos e Taxas', color: '#4B5563' },
+    { id: 'seguros', name: 'Seguros', color: '#6B7280' },
+    { id: 'manutencao', name: 'Manutenção Preventiva', color: '#374151' },
+    { id: 'software', name: 'Software/Sistemas', color: '#1E3A8A' },
+    { id: 'outras', name: 'Outras Despesas Fixas', color: '#6B7280' },
+  ]
+
+  const categories = recurringExpenseCategories
 
 
 
   const selectedCategoryId = watch('categoryId')
-  
-  const selectedCategory = categories.find((cat: any) => cat.id === selectedCategoryId)
+  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
+  const isSalaryCommissionCategory = selectedCategoryId === 'salarios-comissoes'
+  const selectedProfessionalId = watch('professionalId')
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ['professionals', selectedBranchId],
+    queryFn: async () => {
+      const headers = selectedBranchId ? { 'x-branch-id': selectedBranchId } : {}
+      const res = await axios.get('/api/professionals', { headers })
+      return res.data
+    },
+    enabled: !!selectedBranchId && isSalaryCommissionCategory,
+  })
+
+  // Buscar dados do profissional selecionado para cálculo automático
+  const { data: professionalData } = useQuery({
+    queryKey: ['professional-salary-data', selectedProfessionalId, selectedBranchId],
+    queryFn: async () => {
+      const headers = selectedBranchId ? { 'x-branch-id': selectedBranchId } : {}
+      const res = await axios.get(`/api/professionals/${selectedProfessionalId}/salary-commission-data`, { headers })
+      return res.data
+    },
+    enabled: !!selectedProfessionalId && !!selectedBranchId && isSalaryCommissionCategory,
+  })
+
+  // Definir valor automaticamente quando dados do profissional chegarem
+  useEffect(() => {
+    if (professionalData && isSalaryCommissionCategory) {
+      setValue('fixedAmount', professionalData.totalEstimated)
+    }
+  }, [professionalData, isSalaryCommissionCategory, setValue])
   
 
 
@@ -174,7 +210,7 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
       <div>
         <Label htmlFor="categoryId">Categoria</Label>
         <Combobox
-          options={categories.map((category: any) => ({
+          options={categories.map((category) => ({
             value: category.id,
             label: category.name,
           }))}
@@ -189,7 +225,50 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
 
       </div>
 
+      {isSalaryCommissionCategory && (
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="professionalId">Profissional</Label>
+            <Combobox
+              options={professionals.map((professional: any) => ({
+                value: professional.id,
+                label: professional.name,
+              }))}
+              value={selectedProfessionalId}
+              onValueChange={(value) => {
+                setValue('professionalId', value)
+                // Limpar valor fixo para recalcular
+                setValue('fixedAmount', undefined)
+              }}
+              placeholder="Selecione um profissional"
+              searchPlaceholder="Pesquisar profissional..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Salário base + comissões do período
+            </p>
+          </div>
 
+          {professionalData && (
+            <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+              <h4 className="font-medium text-sm text-blue-900">Informações do Profissional</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-600">Salário Base:</span>
+                  <p className="font-medium">R$ {professionalData.baseSalary?.toFixed(2) || '0,00'}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Comissões (mês atual):</span>
+                  <p className="font-medium">R$ {professionalData.currentMonthCommissions?.toFixed(2) || '0,00'}</p>
+                </div>
+                <div className="col-span-2 pt-1 border-t border-blue-200">
+                  <span className="text-gray-600">Total Estimado:</span>
+                  <p className="font-semibold text-blue-900">R$ {professionalData.totalEstimated?.toFixed(2) || '0,00'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>
