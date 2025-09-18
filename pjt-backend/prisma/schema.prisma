@@ -285,6 +285,7 @@ enum FinancialTransactionType {
   INCOME
   EXPENSE
   INVESTMENT
+  RECURRING
 }
 
 enum PaymentMethod {
