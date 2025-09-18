@@ -65,19 +65,19 @@ export class AppointmentsController {
   @Get('available-slots/:professionalId/:date')
   @ApiOperation({ summary: 'Buscar horários disponíveis' })
   @ApiResponse({ status: 200, description: 'Lista de horários disponíveis' })
-  getAvailableSlots(
+  async getAvailableSlots(
     @Param('professionalId') professionalId: string,
     @Param('date') date: string,
   ): Promise<string[]> {
-    // Validar parâmetros antes de chamar o service
     if (
       !professionalId ||
       professionalId === 'undefined' ||
       !date ||
       date === 'undefined'
     ) {
-      return Promise.resolve([]);
+      return [];
     }
+    
     return this.apptService.getAvailableSlots(professionalId, date);
   }
 
@@ -115,6 +115,16 @@ export class AppointmentsController {
   })
   cancelAppointment(@Param('id') id: string): Promise<void> {
     return this.apptService.cancelAppointment(id);
+  }
+
+  @Post('fix-historical')
+  @ApiOperation({ summary: 'Corrigir atendimentos históricos' })
+  @ApiResponse({
+    status: 200,
+    description: 'Atendimentos históricos corrigidos com sucesso',
+  })
+  async fixHistoricalAppointments(): Promise<{ fixed: number; message: string }> {
+    return this.apptService.fixHistoricalAppointments();
   }
 
   @Patch(':id')

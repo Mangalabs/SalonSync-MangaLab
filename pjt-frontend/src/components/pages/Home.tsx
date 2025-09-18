@@ -142,7 +142,7 @@ export default function Home() {
   return (
     <>
       <div className="hidden md:flex h-screen w-screen">
-        <div className="w-1/2 bg-[#1A1A1A] flex flex-col items-center justify-center p-8">
+        <div className="w-1/2 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col items-center justify-center p-8">
           <div className="text-center space-y-8">
             <div className="w-48 h-48 mx-auto rounded-lg flex items-center justify-center">
               <div className="text-white/50 text-sm text-center">
@@ -156,13 +156,13 @@ export default function Home() {
             <CarouselSection />
           </div>
         </div>
-        <div className="w-1/2 bg-[#F5F5F0]">
+        <div className="w-1/2 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
           <AuthPanel />
         </div>
       </div>
 
-      <div className="md:hidden min-h-screen bg-[#F5F5F0] flex flex-col">
-        <div className="bg-[#1A1A1A] px-6 py-8 text-center">
+      <div className="md:hidden min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex flex-col">
+        <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 px-6 py-8 text-center">
           <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center">
             <img
               src="/logo-removebg-preview.png"

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   PlusCircle,
   Calendar,
@@ -8,8 +8,10 @@ import {
   DollarSign,
   Scissors,
   Users,
+  RefreshCw,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   LineChart,
   Line,
@@ -28,8 +30,8 @@ import { useBranch } from '@/contexts/BranchContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
 import { StatsCard } from '../ui/stats-card'
-import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
-import NewAppointmentForm from '@/components/custom/appointment/NewAppointment'
+import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
+import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 
 const formatDate = (d: Date) => d.toLocaleDateString('sv')
 const formatCurrency = (v: number) => `R$ ${v.toFixed(2)}`
@@ -41,6 +43,23 @@ export default function AdminDashboard() {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
   const [showRegisterForm, setShowRegisterForm] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState(null)
+  const queryClient = useQueryClient()
+
+  const fixHistoricalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axios.post('/api/appointments/fix-historical')
+      return response.data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial'] })
+      toast.success(data.message)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao corrigir dados históricos')
+    },
+  })
 
   const today = new Date()
   const todayStr = formatDate(today)
@@ -145,7 +164,17 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
-        <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4">Ações Rápidas</h3>
+        <div className="flex justify-between items-center mb-3 md:mb-4">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800">Ações Rápidas</h3>
+          <button
+            onClick={() => fixHistoricalMutation.mutate()}
+            disabled={fixHistoricalMutation.isPending}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3 w-3 ${fixHistoricalMutation.isPending ? 'animate-spin' : ''}`} />
+            Corrigir Histórico
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {quickActions.map(a => (
             <button
@@ -215,17 +244,20 @@ export default function AdminDashboard() {
       </Dialog>
 
       <Dialog open={showAppointmentForm} onOpenChange={(open) => { setShowAppointmentForm(open); setEditingAppointment(null) }}>
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+        <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Agendar Atendimento</DialogTitle>
           </DialogHeader>
-          <AppointmentForm mode='scheduled' initialData={editingAppointment} onSuccess={() => setShowAppointmentForm(false)} />
+          <ScheduledAppointmentForm initialData={editingAppointment} onSuccess={() => setShowAppointmentForm(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={showRegisterForm} onOpenChange={(open) => setShowRegisterForm(open)}>
         <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
-          <NewAppointmentForm />
+          <DialogHeader>
+            <DialogTitle>Registrar Atendimento</DialogTitle>
+          </DialogHeader>
+          <ImmediateAppointmentForm onSuccess={() => setShowRegisterForm(false)} />
         </DialogContent>
       </Dialog>
     </div>
