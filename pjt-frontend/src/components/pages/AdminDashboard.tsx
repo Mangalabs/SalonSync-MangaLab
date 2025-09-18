@@ -1,21 +1,35 @@
 import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import {
+  PlusCircle,
+  Calendar,
+  ShoppingBag,
+  UserPlus,
+  DollarSign,
+  Scissors,
+  Users,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
-  DollarSign, Scissors, Users, Calendar,
-  PlusCircle, ShoppingBag, UserPlus,
-} from 'lucide-react'
-import {
-  LineChart, Line, XAxis, YAxis, ResponsiveContainer,
-  PieChart, Pie, Cell, Tooltip, Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
 } from 'recharts'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
-
 import { StatsCard } from '../ui/stats-card'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import NewAppointmentForm from '@/components/custom/appointment/NewAppointment'
 
 const formatDate = (d: Date) => d.toLocaleDateString('sv')
 const formatCurrency = (v: number) => `R$ ${v.toFixed(2)}`
@@ -24,6 +38,9 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const { activeBranch } = useBranch()
   const [showSaleForm, setShowSaleForm] = useState(false)
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false)
+  const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState(null)
 
   const today = new Date()
   const todayStr = formatDate(today)
@@ -38,7 +55,7 @@ export default function AdminDashboard() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard-summary', startDate, endDate, activeBranch?.id],
     queryFn: async () => {
-      if (!activeBranch?.id) {return null}
+      if (!activeBranch?.id) return null
       const params = new URLSearchParams({ startDate, endDate, branchId: activeBranch.id })
       const [financial, appointments, professionals, clients, movements] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
@@ -66,7 +83,6 @@ export default function AdminDashboard() {
   const filterByDate = (arr: any[], field: string, date: string) => arr.filter(i => formatDate(new Date(i[field])) === date)
   const todayAppointments = filterByDate(appointments, 'scheduledAt', todayStr)
   const yesterdayAppointments = filterByDate(appointments, 'scheduledAt', yesterdayStr)
-
   const todayCompleted = todayAppointments.filter(a => a.status === 'COMPLETED')
   const yesterdayCompleted = yesterdayAppointments.filter(a => a.status === 'COMPLETED')
 
@@ -111,11 +127,12 @@ export default function AdminDashboard() {
   const appointmentsPercent = yesterdayCompleted.length ? (((todayCompleted.length - yesterdayCompleted.length) / yesterdayCompleted.length) * 100).toFixed(0) : '0'
 
   const quickActions = [
-    { id: 'new-appointment', icon: PlusCircle, label: 'Novo Atendimento', route: '/dashboard/treatments', color: 'purple' },
-    { id: 'appointments', icon: Calendar, label: 'Agendar Horário', route: '/dashboard/appointments', color: 'blue' },
-    { id: 'sell-product', icon: ShoppingBag, label: 'Vender Produto', opensSaleForm: true, color: 'green' },
+    { id: 'appointments', icon: Calendar, label: 'Agendar Atendimento', openForm: true, color: 'blue' },
+    { id: 'register-appointment', icon: PlusCircle, label: 'Registrar Atendimento', openRegisterForm: true, color: 'purple' },
+    { id: 'sell-product', icon: ShoppingBag, label: 'Vender Produto', openSaleForm: true, color: 'green' },
     { id: 'clients', icon: UserPlus, label: 'Novo Cliente', route: '/dashboard/clients', color: 'orange' },
   ]
+
   const actionColors: Record<string, string> = {
     purple: 'border-purple-300 hover:border-purple-400 hover:bg-purple-50 text-purple-600',
     blue: 'border-blue-300 hover:border-blue-400 hover:bg-blue-50 text-blue-600',
@@ -133,7 +150,12 @@ export default function AdminDashboard() {
           {quickActions.map(a => (
             <button
               key={a.id}
-              onClick={() => a.opensSaleForm ? setShowSaleForm(true) : navigate(a.route!)}
+              onClick={() => {
+                if (a.openForm) {setShowAppointmentForm(true)}
+                else if (a.openRegisterForm) {setShowRegisterForm(true)}
+                else if (a.openSaleForm) {setShowSaleForm(true)}
+                else if (a.route) {navigate(a.route)}
+              }}
               className={`flex flex-col items-center p-3 md:p-4 rounded-lg border-2 border-dashed transition-all hover:shadow-md ${actionColors[a.color]}`}
             >
               <a.icon className="w-5 h-8 md:w-6 md:h-18 mb-1 md:mb-2" />
@@ -173,7 +195,11 @@ export default function AdminDashboard() {
                 <Pie data={servicesData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
                   {servicesData.map((s, i) => <Cell key={i} fill={s.color} />)}
                 </Pie>
-                <Tooltip formatter={(v, n) => { const total = servicesData.reduce((s, x) => s + x.value, 0); const pct = total ? ((+v / total) * 100).toFixed(2) : '0.00'; return [`${pct}%`, n] }} />
+                <Tooltip formatter={(v, n) => {
+                  const total = servicesData.reduce((s, x) => s + x.value, 0)
+                  const pct = total ? ((+v / total) * 100).toFixed(2) : '0.00'
+                  return [`${pct}%`, n]
+                }} />
                 <Legend verticalAlign="bottom" height={28} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
@@ -185,6 +211,21 @@ export default function AdminDashboard() {
         <DialogContent>
           <DialogHeader><DialogTitle>Venda de Produto</DialogTitle></DialogHeader>
           <ProductSaleForm onSuccess={() => setShowSaleForm(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAppointmentForm} onOpenChange={(open) => { setShowAppointmentForm(open); setEditingAppointment(null) }}>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Agendar Atendimento</DialogTitle>
+          </DialogHeader>
+          <AppointmentForm mode='scheduled' initialData={editingAppointment} onSuccess={() => setShowAppointmentForm(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRegisterForm} onOpenChange={(open) => setShowRegisterForm(open)}>
+        <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
+          <NewAppointmentForm />
         </DialogContent>
       </Dialog>
     </div>
