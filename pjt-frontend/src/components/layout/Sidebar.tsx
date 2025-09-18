@@ -30,8 +30,7 @@ const menuSections = [
   {
     title: 'Atendimento',
     items: [
-      { to: '/dashboard/appointments', icon: Calendar, label: 'Agenda', roles: ['ADMIN', 'PROFESSIONAL'] },
-      { to: '/dashboard/treatments', icon: PlusCircle, label: 'Novo Atendimento', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/appointments', icon: Calendar, label: 'Atendimento', roles: ['ADMIN', 'PROFESSIONAL'] },
       { to: '/dashboard/clients', icon: Users, label: 'Clientes', roles: ['ADMIN', 'PROFESSIONAL'] },
     ],
   },
