@@ -119,24 +119,23 @@ export function ProfessionalTable() {
                 <div className="font-semibold text-purple-600">{prof.customRole?.commissionRate || prof.commissionRate}%</div>
                 <div className="flex space-x-2">
                   <Button
-                    size="sm"
-                    variant="outline"
+                    className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
                     onClick={(e) => {
                       e.stopPropagation()
                       setEditingProfessional(prof)
                     }}
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className='w-4 h-4' />
                   </Button>
                   <Button
-                    size="sm"
-                    variant="destructive"
+                    className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
                     onClick={(e) => {
                       e.stopPropagation()
                       setDeletingProfessional(prof)
                     }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className='w-4 h-4' />
+                    
                   </Button>
                 </div>
               </div>

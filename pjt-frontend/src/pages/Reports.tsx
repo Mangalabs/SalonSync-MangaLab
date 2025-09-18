@@ -150,7 +150,7 @@ export default function Reports() {
               onClick={handleGenerateInsight}
               disabled={loadingInsight}
             >
-              {loadingInsight ? 'Gerando Insight...' : <><Bot size={20} /> Gerar Insights de IA</>}
+              {loadingInsight ? 'Gerando Insight...' : <><Bot size={20} /> Gerar Sugestões da IA</>}
             </button>
           )}
           {reportData && <ExportButton onExport={handleExportReport} />}
@@ -202,7 +202,7 @@ export default function Reports() {
 
       {insights && (
         <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Insights de IA</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sugestões da IA</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {insights.map((insight) => (
               <div key={insight.title} className="bg-purple-50 border-purple-200 border rounded-xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">

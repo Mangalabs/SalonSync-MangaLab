@@ -25,6 +25,7 @@ import WhatsApp from './components/pages/WhatsApp'
 import TestBranch from './pages/TestBranch'
 import NewAppointment from './components/pages/NewAppointments'
 import Help from './components/pages/Help'
+import Sales from './components/pages/Sales'
 
 export default function App() {
   return (
@@ -97,6 +98,16 @@ export default function App() {
                 }
               />
 
+              <Route
+                path="sales"
+                element={
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                    <SubscriptionGuard>
+                      <Sales />
+                    </SubscriptionGuard>
+                  </RoleGuard>
+                }
+              />
 
               <Route
                 path="inventory"
