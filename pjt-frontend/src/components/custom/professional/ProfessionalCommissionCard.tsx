@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { DollarSign, Calendar, BarChart3, RefreshCw } from 'lucide-react'
+import { DollarSign, BarChart3, RefreshCw } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useUser } from '@/contexts/UserContext'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 
@@ -11,231 +10,160 @@ interface ProfessionalCommissionCardProps {
   professionalId?: string;
 }
 
-export function ProfessionalCommissionCard({
-  professionalId,
-}: ProfessionalCommissionCardProps) {
-  const { user } = useUser()
+export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommissionCardProps) {
   const { activeBranch } = useBranch()
   const queryClient = useQueryClient()
 
-  const { data: professional } = useQuery({
-    queryKey: ['professional', professionalId || user?.id, activeBranch?.id],
+  const { data: professional, isFetching: fetchingProfessional } = useQuery({
+    queryKey: ['professional', professionalId, activeBranch?.id],
     queryFn: async () => {
-      if (professionalId) {
-        const res = await axios.get(`/api/professionals/${professionalId}`)
-        return res.data
-      }
-      const res = await axios.get('/api/professionals')
-      return (
-        res.data.find((prof: any) => prof.name === user?.name) || res.data[0]
-      )
+      const res = await axios.get(`/api/professionals/${professionalId}`)
+      return res.data
     },
-    enabled: !!(professionalId || (user && user.role === 'PROFESSIONAL')),
+    enabled: !!professionalId,
   })
 
-  const { data: monthlyCommission } = useQuery({
-    queryKey: ['monthly-commission', professional?.id, activeBranch?.id],
+  const { data: monthlyCommission, isFetching: fetchingMonthly } = useQuery({
+    queryKey: ['monthly-commission', professionalId, activeBranch?.id],
     queryFn: async () => {
       const now = new Date()
-      const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .split('T')[0]
-      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        .toISOString()
-        .split('T')[0]
-
-      const res = await axios.get(
-        `/api/professionals/${professional.id}/commission?startDate=${startDate}&endDate=${endDate}`,
-      )
+      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+      const res = await axios.get(`/api/professionals/${professionalId}/commission?startDate=${start}&endDate=${end}`)
       return res.data
     },
-    enabled: !!professional,
-    staleTime: 0,
-    gcTime: 0, // Don't cache at all
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    enabled: !!professionalId,
   })
 
-  const { data: dailyCommission } = useQuery({
-    queryKey: ['daily-commission', professional?.id, activeBranch?.id],
+  const { data: dailyCommission, isFetching: fetchingDaily } = useQuery({
+    queryKey: ['daily-commission', professionalId, activeBranch?.id],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0]
-
-      const res = await axios.get(
-        `/api/professionals/${professional.id}/commission?startDate=${today}&endDate=${today}`,
-      )
+      const res = await axios.get(`/api/professionals/${professionalId}/commission?startDate=${today}&endDate=${today}`)
       return res.data
     },
-    enabled: !!professional,
-    staleTime: 0,
-    gcTime: 0, // Don't cache at all
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    enabled: !!professionalId,
   })
 
   const handleRefresh = () => {
-    if (professional) {
-      queryClient.invalidateQueries({ queryKey: ['monthly-commission', professional.id] })
-      queryClient.invalidateQueries({ queryKey: ['daily-commission', professional.id] })
-      queryClient.invalidateQueries({ queryKey: ['professional', professional.id] })
+    if (professionalId) {
+      queryClient.invalidateQueries({ queryKey: ['monthly-commission', professionalId] })
+      queryClient.invalidateQueries({ queryKey: ['daily-commission', professionalId] })
+      queryClient.invalidateQueries({ queryKey: ['professional', professionalId] })
     }
   }
 
-  if (!professional) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-[#737373]">Carregando dados...</p>
-        </CardContent>
-      </Card>
-    )
+  if (!professional) {return <p>Carregando profissional...</p>}
+
+  const isLoading = fetchingProfessional || fetchingMonthly || fetchingDaily
+
+  const getWeekdayAbbr = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('pt-BR', { weekday: 'short' })
   }
 
+  const getLast7Days = () => {
+    const result: any[] = []
+    const today = new Date()
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - i)
+      const dateKey = date.toISOString().split('T')[0]
+      const commissionDay = monthlyCommission?.dailyCommissions?.find((d: any) => d.date === dateKey)
+      result.push({
+        date: dateKey,
+        day: date.getDate(),
+        dayName: getWeekdayAbbr(dateKey),
+        commission: commissionDay?.commission || 0,
+      })
+    }
+    return result
+  }
+
+  const last7Days = getLast7Days()
+  const maxCommission = Math.max(...last7Days.map(d => d.commission), 0)
+
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">{professional.name}</h3>
+    <div className="bg-gray-50 px-6 py-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+        <h4 className="text-xl font-semibold text-gray-800">{professional.name}</h4>
         <Button
-          variant="outline"
           size="sm"
           onClick={handleRefresh}
           className="flex items-center gap-2"
+          disabled={isLoading}
         >
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
+          <RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? 'animate-spin' : ''}`} />
+          {isLoading ? 'Atualizando...' : 'Atualizar'}
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Comissão Mensal
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-[#D4AF37]" />
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle>Comissão Mensal</CardTitle>
+            <DollarSign className="text-green-500 w-5 h-5" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
-              R${' '}
-              {monthlyCommission?.summary?.totalCommission?.toFixed(2) ||
-                '0,00'}
-            </div>
-            <p className="text-xs text-[#737373]">
-              {monthlyCommission?.summary?.totalAppointments || 0} atendimentos
-              este mês
-            </p>
-            <div className="mt-2 text-sm space-y-1">
-              <div className="flex justify-between">
-                <span className="text-[#737373]">Receita gerada:</span>
-                <span>
-                  R${' '}
-                  {monthlyCommission?.summary?.totalRevenue?.toFixed(2) ||
-                    '0,00'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#737373]">Taxa:</span>
-                <span>
-                  {monthlyCommission?.professional?.commissionRate || 0}%
-                </span>
-              </div>
-            </div>
+            {fetchingMonthly ? (
+              <p className="text-gray-500">Carregando...</p>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-green-600">
+                  R$ {monthlyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {monthlyCommission?.summary?.totalAppointments || 0} atendimentos este mês
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comissão Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-[#D4AF37]" />
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle>Comissão Hoje</CardTitle>
+            <DollarSign className="text-blue-500 w-5 h-5" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-[#D4AF37]">
-              R${' '}
-              {dailyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
-            </div>
-            <p className="text-xs text-[#737373]">
-              {dailyCommission?.summary?.totalAppointments || 0} atendimentos
-              hoje
-            </p>
-            <div className="mt-2 text-sm space-y-1">
-              <div className="flex justify-between">
-                <span className="text-[#737373]">Receita gerada:</span>
-                <span>
-                  R${' '}
-                  {dailyCommission?.summary?.totalRevenue?.toFixed(2) || '0,00'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#737373]">Média/atendimento:</span>
-                <span>
-                  R${' '}
-                  {dailyCommission?.summary?.totalAppointments > 0
-                    ? (
-                      dailyCommission.summary.totalRevenue /
-                        dailyCommission.summary.totalAppointments
-                    ).toFixed(2)
-                    : '0,00'}
-                </span>
-              </div>
-            </div>
+            {fetchingDaily ? (
+              <p className="text-gray-500">Carregando...</p>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-blue-600">
+                  R$ {dailyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {dailyCommission?.summary?.totalAppointments || 0} atendimentos hoje
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Performance dos Últimos 7 Dias
-          </CardTitle>
+        <CardHeader className="flex justify-between items-center">
+          <CardTitle>Performance dos Últimos 7 Dias</CardTitle>
+          <BarChart3 className="w-5 h-5 text-purple-500" />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {monthlyCommission?.dailyCommissions?.slice(-7).map((day: any) => {
-              const date = new Date(day.date)
-              const dayName = date.toLocaleDateString('pt-BR', {
-                weekday: 'short',
-              })
-              const dayNumber = date.getDate()
-              const maxCommission = Math.max(
-                ...(monthlyCommission?.dailyCommissions || []).map(
-                  (d: any) => d.commission,
-                ),
-              )
-              const percentage =
-                maxCommission > 0 ? (day.commission / maxCommission) * 100 : 0
-
+        <CardContent className="grid grid-cols-7 gap-3">
+          {fetchingMonthly ? (
+            <p className="text-gray-500 col-span-7 text-center">Carregando gráfico...</p>
+          ) : (
+            last7Days.map(day => {
+              const height = maxCommission > 0 ? Math.max((day.commission / maxCommission) * 100, 5) : 5
               return (
-                <div
-                  key={day.date}
-                  className="flex items-center gap-2 md:gap-3"
-                >
-                  <div className="w-10 md:w-12 text-xs md:text-sm text-[#737373]">
-                    {dayName} {dayNumber}
+                <div key={day.date} className="text-center">
+                  <div className="h-20 flex items-end justify-center mb-2">
+                    <div className="w-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-md" style={{ height: `${height}%` }} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <div className="w-14 md:w-16 text-xs md:text-sm font-medium text-right">
-                        R$ {day.commission.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="text-xs text-[#737373] mt-1">
-                      {day.appointments} atendimento(s)
-                    </div>
-                  </div>
+                  <div className="text-sm text-gray-600">{day.dayName} {day.day}</div>
+                  <div className="text-sm font-semibold text-purple-600">R$ {day.commission.toFixed(2)}</div>
                 </div>
               )
-            }) || (
-              <p className="text-[#737373] text-center py-4">
-                Nenhum dado disponível
-              </p>
-            )}
-          </div>
+            })
+          )}
         </CardContent>
       </Card>
     </div>

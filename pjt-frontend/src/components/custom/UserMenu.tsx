@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Shield, UserCheck, Settings, LogOut } from 'lucide-react'
+import { ChevronDown, Shield, UserCheck, Settings, LogOut, HelpCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,10 @@ export function UserMenu() {
 
   const handleSettings = () => {
     navigate('/dashboard/settings')
+  }
+
+  const handleHelp = () => {
+    navigate('/dashboard/help')
   }
 
   return (
@@ -73,6 +77,13 @@ export function UserMenu() {
         >
           <Settings size={16} />
           Configurações
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleHelp}
+          className="flex items-center gap-2"
+        >
+          <HelpCircle size={16} />
+          Ajuda
         </DropdownMenuItem>
 
         {isAdmin && branches.length > 1 && (

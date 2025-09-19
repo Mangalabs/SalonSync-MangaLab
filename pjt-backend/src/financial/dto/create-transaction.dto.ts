@@ -11,6 +11,7 @@ export enum TransactionType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
   INVESTMENT = 'INVESTMENT',
+  RECURRING = 'RECURRING',
 }
 
 export enum PaymentMethod {

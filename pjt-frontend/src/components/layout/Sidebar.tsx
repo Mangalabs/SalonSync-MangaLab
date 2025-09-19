@@ -33,8 +33,7 @@ const menuSections = [
   {
     title: 'Atendimento',
     items: [
-      { to: '/dashboard/appointments', icon: Calendar, label: 'Agenda', roles: ['ADMIN', 'PROFESSIONAL'] },
-      { to: '/dashboard/treatments', icon: PlusCircle, label: 'Novo Atendimento', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/appointments', icon: Calendar, label: 'Atendimento', roles: ['ADMIN', 'PROFESSIONAL'] },
       { to: '/dashboard/clients', icon: Users, label: 'Clientes', roles: ['ADMIN', 'PROFESSIONAL'] },
     ],
   },
@@ -42,7 +41,7 @@ const menuSections = [
     title: 'Negócio',
     items: [
       { to: '/dashboard/services', icon: Scissors, label: 'Serviços', roles: ['ADMIN', 'PROFESSIONAL'] },
-      { to: '', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'PROFESSIONAL'], opensSaleForm: true },
+      { to: '/dashboard/sales', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'PROFESSIONAL']},
       { to: '/dashboard/inventory', icon: Package, label: 'Estoque', roles: ['ADMIN', 'PROFESSIONAL'] },
       { to: '/dashboard/professionals', icon: User, label: 'Profissionais', roles: ['ADMIN'] },
     ],

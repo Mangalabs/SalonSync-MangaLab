@@ -14,6 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
 
 interface Client {
   id: string
@@ -33,6 +35,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const { activeBranch } = useBranch()
   const [searchTerm, setSearchTerm] = useState('')
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
   const { data: clients, isLoading, error } = useQuery<Client[]>({
     queryKey: ['clients', activeBranch?.id],
@@ -63,7 +67,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.includes(searchTerm) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   if (isLoading) {
@@ -72,6 +76,11 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
   if (error) {
     return <p className="p-4 text-red-500">Erro ao carregar clientes</p>
+  }
+
+  const handleSchedule = (client: Client) => {
+    setSelectedClient(client)
+    setShowForm(true)
   }
 
   return (
@@ -132,7 +141,10 @@ export function ClientTable({ onEdit }: ClientTableProps) {
                 <Trash2 className="w-3 h-3" />
                 Excluir
               </button>
-              <button className="flex-1 bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1">
+              <button
+                onClick={() => handleSchedule(client)}
+                className="flex-1 bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1"
+              >
                 <Calendar className="w-3 h-3" />
                 Agendar
               </button>
@@ -180,6 +192,21 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">
+              Novo Agendamento
+            </DialogTitle>
+          </DialogHeader>
+          <AppointmentForm
+            mode="scheduled"
+            client={selectedClient}
+            onSuccess={() => setShowForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

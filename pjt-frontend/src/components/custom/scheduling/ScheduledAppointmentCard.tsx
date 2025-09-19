@@ -28,10 +28,13 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
       await axios.post(`/api/appointments/${appointment.id}/confirm`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeBranch?.id] })
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
       queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
       queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
       queryClient.invalidateQueries({ queryKey: ['professional'] })
+      queryClient.invalidateQueries({ queryKey: ['financial'] })
       toast.success('Agendamento confirmado com sucesso!')
     },
     onError: (error: any) => {

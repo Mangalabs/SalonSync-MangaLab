@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Calendar, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Calendar, Filter, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,15 +8,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { RecurringExpenseForm } from '@/components/custom/recurring/RecurringExpenseForm'
 import { useFinancial } from '@/contexts/FinancialContext'
+import { toast } from 'sonner'
 import axios from '@/lib/axios'
 
 export function RecurringExpensesTabContent() {
   const { branchFilter } = useFinancial()
+  const queryClient = useQueryClient()
   const [showFilters, setShowFilters] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [editingExpense, setEditingExpense] = useState<any>(null)
+  const [deletingExpense, setDeletingExpense] = useState<any>(null)
 
   const { data: recurringExpenses = [] } = useQuery({
     queryKey: ['recurring-expenses', branchFilter],
@@ -25,6 +33,17 @@ export function RecurringExpensesTabContent() {
       if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
       
       const res = await axios.get(`/api/financial/recurring-expenses?${params}`)
+      return res.data
+    },
+  })
+
+  const { data: recurringCategories = [] } = useQuery({
+    queryKey: ['recurring-categories', branchFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
+      
+      const res = await axios.get(`/api/financial/categories?type=RECURRING&${params}`)
       return res.data
     },
   })
@@ -82,6 +101,9 @@ export function RecurringExpensesTabContent() {
     ...recurringExpenses.map((expense: any) => ({ ...expense, type: 'recurring' })),
   ]
 
+  // Extrair categorias de período das despesas fixas
+  const categories = recurringCategories.map((cat: any) => cat.name)
+
   // Calcular totais
   const totalSalaries = salaryExpenses.reduce((sum: number, s: any) => sum + Number(s.baseSalary), 0)
   const totalRecurring = recurringExpenses.reduce((sum: number, e: any) => sum + Number(e.fixedAmount || 0), 0)
@@ -91,6 +113,9 @@ export function RecurringExpensesTabContent() {
   const filteredExpenses = allExpenses.filter((expense: any) => {
     const matchesSearch = searchTerm === '' || expense.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || expense.type === typeFilter
+    const matchesCategory = categoryFilter === 'all' || 
+      (expense.type === 'recurring' && expense.category && expense.category.name === categoryFilter) ||
+      (expense.type === 'salary' && categoryFilter === 'all')
     
     let matchesStatus = true
     if (statusFilter !== 'all') {
@@ -100,7 +125,7 @@ export function RecurringExpensesTabContent() {
       matchesStatus = status === statusFilter
     }
     
-    return matchesSearch && matchesType && matchesStatus
+    return matchesSearch && matchesType && matchesCategory && matchesStatus
   })
 
   // Agrupar por status
@@ -118,6 +143,22 @@ export function RecurringExpensesTabContent() {
   }, {})
 
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
+
+  const handleDeleteExpense = async (expense: any) => {
+    try {
+      await axios.delete(`/api/financial/recurring-expenses/${expense.id}`)
+      toast.success('Despesa fixa excluída com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
+      setDeletingExpense(null)
+    } catch (error) {
+      toast.error('Erro ao excluir despesa fixa')
+    }
+  }
+
+  const handleEditSuccess = () => {
+    setEditingExpense(null)
+    queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
+  }
 
   return (
     <div className="space-y-6">
@@ -219,7 +260,7 @@ export function RecurringExpensesTabContent() {
         
         {showFilters && (
           <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Input
                 placeholder="Buscar nome..."
                 value={searchTerm}
@@ -234,6 +275,20 @@ export function RecurringExpensesTabContent() {
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="salary">Salários</SelectItem>
                   <SelectItem value="recurring">Despesas Fixas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={String(cat)} value={String(cat)}>
+                      {String(cat)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -255,6 +310,7 @@ export function RecurringExpensesTabContent() {
                 onClick={() => {
                   setSearchTerm('')
                   setTypeFilter('all')
+                  setCategoryFilter('all')
                   setStatusFilter('all')
                 }}
               >
@@ -277,6 +333,7 @@ export function RecurringExpensesTabContent() {
                   <TableHead>Status</TableHead>
                   <TableHead>Datas</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -294,7 +351,16 @@ export function RecurringExpensesTabContent() {
                             <div className="text-xs text-gray-500">{expense.role}</div>
                           )}
                           {expense.type === 'recurring' && expense.category && (
-                            <div className="text-xs text-gray-500">{expense.category.name}</div>
+                            <Badge
+                              variant="secondary"
+                              className="text-xs"
+                              style={{
+                                backgroundColor: expense.category.color + "20",
+                                color: expense.category.color,
+                              }}
+                            >
+                              📅 {expense.category.name}
+                            </Badge>
                           )}
                         </div>
                       </TableCell>
@@ -327,6 +393,28 @@ export function RecurringExpensesTabContent() {
                           <div className="text-xs text-gray-500">+ {expense.commissionRate}% comissão</div>
                         )}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {expense.type === 'recurring' && (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingExpense(expense)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeletingExpense(expense)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
                   )
                 })}
@@ -341,6 +429,43 @@ export function RecurringExpensesTabContent() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog de Edição */}
+      <Dialog open={!!editingExpense} onOpenChange={() => setEditingExpense(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Despesa Fixa</DialogTitle>
+          </DialogHeader>
+          {editingExpense && (
+            <RecurringExpenseForm
+              initialData={editingExpense}
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={!!deletingExpense} onOpenChange={() => setDeletingExpense(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a despesa fixa "{deletingExpense?.name}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleDeleteExpense(deletingExpense)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Informações Adicionais */}
       <Card>

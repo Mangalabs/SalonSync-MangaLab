@@ -66,10 +66,17 @@ export function RecurringExpensesList() {
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
-                    {expense.fixedAmount ? (
+                    {expense.calculatedAmount ? (
                       <>
-                          R$ {Number(expense.fixedAmount).toFixed(2)}
-                        {expense.professional && <span className="text-purple-600">+comissões</span>}
+                        R$ {Number(expense.calculatedAmount).toFixed(2)}
+                        <span className="text-purple-600 ml-1">(calculado)</span>
+                      </>
+                    ) : expense.fixedAmount ? (
+                      <>
+                        R$ {Number(expense.fixedAmount).toFixed(2)}
+                        {expense.professional && expense.category.name === 'Salários/Comissões' && (
+                          <span className="text-purple-600 ml-1">(salário+comissões)</span>
+                        )}
                       </>
                     ) : (
                       <span className="text-gray-500">Valor variável</span>

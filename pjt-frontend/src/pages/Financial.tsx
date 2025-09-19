@@ -83,7 +83,10 @@ export default function Financial() {
           </TabsList>
 
           <TabsContent value="summary" className="space-y-4 md:space-y-6">
-            <FinancialSummary />
+            <FinancialSummary 
+              onNewTransaction={handleNewTransaction}
+              onNewRecurringExpense={() => setRecurringExpenseDialogOpen(true)}
+            />
           </TabsContent>
 
           <TabsContent value="income" className="space-y-4 md:space-y-6">
@@ -182,6 +185,20 @@ export default function Financial() {
             <TransactionForm
               type={transactionType}
               onSuccess={() => setTransactionDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={recurringExpenseDialogOpen}
+          onOpenChange={setRecurringExpenseDialogOpen}
+        >
+          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nova Despesa Fixa</DialogTitle>
+            </DialogHeader>
+            <RecurringExpenseForm
+              onSuccess={() => setRecurringExpenseDialogOpen(false)}
             />
           </DialogContent>
         </Dialog>

@@ -30,9 +30,10 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 interface TransactionFormProps {
   type: 'INCOME' | 'EXPENSE' | 'INVESTMENT';
   onSuccess: () => void;
+  initialData?: any;
 }
 
-export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
+export function TransactionForm({ type, onSuccess, initialData }: TransactionFormProps) {
   const queryClient = useQueryClient()
   const { activeBranch, branches } = useBranch()
   const { isAdmin } = useUser()
@@ -45,7 +46,15 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      branchId: initialData.branchId || activeBranch?.id || '',
+      description: initialData.description || '',
+      amount: initialData.amount?.toString() || '',
+      categoryId: initialData.categoryId || '',
+      paymentMethod: initialData.paymentMethod || 'CASH',
+      reference: initialData.reference || '',
+      date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    } : {
       branchId: activeBranch?.id || '',
       date: new Date().toISOString().split('T')[0],
       paymentMethod: 'CASH',
@@ -76,20 +85,28 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         headers: { 'x-branch-id': data.branchId },
       } : {}
       
-      return axios.post('/api/financial/transactions', {
-        ...data,
-        amount: Number(data.amount),
-        type,
-      }, config)
+      if (initialData) {
+        return axios.put(`/api/financial/transactions/${initialData.id}`, {
+          ...data,
+          amount: Number(data.amount),
+          type,
+        }, config)
+      } else {
+        return axios.post('/api/financial/transactions', {
+          ...data,
+          amount: Number(data.amount),
+          type,
+        }, config)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
-      toast.success('Transação criada com sucesso!')
+      toast.success(initialData ? 'Transação atualizada com sucesso!' : 'Transação criada com sucesso!')
       onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar transação')
+      toast.error(error.response?.data?.message || (initialData ? 'Erro ao atualizar transação' : 'Erro ao criar transação'))
     },
   })
 
@@ -221,7 +238,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Salvando...' : `Salvar ${getTypeName()}`}
+        {isSubmitting ? 'Salvando...' : (initialData ? `Atualizar ${getTypeName()}` : `Salvar ${getTypeName()}`)}
       </Button>
     </form>
   )

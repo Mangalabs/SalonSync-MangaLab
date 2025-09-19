@@ -53,6 +53,8 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
       return res.data
     },
     enabled: isScheduled && !!selectedProfessional && !!selectedDate && selectedProfessional !== 'undefined' && selectedDate !== 'undefined',
+    staleTime: 0, // Sempre buscar dados atualizados
+    refetchOnWindowFocus: true, // Atualizar quando a janela receber foco
   })
 
   return {
@@ -61,5 +63,6 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
     services: services.data || [],
     availableSlots: availableSlots.data || [],
     isLoading: professionals.isLoading || clients.isLoading || services.isLoading,
+    refetchAvailableSlots: availableSlots.refetch,
   }
 }

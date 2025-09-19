@@ -16,9 +16,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { DashboardLayout } from './components/layout/DashBoardLayout'
 import Services from './components/pages/Services'
 import Clients from './components/pages/Clients'
-import Scheduling from './components/pages/Scheduling'
-import Appointments from './components/pages/Appointments'
-import Treatments from './components/pages/Treatments'
 import Inventory from './components/pages/Inventory'
 import CheckoutPage from './components/pages/CheckoutPage'
 import Register from './components/pages/Register'
@@ -27,6 +24,9 @@ import Financial from './pages/Financial'
 import WhatsApp from './components/pages/WhatsApp'
 import Fidelity from './components/pages/Fidelity'
 import TestBranch from './pages/TestBranch'
+import NewAppointment from './components/pages/NewAppointments'
+import Help from './components/pages/Help'
+import Sales from './components/pages/Sales'
 
 export default function App() {
   return (
@@ -90,28 +90,22 @@ export default function App() {
                 }
               />
               <Route
-                path='scheduling'
-                element={
-                  <SubscriptionGuard>
-                    <Scheduling />
-                  </SubscriptionGuard>
-                }
-              />
-              <Route
                 path='appointments'
                 element={
                   <SubscriptionGuard>
-                    <Appointments />
+                    <NewAppointment />
                   </SubscriptionGuard>
                 }
               />
 
               <Route
-                path='treatments'
+                path="sales"
                 element={
-                  <SubscriptionGuard>
-                    <Treatments />
-                  </SubscriptionGuard>
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                    <SubscriptionGuard>
+                      <Sales />
+                    </SubscriptionGuard>
+                  </RoleGuard>
                 }
               />
               <Route
@@ -179,6 +173,10 @@ export default function App() {
                     </SubscriptionGuard>
                   </RoleGuard>
                 }
+              />
+              <Route
+                path="help"
+                element={<Help />}
               />
             </Route>
           </Routes>

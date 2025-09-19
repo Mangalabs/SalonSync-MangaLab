@@ -28,14 +28,24 @@ export class AppointmentsService extends BaseDataService {
       where: {
         professionalId: data.professionalId,
         scheduledAt: data.scheduledAt,
+        status: {
+          in: ['SCHEDULED', 'COMPLETED'], // Considerar apenas agendamentos ativos
+        },
+      },
+      include: {
+        client: { select: { name: true } },
       },
     });
     if (existingAppointment) {
+      const localTime = new Date(data.scheduledAt.getTime() - (3 * 60 * 60 * 1000));
+      const timeStr = localTime.toISOString().substring(11, 16);
       console.log('⚠️ CONFLICT: Appointment already exists at this time:', {
         existing: existingAppointment.id,
+        client: existingAppointment.client?.name,
         scheduledAt: data.scheduledAt.toISOString(),
+        localTime: timeStr,
       });
-      throw new Error('Já existe um agendamento neste horário');
+      throw new Error(`Já existe um agendamento às ${timeStr} com ${existingAppointment.client?.name || 'outro cliente'}`);
     }
 
     console.log('✅ No conflict, creating appointment:', {
@@ -77,7 +87,11 @@ export class AppointmentsService extends BaseDataService {
         },
       },
       include: {
-        professional: true,
+        professional: {
+          include: {
+            customRole: true,
+          },
+        },
         client: true,
         appointmentServices: {
           include: { service: true },
@@ -85,11 +99,20 @@ export class AppointmentsService extends BaseDataService {
       },
     });
 
+    // Só gerar transações financeiras se for atendimento imediato (COMPLETED)
+    if (createdAppointment.status === 'COMPLETED') {
+      await this.prisma.$transaction(async (tx) => {
+        await this.createRevenueTransaction(createdAppointment, tx);
+        await this.createCommissionTransaction(createdAppointment, tx);
+      });
+    }
+
     console.log('✅ Appointment created successfully:', {
       id: createdAppointment.id,
       professionalId: createdAppointment.professionalId,
       status: createdAppointment.status,
       branchId: createdAppointment.branchId,
+      generatedTransactions: createdAppointment.status === 'COMPLETED',
     });
 
     return createdAppointment;
@@ -181,14 +204,15 @@ export class AppointmentsService extends BaseDataService {
       return [];
     }
 
-    const startDate = new Date(date + 'T00:00:00Z');
-    const endDate = new Date(date + 'T23:59:59Z');
+    const startDate = new Date(date + 'T00:00:00-03:00');
+    const endDate = new Date(date + 'T23:59:59-03:00');
 
     // Verificar se as datas são válidas
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return [];
     }
 
+    // Buscar agendamentos existentes para o profissional na data
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
         professionalId,
@@ -196,8 +220,18 @@ export class AppointmentsService extends BaseDataService {
           gte: startDate,
           lte: endDate,
         },
+        status: {
+          in: ['SCHEDULED', 'COMPLETED'], // Considerar agendados e concluídos como ocupados
+        },
       },
-      select: { scheduledAt: true },
+      select: { scheduledAt: true, id: true },
+    });
+
+    console.log(`🕐 Checking available slots for professional ${professionalId} on ${date}:`, {
+      existingAppointments: existingAppointments.map(apt => ({
+        id: apt.id.substring(0, 8),
+        time: apt.scheduledAt.toISOString().substring(11, 16)
+      }))
     });
 
     const workingHours = [
@@ -209,11 +243,24 @@ export class AppointmentsService extends BaseDataService {
       '16:00',
       '17:00',
     ];
-    const bookedTimes = existingAppointments.map((apt) =>
-      apt.scheduledAt.toISOString().substring(11, 16),
-    );
+    
+    // Extrair horários ocupados (formato HH:MM) - converter para horário local
+    const bookedTimes = existingAppointments.map((apt) => {
+      const localTime = new Date(apt.scheduledAt.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
+      const timeStr = localTime.toISOString().substring(11, 16);
+      return timeStr;
+    });
 
-    return workingHours.filter((time) => !bookedTimes.includes(time));
+    // Filtrar horários disponíveis
+    const availableSlots = workingHours.filter((time) => !bookedTimes.includes(time));
+    
+    console.log(`✅ Available slots for ${professionalId} on ${date}:`, {
+      workingHours,
+      bookedTimes,
+      availableSlots
+    });
+
+    return availableSlots;
   }
 
   async confirmAppointment(id: string): Promise<Appointment> {
@@ -247,10 +294,50 @@ export class AppointmentsService extends BaseDataService {
         },
       });
 
+      // Criar transação de receita
+      await this.createRevenueTransaction(updatedAppointment, tx);
+      
       // Criar transação de comissão
       await this.createCommissionTransaction(updatedAppointment, tx);
 
       return updatedAppointment;
+    });
+  }
+
+  private async createRevenueTransaction(appointment: any, tx: any) {
+    // Buscar ou criar categoria de serviços
+    let servicesCategory = await tx.expenseCategory.findFirst({
+      where: {
+        branchId: appointment.branchId,
+        name: 'Serviços',
+        type: 'INCOME',
+      },
+    });
+
+    if (!servicesCategory) {
+      servicesCategory = await tx.expenseCategory.create({
+        data: {
+          name: 'Serviços',
+          type: 'INCOME',
+          color: '#10B981',
+          branchId: appointment.branchId,
+        },
+      });
+    }
+
+    // Criar transação de receita
+    await tx.financialTransaction.create({
+      data: {
+        description: `Atendimento: ${appointment.professional.name} - ${appointment.client.name}`,
+        amount: Number(appointment.total),
+        type: 'INCOME',
+        categoryId: servicesCategory.id,
+        paymentMethod: 'CASH',
+        reference: `Atendimento-${appointment.id}`,
+        appointmentId: appointment.id,
+        date: appointment.scheduledAt,
+        branchId: appointment.branchId,
+      },
     });
   }
 
@@ -326,10 +413,18 @@ export class AppointmentsService extends BaseDataService {
         professionalId: data.professionalId,
         scheduledAt: data.scheduledAt,
         id: { not: id },
+        status: {
+          in: ['SCHEDULED', 'COMPLETED'], // Considerar apenas agendamentos ativos
+        },
+      },
+      include: {
+        client: { select: { name: true } },
       },
     });
     if (conflictingAppointment) {
-      throw new Error('Já existe um agendamento neste horário');
+      const localTime = new Date(data.scheduledAt.getTime() - (3 * 60 * 60 * 1000));
+      const timeStr = localTime.toISOString().substring(11, 16);
+      throw new Error(`Já existe um agendamento às ${timeStr} com ${conflictingAppointment.client?.name || 'outro cliente'}`);
     }
 
     const services = await this.prisma.service.findMany({
@@ -381,9 +476,82 @@ export class AppointmentsService extends BaseDataService {
       throw new NotFoundException('Agendamento não encontrado');
     }
 
-    await this.prisma.appointmentService.deleteMany({
-      where: { appointmentId: id },
+    await this.prisma.$transaction(async (tx) => {
+      // Remover transações financeiras se existirem
+      await tx.financialTransaction.deleteMany({
+        where: { appointmentId: id },
+      });
+
+      // Remover serviços do agendamento
+      await tx.appointmentService.deleteMany({
+        where: { appointmentId: id },
+      });
+
+      // Remover agendamento
+      await tx.appointment.delete({ where: { id } });
     });
-    await this.prisma.appointment.delete({ where: { id } });
+
+    console.log('✅ Appointment cancelled and transactions removed:', { id: id.substring(0, 8) });
+  }
+
+  async fixHistoricalAppointments(): Promise<{ fixed: number; message: string }> {
+    console.log('🔧 Iniciando correção de atendimentos históricos...');
+
+    // Buscar todos os atendimentos COMPLETED que não têm transações financeiras
+    const completedAppointments = await this.prisma.appointment.findMany({
+      where: {
+        status: 'COMPLETED',
+      },
+      include: {
+        professional: {
+          include: {
+            customRole: true,
+          },
+        },
+        client: true,
+        appointmentServices: {
+          include: {
+            service: true,
+          },
+        },
+      },
+    });
+
+    console.log(`📊 Encontrados ${completedAppointments.length} atendimentos concluídos`);
+
+    let fixed = 0;
+
+    for (const appointment of completedAppointments) {
+      // Verificar se já existe transação financeira para este atendimento
+      const existingTransaction = await this.prisma.financialTransaction.findFirst({
+        where: {
+          appointmentId: appointment.id,
+        },
+      });
+
+      if (existingTransaction) {
+        continue;
+      }
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          // Criar transação de receita
+          await this.createRevenueTransaction(appointment, tx);
+          
+          // Criar transação de comissão
+          await this.createCommissionTransaction(appointment, tx);
+        });
+
+        fixed++;
+        console.log(`✅ Atendimento ${appointment.id.substring(0, 8)} corrigido`);
+      } catch (error) {
+        console.error(`❌ Erro ao corrigir atendimento ${appointment.id.substring(0, 8)}:`, error);
+      }
+    }
+
+    const message = `Correção concluída! ${fixed} atendimentos corrigidos.`;
+    console.log(`🎉 ${message}`);
+    
+    return { fixed, message };
   }
 }

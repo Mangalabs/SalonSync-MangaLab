@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   Req,
 } from '@nestjs/common';
@@ -47,11 +48,12 @@ export class FinancialController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
     return this.financialService.getCategories(
       {
         id: req.user.id,
         role: req.user.role,
-        branchId: branchId || req.user.branchId,
+        branchId: finalBranchId,
       },
       type,
     );
@@ -141,6 +143,22 @@ export class FinancialController {
     );
   }
 
+  @Put('transactions/:id')
+  @ApiOperation({ summary: 'Atualizar transação' })
+  updateTransaction(
+    @Param('id') id: string,
+    @Body() body: CreateTransactionDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const targetBranchId =
+      (req.headers['x-branch-id'] as string) || req.user.branchId;
+    return this.financialService.updateTransaction(id, body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: targetBranchId,
+    });
+  }
+
   @Delete('transactions/:id')
   @ApiOperation({ summary: 'Excluir transação' })
   deleteTransaction(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
@@ -173,10 +191,11 @@ export class FinancialController {
     @Query('branchId') branchId: string,
     @Req() req: AuthenticatedRequest,
   ) {
+    const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
     return this.financialService.getRecurringExpenses({
       id: req.user.id,
       role: req.user.role,
-      branchId: branchId || req.user.branchId,
+      branchId: finalBranchId,
     });
   }
 
@@ -184,6 +203,35 @@ export class FinancialController {
   @ApiOperation({ summary: 'Listar despesas fixas pendentes' })
   getPendingRecurringExpenses(@Req() req: AuthenticatedRequest) {
     return this.financialService.getPendingRecurringExpenses({
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
+
+  @Put('recurring-expenses/:id')
+  @ApiOperation({ summary: 'Atualizar despesa fixa' })
+  updateRecurringExpense(
+    @Param('id') id: string,
+    @Body() body: CreateRecurringExpenseDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const targetBranchId =
+      (req.headers['x-branch-id'] as string) || req.user.branchId;
+    return this.financialService.updateRecurringExpense(id, body, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: targetBranchId,
+    });
+  }
+
+  @Delete('recurring-expenses/:id')
+  @ApiOperation({ summary: 'Excluir despesa fixa' })
+  deleteRecurringExpense(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.financialService.deleteRecurringExpense(id, {
       id: req.user.id,
       role: req.user.role,
       branchId: req.user.branchId,
@@ -213,4 +261,6 @@ export class FinancialController {
       branchId: req.user.branchId,
     });
   }
+
+
 }

@@ -92,7 +92,9 @@ export function useAppointmentForm(
       let status: string
       
       if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
-        scheduledAt = new Date(`${data.scheduledDate}T${data.scheduledTime}`).toISOString()
+        // Criar data no horário local para evitar problemas de fuso horário
+        const localDate = new Date(`${data.scheduledDate}T${data.scheduledTime}:00`)
+        scheduledAt = localDate.toISOString()
         status = 'SCHEDULED'
       } else {
         scheduledAt = new Date().toISOString()
@@ -124,9 +126,12 @@ export function useAppointmentForm(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
       queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
       queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
       queryClient.invalidateQueries({ queryKey: ['professional'] })
+      queryClient.invalidateQueries({ queryKey: ['financial'] })
       
       const action = initialData ? 'atualizado' : 'criado'
       const type = isScheduled ? 'Agendamento' : 'Atendimento'
@@ -135,7 +140,17 @@ export function useAppointmentForm(
     },
     onError: (error: any) => {
       const action = initialData ? 'atualizar' : (isScheduled ? 'criar agendamento' : 'registrar atendimento')
-      toast.error(error.response?.data?.message || `Erro ao ${action}`)
+      const errorMessage = error.response?.data?.message || error.message || `Erro ao ${action}`
+      
+      // Mostrar mensagem específica para conflitos de horário
+      if (errorMessage.includes('Já existe um agendamento')) {
+        toast.error(errorMessage, {
+          description: 'Escolha outro horário ou profissional',
+          duration: 5000,
+        })
+      } else {
+        toast.error(errorMessage)
+      }
     },
   })
 

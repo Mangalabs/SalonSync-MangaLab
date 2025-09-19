@@ -105,4 +105,18 @@ export class ProfessionalsController {
       branchId: req.user.branchId,
     });
   }
+
+  @Get(':id/salary-commission-data')
+  @ApiOperation({ summary: 'Buscar dados de salário e comissão para despesas fixas' })
+  @ApiResponse({ status: 200, description: 'Dados obtidos com sucesso' })
+  getSalaryCommissionData(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.getSalaryCommissionData(id, {
+      id: req.user.id,
+      role: req.user.role,
+      branchId: req.user.branchId,
+    });
+  }
 }

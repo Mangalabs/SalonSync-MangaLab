@@ -143,11 +143,18 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
                     <td className="py-3 px-4 text-gray-600">{movement.user?.name || '-'}</td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex justify-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setEditingMovement(movement)}>
-                          <Edit size={14} />
+                        <Button
+                          className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                          onClick={() => setEditingMovement(movement)}
+                        >
+                          <Edit className='w-4 h-4' />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setDeletingMovement(movement)}>
-                          <Trash2 size={14} />
+                        <Button
+                          className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                          onClick={() => setDeletingMovement(movement)}
+                        >
+                          <Trash2 className='w-4 h-4' />
+                          
                         </Button>
                       </div>
                     </td>
