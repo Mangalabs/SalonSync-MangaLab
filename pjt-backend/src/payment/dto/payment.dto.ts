@@ -43,3 +43,9 @@ export class CreateCheckoutSessionDto {
   @IsNotEmpty()
   priceId: string;
 }
+
+export class CreateAccountSessionDto {
+  @IsString()
+  @IsNotEmpty()
+  account: string;
+}

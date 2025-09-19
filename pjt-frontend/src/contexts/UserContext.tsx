@@ -4,23 +4,25 @@ import type { ReactNode } from 'react'
 import axios from '@/lib/axios'
 
 interface User {
-  id: string;
-  email: string;
-  name?: string;
-  businessName?: string;
-  phone?: string;
-  avatar?: string;
-  role: string;
-  branchName?: string;
-  customerId?: string;
+  id: string
+  email: string
+  name?: string
+  businessName?: string
+  phone?: string
+  avatar?: string
+  role: string
+  branchName?: string
+  customerId?: string
+  accountId?: string
 }
 
 interface UserContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAdmin: boolean;
-  isProfessional: boolean;
-  logout: () => void;
+  user: User | null
+  isLoading: boolean
+  isAdmin: boolean
+  isProfessional: boolean
+  logout: () => void
+  update: (newData) => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -56,17 +58,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
     window.location.href = '/login'
   }
 
+  const update = (newData) => {
+    setUser({ ...newData, ...user })
+  }
+
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
   const isProfessional = user?.role === 'PROFESSIONAL'
 
   return (
-    <UserContext.Provider value={{
-      user,
-      isLoading,
-      isAdmin,
-      isProfessional,
-      logout,
-    }}>
+    <UserContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAdmin,
+        isProfessional,
+        logout,
+        update,
+      }}
+    >
       {children}
     </UserContext.Provider>
   )
