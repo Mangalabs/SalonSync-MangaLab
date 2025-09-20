@@ -3,6 +3,9 @@ import {
   TrendingUp,
   TrendingDown,
   PiggyBank,
+  PieChart,
+  Calendar,
+  Target,
 } from 'lucide-react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -14,24 +17,72 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { TransactionForm } from '@/components/custom/transaction/TransactionForm'
 import { RecurringExpenseForm } from '@/components/custom/recurring/RecurringExpenseForm'
 import { RecurringExpensesTabContent } from '@/components/custom/recurring/RecurringExpensesTabContent'
 import { FinancialSummary } from '@/components/custom/financial/FinancialSummary'
 import { FinancialTabContent } from '@/components/custom/financial/FinancialTabContent'
-import { FinancialProvider } from '@/contexts/FinancialContext'
+import { FinancialProvider, useFinancial } from '@/contexts/FinancialContext'
+import { useBranch } from '@/contexts/BranchContext'
+
+function PeriodFilter() {
+  const { activeBranch } = useBranch()
+  const { startDate, endDate, setStartDate, setEndDate, resetToToday } =
+    useFinancial()
+
+  return (
+    <div className="space-y-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <h2 className="flex items-center gap-2 font-medium text-gray-700">
+        <Calendar className="h-4 w-4" /> Período{' '}
+        {activeBranch ? `(${activeBranch.name})` : ''}
+      </h2>
+
+      <div className="flex flex-col sm:flex-row items-end gap-3">
+        <div className="flex-1">
+          <Label htmlFor="startDate" className="text-xs">
+            Data Inicial
+          </Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="text-sm h-8"
+          />
+        </div>
+
+        <div className="flex-1">
+          <Label htmlFor="endDate" className="text-xs">
+            Data Final
+          </Label>
+          <Input
+            id="endDate"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="text-sm h-8"
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={resetToToday}
+          className="w-full sm:w-auto text-sm h-8 bg-white"
+        >
+          Hoje
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export default function Financial() {
   const [activeTab, setActiveTab] = useState('summary')
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false)
-  const [recurringExpenseDialogOpen, setRecurringExpenseDialogOpen] = useState(false)
+  const [recurringExpenseDialogOpen, setRecurringExpenseDialogOpen] =
+    useState(false)
   const [transactionType, setTransactionType] = useState<
     'INCOME' | 'EXPENSE' | 'INVESTMENT'
   >('EXPENSE')
@@ -41,49 +92,46 @@ export default function Financial() {
     setTransactionDialogOpen(true)
   }
 
-  // const getTabLabel = (tab: string) => {
-  //   const labels = {
-  //     summary: 'Resumo',
-  //     income: 'Receitas',
-  //     expenses: 'Despesas',
-  //     investments: 'Investimentos',
-  //   }
-  //   return labels[tab as keyof typeof labels] || tab
-  // }
+  const tabs = [
+    { id: 'summary', label: 'Resumo', icon: PieChart },
+    { id: 'income', label: 'Receitas', icon: TrendingUp },
+    { id: 'expenses', label: 'Despesas', icon: TrendingDown },
+    { id: 'recurring', label: 'Despesas Fixas', icon: Calendar },
+    { id: 'investments', label: 'Investimentos', icon: Target },
+  ]
 
   return (
     <FinancialProvider>
       <div className="space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl md:text-3xl font-bold">Financeiro</h1>
-
-          <div className="md:hidden">
-            <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-32 text-xs h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="summary">Resumo</SelectItem>
-                <SelectItem value="income">Receitas</SelectItem>
-                <SelectItem value="expenses">Despesas</SelectItem>
-                <SelectItem value="recurring">Despesas Fixas</SelectItem>
-                <SelectItem value="investments">Investimentos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
+        <PeriodFilter />
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden md:grid w-full grid-cols-5">
-            <TabsTrigger value="summary">Resumo</TabsTrigger>
-            <TabsTrigger value="income">Receitas</TabsTrigger>
-            <TabsTrigger value="expenses">Despesas</TabsTrigger>
-            <TabsTrigger value="recurring">Despesas Fixas</TabsTrigger>
-            <TabsTrigger value="investments">Investimentos</TabsTrigger>
+          <TabsList className="hidden bg-white w-full grid-cols-5 rounded-2xl p-2 shadow-sm border h-15 border-gray-100 flex flex-wrap gap-1">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-xl transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  {tab.label}
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
 
           <TabsContent value="summary" className="space-y-4 md:space-y-6">
-            <FinancialSummary 
+            <FinancialSummary
               onNewTransaction={handleNewTransaction}
               onNewRecurringExpense={() => setRecurringExpenseDialogOpen(true)}
             />
@@ -97,7 +145,7 @@ export default function Financial() {
               </h2>
               <Button
                 onClick={() => handleNewTransaction('INCOME')}
-                className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A] w-full sm:w-auto text-sm h-8"
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
               >
                 <span className="hidden sm:inline">+ Nova Receita</span>
                 <span className="sm:hidden">+ Receita</span>
@@ -114,7 +162,7 @@ export default function Financial() {
               </h2>
               <Button
                 onClick={() => handleNewTransaction('EXPENSE')}
-                className="bg-red-600 hover:bg-red-700 w-full sm:w-auto text-sm h-8"
+                className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
               >
                 <span className="hidden sm:inline">+ Nova Despesa</span>
                 <span className="sm:hidden">+ Despesa</span>
@@ -129,11 +177,12 @@ export default function Financial() {
                 <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
                 Despesas Fixas
               </h2>
-              <Dialog open={recurringExpenseDialogOpen} onOpenChange={setRecurringExpenseDialogOpen}>
+              <Dialog
+                open={recurringExpenseDialogOpen}
+                onOpenChange={setRecurringExpenseDialogOpen}
+              >
                 <DialogTrigger asChild>
-                  <Button
-                    className="bg-purple-600 hover:bg-purple-700 text-sm h-8"
-                  >
+                  <Button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
                     <span className="hidden sm:inline">+ Nova Despesa Fixa</span>
                     <span className="sm:hidden">+ Fixa</span>
                   </Button>
@@ -142,7 +191,9 @@ export default function Financial() {
                   <DialogHeader>
                     <DialogTitle>Nova Despesa Fixa</DialogTitle>
                   </DialogHeader>
-                  <RecurringExpenseForm onSuccess={() => setRecurringExpenseDialogOpen(false)} />
+                  <RecurringExpenseForm
+                    onSuccess={() => setRecurringExpenseDialogOpen(false)}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -157,7 +208,7 @@ export default function Financial() {
               </h2>
               <Button
                 onClick={() => handleNewTransaction('INVESTMENT')}
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm h-8"
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
               >
                 <span className="hidden sm:inline">+ Novo Investimento</span>
                 <span className="sm:hidden">+ Investimento</span>
@@ -171,7 +222,7 @@ export default function Financial() {
           open={transactionDialogOpen}
           onOpenChange={setTransactionDialogOpen}
         >
-          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>
                 Nova{' '}
@@ -193,7 +244,7 @@ export default function Financial() {
           open={recurringExpenseDialogOpen}
           onOpenChange={setRecurringExpenseDialogOpen}
         >
-          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Nova Despesa Fixa</DialogTitle>
             </DialogHeader>
