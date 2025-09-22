@@ -47,4 +47,10 @@ export class ResetPasswordController {
     const token = auth?.replace('Bearer ', '');
     return this.paymentService.getUserSubscriptions(token);
   }
+
+  @Post('create-portal-session')
+  createPortalSession(@Headers('authorization') auth: string) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.createPortalSession(token);
+  }
 }

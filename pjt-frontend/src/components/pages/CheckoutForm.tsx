@@ -42,8 +42,36 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
     }
   }
 
+  const [userHasAccess, setUserHasAccess] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      fetchSubscription()
+    } else {
+      setUserHasAccess(false)
+    }
+  }, [])
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await api.get('/api/payment/user-has-active-subscription')
+      setUserHasAccess(res.data)
+    } catch {
+      setUserHasAccess(false)
+    }
+  }
+
   return (
     <>
+      {!userHasAccess && (
+        <EmbeddedCheckoutProvider
+          stripe={stripe}
+          options={{ fetchClientSecret }}
+        >
+          <EmbeddedCheckout />
+        </EmbeddedCheckoutProvider>
+      )}
       <EmbeddedCheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>

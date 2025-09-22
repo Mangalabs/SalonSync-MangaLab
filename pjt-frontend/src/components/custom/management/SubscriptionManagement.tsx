@@ -1,6 +1,5 @@
-import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-
+import CheckoutForm from '@/components/pages/CheckoutForm'
 import api from '@/lib/axios'
 
 export function SubscriptionManagement() {
@@ -14,13 +13,15 @@ export function SubscriptionManagement() {
 
   return (
     <div className='w-full max-w-md mx-auto'>
+      <CheckoutForm />
+
       <Button
         size='sm'
         variant='outline'
         onClick={() => createSession()}
         className='w-full text-[#DC2626] border-[#FCA5A5] hover:bg-[#FEF2F2]'
       >
-        Abrir Pagina de Gerenciamento de Assinatura
+        Abrir Página de Gerenciamento de Assinatura
       </Button>
     </div>
   )

@@ -156,14 +156,14 @@ export default function App() {
                   </RoleGuard>
                 }
               />
-              <Route
+              {/* <Route
                 path='fidelity'
                 element={
                   <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <Fidelity />
                   </RoleGuard>
                 }
-              />
+              /> */}
               <Route
                 path='test-branch'
                 element={

@@ -57,7 +57,7 @@ const menuSections = [
   {
     title: 'Sistema',
     items: [
-      { to: '/dashboard/fidelity', icon: Star, label: 'Fidelidade', roles: ['ADMIN', 'PROFESSIONAL'] },
+      // { to: '/dashboard/fidelity', icon: Star, label: 'Fidelidade', roles: ['ADMIN', 'PROFESSIONAL'] },
       { to: '/dashboard/settings', icon: Settings, label: 'Configurações', roles: ['ADMIN', 'PROFESSIONAL'] },
     ],
   },
