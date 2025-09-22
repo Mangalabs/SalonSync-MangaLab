@@ -1,16 +1,15 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Building2, Plus, Edit, Trash2 } from 'lucide-react'
+import { Building, MapPin, Plus, Edit, Trash2, Search as SearchIcon } from 'lucide-react'
 
 import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 const branchSchema = z.object({
@@ -19,19 +18,21 @@ const branchSchema = z.object({
   phone: z.string().optional(),
 })
 
-type BranchFormData = z.infer<typeof branchSchema>;
+type BranchFormData = z.infer<typeof branchSchema>
 
 interface Branch {
-  id: string;
-  name: string;
-  address?: string;
-  phone?: string;
-  isActive: boolean;
+  id: string
+  name: string
+  address?: string
+  phone?: string
+  isActive: boolean
+  manager?: string
 }
 
 export function BranchManagement() {
-  const [open, setOpen] = useState(false)
+  const [showAddBranch, setShowAddBranch] = useState(false)
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
+  const [search, setSearch] = useState('')
   const queryClient = useQueryClient()
 
   const { data: branches = [], isLoading } = useQuery<Branch[]>({
@@ -42,12 +43,7 @@ export function BranchManagement() {
     },
   })
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<BranchFormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<BranchFormData>({
     resolver: zodResolver(branchSchema),
   })
 
@@ -62,7 +58,7 @@ export function BranchManagement() {
     onSuccess: () => {
       toast.success(editingBranch ? 'Filial atualizada!' : 'Filial criada!')
       reset()
-      setOpen(false)
+      setShowAddBranch(false)
       setEditingBranch(null)
       queryClient.invalidateQueries({ queryKey: ['branches'] })
     },
@@ -84,9 +80,7 @@ export function BranchManagement() {
     },
   })
 
-  const onSubmit = (data: BranchFormData) => {
-    createBranch.mutate(data)
-  }
+  const onSubmit = (data: BranchFormData) => createBranch.mutate(data)
 
   const handleEdit = (branch: Branch) => {
     setEditingBranch(branch)
@@ -95,107 +89,133 @@ export function BranchManagement() {
       address: branch.address || '',
       phone: branch.phone || '',
     })
-    setOpen(true)
+    setShowAddBranch(true)
   }
 
   const handleNew = () => {
     setEditingBranch(null)
     reset()
-    setOpen(true)
+    setShowAddBranch(true)
   }
+
+  const filteredBranches = useMemo(
+    () =>
+      branches.filter((b) =>
+        b.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [branches, search],
+  )
 
   if (isLoading) {return <div>Carregando filiais...</div>}
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Gerenciar Filiais
-          </span>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleNew} className="">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Filial
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingBranch ? 'Editar Filial' : 'Nova Filial'}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nome da Filial</Label>
-                  <Input id="name" {...register('name')} />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name.message}</p>
-                  )}
-                </div>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <MapPin className="w-5 h-5" />
+          Filiais
+        </h3>
 
-                <div>
-                  <Label htmlFor="address">Endereço</Label>
-                  <Input id="address" {...register('address')} />
-                  {errors.address && (
-                    <p className="text-sm text-red-500">{errors.address.message}</p>
-                  )}
-                </div>
+        <Dialog open={showAddBranch} onOpenChange={setShowAddBranch}>
+          <DialogTrigger asChild>
+            <button
+              onClick={handleNew}
+              className="bg-purple-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Nova Filial
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingBranch ? 'Editar Filial' : 'Adicionar Nova Filial'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome da Filial</Label>
+                <Input id="name" {...register('name')} />
+                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+              </div>
 
-                <div>
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" {...register('phone')} />
-                  {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone.message}</p>
-                  )}
-                </div>
+              <div>
+                <Label htmlFor="address">Endereço</Label>
+                <Input id="address" {...register('address')} />
+                {errors.address && <p className="text-sm text-red-500">{errors.address.message}</p>}
+              </div>
 
-                <Button type="submit" disabled={isSubmitting} className="w-full">
-                  {isSubmitting ? 'Salvando...' : editingBranch ? 'Atualizar' : 'Criar Filial'}
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input id="phone" {...register('phone')} />
+                {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBranch(false)}
+                  className="px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : editingBranch ? 'Atualizar' : 'Salvar Filial'}
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {branches.map((branch) => (
-            <div key={branch.id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">{branch.name}</h4>
-                  {branch.address && (
-                    <p className="text-sm text-gray-500">{branch.address}</p>
-                  )}
-                  {branch.phone && (
-                    <p className="text-sm text-gray-500">{branch.phone}</p>
-                  )}
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="mb-4">
+        <div className="relative">
+          <Input
+            placeholder="Buscar filiais..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        </div>
+      </div>
+
+      <div className={`space-y-4 ${filteredBranches.length > 5 ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+        {filteredBranches.map((branch) => (
+          <div key={branch.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Building className="w-6 h-6 text-purple-600" />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(branch)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteBranch.mutate(branch.id)}
-                    disabled={deleteBranch.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-gray-800">{branch.name}</h4>
+                  </div>
+                  {branch.address && <p className="text-gray-600 text-sm mb-1">{branch.address}</p>}
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    {branch.phone && <span>📞 {branch.phone}</span>}
+                    {branch.manager && <span>👤 {branch.manager}</span>}
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                  onClick={() => handleEdit(branch)}
+                >
+                  <Edit className='w-4 h-4' />
+                </Button>
+                <Button
+                  className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                  onClick={() => deleteBranch.mutate(branch.id)}
+                  disabled={deleteBranch.isPending}
+                >
+                  <Trash2 className='w-4 h-4' />     
+                </Button>
+              </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+        {filteredBranches.length === 0 && <p className="text-gray-500 text-center py-4">Nenhuma filial encontrada.</p>}
+      </div>
+    </div>
   )
 }
