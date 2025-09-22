@@ -1,46 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CheckoutProvider , PaymentElement, useCheckout } from '@stripe/react-stripe-js'
+import {
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout,
+} from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
 import api from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
-import { Button } from '@/components/ui/button'
 import { PlanCard } from '@/components/custom/PlanCard'
-
-function Form() {
-  const { confirm } = useCheckout()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleClick = () => {
-    setLoading(true)
-    confirm().then((result) => {
-      if (result.type === 'error') {
-        setError(result.error)
-      }
-      setLoading(false)
-    })
-  }
-
-  return (
-    <form>
-      <PaymentElement options={{ layout: 'accordion' }} />
-
-      <div>
-        <Button
-          type="submit"
-          className="w-full mt-4"
-          disabled={loading}
-          onClick={handleClick}
-        >
-          Pagar
-        </Button>
-        {error && <div>{error.message}</div>}
-      </div>
-    </form>
-  )
-}
 
 function CheckoutLazyElement({ selectedPlan, userId }) {
   const [error, setError] = useState('')
@@ -74,12 +42,40 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
     }
   }
 
+  const [userHasAccess, setUserHasAccess] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      fetchSubscription()
+    } else {
+      setUserHasAccess(false)
+    }
+  }, [])
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await api.get('/api/payment/user-has-active-subscription')
+      setUserHasAccess(res.data)
+    } catch {
+      setUserHasAccess(false)
+    }
+  }
+
   return (
     <>
-      <CheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
-        <Form />
-      </CheckoutProvider>
-      {error && <p className="text-xl text-red-600 text-center">{error}</p>}
+      {!userHasAccess && (
+        <EmbeddedCheckoutProvider
+          stripe={stripe}
+          options={{ fetchClientSecret }}
+        >
+          <EmbeddedCheckout />
+        </EmbeddedCheckoutProvider>
+      )}
+      <EmbeddedCheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
+        <EmbeddedCheckout />
+      </EmbeddedCheckoutProvider>
+      {error && <p className='text-xl text-red-600 text-center'>{error}</p>}
     </>
   )
 }
@@ -98,7 +94,7 @@ export default function CheckoutForm() {
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-        },
+        }
       )
 
       const result = await res.json()
@@ -110,7 +106,7 @@ export default function CheckoutForm() {
       const result = await api.get('/api/payment/get-user-subscriptions')
 
       const activeSubscription = result.data.find(
-        (sub) => sub.status === 'active' || sub.status === 'trialing',
+        (sub) => sub.status === 'active' || sub.status === 'trialing'
       )
 
       setSelectedPlan({
@@ -150,8 +146,8 @@ export default function CheckoutForm() {
       )}
 
       {!user && (
-        <div className="mt-4 text-center">
-          <a href="/login" className="text-sm text-[#D4AF37] hover:underline">
+        <div className='mt-4 text-center'>
+          <a href='/login' className='text-sm text-[#D4AF37] hover:underline'>
             Já tem conta? Faça login aqui
           </a>
         </div>

@@ -11,6 +11,7 @@ model User {
   id             String          @id @default(uuid())
   email          String          @unique
   customerId     String?         @unique
+  accountId      String?         @unique
   password       String
   name           String?
   businessName   String?

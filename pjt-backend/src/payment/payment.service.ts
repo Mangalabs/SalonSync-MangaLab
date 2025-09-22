@@ -8,7 +8,11 @@ import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateCustomerDto, CreateCheckoutSessionDto } from './dto/payment.dto';
+import {
+  CreateCustomerDto,
+  CreateCheckoutSessionDto,
+  CreateAccountSessionDto,
+} from './dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -57,6 +61,67 @@ export class PaymentService {
     }
   }
 
+  async createAccount(token: string) {
+    if (!token) {
+      throw new UnauthorizedException('Token não fornecido');
+    }
+
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      if (user.accountId) {
+        return await stripeClient.accounts.retrieve(user.accountId);
+      }
+
+      const account = await stripeClient.accounts.create({});
+
+      await this.prisma.user.update({
+        where: { id: decoded.sub },
+        data: {
+          accountId: account.id,
+        },
+      });
+
+      return account;
+    } catch (e) {
+      console.log(e);
+      throw new Error('Não foi possível criar conta de pagamento');
+    }
+  }
+
+  async createAccountSession(data: CreateAccountSessionDto) {
+    try {
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const accountSession = await stripeClient.accountSessions.create({
+        account: data.account,
+        components: {
+          account_onboarding: { enabled: true },
+          account_management: { enabled: true },
+          payments: { enabled: true },
+          payouts: { enabled: true },
+        },
+      });
+
+      return {
+        client_secret: accountSession.client_secret,
+      };
+    } catch {
+      throw new Error('Não foi possível criar sessão de conta');
+    }
+  }
+
   async createCheckoutSession(data: CreateCheckoutSessionDto) {
     try {
       const { priceId, userId } = data;
@@ -85,7 +150,8 @@ export class PaymentService {
       }
 
       const session = await stripeClient.checkout.sessions.create({
-        ui_mode: 'custom',
+        ui_mode: 'embedded',
+        allow_promotion_codes: true,
         customer: user.customerId as string,
         line_items: [
           {
@@ -94,14 +160,14 @@ export class PaymentService {
           },
         ],
         mode: 'subscription',
-        // return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        // return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       });
 
       return { clientSecret: session.client_secret };
     } catch (e) {
+      console.log(e);
       if (e instanceof HttpException) throw e;
-
       throw new HttpException(
         'Não foi possível criar sessão de pagamento',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -196,6 +262,41 @@ export class PaymentService {
     } catch (e) {
       console.log(e);
       throw new Error('Não foi possível recuperar assinaturas');
+    }
+  }
+
+  async createPortalSession(token: string) {
+    if (!token) {
+      throw new UnauthorizedException('Token não fornecido');
+    }
+
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.customerId) {
+        return {};
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const session = await stripeClient.billingPortal.sessions.create({
+        customer: user.customerId,
+        return_url: 'https://example.com/account',
+      });
+
+      return session;
+    } catch (e) {
+      console.log(e);
+      throw new Error('Não foi criar portal de usuário');
     }
   }
 }
