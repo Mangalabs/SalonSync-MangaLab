@@ -20,9 +20,8 @@ export class WhatsAppService {
     private professionalsService: ProfessionalsService,
   ) {}
 
-  //TODO: Refactor de repetição de código entre funções
   private encrypt(text: string): string {
-    const algorithm = 'aes-256-cbc'; //TODO: Mover para .env
+    const algorithm = 'aes-256-cbc';
     const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -32,7 +31,7 @@ export class WhatsAppService {
   }
 
   private decrypt(encryptedText: string): string {
-    const algorithm = 'aes-256-cbc'; //TODO: Mover para .env
+    const algorithm = 'aes-256-cbc';
     const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
     const [ivHex, encrypted] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
@@ -43,13 +42,11 @@ export class WhatsAppService {
   }
 
   async saveConfig(branchId: string, dto: CreateWhatsAppConfigDto) {
-    // Desativar configurações antigas
     await this.prisma.whatsAppConfig.updateMany({
       where: { branchId, isActive: true },
       data: { isActive: false },
     });
 
-    // Criar nova configuração
     return await this.prisma.whatsAppConfig.create({
       data: {
         branchId,
@@ -98,12 +95,17 @@ export class WhatsAppService {
         );
       }
 
-      const fromNumber = config.whatsappNumber;
-      const destinationNumber = toNumber || fromNumber; // Default to sending to self if no number is provided
-
-      if (`whatsapp:${fromNumber}` === `whatsapp:${destinationNumber}`) {
+      if (!toNumber) {
         throw new Error(
-          'O número de origem e destino são os mesmos. Para testar, envie para um número de celular pessoal que tenha autorizado no Sandbox da Twilio.',
+          'O número de telefone de destino é obrigatório para enviar uma mensagem de teste.',
+        );
+      }
+
+      const fromNumber = config.whatsappNumber;
+
+      if (`whatsapp:${fromNumber}` === `whatsapp:${toNumber}`) {
+        throw new Error(
+          'Para testar, use um número diferente do sandbox. O número de origem e destino não podem ser iguais.',
         );
       }
 
@@ -114,7 +116,7 @@ export class WhatsAppService {
       const message = await client.messages.create({
         body: '🚀 Teste de integração WhatsApp\n\nSeu sistema está configurado corretamente para enviar mensagens via Twilio!',
         from: `whatsapp:${fromNumber}`,
-        to: `whatsapp:${destinationNumber}`,
+        to: `whatsapp:${toNumber}`,
       });
 
       return {
@@ -122,7 +124,7 @@ export class WhatsAppService {
         messageSid: message.sid,
         status: message.status,
         from: fromNumber,
-        to: destinationNumber,
+        to: toNumber,
       };
     } catch (error) {
       console.error('WhatsApp Service - sendTestMessage error:', error);
@@ -139,7 +141,6 @@ export class WhatsAppService {
       return;
     }
 
-    // Encontrar a configuração baseada no AccountSid
     const config = await this.prisma.whatsAppConfig.findFirst({
       where: {
         accountSid: AccountSid,
@@ -152,9 +153,6 @@ export class WhatsAppService {
       return;
     }
 
-    console.log('Config found for branch:', config.branchId);
-
-    // Salvar mensagem no banco
     await this.prisma.whatsAppMessage.create({
       data: {
         branchId: config.branchId,
@@ -167,56 +165,93 @@ export class WhatsAppService {
       },
     });
 
-    console.log('Message saved:', MessageSid);
-
-    // Processar conversação automática
     await this.processConversation(config, From, Body || '');
   }
 
   async processConversation(config: any, phoneNumber: string, message: string) {
     const cleanPhone = phoneNumber.replace('whatsapp:', '');
 
-    // Buscar ou criar conversação
-    let conversation = await this.prisma.whatsAppConversation.findUnique({
-      where: {
-        branchId_phoneNumber: {
-          branchId: config.branchId,
-          phoneNumber: cleanPhone,
-        },
-      },
+    let conversation = await this.prisma.whatsAppConversation.findFirst({
+      where: { branchId: config.branchId, phoneNumber: cleanPhone },
+      include: { branch: true },
     });
 
     if (!conversation) {
-      conversation = await this.prisma.whatsAppConversation.create({
+      const branch = await this.prisma.branch.findUnique({
+        where: { id: config.branchId },
+      });
+      if (!branch) {
+        console.log(`Branch com id ${config.branchId} não encontrado.`);
+        return;
+      }
+      
+      const newConversation = await this.prisma.whatsAppConversation.create({
         data: {
           branchId: config.branchId,
           phoneNumber: cleanPhone,
           currentStep: 'GREETING',
           selectedData: {},
         },
+        include: { branch: true },
       });
+      conversation = newConversation;
     }
 
-    // Processar mensagem baseada no estado atual
+    if (!conversation) {
+      console.log('Conversation not found and could not be created');
+      return;
+    }
+
     const response = await this.generateResponse(conversation, message);
 
     if (response) {
-      await this.sendMessage(
-        config,
-        cleanPhone,
-        response.message,
-        response.buttons,
+      if (response.message) {
+        await this.sendMessage(
+          config,
+          cleanPhone,
+          response.message,
+          response.buttons,
+        );
+      }
+
+      const updatedConversation = await this.prisma.whatsAppConversation.update(
+        {
+          where: { id: conversation.id },
+          data: {
+            currentStep: response.nextStep,
+            selectedData: response.selectedData,
+            lastMessageAt: new Date(),
+          },
+          include: { branch: true },
+        },
       );
 
-      // Atualizar conversação
-      await this.prisma.whatsAppConversation.update({
-        where: { id: conversation.id },
-        data: {
-          currentStep: response.nextStep,
-          selectedData: response.selectedData,
-          lastMessageAt: new Date(),
-        },
-      });
+      if (response.nextStep === 'CREATE_APPOINTMENT') {
+        const finalResponse = await this.generateResponse(
+          updatedConversation,
+          '',
+        );
+
+        if (finalResponse && finalResponse.message) {
+          await this.sendMessage(
+            config,
+            cleanPhone,
+            finalResponse.message,
+            finalResponse.buttons,
+          );
+        }
+
+        if (finalResponse) {
+          await this.prisma.whatsAppConversation.update({
+            where: { id: conversation.id },
+            data: {
+              currentStep: finalResponse.nextStep,
+              selectedData: finalResponse.selectedData,
+              lastMessageAt: new Date(),
+            },
+          });
+        }
+      }
     }
   }
 
@@ -224,6 +259,9 @@ export class WhatsAppService {
     const cleanInput = input.trim().toLowerCase();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 7);
 
     if (cleanInput === 'hoje') {
       return today.toISOString().split('T')[0];
@@ -235,7 +273,6 @@ export class WhatsAppService {
       return tomorrow.toISOString().split('T')[0];
     }
 
-    // Tenta DD/MM/YYYY ou DD/MM
     const match = cleanInput.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
     if (match) {
       const day = parseInt(match[1], 10);
@@ -243,7 +280,7 @@ export class WhatsAppService {
       const year = parseInt(match[3], 10) || today.getFullYear();
 
       const date = new Date(year, month, day);
-      if (date >= today) {
+      if (date >= today && date <= maxDate) {
         return date.toISOString().split('T')[0];
       }
     }
@@ -255,55 +292,98 @@ export class WhatsAppService {
     const step = conversation.currentStep;
     const selectedData = conversation.selectedData || {};
 
+    if (message.trim().toLowerCase() === 'cancelar' && step !== 'GREETING') {
+      return {
+        message: 'Operação cancelada. Se precisar de algo, é só me chamar!',
+        nextStep: 'GREETING',
+        selectedData: {},
+      };
+    }
+
     switch (step) {
-      case 'GREETING':
+      case 'GREETING': {
+        const branchName = conversation.branch?.name || 'nosso salão';
+        const welcomeMessage = `👋 Olá! Bem-vindo ao *${branchName}*!\n\n📅 Vamos agendar seu atendimento?`;
+
         return {
-          message:
-            '👋 Olá! Bem-vindo ao nosso sistema de agendamentos!\n\nEscolha uma opção:',
+          message: welcomeMessage,
           nextStep: 'MENU_SELECT',
           selectedData,
           buttons: [
-            { reply: { id: '1', title: '📅 Agendar' } },
-            { reply: { id: '2', title: '📞 Atendimento' } },
-            { reply: { id: '0', title: '❌ Cancelar' } },
+            { reply: { id: '1', title: '📅 Agendar Serviço' } },
+            { reply: { id: '3', title: '💰 Ver Preços' } },
+            { reply: { id: '2', title: '📞 Falar com Atendente' } },
+            { reply: { id: '0', title: '❌ Sair' } },
           ],
         };
+      }
 
       case 'MENU_SELECT':
         if (message.trim() === '0') {
           return {
-            message: '❌ Operação cancelada. Até logo!',
+            message:
+              '👋 Até logo! Volte sempre que precisar. Estamos aqui para te atender! 😊',
             nextStep: 'GREETING',
             selectedData: {},
           };
         } else if (message.trim() === '1') {
           return {
             message:
-              '👤 Para prosseguir com o agendamento, preciso do seu nome completo:\n\nPor favor, digite seu nome completo:',
+              '👤 Para prosseguir com o agendamento, preciso do seu nome completo:\n\n✍️ Digite seu nome completo:',
             nextStep: 'NAME_COLLECT',
             selectedData,
           };
         } else if (message.trim() === '2') {
           return {
             message:
-              'Em breve você será atendido por um de nossos colaboradores. Aguarde!',
+              '👥 Perfeito! Em breve você será atendido por um de nossos colaboradores.\n\n⏰ Aguarde um momento, por favor!',
             nextStep: 'WAITING_HUMAN',
             selectedData,
+          };
+        } else if (message.trim() === '3') {
+          const services = await this.prisma.service.findMany({
+            where: {
+              OR: [{ branchId: conversation.branchId }, { branchId: null }],
+            },
+            select: { name: true, price: true },
+            orderBy: { name: 'asc' },
+          });
+
+          let priceList =
+            services.length > 0
+              ? services
+                  .map((s) => `💅 ${s.name}: R$ ${s.price.toFixed(2)}`)
+                  .join('\n')
+              : 'Nenhum serviço cadastrado ainda.';
+
+          return {
+            message: `💰 *Nossos Preços:*\n\n${priceList}\n\nGostaria de agendar algum serviço?`,
+            nextStep: 'MENU_SELECT',
+            selectedData,
+            buttons: [
+              { reply: { id: '1', title: '📅 Sim, quero agendar' } },
+              { reply: { id: '0', title: '🔙 Menu principal' } },
+            ],
           };
         } else {
           return {
             message:
-              'Opção inválida. Digite *1* para agendar ou *2* para atendimento.',
+              '❌ Opção inválida. Por favor, toque em uma das opções abaixo:',
             nextStep: 'MENU_SELECT',
             selectedData,
+            buttons: [
+              { reply: { id: '1', title: '📅 Agendar Serviço' } },
+              { reply: { id: '2', title: '📞 Falar com Atendente' } },
+              { reply: { id: '3', title: '💰 Ver Preços' } },
+              { reply: { id: '0', title: '❌ Sair' } },
+            ],
           };
         }
 
       case 'NAME_COLLECT': {
-        if (message.trim().length < 2) {
+        if (message.trim().length < 3) {
           return {
-            message:
-              'Por favor, digite um nome válido com pelo menos 2 caracteres:',
+            message: 'Por favor, digite um nome e sobrenome válidos.',
             nextStep: 'NAME_COLLECT',
             selectedData,
           };
@@ -312,151 +392,79 @@ export class WhatsAppService {
         const clientName = message.trim();
         const cleanPhone = conversation.phoneNumber;
 
-        // 1. Buscar ou criar cliente
-        let client = await this.prisma.client.findFirst({
-          where: { phone: cleanPhone, branchId: conversation.branchId },
-        });
-
-        let clientId: string;
-
-        // 2. Buscar o dono da configuração atual (para escopo de filiais)
-        const currentConfig = await this.prisma.whatsAppConfig.findFirst({
-          where: { branchId: conversation.branchId, isActive: true },
-          include: { branch: { include: { owner: true } } },
-        });
-
-        if (
-          !currentConfig ||
-          !currentConfig.branch ||
-          !currentConfig.branch.ownerId
-        ) {
+        const ownerId = conversation.branch.ownerId;
+        if (!ownerId) {
           return {
-            message:
-              'Erro interno de configuração. Tente novamente mais tarde.',
+            message: 'Erro: A filial não tem um dono configurado.',
             nextStep: 'GREETING',
             selectedData: {},
           };
         }
-        const ownerId = currentConfig.branch.ownerId;
         const botUserContext = {
           id: ownerId,
           role: 'ADMIN' as const,
           branchId: conversation.branchId,
         };
 
+        let client = await this.prisma.client.findFirst({
+          where: { phone: cleanPhone, branchId: conversation.branchId },
+        });
+
         if (client) {
-          clientId = client.id;
-          // Opcional: atualizar o nome se for diferente
           if (client.name !== clientName) {
             await this.clientsService.update(client.id, { name: clientName });
           }
         } else {
-          const newClient = await this.clientsService.create(
+          client = await this.clientsService.create(
             { name: clientName, phone: cleanPhone },
             botUserContext,
             conversation.branchId,
           );
-          clientId = newClient.id;
         }
 
-        // 3. Buscar apenas filiais do mesmo dono
-        const availableBranches = await this.prisma.branch.findMany({
-          where: {
-            ownerId: ownerId,
-            isActive: true,
-          },
-          select: { id: true, name: true },
+        const professionals = await this.prisma.professional.findMany({
+          where: { branchId: conversation.branchId, active: true },
+          select: { id: true, name: true, role: true },
+          orderBy: { name: 'asc' },
         });
 
-        const branchButtons = availableBranches.map((branch, index) => ({
-          reply: { id: String(index + 1), title: branch.name },
+        if (professionals.length === 0) {
+          return {
+            message: 'Desculpe, não há profissionais disponíveis no momento.',
+            nextStep: 'GREETING',
+            selectedData: {},
+          };
+        }
+
+        const professionalButtons = professionals.map((prof, index) => ({
+          reply: {
+            id: String(index + 1),
+            title: `${prof.name} • ${prof.role}`,
+          },
         }));
-        branchButtons.push({ reply: { id: '0', title: '❌ Cancelar' } });
+        professionalButtons.push({ reply: { id: '0', title: '❌ Cancelar' } });
 
         return {
-          message: `👋 Olá *${clientName}*!\n\n🏢 Escolha a filial onde deseja agendar:`,
-          nextStep: 'BRANCH_SELECT',
+          message: `👋 Olá *${clientName}*!\n\n👨💼 Escolha um profissional para seu atendimento:`,
+          nextStep: 'PROFESSIONAL_SELECT',
           selectedData: {
             ...selectedData,
+            clientId: client.id,
             clientName,
-            clientId, // Armazenando o ID do cliente
-            branches: availableBranches,
+            professionals,
             botUserContext,
           },
-          buttons: branchButtons,
+          buttons: professionalButtons,
         };
       }
 
-      case 'BRANCH_SELECT':
-        if (message.trim() === '0') {
-          return {
-            message: '❌ Operação cancelada. Até logo!',
-            nextStep: 'GREETING',
-            selectedData: {},
-          };
-        }
-
-        const branchIndex = parseInt(message.trim()) - 1;
-        const branches = selectedData.branches || [];
-
-        if (branchIndex >= 0 && branchIndex < branches.length) {
-          const selectedBranch = branches[branchIndex];
-
-          // Buscar profissionais da filial selecionada
-          const professionals = await this.prisma.professional.findMany({
-            where: {
-              branchId: selectedBranch.id,
-              active: true,
-            },
-            select: { id: true, name: true, role: true },
-          });
-
-          if (professionals.length === 0) {
-            return {
-              message:
-                'Desculpe, não há profissionais disponíveis nesta filial no momento.',
-              nextStep: 'GREETING',
-              selectedData: {},
-            };
-          }
-
-          const professionalButtons = professionals.map((prof, index) => ({
-            reply: {
-              id: (index + 1).toString(),
-              title: `${prof.name} • ${prof.role}`,
-            },
-          }));
-          professionalButtons.push({
-            reply: { id: '0', title: '❌ Cancelar' },
-          });
-
-          return {
-            message: `👨‍💼 Profissionais disponíveis em *${selectedBranch.name}*:\n\nEscolha um profissional:`,
-            nextStep: 'PROFESSIONAL_SELECT',
-            selectedData: {
-              ...selectedData,
-              selectedBranch,
-              professionals,
-            },
-            buttons: professionalButtons,
-          };
-        } else {
-          return {
-            message:
-              '❌ Opção inválida. Por favor, escolha um número da lista de filiais.',
-            nextStep: 'BRANCH_SELECT',
-            selectedData,
-          };
-        }
-
       case 'PROFESSIONAL_SELECT': {
-        if (message.trim() === '0') {
+        if (message.trim() === '0')
           return {
             message: '❌ Operação cancelada. Até logo!',
             nextStep: 'GREETING',
             selectedData: {},
           };
-        }
 
         const profIndex = parseInt(message.trim()) - 1;
         const professionals = selectedData.professionals || [];
@@ -464,28 +472,31 @@ export class WhatsAppService {
         if (profIndex >= 0 && profIndex < professionals.length) {
           const selectedProfessional = professionals[profIndex];
 
-          // Buscar serviços da filial
           const services = await this.prisma.service.findMany({
             where: {
-              branchId: selectedData.selectedBranch.id,
-              // isActive: true, // ERROR: This field does not exist on the model
+              OR: [{ branchId: conversation.branchId }, { branchId: null }],
             },
             select: { id: true, name: true, price: true },
+            orderBy: { name: 'asc' },
           });
 
           if (services.length === 0) {
             return {
               message:
-                'Desculpe, não há serviços disponíveis para esta filial.',
-              nextStep: 'GREETING',
-              selectedData: {},
+                '⚠️ Ops! Não há serviços cadastrados ainda.\n\n📞 Entre em contato conosco para mais informações.',
+              nextStep: 'MENU_SELECT',
+              selectedData,
+              buttons: [
+                { reply: { id: '2', title: '📞 Falar com Atendente' } },
+                { reply: { id: '0', title: '🔙 Menu principal' } },
+              ],
             };
           }
 
           const serviceButtons = services.map((service, index) => ({
             reply: {
               id: String(index + 1),
-              title: `${service.name} (R$ ${service.price.toFixed(2)})`,
+              title: `${service.name} - R$ ${service.price.toFixed(2)}`,
             },
           }));
           serviceButtons.push({ reply: { id: '0', title: '❌ Cancelar' } });
@@ -493,11 +504,7 @@ export class WhatsAppService {
           return {
             message: `✅ Profissional: *${selectedProfessional.name}*\n\n💅 Agora, escolha o serviço desejado:`,
             nextStep: 'SERVICE_SELECT',
-            selectedData: {
-              ...selectedData,
-              selectedProfessional,
-              services,
-            },
+            selectedData: { ...selectedData, selectedProfessional, services },
             buttons: serviceButtons,
           };
         } else {
@@ -511,13 +518,12 @@ export class WhatsAppService {
       }
 
       case 'SERVICE_SELECT': {
-        if (message.trim() === '0') {
+        if (message.trim() === '0')
           return {
             message: '❌ Operação cancelada. Até logo!',
             nextStep: 'GREETING',
             selectedData: {},
           };
-        }
 
         const serviceIndex = parseInt(message.trim()) - 1;
         const services = selectedData.services || [];
@@ -526,12 +532,9 @@ export class WhatsAppService {
           const selectedService = services[serviceIndex];
 
           return {
-            message: `📅 Ótimo! Agora, por favor, informe a data para o agendamento (por exemplo, "hoje", "amanhã" ou "25/12/2024"):`,
+            message: `📅 Ótimo! Agora, informe a data desejada:\n\n📝 *Opções:*\n• "hoje"\n• "amanhã"\n• DD/MM (ex: 25/12)\n\n⚠️ *Limite:* até 7 dias de antecedência`,
             nextStep: 'DATE_SELECT',
-            selectedData: {
-              ...selectedData,
-              selectedService,
-            },
+            selectedData: { ...selectedData, selectedService },
           };
         } else {
           return {
@@ -545,42 +548,39 @@ export class WhatsAppService {
 
       case 'DATE_SELECT': {
         const parsedDate = this.parseDate(message);
-
-        if (parsedDate) {
-          const professionalId = selectedData.selectedProfessional.id;
-          const availableSlots =
-            await this.appointmentsService.getAvailableSlots(
-              professionalId,
-              parsedDate,
-            );
-
-          if (availableSlots.length > 0) {
-            const slotButtons = availableSlots.map((slot, index) => ({
-              reply: { id: String(index + 1), title: slot },
-            }));
-            slotButtons.push({ reply: { id: '0', title: '❌ Cancelar' } });
-
-            return {
-              message: `⏰ Horários disponíveis para *${parsedDate}* com *${selectedData.selectedProfessional.name}*:\n\nEscolha um horário:`,
-              nextStep: 'TIME_SLOT_SELECT',
-              selectedData: {
-                ...selectedData,
-                selectedDate: parsedDate,
-                availableSlots,
-              },
-              buttons: slotButtons,
-            };
-          } else {
-            return {
-              message: `🙁 Desculpe, não há horários disponíveis para *${selectedData.selectedProfessional.name}* no dia *${parsedDate}*.\n\nPor favor, escolha outra data.`,
-              nextStep: 'DATE_SELECT',
-              selectedData,
-            };
-          }
-        } else {
+        if (!parsedDate) {
           return {
             message:
-              'Data inválida. Por favor, use o formato "DD/MM/YYYY" ou diga "hoje" ou "amanhã".',
+              '❌ Data inválida ou fora do limite.\n\n📅 Use: "hoje", "amanhã" ou DD/MM\n⚠️ Máximo: 7 dias de antecedência',
+            nextStep: 'DATE_SELECT',
+            selectedData,
+          };
+        }
+
+        const availableSlots = await this.appointmentsService.getAvailableSlots(
+          selectedData.selectedProfessional.id,
+          parsedDate,
+        );
+
+        if (availableSlots.length > 0) {
+          const slotButtons = availableSlots.map((slot, index) => ({
+            reply: { id: String(index + 1), title: slot },
+          }));
+          slotButtons.push({ reply: { id: '0', title: '❌ Cancelar' } });
+
+          return {
+            message: `⏰ Horários disponíveis para *${parsedDate}* com *${selectedData.selectedProfessional.name}*:\n\nEscolha um horário:`,
+            nextStep: 'TIME_SLOT_SELECT',
+            selectedData: {
+              ...selectedData,
+              selectedDate: parsedDate,
+              availableSlots,
+            },
+            buttons: slotButtons,
+          };
+        } else {
+          return {
+            message: `🙁 Desculpe, não há horários disponíveis para *${selectedData.selectedProfessional.name}* no dia *${parsedDate}*.\n\nPor favor, escolha outra data.`,
             nextStep: 'DATE_SELECT',
             selectedData,
           };
@@ -588,13 +588,12 @@ export class WhatsAppService {
       }
 
       case 'TIME_SLOT_SELECT': {
-        if (message.trim() === '0') {
+        if (message.trim() === '0')
           return {
             message: '❌ Operação cancelada. Até logo!',
             nextStep: 'GREETING',
             selectedData: {},
           };
-        }
 
         const slotIndex = parseInt(message.trim()) - 1;
         const availableSlots = selectedData.availableSlots || [];
@@ -602,7 +601,6 @@ export class WhatsAppService {
         if (slotIndex >= 0 && slotIndex < availableSlots.length) {
           const selectedTime = availableSlots[slotIndex];
 
-          // Construir a mensagem de confirmação
           const {
             clientName,
             selectedService,
@@ -621,10 +619,7 @@ export class WhatsAppService {
           return {
             message: confirmationMessage,
             nextStep: 'CONFIRMATION',
-            selectedData: {
-              ...selectedData,
-              selectedTime,
-            },
+            selectedData: { ...selectedData, selectedTime },
             buttons: [
               { reply: { id: '1', title: '✅ Sim, confirmar' } },
               { reply: { id: '0', title: '❌ Não, cancelar' } },
@@ -648,19 +643,12 @@ export class WhatsAppService {
             nextStep: 'CREATE_APPOINTMENT',
             selectedData,
           };
-        } else if (input === '0' || input.toLowerCase() === 'não') {
+        } else {
           return {
             message:
               'Agendamento cancelado. Se precisar de algo mais, é só chamar!',
             nextStep: 'GREETING',
             selectedData: {},
-          };
-        } else {
-          return {
-            message:
-              'Opção inválida. Por favor, digite "1" para confirmar ou "0" para cancelar.',
-            nextStep: 'CONFIRMATION',
-            selectedData,
           };
         }
       }
@@ -676,22 +664,30 @@ export class WhatsAppService {
             selectedBranch,
             botUserContext,
           } = selectedData;
-
           const scheduledAt = new Date(`${selectedDate}T${selectedTime}:00`);
 
           await this.appointmentsService.create(
             {
               professionalId: selectedProfessional.id,
-              clientId: clientId,
+              clientId,
               serviceIds: [selectedService.id],
-              scheduledAt: scheduledAt,
+              scheduledAt,
             },
             botUserContext,
-            selectedBranch.id,
+            conversation.branchId,
           );
 
+          const branch = await this.prisma.branch.findUnique({
+            where: { id: conversation.branchId },
+            select: { name: true, address: true, phone: true },
+          });
+
+          const branchInfo = branch
+            ? `\n\n📍 *${branch.name}*${branch.address ? `\n📍 ${branch.address}` : ''}${branch.phone ? `\n📞 ${branch.phone}` : ''}`
+            : '';
+
           return {
-            message: `✅ Agendamento realizado com sucesso para *${selectedService.name}* com *${selectedProfessional.name}* no dia *${selectedDate}* às *${selectedTime}*.`,
+            message: `✅ *Agendamento Confirmado!*\n\n👤 Cliente: *${selectedData.clientName}*\n💅 Serviço: *${selectedService.name}*\n👨‍💼 Profissional: *${selectedProfessional.name}*\n📅 Data: *${selectedDate}*\n🕐 Horário: *${selectedTime}*${branchInfo}\n\n🎉 Seu agendamento foi realizado com sucesso!\n\n⏰ Chegue 10 minutos antes do horário marcado.`,
             nextStep: 'GREETING',
             selectedData: {},
           };
@@ -716,7 +712,15 @@ export class WhatsAppService {
       }
 
       default:
-        // Reiniciar conversa para qualquer mensagem não reconhecida
+        if (conversation.currentStep !== 'GREETING') {
+          return {
+            message:
+              '❌ Não entendi. Por favor, escolha uma das opções disponíveis.',
+            nextStep: conversation.currentStep,
+            selectedData,
+          };
+        }
+
         return {
           message:
             '👋 Olá! Bem-vindo ao nosso sistema de agendamentos!\n\nEscolha uma opção:',
@@ -739,22 +743,26 @@ export class WhatsAppService {
     );
 
     try {
+      const fromNumber = config.whatsappNumber;
+      const toNumber = `whatsapp:${phoneNumber}`;
+
       if (buttons && buttons.length > 0) {
-        const buttonText = buttons
-          .map((btn) => `*${btn.reply.id}* - ${btn.reply.title}`)
+        const buttonList = buttons
+          .map((btn) => `${btn.reply.id} - ${btn.reply.title}`)
           .join('\n');
-        const fullMessage = `${message}\n\n${buttonText}\n\n👆 Digite o número da opção desejada:`;
+
+        const fullMessage = `${message}\n\n${buttonList}`;
 
         await client.messages.create({
           body: fullMessage,
-          from: 'whatsapp:+14155238886', // FORCE Sandbox number to fix config issue
-          to: `whatsapp:${phoneNumber}`,
+          from: `whatsapp:${fromNumber}`,
+          to: toNumber,
         });
       } else {
         await client.messages.create({
           body: message,
-          from: 'whatsapp:+14155238886', // FORCE Sandbox number to fix config issue
-          to: `whatsapp:${phoneNumber}`,
+          from: `whatsapp:${fromNumber}`,
+          to: toNumber,
         });
       }
 
@@ -762,14 +770,11 @@ export class WhatsAppService {
     } catch (error) {
       console.error('Error sending auto-response:', error);
 
-      // Verificar se é limite de mensagens
       if (error.code === 63038) {
         console.log('Daily message limit exceeded for Twilio Sandbox');
-        // Não tentar reenviar, apenas logar
         return;
       }
 
-      // Para outros erros, pode tentar novamente ou logar
       throw error;
     }
   }
