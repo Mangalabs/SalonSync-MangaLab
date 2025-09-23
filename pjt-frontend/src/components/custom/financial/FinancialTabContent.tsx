@@ -1,12 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Filter,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  Trash2,
-} from 'lucide-react'
+import { Filter, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -189,18 +183,20 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const filteredTransactions = useMemo(
     () =>
       calculations.allTransactions?.filter((t: any) => {
+        const matchesBranch =
+          !branchFilter || t.branchId === branchFilter
         const matchesCategory =
           categoryFilter === 'all' || t.category.name === categoryFilter
         const matchesPayment =
-          paymentMethodFilter === 'all' ||
-          t.paymentMethod === paymentMethodFilter
+          paymentMethodFilter === 'all' || t.paymentMethod === paymentMethodFilter
         const matchesSearch =
           searchTerm === '' ||
           t.description.toLowerCase().includes(searchTerm.toLowerCase())
-        return matchesCategory && matchesPayment && matchesSearch
+        return matchesBranch && matchesCategory && matchesPayment && matchesSearch
       }) || [],
     [
       calculations.allTransactions,
+      branchFilter,
       categoryFilter,
       paymentMethodFilter,
       searchTerm,
@@ -519,31 +515,35 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
           {filteredTransactions.length > 0 ? (
             <div
-              className={`rounded-md ${
+              className={`rounded-md overflow-x-auto ${
                 filteredTransactions.length > 10
                   ? 'max-h-[500px] overflow-y-auto'
                   : ''
               }`}>
-              <Table>
-                <TableHeader className='sticky top-0 bg-white z-10'>
+              <Table className='min-w-full text-xs sm:text-sm'>
+                <TableHeader className='sticky top-0 bg-white z-10 shadow-sm'>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Pagamento</TableHead>
-                    <TableHead className='text-right'>Valor</TableHead>
-                    <TableHead className='text-right'>Ações</TableHead>
+                    <TableHead className="w-[60px] sm:w-[90px]">Data</TableHead>
+                    <TableHead className="w-[100px] sm:w-[150px]">Descrição</TableHead>
+                    <TableHead className="hidden sm:table-cell w-[80px] sm:w-[120px]">Categoria</TableHead>
+                    <TableHead className="hidden md:table-cell w-[80px] sm:w-[120px]">Pagamento</TableHead>
+                    <TableHead className="text-right w-[70px] sm:w-[100px]">Valor</TableHead>
+                    <TableHead className="text-right w-[60px] sm:w-[90px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="text-[11px] sm:text-xs md:text-sm">
                   {filteredTransactions.map((transaction: any) => {
                     const isStockRelated =
                       transaction.reference?.startsWith('Estoque-') ||
                       transaction.reference?.startsWith('Produto-')
                     const isAppointment = transaction.isAppointment
+
                     return (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
+                      <TableRow
+                        key={transaction.id}
+                        className="whitespace-nowrap h-6 sm:h-7 md:h-10"
+                      >
+                        <TableCell className="py-0.5 px-1 text-[10px] sm:text-[11px] md:text-sm">
                           {(() => {
                             try {
                               const date = new Date(transaction.date)
@@ -555,69 +555,80 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                             }
                           })()}
                         </TableCell>
-                        <TableCell>
+
+                        <TableCell className="max-w-[90px] sm:max-w-[150px] md:max-w-[250px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3">
                           <div>
-                            <div className='font-medium flex items-center gap-2'>
+                            <div className="font-medium flex items-center gap-0.5 sm:gap-1">
                               {isStockRelated && (
-                                <span className='text-md bg-blue-50 text-blue-500 px-2 py-1 rounded'>
+                                <span className="hidden sm:inline text-[8px] sm:text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">
                                   📦 Estoque
                                 </span>
                               )}
                               {isAppointment && (
-                                <span className='text-md bg-green-50 text-green-500 px-2 py-1 rounded'>
+                                <span className="hidden sm:inline text-[8px] sm:text-[10px] bg-green-50 text-green-600 px-1 py-0.5 rounded">
                                   📅 Atendimento
                                 </span>
                               )}
-                              <p className='text-base'>
+                              <p
+                                className="truncate text-[10px] sm:text-[11px] md:text-sm"
+                                title={transaction.description}
+                              >
                                 {transaction.description}
                               </p>
                             </div>
                             {transaction.reference && (
-                              <div className='text-xs text-gray-500'>
+                              <div className="hidden sm:block text-[9px] sm:text-[10px] text-gray-500 truncate">
                                 Ref: {transaction.reference}
                               </div>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+
+                        <TableCell className="hidden sm:table-cell py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3">
                           <Badge
-                            variant='secondary'
+                            variant="secondary"
+                            className="truncate max-w-[80px] sm:max-w-[120px] text-[9px] sm:text-[10px] md:text-xs"
                             style={{
-                              backgroundColor:
-                                transaction.category.color + '20',
+                              backgroundColor: transaction.category.color + '20',
                               color: transaction.category.color,
-                            }}>
+                            }}
+                          >
                             {transaction.category.name}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-sm'>
+
+                        <TableCell className="hidden md:table-cell text-[10px] sm:text-[11px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3">
                           {getPaymentMethodLabel(transaction.paymentMethod)}
                         </TableCell>
+
                         <TableCell
-                          className={`text-right font-semibold ${getTypeColor()}`}>
+                          className={`text-right font-semibold ${getTypeColor()} text-[10px] sm:text-[11px] md:text-sm py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3`}
+                        >
                           {formatCurrency(Number(transaction.amount))}
                         </TableCell>
-                        <TableCell className='text-right'>
-                          <div className='flex items-center justify-end gap-1'>
+
+                        <TableCell className="text-right py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3">
+                          <div className="flex items-center justify-end gap-0.5 sm:gap-1 md:gap-2">
                             {!isAppointment && (
                               <Button
-                                className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
-                                onClick={() =>
-                                  setEditingTransaction(transaction)
-                                }>
-                                <Edit className='w-4 h-4' />
+                                size="icon"
+                                className="p-0.5 sm:p-0.5 md:p-1 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8"
+                                onClick={() => setEditingTransaction(transaction)}
+                              >
+                                <Edit className="w-2 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
                               </Button>
                             )}
                             <Button
-                              className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
-                              onClick={() =>
-                                setDeletingTransaction(transaction)
-                              }>
-                              <Trash2 className='w-4 h-4' />
+                              size="icon"
+                              className="p-0.5 sm:p-0.5 md:p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8"
+                              onClick={() => setDeletingTransaction(transaction)}
+                            >
+                              <Trash2 className="w-2 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
+
                     )
                   })}
                 </TableBody>

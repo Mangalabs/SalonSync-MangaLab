@@ -117,14 +117,22 @@ export default function Financial() {
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-xl transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                  }`}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium transition-all duration-200 text-xs sm:text-sm md:text-base
+                    ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
                 >
-                  <IconComponent className="w-4 h-4" />
-                  {tab.label}
+                  <IconComponent className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                  <span
+                    className="
+                      hidden sm:inline truncate
+                      text-xs sm:text-sm md:text-base
+                    "
+                  >
+                    {tab.label}
+                  </span>
                 </TabsTrigger>
               )
             })}
