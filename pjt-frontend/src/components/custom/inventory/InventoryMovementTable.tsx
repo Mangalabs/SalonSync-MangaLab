@@ -187,19 +187,16 @@ export function InventoryMovementTable({
                     key={movement.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none"
                   >
-                    {/* Data/Hora */}
                     <td className="py-2 px-3 md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Data/Hora: </span>
                       {new Date(movement.createdAt).toLocaleString('pt-BR')}
                     </td>
 
-                    {/* Produto */}
                     <td className="py-2 px-3 md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Produto: </span>
                       {movement.product.name}
                     </td>
 
-                    {/* Tipo */}
                     <td className="py-2 px-3 md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Tipo: </span>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}>
@@ -208,37 +205,31 @@ export function InventoryMovementTable({
                       </span>
                     </td>
 
-                    {/* Quantidade */}
                     <td className="py-2 px-3 text-right md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Qtd: </span>
                       {movement.quantity}
                     </td>
 
-                    {/* Valor Unitário */}
                     <td className="py-2 px-3 text-right md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Valor Unit.: </span>
                       {movement.unitCost ? `R$ ${Number(movement.unitCost).toFixed(2)}` : '-'}
                     </td>
 
-                    {/* Total */}
                     <td className="py-2 px-3 text-right md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Total: </span>
                       {movement.totalCost ? `R$ ${Number(movement.totalCost).toFixed(2)}` : '-'}
                     </td>
 
-                    {/* Motivo */}
                     <td className="py-2 px-3 md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Motivo: </span>
                       {movement.reason}
                     </td>
 
-                    {/* Usuário */}
                     <td className="py-2 px-3 md:table-cell block">
                       <span className="md:hidden font-semibold text-gray-700">Usuário: </span>
                       {movement.user?.name || '-'}
                     </td>
 
-                    {/* Ações */}
                     <td className="py-2 px-3 md:table-cell block flex space-x-2 mt-2 md:mt-0">
                       <Button
                         className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none"

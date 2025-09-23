@@ -149,7 +149,6 @@ export default function Inventory() {
           </div>
         )}
 
-        {/* Tabelas */}
         <div className="overflow-x-auto">
           {activeTab === 'products' ? (
             <ProductTable />
