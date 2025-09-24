@@ -10,6 +10,7 @@ import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import {
   AlertDialog,
@@ -121,7 +122,37 @@ export function BranchManagement() {
     return branches.length > 1
   }
 
-  if (isLoading) {return <div>Carregando filiais...</div>}
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full mb-4" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

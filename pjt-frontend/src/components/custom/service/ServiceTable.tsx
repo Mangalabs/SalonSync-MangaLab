@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
@@ -67,7 +68,36 @@ export function ServiceTable() {
     },
   })
 
-  if (isLoading) {return <p>Carregando serviços...</p>}
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="flex justify-between items-center mb-6">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+              <Skeleton className="h-32 w-full" />
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <div className="flex space-x-2">
+                  <Skeleton className="h-8 flex-1" />
+                  <Skeleton className="h-8 flex-1" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
   if (error) {return <p className="text-red-500">Erro ao carregar serviços</p>}
 
   return (

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,7 +68,30 @@ export function FidelityTable({ onEdit }: FidelityTableProps) {
   )
 
   if (isLoading) {
-    return <p className="p-4">Carregando...</p>
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <Skeleton className="h-12 w-full mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-full mb-4" />
+              <div className="flex space-x-2">
+                <Skeleton className="h-8 flex-1" />
+                <Skeleton className="h-8 flex-1" />
+                <Skeleton className="h-8 flex-1" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (error) {

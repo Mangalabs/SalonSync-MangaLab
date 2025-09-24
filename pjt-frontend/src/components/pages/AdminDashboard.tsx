@@ -28,6 +28,7 @@ import {
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
 import { StatsCard } from '../ui/stats-card'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
@@ -159,7 +160,52 @@ export default function AdminDashboard() {
     orange: 'border-orange-300 hover:border-orange-400 hover:bg-orange-50 text-orange-600',
   }
 
-  if (isLoading) {return <div className="text-center py-20">Carregando dados do dashboard...</div>}
+  if (isLoading) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+          <div className="flex justify-between items-center mb-3 md:mb-4">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-8 w-28" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center p-3 md:p-4 rounded-lg border-2 border-dashed border-gray-200">
+                <Skeleton className="w-6 h-6 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
+            <Skeleton className="h-5 w-40 mb-4" />
+            <Skeleton className="h-48 md:h-56 lg:h-67 w-full" />
+          </div>
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
+            <Skeleton className="h-5 w-40 mb-4" />
+            <Skeleton className="h-48 md:h-56 lg:h-67 w-full" />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 md:space-y-6">

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
@@ -97,7 +98,36 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
     }
   }
 
-  if (isLoading) {return <p className="p-4">Carregando...</p>}
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="overflow-x-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <th key={i} className="text-left py-3 px-4">
+                    <Skeleton className="h-4 w-16" />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  {Array.from({ length: 9 }).map((_, j) => (
+                    <td key={j} className="py-3 px-4">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
   if (error) {return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>}
 
   return (

@@ -12,6 +12,7 @@ import { UserProvider } from '@/contexts/UserContext'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { SubscriptionGuard } from '@/components/auth/SubscriptionGuard'
 import { Toaster } from '@/components/ui/sonner'
+import { ErrorBoundary, NetworkIndicator } from '@/components/ui/error-boundary'
 
 import { DashboardLayout } from './components/layout/DashBoardLayout'
 import Services from './components/pages/Services'
@@ -21,7 +22,7 @@ import CheckoutPage from './components/pages/CheckoutPage'
 import Register from './components/pages/Register'
 import Reports from './pages/Reports'
 import Financial from './pages/Financial'
-import WhatsApp from './components/pages/WhatsApp'
+
 import Fidelity from './components/pages/Fidelity'
 import TestBranch from './pages/TestBranch'
 import NewAppointment from './components/pages/NewAppointments'
@@ -30,7 +31,8 @@ import Sales from './components/pages/Sales'
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
+      <NetworkIndicator />
       <UserProvider>
         <BrowserRouter>
           <Routes>
@@ -138,16 +140,7 @@ export default function App() {
                   </RoleGuard>
                 }
               />
-              <Route
-                path='whatsapp'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN']}>
-                    <SubscriptionGuard>
-                      <WhatsApp />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
+
               <Route
                 path='settings'
                 element={
@@ -183,6 +176,6 @@ export default function App() {
         </BrowserRouter>
         <Toaster />
       </UserProvider>
-    </>
+    </ErrorBoundary>
   )
 }

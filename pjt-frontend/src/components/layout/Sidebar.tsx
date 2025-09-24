@@ -51,7 +51,7 @@ const menuSections = [
     items: [
       { to: '/dashboard/financial', icon: TrendingUp, label: 'Financeiro', roles: ['ADMIN'] },
       { to: '/dashboard/reports', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
-      { to: '/dashboard/whatsapp', icon: MessageCircle, label: 'WhatsApp', roles: ['ADMIN'] },
+
     ],
   },
   {
