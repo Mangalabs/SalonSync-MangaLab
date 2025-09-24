@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import {
@@ -220,7 +221,31 @@ export default function Appointments() {
         <div>
           <h4 className='font-semibold text-gray-800 mb-4 capitalize'>{formatDate(selectedDate)}</h4>
           <div className='space-y-3'>
-            {isLoading && <p className='text-gray-500'>Carregando agendamentos...</p>}
+            {isLoading && (
+              <div className='space-y-3'>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className='flex items-center justify-between p-4 border rounded-xl'>
+                    <div className='flex items-center space-x-4'>
+                      <div className='text-center min-w-[60px] space-y-1'>
+                        <Skeleton className='h-4 w-12 mx-auto' />
+                        <Skeleton className='h-3 w-8 mx-auto' />
+                      </div>
+                      <div className='w-px h-10 bg-gray-200'></div>
+                      <div className='space-y-2'>
+                        <Skeleton className='h-4 w-32' />
+                        <Skeleton className='h-3 w-24' />
+                        <Skeleton className='h-3 w-20' />
+                      </div>
+                    </div>
+                    <div className='flex space-x-2'>
+                      <Skeleton className='h-8 w-8' />
+                      <Skeleton className='h-8 w-8' />
+                      <Skeleton className='h-8 w-8' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {!isLoading && todayAppointments.map(appointment => (
               <div
                 key={appointment.id}
@@ -292,51 +317,76 @@ export default function Appointments() {
 
         <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
           <h4 className='font-semibold text-gray-800 mb-4'>Hoje</h4>
-          <div className='space-y-3'>
-            <div className='flex justify-between text-sm'>
-              <span className='text-gray-600'>Total Agendamentos:</span>
-              <span className='font-semibold'>{todayAppointments.length}</span>
+          {isLoading ? (
+            <div className='space-y-3'>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className='flex justify-between text-sm'>
+                  <Skeleton className='h-4 w-24' />
+                  <Skeleton className='h-4 w-8' />
+                </div>
+              ))}
             </div>
-            <div className='flex justify-between text-sm'>
-              <span className='text-gray-600'>Pendentes:</span>
-              <span className='font-semibold text-green-600'>
-                {todayAppointments.filter((a) => a.status === 'confirmed').length}
-              </span>
+          ) : (
+            <div className='space-y-3'>
+              <div className='flex justify-between text-sm'>
+                <span className='text-gray-600'>Total Agendamentos:</span>
+                <span className='font-semibold'>{todayAppointments.length}</span>
+              </div>
+              <div className='flex justify-between text-sm'>
+                <span className='text-gray-600'>Pendentes:</span>
+                <span className='font-semibold text-green-600'>
+                  {todayAppointments.filter((a) => a.status === 'confirmed').length}
+                </span>
+              </div>
+              <div className='flex justify-between text-sm'>
+                <span className='text-gray-600'>Concluídos:</span>
+                <span className='font-semibold text-blue-600'>
+                  {completedAppointmentsToday.length}
+                </span>
+              </div>
             </div>
-            <div className='flex justify-between text-sm'>
-              <span className='text-gray-600'>Concluídos:</span>
-              <span className='font-semibold text-blue-600'>
-                {completedAppointmentsToday.length}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
           <h4 className='font-semibold text-gray-800 mb-4'>Próximos</h4>
-          <div className='space-y-3'>
-            {upcomingAppointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className='flex items-center space-x-3 p-3 bg-gray-50 rounded-lg'
-              >
-                <div className='w-2 h-2 bg-purple-500 rounded-full'></div>
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-gray-800'>
-                    {appointment.client}
-                  </p>
-                  <p className='text-xs text-gray-500'>
-                    {appointment.date} {appointment.time}
-                  </p>
+          {isLoading ? (
+            <div className='space-y-3'>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className='flex items-center space-x-3 p-3 bg-gray-50 rounded-lg'>
+                  <Skeleton className='w-2 h-2 rounded-full' />
+                  <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-24' />
+                    <Skeleton className='h-3 w-32' />
+                  </div>
                 </div>
-              </div>
-            ))}
-            {upcomingAppointments.length === 0 && (
-              <p className='text-sm text-gray-500'>
-                Nenhum agendamento futuro.
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className='space-y-3'>
+              {upcomingAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className='flex items-center space-x-3 p-3 bg-gray-50 rounded-lg'
+                >
+                  <div className='w-2 h-2 bg-purple-500 rounded-full'></div>
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-gray-800'>
+                      {appointment.client}
+                    </p>
+                    <p className='text-xs text-gray-500'>
+                      {appointment.date} {appointment.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {upcomingAppointments.length === 0 && (
+                <p className='text-sm text-gray-500'>
+                  Nenhum agendamento futuro.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

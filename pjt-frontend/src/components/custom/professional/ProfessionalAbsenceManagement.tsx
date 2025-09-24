@@ -6,6 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Calendar, Plus, Edit, Trash2, AlertTriangle } from 'lucide-react'
 
+
+import { LoadingState, EmptyState } from '@/components/ui/loading-state'
+import { Skeleton } from '@/components/ui/skeleton'
+
 import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,7 +75,7 @@ export function ProfessionalAbsenceManagement() {
   const [deletingAbsence, setDeletingAbsence] = useState<Absence | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: professionals = [] } = useQuery<Professional[]>({
+  const { data: professionals = [], error: professionalsError, isLoading: professionalsLoading } = useQuery<Professional[]>({
     queryKey: ['professionals'],
     queryFn: async () => {
       const res = await axios.get('/api/professionals')
@@ -79,12 +83,20 @@ export function ProfessionalAbsenceManagement() {
     },
   })
 
-  const { data: absences = [], isLoading } = useQuery<Absence[]>({
+  const { data: absences = [], isLoading, refetch } = useQuery<Absence[]>({
     queryKey: ['professional-absences'],
     queryFn: async () => {
-      const res = await axios.get('/api/professionals/absences')
-      return res.data
+      try {
+        const res = await axios.get('/api/professionals/absences')
+        return res.data
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return []
+        }
+        throw error
+      }
     },
+    retry: false,
   })
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<AbsenceFormData>({
@@ -158,7 +170,45 @@ export function ProfessionalAbsenceManagement() {
     return new Date(startDate) <= new Date(endDate)
   }
 
-  if (isLoading) return <div>Carregando ausências...</div>
+  if (professionalsError) {
+    return (
+      <LoadingState 
+        error={professionalsError} 
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ['professionals'] })}
+      />
+    )
+  }
+
+  if (professionalsLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-6">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-36" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -290,53 +340,80 @@ export function ProfessionalAbsenceManagement() {
       </div>
 
       <div className="space-y-4">
-        {absences.map((absence) => (
-          <div key={absence.id} className="border border-gray-200 rounded-xl p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="font-semibold text-gray-800">{absence.professional.name}</h4>
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${absenceTypeColors[absence.type]}`}>
-                    {absenceTypeLabels[absence.type]}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600 mb-1">
-                  <strong>Período:</strong> {formatDate(absence.startDate)} até {formatDate(absence.endDate)}
-                </div>
-                {absence.reason && (
-                  <div className="text-sm text-gray-600">
-                    <strong>Motivo:</strong> {absence.reason}
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-xl p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-5 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-36" />
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEdit(absence)}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDeletingAbsence(absence)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+            ))}
+          </div>
+        ) : absences.length === 0 ? (
+          <EmptyState 
+            icon={Calendar}
+            title="Nenhuma ausência registrada"
+            description="Registre ausências para evitar agendamentos em dias indisponíveis."
+            action={
+              <Button onClick={handleNew} className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Ausência
+              </Button>
+            }
+          />
+        ) : (
+          absences.map((absence) => (
+            <div key={absence.id} className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h4 className="font-semibold text-gray-800">{absence.professional.name}</h4>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${absenceTypeColors[absence.type]}`}>
+                      {absenceTypeLabels[absence.type]}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 mb-1">
+                    <strong>Período:</strong> {formatDate(absence.startDate)} até {formatDate(absence.endDate)}
+                  </div>
+                  {absence.reason && (
+                    <div className="text-sm text-gray-600">
+                      <strong>Motivo:</strong> {absence.reason}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(absence)}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDeletingAbsence(absence)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-
-        {absences.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma ausência registrada</h3>
-            <p className="text-gray-500">Registre ausências para evitar agendamentos em dias indisponíveis.</p>
-          </div>
+          ))
         )}
       </div>
 

@@ -14,7 +14,7 @@ import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { FinancialModule } from './financial/financial.module';
 import { RolesModule } from './roles/roles.module';
-import { WhatsAppModule } from './whatsapp/whatsapp.module';
+
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
 import { AiModule } from './ai/ai.module';
@@ -37,7 +37,7 @@ import { PaymentModule } from './payment/paument.module';
     InventoryModule,
     FinancialModule,
     AiModule,
-    WhatsAppModule,
+
     ResetPasswordModule,
     PaymentModule,
   ],
@@ -51,7 +51,7 @@ export class AppModule {
       .exclude(
         { path: 'auth/login', method: RequestMethod.POST },
         { path: 'auth/create-admin', method: RequestMethod.POST },
-        { path: 'whatsapp/webhook', method: RequestMethod.POST },
+
         { path: 'reset/generate', method: RequestMethod.POST },
         { path: 'reset/reset', method: RequestMethod.POST },
         { path: 'payment/create-checkout-session', method: RequestMethod.POST },
