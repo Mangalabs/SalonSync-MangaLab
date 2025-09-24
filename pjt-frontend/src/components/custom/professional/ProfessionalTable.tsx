@@ -134,6 +134,7 @@ export function ProfessionalTable() {
       }
     },
     enabled: !!activeBranch,
+    retry: false,
   })
 
   const { data: branches = [] } = useQuery({
@@ -218,6 +219,14 @@ export function ProfessionalTable() {
     },
   })
 
+  const toggleWorkingDay = (dayValue: number) => {
+    setSelectedWorkingDays((prev) =>
+      prev.includes(dayValue)
+        ? prev.filter((d) => d !== dayValue)
+        : [...prev, dayValue].sort()
+    )
+  }
+
   const {
     register,
     handleSubmit,
@@ -237,15 +246,6 @@ export function ProfessionalTable() {
 
   const toggleExpanded = (id: string) =>
     setExpandedProfessional(expandedProfessional === id ? null : id)
-
-  if (isLoading) {return <p>Carregando...</p>}
-  const toggleWorkingDay = (dayValue: number) => {
-    setSelectedWorkingDays((prev) =>
-      prev.includes(dayValue)
-        ? prev.filter((d) => d !== dayValue)
-        : [...prev, dayValue].sort()
-    )
-  }
 
   if (isLoading) {
     return (
@@ -292,7 +292,7 @@ export function ProfessionalTable() {
       prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (prof.customRole?.title || prof.role)
         .toLowerCase()
-        .includes(searchTerm.toLowerCase()),
+        .includes(searchTerm.toLowerCase())
   )
 
   const filteredRoles = roles.filter((role: any) =>
@@ -304,7 +304,8 @@ export function ProfessionalTable() {
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4'>
         <Button
           className='w-full sm:w-auto bg-primary text-primary-foreground px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/80 transition-colors'
-          onClick={() => setCreatingNew(true)}>
+          onClick={() => setCreatingNew(true)}
+        >
           <PlusCircle className='w-4 h-4' />
           Novo Profissional
         </Button>
@@ -348,7 +349,8 @@ export function ProfessionalTable() {
                     queryClient.invalidateQueries({
                       queryKey: ['professional', prof.id],
                     })
-                  }}>
+                  }}
+                >
                   <div className='flex items-center gap-3'>
                     <div className='w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold'>
                       {prof.name[0]}
@@ -383,7 +385,8 @@ export function ProfessionalTable() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setEditingProfessional(prof)
-                      }}>
+                      }}
+                    >
                       <Edit className='w-4 h-4' />
                       <span className='md:hidden ml-1 text-sm'>Editar</span>
                     </Button>
@@ -466,7 +469,8 @@ export function ProfessionalTable() {
           setEditingProfessional(null)
           setCreatingNew(false)
           setSelectedWorkingDays([1, 2, 3, 4, 5])
-        }}>
+        }}
+      >
         <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
           <DialogHeader>
             <DialogTitle>
@@ -480,24 +484,6 @@ export function ProfessionalTable() {
               {errors.name && (
                 <p className='text-xs text-destructive'>
                   {errors.name.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor='email'>Email</Label>
-              <Input id='email' type='email' {...register('email')} />
-              {errors.email && (
-                <p className='text-xs text-destructive'>
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor='password'>Senha</Label>
-              <Input id='password' type='password' {...register('password')} />
-              {errors.password && (
-                <p className='text-xs text-destructive'>
-                  {errors.password.message}
                 </p>
               )}
             </div>
@@ -607,7 +593,8 @@ export function ProfessionalTable() {
 
       <AlertDialog
         open={!!deletingProfessional}
-        onOpenChange={() => setDeletingProfessional(null)}>
+        onOpenChange={() => setDeletingProfessional(null)}
+      >
         <AlertDialogContent className='bg-card'>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Profissional</AlertDialogTitle>
@@ -628,7 +615,8 @@ export function ProfessionalTable() {
               onClick={() =>
                 deletingProfessional &&
                 deleteProfessional.mutate(deletingProfessional.id)
-              }>
+              }
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -643,11 +631,13 @@ export function ProfessionalTable() {
             if (!open) {
               setEditingRole(null)
             }
-          }}>
+          }}
+        >
           <DialogTrigger asChild>
             <Button
               variant='outline'
-              className='border border-border hover:bg-accent/10 text-foreground flex items-center gap-2 px-4 py-2 rounded-xl transition-colors'>
+              className='border border-border hover:bg-accent/10 text-foreground flex items-center gap-2 px-4 py-2 rounded-xl transition-colors'
+            >
               <Settings className='w-4 h-4' />
               Criar Função
             </Button>
@@ -691,11 +681,13 @@ export function ProfessionalTable() {
           <div
             className={`divide-y divide-border ${
               filteredRoles.length > 5 ? 'max-h-64 overflow-y-auto' : ''
-            }`}>
+            }`}
+          >
             {filteredRoles.map((role: any) => (
               <div
                 key={role.id}
-                className='px-6 py-4 flex justify-between items-center hover:bg-accent/10 transition-colors'>
+                className='px-6 py-4 flex justify-between items-center hover:bg-accent/10 transition-colors'
+              >
                 <div>
                   <div className='font-medium text-foreground'>
                     {role.title}
@@ -713,7 +705,8 @@ export function ProfessionalTable() {
                     setEditingRole(role)
                     setRoleOpen(true)
                   }}
-                  className='h-6 w-6 p-0 text-muted-foreground hover:text-foreground'>
+                  className='h-6 w-6 p-0 text-muted-foreground hover:text-foreground'
+                >
                   <Edit className='h-3 w-3' />
                 </Button>
               </div>

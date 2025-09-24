@@ -100,12 +100,6 @@ const menuSections = [
         label: 'Relatórios',
         roles: ['ADMIN'],
       },
-      {
-        to: '/dashboard/whatsapp',
-        icon: MessageCircle,
-        label: 'WhatsApp',
-        roles: ['ADMIN'],
-      },
     ],
   },
   {

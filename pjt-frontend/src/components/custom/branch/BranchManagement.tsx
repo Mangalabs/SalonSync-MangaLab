@@ -17,6 +17,7 @@ import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -119,13 +120,45 @@ export function BranchManagement() {
   const filteredBranches = useMemo(
     () =>
       branches.filter((b) =>
-        b.name.toLowerCase().includes(search.toLowerCase()),
+        b.name.toLowerCase().includes(search.toLowerCase())
       ),
-    [branches, search],
+    [branches, search]
   )
 
   if (isLoading) {
     return <div className='text-muted-foreground'>Carregando filiais...</div>
+  }
+
+  if (isLoading) {
+    return (
+      <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+        <div className='flex items-center justify-between mb-4'>
+          <Skeleton className='h-6 w-32' />
+          <Skeleton className='h-10 w-32' />
+        </div>
+        <Skeleton className='h-10 w-full mb-4' />
+        <div className='space-y-4'>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className='border border-gray-200 rounded-xl p-4'>
+              <div className='flex items-start justify-between'>
+                <div className='flex items-start gap-4'>
+                  <Skeleton className='w-12 h-12 rounded-xl' />
+                  <div className='flex-1 space-y-2'>
+                    <Skeleton className='h-5 w-32' />
+                    <Skeleton className='h-4 w-48' />
+                    <Skeleton className='h-4 w-24' />
+                  </div>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -140,7 +173,8 @@ export function BranchManagement() {
           <DialogTrigger asChild>
             <button
               onClick={handleNew}
-              className='bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:opacity-90 transition-colors flex items-center gap-2 cursor-pointer'>
+              className='bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:opacity-90 transition-colors flex items-center gap-2 cursor-pointer'
+            >
               <Plus className='w-4 h-4' />
               Nova Filial
             </button>
@@ -186,15 +220,16 @@ export function BranchManagement() {
                 <button
                   type='button'
                   onClick={() => setShowAddBranch(false)}
-                  className='px-4 py-2 border border-border text-muted-foreground rounded-xl font-medium hover:bg-muted'>
+                  className='px-4 py-2 border border-border text-muted-foreground rounded-xl font-medium hover:bg-muted'
+                >
                   Cancelar
                 </button>
                 <Button type='submit' disabled={isSubmitting}>
                   {isSubmitting
                     ? 'Salvando...'
                     : editingBranch
-                      ? 'Atualizar'
-                      : 'Salvar Filial'}
+                    ? 'Atualizar'
+                    : 'Salvar Filial'}
                 </Button>
               </div>
             </form>
@@ -216,11 +251,13 @@ export function BranchManagement() {
       <div
         className={`space-y-4 ${
           filteredBranches.length > 5 ? 'max-h-[400px] overflow-y-auto' : ''
-        }`}>
+        }`}
+      >
         {filteredBranches.map((branch) => (
           <div
             key={branch.id}
-            className='border border-border rounded-xl p-4 hover:shadow-md hover:bg-muted transition-colors'>
+            className='border border-border rounded-xl p-4 hover:shadow-md hover:bg-muted transition-colors'
+          >
             <div className='flex items-start justify-between'>
               <div className='flex items-start gap-4'>
                 <div className='w-12 h-12 bg-muted rounded-xl flex items-center justify-center'>
@@ -246,13 +283,15 @@ export function BranchManagement() {
               <div className='flex items-center gap-2'>
                 <Button
                   className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors cursor-pointer'
-                  onClick={() => handleEdit(branch)}>
+                  onClick={() => handleEdit(branch)}
+                >
                   <Edit className='w-4 h-4' />
                 </Button>
                 <Button
                   className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors cursor-pointer'
                   onClick={() => deleteBranch.mutate(branch.id)}
-                  disabled={deleteBranch.isPending}>
+                  disabled={deleteBranch.isPending}
+                >
                   <Trash2 className='w-4 h-4' />
                 </Button>
               </div>

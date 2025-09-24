@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -67,7 +68,7 @@ export function InventoryMovementTable({
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Erro ao excluir movimentação',
+        error.response?.data?.message || 'Erro ao excluir movimentação'
       )
     },
   })
@@ -133,15 +134,36 @@ export function InventoryMovementTable({
 
   if (isLoading) {
     return (
-      <p className='p-4 text-center text-muted-foreground'>Carregando...</p>
+      <div className='space-y-4'>
+        <div className='overflow-x-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+          <table className='w-full'>
+            <thead>
+              <tr className='border-b border-gray-200'>
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <th key={i} className='text-left py-3 px-4'>
+                    <Skeleton className='h-4 w-16' />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className='border-b border-gray-100'>
+                  {Array.from({ length: 9 }).map((_, j) => (
+                    <td key={j} className='py-3 px-4'>
+                      <Skeleton className='h-4 w-full' />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     )
   }
   if (error) {
-    return (
-      <p className='p-4 text-center text-destructive'>
-        Erro ao carregar movimentações
-      </p>
-    )
+    return <p className='p-4 text-red-500'>Erro ao carregar movimentações</p>
   }
 
   return (
@@ -188,7 +210,8 @@ export function InventoryMovementTable({
                 return (
                   <tr
                     key={movement.id}
-                    className='border-b border-border hover:bg-muted transition-colors md:table-row block md:border-0 md:hover:bg-transparent mb-4 md:mb-0 rounded-lg md:rounded-none'>
+                    className='border-b border-border hover:bg-muted transition-colors md:table-row block md:border-0 md:hover:bg-transparent mb-4 md:mb-0 rounded-lg md:rounded-none'
+                  >
                     <td className='py-2 px-3 md:table-cell block'>
                       <span className='md:hidden font-semibold'>
                         Data/Hora:{' '}
@@ -204,7 +227,8 @@ export function InventoryMovementTable({
                     <td className='py-2 px-3 md:table-cell block'>
                       <span className='md:hidden font-semibold'>Tipo: </span>
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}>
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}
+                      >
                         <Icon className='w-3 h-3 mr-1' />
                         {config.label}
                       </span>
@@ -244,12 +268,14 @@ export function InventoryMovementTable({
                     <td className='py-2 px-3 md:table-cell block flex space-x-2 mt-2 md:mt-0'>
                       <Button
                         className='p-2 text-green-600 bg-green-200 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
-                        onClick={() => setEditingMovement(movement)}>
+                        onClick={() => setEditingMovement(movement)}
+                      >
                         <Edit className='w-4 h-4' />
                       </Button>
                       <Button
                         className='p-2 text-red-600 bg-red-200 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
-                        onClick={() => setDeletingMovement(movement)}>
+                        onClick={() => setDeletingMovement(movement)}
+                      >
                         <Trash2 className='w-4 h-4' />
                       </Button>
                     </td>
@@ -275,7 +301,8 @@ export function InventoryMovementTable({
 
       <Dialog
         open={!!editingMovement}
-        onOpenChange={() => setEditingMovement(null)}>
+        onOpenChange={() => setEditingMovement(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Movimentação</DialogTitle>
@@ -288,7 +315,8 @@ export function InventoryMovementTable({
 
       <AlertDialog
         open={!!deletingMovement}
-        onOpenChange={() => setDeletingMovement(null)}>
+        onOpenChange={() => setDeletingMovement(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
@@ -303,7 +331,8 @@ export function InventoryMovementTable({
               onClick={() =>
                 deletingMovement && deleteMovement.mutate(deletingMovement.id)
               }
-              disabled={deleteMovement.isPending}>
+              disabled={deleteMovement.isPending}
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

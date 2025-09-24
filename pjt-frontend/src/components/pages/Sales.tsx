@@ -54,7 +54,9 @@ export default function Sales() {
   const [editingClient, setEditingClient] = useState<any | null>(null)
 
   useEffect(() => {
-    if (!activeBranch) {return}
+    if (!activeBranch) {
+      return
+    }
     setCarts((prev) => ({
       ...prev,
       [activeBranch.id]: prev[activeBranch.id] || [],
@@ -93,7 +95,7 @@ export default function Sales() {
         return []
       }
       const res = await axios.get(
-        `/api/professionals?branchId=${activeBranch.id}`,
+        `/api/professionals?branchId=${activeBranch.id}`
       )
       return res.data
     },
@@ -103,7 +105,7 @@ export default function Sales() {
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(
-        (p: any) => p.name === user.name,
+        (p: any) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
@@ -111,40 +113,46 @@ export default function Sales() {
   }, [isProfessional, isAdmin, user?.name, professionals])
 
   const addToCart = (product: Product) => {
-    if (!activeBranch) {return}
+    if (!activeBranch) {
+      return
+    }
     const existingItem = cart.find((item) => item.id === product.id)
     const updatedCart = existingItem
       ? cart.map((item) =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      )
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
       : [...cart, { ...product, quantity: 1 }]
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
   }
 
   const updateQuantity = (productId: string, newQuantity: number) => {
-    if (!activeBranch) {return}
+    if (!activeBranch) {
+      return
+    }
     let updatedCart: CartItem[]
     if (newQuantity <= 0) {
       updatedCart = cart.filter((item) => item.id !== productId)
     } else {
       updatedCart = cart.map((item) =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item,
+        item.id === productId ? { ...item, quantity: newQuantity } : item
       )
     }
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
   }
 
   const removeFromCart = (productId: string) => {
-    if (!activeBranch) {return}
+    if (!activeBranch) {
+      return
+    }
     const updatedCart = cart.filter((item) => item.id !== productId)
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
   }
 
   const subtotal = cart.reduce(
     (acc, item) => acc + Number(item.salePrice) * item.quantity,
-    0,
+    0
   )
   const categories = [
     'all',
@@ -153,8 +161,12 @@ export default function Sales() {
 
   const createSale = useMutation({
     mutationFn: async () => {
-      if (!activeBranch?.id) {throw new Error('Filial não selecionada')}
-      if (cart.length === 0) {throw new Error('Carrinho vazio')}
+      if (!activeBranch?.id) {
+        throw new Error('Filial não selecionada')
+      }
+      if (cart.length === 0) {
+        throw new Error('Carrinho vazio')
+      }
 
       const headers = { 'x-branch-id': activeBranch.id }
       const promises = cart.map((item) =>
@@ -172,8 +184,8 @@ export default function Sales() {
               : undefined,
             soldById: currentProfessionalId || undefined,
           },
-          { headers },
-        ),
+          { headers }
+        )
       )
 
       await Promise.all(promises)
@@ -207,7 +219,8 @@ export default function Sales() {
     }
     return (
       <span
-        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}>
+        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}
+      >
         {product.currentStock} {product.unit}
       </span>
     )
@@ -243,7 +256,8 @@ export default function Sales() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'>
+              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'
+            >
               {categories.map((category) => (
                 <option key={category} value={category}>
                   {category === 'all' ? 'Todas as categorias' : category}
@@ -254,9 +268,22 @@ export default function Sales() {
         </div>
 
         {isLoading ? (
-          <p className='text-center text-muted-foreground'>
-            Carregando produtos...
-          </p>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className='border border-gray-200 rounded-xl p-4'>
+                <div className='flex items-center justify-between mb-3'>
+                  <div className='w-12 h-12 bg-gray-200 rounded-lg animate-pulse' />
+                  <div className='h-5 w-16 bg-gray-200 rounded-full animate-pulse' />
+                </div>
+                <div className='h-5 w-24 bg-gray-200 rounded mb-1 animate-pulse' />
+                <div className='h-4 w-16 bg-gray-200 rounded mb-2 animate-pulse' />
+                <div className='flex justify-between items-center mb-3'>
+                  <div className='h-6 w-20 bg-gray-200 rounded animate-pulse' />
+                </div>
+                <div className='h-10 w-full bg-gray-200 rounded-lg animate-pulse' />
+              </div>
+            ))}
+          </div>
         ) : error ? (
           <p className='text-center text-destructive'>
             Erro ao carregar produtos
@@ -271,11 +298,13 @@ export default function Sales() {
               filteredProducts.length > 9
                 ? 'max-h-[600px] overflow-y-auto pr-2'
                 : ''
-            }`}>
+            }`}
+          >
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'>
+                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'
+              >
                 <div className='flex items-center justify-between mb-3'>
                   <div className='w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg flex items-center justify-center'>
                     <ShoppingCart className='text-primary w-5 h-5 sm:w-6 sm:h-6' />
@@ -295,7 +324,8 @@ export default function Sales() {
                 </div>
                 <button
                   onClick={() => addToCart(product)}
-                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'>
+                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'
+                >
                   <ShoppingCart className='w-4 h-4' />
                   Adicionar
                 </button>
@@ -313,7 +343,8 @@ export default function Sales() {
           <div
             className={`space-y-3 mb-4 ${
               cart.length > 5 ? 'max-h-64 overflow-y-auto pr-2' : ''
-            }`}>
+            }`}
+          >
             {cart.length === 0 ? (
               <div className='text-center py-6 sm:py-8 text-muted-foreground'>
                 <ShoppingCart className='w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50' />
@@ -326,7 +357,8 @@ export default function Sales() {
               cart.map((item) => (
                 <div
                   key={item.id}
-                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'>
+                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'
+                >
                   <div className='flex-1 min-w-0'>
                     <p className='font-medium text-foreground truncate'>
                       {item.name}
@@ -338,7 +370,8 @@ export default function Sales() {
                   <div className='flex items-center gap-1 sm:gap-2'>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
+                    >
                       <Minus className='w-3 h-3' />
                     </button>
                     <span className='w-6 sm:w-8 text-center font-semibold text-sm'>
@@ -346,12 +379,14 @@ export default function Sales() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
+                    >
                       <Plus className='w-3 h-3' />
                     </button>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'>
+                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'
+                    >
                       <Trash2 className='w-4 h-4' />
                     </button>
                   </div>
@@ -381,7 +416,8 @@ export default function Sales() {
             <button
               disabled={cart.length === 0}
               onClick={() => createSale.mutate()}
-              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'>
+              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'
+            >
               <CreditCard className='w-4 h-4' />
               Finalizar Venda
             </button>
@@ -411,7 +447,8 @@ export default function Sales() {
                 onClick={() => {
                   setEditingClient(null)
                   setOpenClientDialog(true)
-                }}>
+                }}
+              >
                 <UserPlus className='w-4 h-4' />
                 Novo Cliente
               </Button>
@@ -437,7 +474,7 @@ export default function Sales() {
             <div className='max-h-40 sm:max-h-64 overflow-y-auto text-sm border border-border rounded-lg'>
               {clients
                 .filter((c: any) =>
-                  c.name.toLowerCase().includes(clientSearch.toLowerCase()),
+                  c.name.toLowerCase().includes(clientSearch.toLowerCase())
                 )
                 .map((client: any) => (
                   <div
@@ -447,7 +484,8 @@ export default function Sales() {
                       selectedClient === client.name
                         ? 'bg-muted text-primary'
                         : 'hover:bg-gray-400'
-                    }`}>
+                    }`}
+                  >
                     {client.name}
                   </div>
                 ))}
