@@ -12,6 +12,7 @@ import {
   Scissors,
   ShoppingCart,
   X,
+  Star,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useState } from 'react'
@@ -25,7 +26,9 @@ import { useSidebar } from '@/contexts/SidebarContext'
 const menuSections = [
   {
     title: 'Principal',
-    items: [{ to: '/dashboard', icon: Home, label: 'Dashboard', roles: ['ADMIN', 'PROFESSIONAL'] }],
+    items: [
+      { to: '/dashboard', icon: Home, label: 'Dashboard', roles: ['ADMIN', 'PROFESSIONAL'] },
+    ],
   },
   {
     title: 'Atendimento',
@@ -48,12 +51,15 @@ const menuSections = [
     items: [
       { to: '/dashboard/financial', icon: TrendingUp, label: 'Financeiro', roles: ['ADMIN'] },
       { to: '/dashboard/reports', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
-      { to: '/dashboard/whatsapp', icon: MessageCircle, label: 'WhatsApp', roles: ['ADMIN'] },
+
     ],
   },
   {
     title: 'Sistema',
-    items: [{ to: '/dashboard/settings', icon: Settings, label: 'Configurações', roles: ['ADMIN', 'PROFESSIONAL'] }],
+    items: [
+      // { to: '/dashboard/fidelity', icon: Star, label: 'Fidelidade', roles: ['ADMIN', 'PROFESSIONAL'] },
+      { to: '/dashboard/settings', icon: Settings, label: 'Configurações', roles: ['ADMIN', 'PROFESSIONAL'] },
+    ],
   },
 ]
 

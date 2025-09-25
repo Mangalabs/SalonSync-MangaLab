@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Edit, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
 import {
@@ -84,14 +85,49 @@ export function ProductTable() {
   const handleAdjustment = (product: Product) => setAdjustingProduct(product)
 
   if (isLoading) {
-    return <p className='p-4 text-gray-500'>Carregando...</p>
+
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <div className="overflow-x-auto bg-white border rounded-2xl shadow-sm">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-20" /></th>
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-12" /></th>
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
+                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-12" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  <td className="py-3 px-4 flex items-center space-x-3">
+                    <Skeleton className="w-10 h-10 rounded-lg" />
+                    <Skeleton className="h-4 w-24" />
+                  </td>
+                  <td className="py-3 px-4"><Skeleton className="h-4 w-20" /></td>
+                  <td className="py-3 px-4"><Skeleton className="h-6 w-16" /></td>
+                  <td className="py-3 px-4"><Skeleton className="h-4 w-16" /></td>
+                  <td className="py-3 px-4"><Skeleton className="h-6 w-20" /></td>
+                  <td className="py-3 px-4">
+                    <div className="flex space-x-2">
+                      <Skeleton className="h-8 w-8" />
+                      <Skeleton className="h-8 w-8" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
   }
-  if (error) {
-    return <p className='p-4 text-red-500'>Erro ao carregar produtos</p>
-  }
-  if (!data?.length) {
-    return <p className='p-4 text-gray-500'>Nenhum produto encontrado</p>
-  }
+  if (error) {return <p className="p-4 text-red-500">Erro ao carregar produtos</p>}
+  if (!data?.length) {return <p className="p-4 text-gray-500">Nenhum produto encontrado</p>}
 
   const filteredProducts = data.filter(
     (p) =>

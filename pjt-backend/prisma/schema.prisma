@@ -11,6 +11,7 @@ model User {
   id             String          @id @default(uuid())
   email          String          @unique
   customerId     String?         @unique
+  accountId      String?         @unique
   password       String
   name           String?
   businessName   String?
@@ -45,9 +46,21 @@ model Branch {
   roles                 Role[]
   services              Service[]
   stockMovements        StockMovement[]
-  whatsappConfigs       WhatsAppConfig[]
-  whatsappConversations WhatsAppConversation[]
-  whatsappMessages      WhatsAppMessage[]
+
+  branchSettings        BranchSettings?
+}
+
+model BranchSettings {
+  id                String   @id @default(uuid())
+  branchId          String   @unique
+  defaultStartTime  String   @default("09:00") // Horário padrão de início
+  defaultEndTime    String   @default("18:00") // Horário padrão de fim
+  lunchStartTime    String   @default("12:00") // Início do almoço
+  lunchEndTime      String   @default("14:00") // Fim do almoço
+  appointmentDuration Int    @default(60)      // Duração padrão em minutos
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  branch            Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
 
 model Role {
@@ -64,18 +77,20 @@ model Role {
 }
 
 model Professional {
-  id                String             @id @default(uuid())
+  id                String                    @id @default(uuid())
   name              String
   role              String
-  active            Boolean            @default(true)
-  commissionRate    Decimal            @default(0) @db.Decimal(5, 2)
+  active            Boolean                   @default(true)
+  commissionRate    Decimal                   @default(0) @db.Decimal(5, 2)
   roleId            String?
   branchId          String
   appointments      Appointment[]
-  branch            Branch             @relation(fields: [branchId], references: [id])
-  customRole        Role?              @relation(fields: [roleId], references: [id])
+  branch            Branch                    @relation(fields: [branchId], references: [id])
+  customRole        Role?                     @relation(fields: [roleId], references: [id])
   recurringExpenses RecurringExpense[]
-  services          Service[]          @relation("ProfessionalServices")
+  services          Service[]                 @relation("ProfessionalServices")
+  absences          ProfessionalAbsence[]
+  workingDays       ProfessionalWorkingDay[]
 }
 
 model Service {
@@ -217,30 +232,7 @@ model RecurringExpense {
   professional   Professional?          @relation(fields: [professionalId], references: [id])
 }
 
-model WhatsAppConfig {
-  id                 String   @id @default(uuid())
-  branchId           String
-  accountSid         String
-  authTokenEncrypted String
-  whatsappNumber     String
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  branch             Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-}
 
-model WhatsAppMessage {
-  id         String   @id @default(uuid())
-  branchId   String
-  messageSid String   @unique
-  from       String
-  to         String
-  body       String
-  status     String
-  direction  String
-  createdAt  DateTime @default(now())
-  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-}
 
 model ResetLinks {
   id            String   @id @default(uuid())
@@ -259,20 +251,7 @@ enum AppointmentStatus {
   CANCELLED
 }
 
-model WhatsAppConversation {
-  id            String   @id @default(uuid())
-  branchId      String
-  phoneNumber   String
-  currentStep   String   @default("GREETING")
-  selectedData  Json?
-  lastMessageAt DateTime @default(now())
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  branch        Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  @@unique([branchId, phoneNumber])
-}
 
 enum StockMovementType {
   IN
@@ -295,3 +274,40 @@ enum PaymentMethod {
   TRANSFER
   OTHER
 }
+
+model ProfessionalAbsence {
+  id             String       @id @default(uuid())
+  professionalId String
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  type           AbsenceType  @default(VACATION)
+  isRecurring    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+}
+
+model ProfessionalWorkingDay {
+  id             String       @id @default(uuid())
+  professionalId String
+  dayOfWeek      Int          // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+  startTime      String       // Formato HH:MM
+  endTime        String       // Formato HH:MM
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, dayOfWeek])
+}
+
+enum AbsenceType {
+  VACATION
+  SICK_LEAVE
+  PERSONAL
+  TRAINING
+  OTHER
+}
+
+

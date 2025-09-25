@@ -192,7 +192,7 @@ export class AuthService {
     password: string;
     name: string;
     businessName: string;
-    branchName?: string;
+    branches?: { name: string }[];
     city: string;
     country: string;
     line1: string;
@@ -239,13 +239,21 @@ export class AuthService {
       },
     });
 
-    // Criar filial padrão
-    await this.prisma.branch.create({
-      data: {
-        name: data.branchName || 'Matriz',
+    const branchesData = data.branches?.map((branch) => {
+      return {
+        name: branch.name,
+        ownerId: user.id,
+      };
+    });
+
+    await this.prisma.branch.createMany({
+      data: branchesData || {
+        name: 'Matriz',
         ownerId: user.id,
       },
     });
+
+    const token = this.generateToken(user.id);
 
     return {
       id: user.id,
@@ -254,6 +262,7 @@ export class AuthService {
       businessName: user.businessName,
       role: user.role,
       customerId: user.customerId,
+      token,
     };
   }
 
