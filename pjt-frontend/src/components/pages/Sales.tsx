@@ -14,6 +14,14 @@ import { toast } from 'sonner'
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { ClientForm } from '@/components/custom/client/ClientForm'
 
 interface Product {
   id: string
@@ -35,13 +43,15 @@ export default function Sales() {
   const { activeBranch } = useBranch()
 
   const [carts, setCarts] = useState<{ [branchId: string]: CartItem[] }>({})
-  
   const cart = activeBranch ? carts[activeBranch.id] || [] : []
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [clientSearch, setClientSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
+
+  const [openClientDialog, setOpenClientDialog] = useState(false)
+  const [editingClient, setEditingClient] = useState<any | null>(null)
 
   useEffect(() => {
     if (!activeBranch) {return}
@@ -183,25 +193,25 @@ export default function Sales() {
   })
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-      <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-800">Catálogo de Produtos</h3>
-          <div className="flex space-x-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+    <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 p-3 sm:p-6">
+      <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800">Catálogo de Produtos</h3>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar produtos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -234,25 +244,32 @@ export default function Sales() {
         ) : !filteredProducts.length ? (
           <p className="text-center text-gray-500">Nenhum produto encontrado</p>
         ) : (
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${filteredProducts.length > 9 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+              filteredProducts.length > 9 ? 'max-h-[600px] overflow-y-auto pr-2' : ''
+            }`}
+          >
             {filteredProducts.map((product) => (
-              <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+              <div
+                key={product.id}
+                className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col"
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="text-purple-600 w-6 h-6" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <ShoppingCart className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   {getStockBadge(product)}
                 </div>
-                <h4 className="font-semibold text-gray-800 mb-1">{product.name}</h4>
+                <h4 className="font-semibold text-gray-800 mb-1 truncate">{product.name}</h4>
                 <p className="text-sm text-gray-500 mb-2">{product.category}</p>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-bold text-purple-600">
-                    R$ {Number(product.salePrice).toFixed(2).replace('.', ',')} cada
+                  <span className="text-base sm:text-lg font-bold text-purple-600">
+                    R$ {Number(product.salePrice).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
                 <button
                   onClick={() => addToCart(product)}
-                  className="w-full bg-purple-100 text-purple-700 py-2 px-4 rounded-lg font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2"
+                  className="mt-auto w-full bg-purple-100 text-purple-700 py-2 px-4 rounded-lg font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Adicionar
@@ -264,30 +281,37 @@ export default function Sales() {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
           <h4 className="font-semibold text-gray-800 mb-4">Carrinho de Compras</h4>
-          <div className={`space-y-3 mb-4 ${cart.length > 5 ? 'max-h-64 overflow-y-auto' : ''}`}>
+          <div className={`space-y-3 mb-4 ${cart.length > 5 ? 'max-h-64 overflow-y-auto pr-2' : ''}`}>
             {cart.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 text-gray-300" />
                 <p>Carrinho vazio</p>
-                <p className="text-sm">Adicione produtos para começar a venda</p>
+                <p className="text-xs sm:text-sm">Adicione produtos para começar a venda</p>
               </div>
             ) : (
               cart.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg gap-2"
+                >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-800 truncate">{item.name}</p>
-                    <p className="text-sm text-gray-500">R$ {Number(item.salePrice).toFixed(2).replace('.', ',')}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      R$ {Number(item.salePrice).toFixed(2).replace('.', ',')}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
-                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                    <span className="w-6 sm:w-8 text-center font-semibold text-sm">
+                      {item.quantity}
+                    </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200"
@@ -296,7 +320,7 @@ export default function Sales() {
                     </button>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="ml-2 text-red-500 hover:text-red-700"
+                      className="ml-1 sm:ml-2 text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -306,28 +330,26 @@ export default function Sales() {
             )}
           </div>
           <div className="border-t pt-4">
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-2 mb-4 text-sm">
+              <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal:</span>
                 <span className="font-semibold">R$ {subtotal.toFixed(2).replace('.', ',')}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between">
                 <span className="text-gray-600">Desconto:</span>
                 <span className="font-semibold">R$ 0,00</span>
               </div>
-              <div className="border-t pt-2">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-800">Total:</span>
-                  <span className="font-bold text-purple-600 text-lg">
-                    R$ {subtotal.toFixed(2).replace('.', ',')}
-                  </span>
-                </div>
+              <div className="border-t pt-2 flex justify-between text-sm sm:text-base">
+                <span className="font-semibold text-gray-800">Total:</span>
+                <span className="font-bold text-purple-600 text-base sm:text-lg">
+                  R$ {subtotal.toFixed(2).replace('.', ',')}
+                </span>
               </div>
             </div>
             <button
               disabled={cart.length === 0}
               onClick={() => createSale.mutate()}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <CreditCard className="w-4 h-4" />
               Finalizar Venda
@@ -335,45 +357,80 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h4 className="font-semibold text-gray-800 mb-4">Cliente <span className=' text-gray-400'>(Opcional)</span></h4>
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+          <h4 className="font-semibold text-gray-800 mb-4">
+            Cliente <span className="text-gray-400 text-sm">(Opcional)</span>
+          </h4>
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar cliente..."
                 value={clientSearch}
                 onChange={(e) => setClientSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               />
             </div>
-            <button className="w-full text-sm text-purple-600 hover:text-purple-800 font-medium border border-purple-200 py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors flex items-center justify-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Novo Cliente
-            </button>
-            <div className={`max-h-40 overflow-y-auto text-sm ${clients.length > 5 ? 'max-h-64' : ''}`}>
+
+            <Dialog open={openClientDialog} onOpenChange={setOpenClientDialog}>
+              <Button
+                className="w-full text-sm text-purple-600 hover:text-purple-800 font-medium border border-purple-200 py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                onClick={() => {
+                  setEditingClient(null)
+                  setOpenClientDialog(true)
+                }}
+              >
+                <UserPlus className="w-4 h-4" />
+                Novo Cliente
+              </Button>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
+                  </DialogTitle>
+                </DialogHeader>
+                <ClientForm
+                  initialData={editingClient}
+                  onSuccess={() => {
+                    setOpenClientDialog(false)
+                    queryClient.invalidateQueries({ queryKey: ['clients', activeBranch?.id] })
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+
+            <div
+              className={'max-h-40 sm:max-h-64 overflow-y-auto text-sm border border-gray-100 rounded-lg'}
+            >
               {clients
                 .filter((c: any) => c.name.toLowerCase().includes(clientSearch.toLowerCase()))
                 .map((client: any) => (
                   <div
                     key={client.id}
                     onClick={() => setSelectedClient(client.name)}
-                    className={`p-2 rounded cursor-pointer ${selectedClient === client.name ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-50'
+                    className={`p-2 rounded cursor-pointer ${
+                      selectedClient === client.name
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'hover:bg-gray-50'
                     }`}
                   >
                     {client.name}
                   </div>
                 ))}
             </div>
+
             {!selectedClient && (
-              <div className="text-center text-sm text-gray-500 py-4">
-                <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center text-sm text-gray-500 py-3 sm:py-4">
+                <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-gray-300" />
                 <p>Nenhum cliente selecionado</p>
               </div>
             )}
             {selectedClient && (
-              <p className="text-sm text-green-600 font-medium">Cliente selecionado: {selectedClient}</p>
+              <p className="text-sm text-green-600 font-medium">
+                Cliente selecionado: {selectedClient}
+              </p>
             )}
           </div>
         </div>

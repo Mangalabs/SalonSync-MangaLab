@@ -31,14 +31,21 @@ interface Props {
   dateRange: { start: string; end: string }
 }
 
-export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props) {
+export function InventoryMovementTable({
+  searchTerm,
+  filter,
+  dateRange,
+}: Props) {
   const { activeBranch } = useBranch()
   const queryClient = useQueryClient()
-  const [editingMovement, setEditingMovement] = useState<InventoryMovement | null>(null)
-  const [deletingMovement, setDeletingMovement] = useState<InventoryMovement | null>(null)
+  const [editingMovement, setEditingMovement] =
+    useState<InventoryMovement | null>(null)
+  const [deletingMovement, setDeletingMovement] =
+    useState<InventoryMovement | null>(null)
 
   const deleteMovement = useMutation({
-    mutationFn: async (movementId: string) => axios.delete(`/api/inventory/movements/${movementId}`),
+    mutationFn: async (movementId: string) =>
+      axios.delete(`/api/inventory/movements/${movementId}`),
     onSuccess: () => {
       toast.success('Movimentação excluída com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
@@ -46,7 +53,9 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
       setDeletingMovement(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao excluir movimentação')
+      toast.error(
+        error.response?.data?.message || 'Erro ao excluir movimentação',
+      )
     },
   })
 
@@ -60,7 +69,7 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
     enabled: !!activeBranch,
   })
 
-  const filteredData = data?.filter(m => {
+  const filteredData = data?.filter((m) => {
     const term = searchTerm.toLowerCase()
     const matchesSearch =
       m.product.name.toLowerCase().includes(term) ||
@@ -71,10 +80,10 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
       filter === 'all'
         ? true
         : (filter === 'entrada' && m.type === 'IN') ||
-        (filter === 'saida' && m.type === 'OUT') ||
-        (filter === 'ajuste' && m.type === 'ADJUSTMENT') ||
-        (filter === 'transferencia' && m.type === 'TRANSFER') ||
-        (filter === 'perda' && m.type === 'LOSS')
+          (filter === 'saida' && m.type === 'OUT') ||
+          (filter === 'ajuste' && m.type === 'ADJUSTMENT') ||
+          (filter === 'transferencia' && m.type === 'TRANSFER') ||
+          (filter === 'perda' && m.type === 'LOSS')
 
     const movementDate = new Date(m.createdAt)
     const startDate = dateRange.start ? new Date(dateRange.start) : null
@@ -89,14 +98,45 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
 
   const getTypeConfig = (type: string) => {
     switch (type) {
-      case 'IN': return { label: 'Entrada', color: 'text-green-600 bg-green-100', icon: ArrowDown }
-      case 'OUT': return { label: 'Saída', color: 'text-red-600 bg-red-100', icon: ArrowUp }
-      case 'ADJUSTMENT': return { label: 'Ajuste', color: 'text-yellow-600 bg-yellow-100', icon: RefreshCw }
-      case 'LOSS': return { label: 'Perda', color: 'text-orange-600 bg-orange-100', icon: RefreshCw }
-      case 'TRANSFER': return { label: 'Transferência', color: 'text-blue-600 bg-blue-100', icon: RefreshCw }
-      default: return { label: type, color: 'text-gray-600 bg-gray-100', icon: RefreshCw }
+      case 'IN':
+        return {
+          label: 'Entrada',
+          color: 'text-green-600 bg-green-100',
+          icon: ArrowDown,
+        }
+      case 'OUT':
+        return {
+          label: 'Saída',
+          color: 'text-red-600 bg-red-100',
+          icon: ArrowUp,
+        }
+      case 'ADJUSTMENT':
+        return {
+          label: 'Ajuste',
+          color: 'text-yellow-600 bg-yellow-100',
+          icon: RefreshCw,
+        }
+      case 'LOSS':
+        return {
+          label: 'Perda',
+          color: 'text-orange-600 bg-orange-100',
+          icon: RefreshCw,
+        }
+      case 'TRANSFER':
+        return {
+          label: 'Transferência',
+          color: 'text-blue-600 bg-blue-100',
+          icon: RefreshCw,
+        }
+      default:
+        return {
+          label: type,
+          color: 'text-gray-600 bg-gray-100',
+          icon: RefreshCw,
+        }
     }
   }
+
 
   if (isLoading) {
     return (
@@ -131,62 +171,89 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
   if (error) {return <p className="p-4 text-red-500">Erro ao carregar movimentações</p>}
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+    <div className='space-y-4'>
+      <div className='overflow-x-auto bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100'>
         {filteredData?.length ? (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Data/Hora</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Produto</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Tipo</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-700">Qtd</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Unit.</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Motivo</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Usuário</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-700">Ações</th>
+          <table className="min-w-full w-full table-auto border-collapse">
+            <thead className="hidden md:table-header-group">
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Data/Hora</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Produto</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Tipo</th>
+                <th className="py-3 px-4 text-right font-semibold text-gray-700">Qtd</th>
+                <th className="py-3 px-4 text-right font-semibold text-gray-700">Valor Unit.</th>
+                <th className="py-3 px-4 text-right font-semibold text-gray-700">Total</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Motivo</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Usuário</th>
+                <th className="py-3 px-4 text-center font-semibold text-gray-700">Ações</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((movement) => {
                 const config = getTypeConfig(movement.type)
                 const Icon = config.icon
+
                 return (
-                  <tr key={movement.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-sm text-gray-800">{new Date(movement.createdAt).toLocaleString('pt-BR')}</td>
-                    <td className="py-3 px-4 text-gray-800">{movement.product.name}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+                  <tr
+                    key={movement.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none"
+                  >
+                    <td className="py-2 px-3 md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Data/Hora: </span>
+                      {new Date(movement.createdAt).toLocaleString('pt-BR')}
+                    </td>
+
+                    <td className="py-2 px-3 md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Produto: </span>
+                      {movement.product.name}
+                    </td>
+
+                    <td className="py-2 px-3 md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Tipo: </span>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}>
                         <Icon className="w-3 h-3 mr-1" />
                         {config.label}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-semibold">{movement.quantity}</td>
-                    <td className="py-3 px-4 text-right text-gray-800">
+
+                    <td className="py-2 px-3 text-right md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Qtd: </span>
+                      {movement.quantity}
+                    </td>
+
+                    <td className="py-2 px-3 text-right md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Valor Unit.: </span>
                       {movement.unitCost ? `R$ ${Number(movement.unitCost).toFixed(2)}` : '-'}
                     </td>
-                    <td className="py-3 px-4 text-right text-gray-800">
+
+                    <td className="py-2 px-3 text-right md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Total: </span>
                       {movement.totalCost ? `R$ ${Number(movement.totalCost).toFixed(2)}` : '-'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{movement.reason}</td>
-                    <td className="py-3 px-4 text-gray-600">{movement.user?.name || '-'}</td>
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
-                          onClick={() => setEditingMovement(movement)}
-                        >
-                          <Edit className='w-4 h-4' />
-                        </Button>
-                        <Button
-                          className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
-                          onClick={() => setDeletingMovement(movement)}
-                        >
-                          <Trash2 className='w-4 h-4' />
-                          
-                        </Button>
-                      </div>
+
+                    <td className="py-2 px-3 md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Motivo: </span>
+                      {movement.reason}
+                    </td>
+
+                    <td className="py-2 px-3 md:table-cell block">
+                      <span className="md:hidden font-semibold text-gray-700">Usuário: </span>
+                      {movement.user?.name || '-'}
+                    </td>
+
+                    <td className="py-2 px-3 md:table-cell block flex space-x-2 mt-2 md:mt-0">
+                      <Button
+                        className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none"
+                        onClick={() => setEditingMovement(movement)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none"
+                        onClick={() => setDeletingMovement(movement)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </td>
                   </tr>
                 )
@@ -194,17 +261,23 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
             </tbody>
           </table>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <RefreshCw className="w-8 h-8 text-gray-400" />
+          <div className='text-center py-12'>
+            <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+              <RefreshCw className='w-8 h-8 text-gray-400' />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma movimentação encontrada</h3>
-            <p className="text-gray-500">Tente buscar com outro termo, período ou filtro de tipo.</p>
+            <h3 className='text-lg font-medium text-gray-900 mb-2'>
+              Nenhuma movimentação encontrada
+            </h3>
+            <p className='text-gray-500'>
+              Tente buscar com outro termo, período ou filtro de tipo.
+            </p>
           </div>
         )}
       </div>
 
-      <Dialog open={!!editingMovement} onOpenChange={() => setEditingMovement(null)}>
+      <Dialog
+        open={!!editingMovement}
+        onOpenChange={() => setEditingMovement(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Movimentação</DialogTitle>
@@ -215,17 +288,24 @@ export function InventoryMovementTable({ searchTerm, filter, dateRange }: Props)
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deletingMovement} onOpenChange={() => setDeletingMovement(null)}>
+      <AlertDialog
+        open={!!deletingMovement}
+        onOpenChange={() => setDeletingMovement(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita e irá afetar o estoque do produto.
+              Tem certeza que deseja excluir esta movimentação? Esta ação não
+              pode ser desfeita e irá afetar o estoque do produto.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deletingMovement && deleteMovement.mutate(deletingMovement.id)} disabled={deleteMovement.isPending}>
+            <AlertDialogAction
+              onClick={() =>
+                deletingMovement && deleteMovement.mutate(deletingMovement.id)
+              }
+              disabled={deleteMovement.isPending}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

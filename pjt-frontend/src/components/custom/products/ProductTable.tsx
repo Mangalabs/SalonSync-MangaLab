@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +51,9 @@ export function ProductTable() {
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null)
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null,
+  )
   const [searchTerm, setSearchTerm] = useState('')
 
   const { data, isLoading, error } = useQuery<Product[]>({
@@ -63,7 +70,9 @@ export function ProductTable() {
       await axios.delete(`/api/products/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
+      queryClient.invalidateQueries({
+        queryKey: ['products', activeBranch?.id],
+      })
       setDeletingProductId(null)
     },
     onError: (error: any) => {
@@ -73,11 +82,10 @@ export function ProductTable() {
     },
   })
 
-  const handleAdjustment = (product: Product) => {
-    setAdjustingProduct(product)
-  }
+  const handleAdjustment = (product: Product) => setAdjustingProduct(product)
 
   if (isLoading) {
+
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
@@ -121,37 +129,50 @@ export function ProductTable() {
   if (error) {return <p className="p-4 text-red-500">Erro ao carregar produtos</p>}
   if (!data?.length) {return <p className="p-4 text-gray-500">Nenhum produto encontrado</p>}
 
-  const filteredProducts = data.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredProducts = data.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex mb-4">
+    <div className='space-y-4'>
+      <div className='flex mb-4'>
         <input
-          type="text"
-          placeholder="Buscar produtos..."
+          type='text'
+          placeholder='Buscar produtos...'
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className='flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base'
         />
       </div>
 
-      <div className="overflow-x-auto bg-white border rounded-2xl shadow-sm">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Produto</th>
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Categoria</th>
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Estoque</th>
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Preço</th>
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
-              <th className="py-3 px-4 text-left font-semibold text-gray-700">Ações</th>
+      <div className='overflow-x-auto bg-white border rounded-2xl shadow-sm'>
+        <table className='min-w-full w-full table-auto border-collapse'>
+          <thead className='hidden md:table-header-group'>
+            <tr className='border-b border-gray-200 bg-gray-50'>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Produto
+              </th>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Categoria
+              </th>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Estoque
+              </th>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Preço
+              </th>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Status
+              </th>
+              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map(product => {
+            {filteredProducts.map((product) => {
               const status =
                 product.currentStock <= product.minStock
                   ? 'low'
@@ -160,44 +181,73 @@ export function ProductTable() {
                     : 'good'
 
               return (
-                <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4 flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Package className="text-purple-600 w-5 h-5" />
+                <tr
+                  key={product.id}
+                  className='border-b border-gray-100 hover:bg-gray-50 transition-colors md:table-row flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none'>
+                  <td className='py-2 px-3 flex items-center space-x-3 md:table-cell block'>
+                    <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0'>
+                      <Package className='text-purple-600 w-5 h-5' />
                     </div>
-                    <span className="font-medium text-gray-800">{product.name}</span>
+                    <div className='flex flex-col'>
+                      <span className='font-medium text-gray-800 truncate'>
+                        {product.name}
+                      </span>
+                      <span className='text-sm text-gray-500 block md:hidden'>
+                        Produto
+                      </span>
+                    </div>
                   </td>
-                  <td className="py-3 px-4 text-gray-600">{product.category}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
+
+                  <td className='py-2 px-3 text-gray-600 md:table-cell block'>
+                    <span className='md:hidden font-semibold text-gray-700'>
+                      Categoria:{' '}
+                    </span>
+                    {product.category}
+                  </td>
+
+                  <td className='py-2 px-3 md:table-cell block'>
+                    <span className='md:hidden font-semibold text-gray-700'>
+                      Estoque:{' '}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
                       {product.currentStock} {product.unit}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-semibold text-gray-800">
+
+                  <td className='py-2 px-3 font-semibold text-gray-800 md:table-cell block'>
+                    <span className='md:hidden font-semibold text-gray-700'>
+                      Preço:{' '}
+                    </span>
                     R$ {Number(product.salePrice).toFixed(2).replace('.', ',')}
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
-                      {status === 'low' ? 'Estoque Baixo' : status === 'normal' ? 'Atenção' : 'Em Estoque'}
+
+                  <td className='py-2 px-3 md:table-cell block'>
+                    <span className='md:hidden font-semibold text-gray-700'>
+                      Status:{' '}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
+                      {status === 'low'
+                        ? 'Estoque Baixo'
+                        : status === 'normal'
+                          ? 'Atenção'
+                          : 'Em Estoque'}
                     </span>
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <Button
-                        className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
-                        onClick={() => handleAdjustment(product)}
-                      >
-                        <Edit className='w-4 h-4' />
-                      </Button>
-                      <Button
-                        className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
-                        onClick={() => setDeletingProductId(product.id)}
-                        disabled={deleteProduct.isPending}
-                      >
-                        <Trash2 className='w-4 h-4' />
-                        
-                      </Button>
-                    </div>
+
+                  <td className='py-2 px-3 md:table-cell block flex space-x-2 flex-wrap mt-2 md:mt-0'>
+                    <Button
+                      className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none'
+                      onClick={() => handleAdjustment(product)}>
+                      <Edit className='w-4 h-4' />
+                    </Button>
+                    <Button
+                      className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none'
+                      onClick={() => setDeletingProductId(product.id)}
+                      disabled={deleteProduct.isPending}>
+                      <Trash2 className='w-4 h-4' />
+                    </Button>
                   </td>
                 </tr>
               )
@@ -208,9 +258,8 @@ export function ProductTable() {
 
       <Dialog
         open={!!adjustingProduct}
-        onOpenChange={() => setAdjustingProduct(null)}
-      >
-        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+        onOpenChange={() => setAdjustingProduct(null)}>
+        <DialogContent className='w-full max-w-[95vw] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Editar Produto - {adjustingProduct?.name}</DialogTitle>
           </DialogHeader>
@@ -223,21 +272,22 @@ export function ProductTable() {
 
       <AlertDialog
         open={!!deletingProductId}
-        onOpenChange={() => setDeletingProductId(null)}
-      >
-        <AlertDialogContent>
+        onOpenChange={() => setDeletingProductId(null)}>
+        <AlertDialogContent className='max-w-[95vw]'>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este produto? Esta ação não pode
+              ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingProductId && deleteProduct.mutate(deletingProductId)}
-              disabled={deleteProduct.isPending}
-            >
+              onClick={() =>
+                deletingProductId && deleteProduct.mutate(deletingProductId)
+              }
+              disabled={deleteProduct.isPending}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
