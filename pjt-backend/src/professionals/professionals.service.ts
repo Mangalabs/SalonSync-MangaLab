@@ -16,7 +16,7 @@ export class ProfessionalsService extends BaseDataService {
     super(prisma);
   }
 
-  async findAll(user: UserContext): Promise<Professional[]> {
+  async findAll(user: UserContext, include?: string): Promise<Professional[]> {
     let branchIds: string[];
 
     // Se branchId específico foi fornecido, usar apenas ele
@@ -35,6 +35,8 @@ export class ProfessionalsService extends BaseDataService {
       branchIds = await this.getUserBranchIds(user);
     }
 
+    const includeWorkingDays = include?.includes('workingDays');
+    
     return this.prisma.professional.findMany({
       where: { branchId: { in: branchIds } },
       include: {
@@ -44,6 +46,17 @@ export class ProfessionalsService extends BaseDataService {
         customRole: {
           select: { id: true, title: true, commissionRate: true },
         },
+        ...(includeWorkingDays && {
+          workingDays: {
+            where: { isActive: true },
+            select: {
+              dayOfWeek: true,
+              startTime: true,
+              endTime: true,
+              isActive: true,
+            },
+          },
+        }),
       },
     });
   }

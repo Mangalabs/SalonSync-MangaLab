@@ -25,6 +25,7 @@ export class ProfessionalsController {
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
   findAll(
     @Query('branchId') branchId: string,
+    @Query('include') include: string,
     @Req() req: AuthenticatedRequest,
   ) {
     // Para admin, usar branchId do query se fornecido, senão usar do contexto
@@ -35,7 +36,7 @@ export class ProfessionalsController {
       id: req.user.id,
       role: req.user.role,
       branchId: targetBranchId,
-    });
+    }, include);
   }
 
   @Get(':id')

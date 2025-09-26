@@ -83,20 +83,13 @@ export function ProfessionalAbsenceManagement() {
     },
   })
 
-  const { data: absences = [], isLoading, refetch } = useQuery<Absence[]>({
+  const { data: absences = [], isLoading } = useQuery<Absence[]>({
     queryKey: ['professional-absences'],
     queryFn: async () => {
-      try {
-        const res = await axios.get('/api/professionals/absences')
-        return res.data
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          return []
-        }
-        throw error
-      }
+      // Como o endpoint não existe ainda, retornar array vazio
+      return []
     },
-    retry: false,
+    enabled: false, // Desabilitar a query até o endpoint ser implementado
   })
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<AbsenceFormData>({
@@ -105,35 +98,33 @@ export function ProfessionalAbsenceManagement() {
 
   const createAbsence = useMutation({
     mutationFn: async (data: AbsenceFormData) => {
-      if (editingAbsence) {
-        await axios.patch(`/api/professionals/absences/${editingAbsence.id}`, data)
-      } else {
-        await axios.post('/api/professionals/absences', data)
-      }
+      // Simular sucesso até o endpoint ser implementado
+      console.log('Dados da ausência:', data)
+      return Promise.resolve()
     },
     onSuccess: () => {
-      toast.success(editingAbsence ? 'Ausência atualizada!' : 'Ausência registrada!')
+      toast.success('Funcionalidade em desenvolvimento')
       reset()
       setShowForm(false)
       setEditingAbsence(null)
-      queryClient.invalidateQueries({ queryKey: ['professional-absences'] })
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao salvar ausência')
+    onError: () => {
+      toast.error('Funcionalidade em desenvolvimento')
     },
   })
 
   const deleteAbsence = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/professionals/absences/${id}`)
+      // Simular sucesso até o endpoint ser implementado
+      console.log('Removendo ausência:', id)
+      return Promise.resolve()
     },
     onSuccess: () => {
-      toast.success('Ausência removida!')
-      queryClient.invalidateQueries({ queryKey: ['professional-absences'] })
+      toast.success('Funcionalidade em desenvolvimento')
       setDeletingAbsence(null)
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao remover ausência')
+    onError: () => {
+      toast.error('Funcionalidade em desenvolvimento')
     },
   })
 
