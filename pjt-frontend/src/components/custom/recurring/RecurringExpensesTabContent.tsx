@@ -83,12 +83,9 @@ export function RecurringExpensesTabContent() {
     queryKey: ['salary-expenses-preview', branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (branchFilter !== 'all') {
-        params.append('branchId', branchFilter)
-      }
+      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
       const res = await axios.get(`/api/professionals?${params}`)
-      const professionals = res.data
-      return professionals
+      return res.data
         .filter((prof: any) => prof.customRole?.baseSalary || prof.baseSalary)
         .map((prof: any) => ({
           id: prof.id,
@@ -109,20 +106,20 @@ export function RecurringExpensesTabContent() {
       return {
         status: 'upcoming',
         label: 'Próxima',
-        color: 'bg-blue-100 text-blue-800',
+        color: 'bg-muted text-foreground',
       }
     }
     if (today >= receiptDay && today <= dueDay) {
       return {
         status: 'active',
         label: 'Ativa',
-        color: 'bg-orange-100 text-orange-800',
+        color: 'bg-accent text-accent-foreground',
       }
     }
     return {
       status: 'overdue',
       label: 'Vencida',
-      color: 'bg-red-100 text-red-800',
+      color: 'bg-destructive text-destructive-foreground',
     }
   }
 
@@ -132,20 +129,16 @@ export function RecurringExpensesTabContent() {
       return {
         status: 'upcoming',
         label: 'Próximo',
-        color: 'bg-blue-100 text-blue-800',
+        color: 'bg-muted text-foreground',
       }
     }
     if (today === payDay) {
-      return {
-        status: 'due',
-        label: 'Hoje',
-        color: 'bg-green-100 text-green-800',
-      }
+      return { status: 'due', label: 'Hoje', color: 'bg-primary text-primary' }
     }
     return {
       status: 'overdue',
       label: 'Pendente',
-      color: 'bg-red-100 text-red-800',
+      color: 'bg-destructive text-destructive-foreground',
     }
   }
 
@@ -225,36 +218,37 @@ export function RecurringExpensesTabContent() {
 
   return (
     <div className='space-y-6'>
+      {/* Cards resumo */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
         {[
           {
             title: 'Total Mensal',
             value: grandTotal,
-            color: 'text-red-600',
+            color: 'text-foreground',
             subtitle: 'Despesas fixas estimadas',
           },
           {
             title: 'Salários',
             value: totalSalaries,
-            color: 'text-purple-600',
+            color: 'text-foreground',
             subtitle: `${salaryExpenses.length} itens`,
           },
           {
             title: 'Despesas Fixas',
             value: totalRecurring,
-            color: 'text-orange-600',
+            color: 'text-foreground',
             subtitle: `${recurringExpenses.length} itens`,
           },
           {
             title: 'Total de Itens',
             value: grandTotal,
-            color: 'text-gray-600',
+            color: 'text-foreground',
             subtitle: 'Salários + Despesas',
           },
         ].map((card, idx) => (
-          <Card key={idx}>
+          <Card key={idx} className='bg-card shadow-sm'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+              <CardTitle className='text-sm font-medium text-foreground'>
                 {card.title}
               </CardTitle>
             </CardHeader>
@@ -262,7 +256,9 @@ export function RecurringExpensesTabContent() {
               <div className={`text-2xl font-bold ${card.color}`}>
                 {formatCurrency(card.value)}
               </div>
-              <p className='text-xs text-gray-500 mt-1'>{card.subtitle}</p>
+              <p className='text-xs text-muted-foreground mt-1'>
+                {card.subtitle}
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -275,24 +271,30 @@ export function RecurringExpensesTabContent() {
               const labels: any = {
                 upcoming: {
                   label: 'Próximas',
-                  color: 'bg-blue-50 text-blue-700',
+                  color: 'bg-muted text-foreground',
                 },
                 active: {
                   label: 'Ativas',
-                  color: 'bg-orange-50 text-orange-700',
+                  color: 'bg-accent text-accent-foreground',
                 },
-                due: { label: 'Hoje', color: 'bg-green-50 text-green-700' },
-                overdue: { label: 'Vencidas', color: 'bg-red-50 text-red-700' },
+                due: {
+                  label: 'Hoje',
+                  color: 'bg-primary text-primary-foreground',
+                },
+                overdue: {
+                  label: 'Vencidas',
+                  color: 'pt-6 bg-destructive/40 text-destructive-foreground',
+                },
               }
               const info = labels[status] || {
                 label: status,
-                color: 'bg-gray-50 text-gray-700',
+                color: 'bg-muted pt-5 text-foreground',
               }
               return (
-                <Card key={status} className={`${info.color}`}>
+                <Card key={status} className={`shadow-sm ${info.color}`}>
                   <CardContent>
                     <div className='font-medium text-sm'>{info.label}</div>
-                    <div className='text-xs text-gray-600'>
+                    <div className='text-xs text-muted-foreground'>
                       {data.count} itens
                     </div>
                     <div className='font-semibold'>
@@ -306,20 +308,22 @@ export function RecurringExpensesTabContent() {
         </div>
       )}
 
-      <Card>
+      <Card className='bg-card shadow-sm'>
         <CardHeader>
           <div className='flex items-center justify-between'>
-            <CardTitle className='text-lg'>Despesas Detalhadas</CardTitle>
+            <CardTitle className='text-lg text-foreground'>
+              Despesas Detalhadas
+            </CardTitle>
             <Button
               variant='outline'
               size='sm'
               onClick={() => setShowFilters(!showFilters)}>
-              <Filter className='h-4 w-4 mr-2' />
+              <Filter className='h-4 w-4 mr-2 text-foreground' />
               Filtros
               {showFilters ? (
-                <ChevronUp className='h-4 w-4 ml-2' />
+                <ChevronUp className='h-4 w-4 ml-2 text-foreground' />
               ) : (
-                <ChevronDown className='h-4 w-4 ml-2' />
+                <ChevronDown className='h-4 w-4 ml-2 text-foreground' />
               )}
             </Button>
           </div>
@@ -333,7 +337,6 @@ export function RecurringExpensesTabContent() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder='Tipo' />
@@ -389,20 +392,24 @@ export function RecurringExpensesTabContent() {
         {filteredExpenses.length > 0 ? (
           <div className='rounded-md overflow-x-auto'>
             <Table className='min-w-full text-xs sm:text-sm'>
-              <TableHeader className='sticky top-0 bg-white z-10 shadow-sm'>
+              <TableHeader className='sticky top-0 bg-card z-10 shadow-sm'>
                 <TableRow>
-                  <TableHead className='w-[60px] sm:w-[90px]'>Tipo</TableHead>
-                  <TableHead className='w-[100px] sm:w-[150px]'>Nome</TableHead>
-                  <TableHead className='hidden sm:table-cell w-[80px] sm:w-[120px]'>
+                  <TableHead className='w-[60px] sm:w-[90px] text-foreground'>
+                    Tipo
+                  </TableHead>
+                  <TableHead className='w-[100px] sm:w-[150px] text-foreground'>
+                    Nome
+                  </TableHead>
+                  <TableHead className='hidden sm:table-cell w-[80px] sm:w-[120px] text-foreground'>
                     Categoria
                   </TableHead>
-                  <TableHead className='hidden md:table-cell w-[80px] sm:w-[120px]'>
+                  <TableHead className='hidden md:table-cell w-[80px] sm:w-[120px] text-foreground'>
                     Status
                   </TableHead>
-                  <TableHead className='text-right w-[70px] sm:w-[100px]'>
+                  <TableHead className='text-right w-[70px] sm:w-[100px] text-foreground'>
                     Valor
                   </TableHead>
-                  <TableHead className='text-right w-[60px] sm:w-[90px]'>
+                  <TableHead className='text-right w-[60px] sm:w-[90px] text-foreground'>
                     Ações
                   </TableHead>
                 </TableRow>
@@ -418,11 +425,11 @@ export function RecurringExpensesTabContent() {
                     <TableRow
                       key={expense.id}
                       className='whitespace-nowrap h-6 sm:h-7 md:h-10'>
-                      <TableCell className='py-0.5 px-1 text-[10px] sm:text-[11px] md:text-sm'>
+                      <TableCell className='py-0.5 px-1 text-[10px] sm:text-[11px] md:text-sm text-foreground'>
                         {isSalary ? 'Salário' : 'Despesa Fixa'}
                       </TableCell>
 
-                      <TableCell className='max-w-[90px] sm:max-w-[150px] md:max-w-[250px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
+                      <TableCell className='max-w-[90px] sm:max-w-[150px] md:max-w-[250px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3 text-foreground'>
                         <p className='truncate' title={expense.name}>
                           {expense.name}
                         </p>
@@ -446,7 +453,7 @@ export function RecurringExpensesTabContent() {
                         </span>
                       </TableCell>
 
-                      <TableCell className='text-right font-semibold text-[10px] sm:text-[11px] md:text-sm py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
+                      <TableCell className='text-right font-semibold text-[10px] sm:text-[11px] md:text-sm py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3 text-foreground'>
                         {formatCurrency(
                           Number(
                             isSalary
@@ -456,21 +463,19 @@ export function RecurringExpensesTabContent() {
                         )}
                       </TableCell>
 
-                      <TableCell className='text-right py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
-                        <div className='flex items-center justify-end gap-0.5 sm:gap-1 md:gap-2'>
-                          <Button
-                            size='icon'
-                            className='p-0.5 sm:p-0.5 md:p-1 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
-                            onClick={() => setEditingExpense(expense)}>
-                            <Edit className='w-2 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4' />
-                          </Button>
-                          <Button
-                            size='icon'
-                            className='p-0.5 sm:p-0.5 md:p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
-                            onClick={() => setDeletingExpense(expense)}>
-                            <Trash2 className='w-2 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4' />
-                          </Button>
-                        </div>
+                      <TableCell className='text-right py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3 flex items-center justify-end gap-1'>
+                        <Button
+                          size='icon'
+                          className='p-0.5 sm:p-0.5 md:p-1 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
+                          onClick={() => setEditingExpense(expense)}>
+                          <Edit className='w-4 h-4' />
+                        </Button>
+                        <Button
+                          size='icon'
+                          className='p-0.5 sm:p-0.5 md:p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
+                          onClick={() => setDeletingExpense(expense)}>
+                          <Trash2 className='w-4 h-4' />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )
@@ -479,7 +484,7 @@ export function RecurringExpensesTabContent() {
             </Table>
           </div>
         ) : (
-          <div className='space-y-2 text-center text-gray-500'>
+          <div className='space-y-2 text-center text-muted-foreground'>
             <p>Nenhuma despesa encontrada com os filtros aplicados</p>
           </div>
         )}
@@ -490,7 +495,9 @@ export function RecurringExpensesTabContent() {
         onOpenChange={() => setEditingExpense(null)}>
         <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Editar Despesa Fixa</DialogTitle>
+            <DialogTitle className='text-foreground'>
+              Editar Despesa Fixa
+            </DialogTitle>
           </DialogHeader>
           {editingExpense && (
             <RecurringExpenseForm
@@ -506,8 +513,10 @@ export function RecurringExpensesTabContent() {
         onOpenChange={() => setDeletingExpense(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className='text-foreground'>
+              Confirmar Exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription className='text-muted-foreground'>
               Tem certeza que deseja excluir a despesa fixa "
               {deletingExpense?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
@@ -516,29 +525,27 @@ export function RecurringExpensesTabContent() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDeleteExpense(deletingExpense)}
-              className='bg-red-600 hover:bg-red-700'>
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/80'>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Card>
-        <CardContent className='p-4'>
-          <div className='text-xs text-gray-600 space-y-1'>
-            <p>
-              💡 <strong>Salários:</strong> Gerados automaticamente no dia
-              configurado (salário base + comissões do mês)
-            </p>
-            <p>
-              📅 <strong>Despesas Fixas:</strong> Período entre data de
-              recebimento e vencimento
-            </p>
-            <p>
-              🔄 <strong>Status:</strong> Baseado no dia atual em relação às
-              datas configuradas
-            </p>
-          </div>
+      <Card className='bg-card shadow-sm'>
+        <CardContent className='p-4 text-xs text-muted-foreground space-y-1'>
+          <p>
+            💡 <strong>Salários:</strong> Gerados automaticamente no dia
+            configurado (salário base + comissões do mês)
+          </p>
+          <p>
+            📅 <strong>Despesas Fixas:</strong> Período entre data de
+            recebimento e vencimento
+          </p>
+          <p>
+            🔄 <strong>Status:</strong> Baseado no dia atual em relação às datas
+            configuradas
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -16,25 +16,33 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<any | null>(null)
 
   return (
-    <div className="container mx-auto px-3 sm:px-6 py-4 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1A1A1A]">
+    <div
+      className='container mx-auto px-3 sm:px-6 py-4 space-y-6'
+      style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3'>
+        <h1
+          className='text-xl sm:text-2xl font-bold'
+          style={{ color: 'var(--color-text)' }}>
           Clientes
         </h1>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition-opacity"
+              className='bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-60 transition-opacity cursor-pointer'
+              style={{
+                backgroundColor: 'var(--color-button-bg)',
+                color: 'var(--color-button-text)',
+              }}
               onClick={() => {
                 setEditingClient(null)
                 setOpen(true)
-              }}
-            >
+              }}>
               + Novo cliente
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95%] sm:max-w-lg">
+          <DialogContent
+            className='w-[95%] sm:max-w-lg '>
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
@@ -48,7 +56,13 @@ export default function Clients() {
         </Dialog>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
+      <div
+        className='overflow-x-auto rounded-2xl shadow-sm border'
+        style={{
+          backgroundColor: 'var(--color-card)',
+          borderColor: 'var(--color-border)',
+          boxShadow: '0 2px 8px var(--color-shadow)',
+        }}>
         <ClientTable
           onEdit={(client) => {
             setEditingClient(client)

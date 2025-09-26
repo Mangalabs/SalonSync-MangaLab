@@ -38,7 +38,7 @@ export function ExportButton({ onExport, disabled }: ExportButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button
           disabled={disabled || isExporting}
-          className="w-full bg-gradient-to-r from-black to-gray-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm"
+          className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm cursor-pointer"
         >
           <Download className="h-4 w-4" />
           {isExporting ? 'Exportando...' : 'Exportar'}

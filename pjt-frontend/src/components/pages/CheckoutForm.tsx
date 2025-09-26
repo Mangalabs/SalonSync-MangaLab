@@ -30,7 +30,7 @@ function Form() {
       <div>
         <Button
           type="submit"
-          className="w-full mt-4"
+          className="w-full mt-4 cursor-pointer"
           disabled={loading}
           onClick={handleClick}
         >

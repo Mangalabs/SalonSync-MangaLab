@@ -110,71 +110,74 @@ export function InventoryMovementTable({
   })
 
   const getTypeConfig = (type: string) => {
+    const base = {
+      color: 'bg-accent text-accent-foreground',
+      icon: RefreshCw,
+    }
+
     switch (type) {
       case 'IN':
-        return {
-          label: 'Entrada',
-          color: 'text-green-600 bg-green-100',
-          icon: ArrowDown,
-        }
+        return { label: 'Entrada', ...base, icon: ArrowDown }
       case 'OUT':
-        return {
-          label: 'Saída',
-          color: 'text-red-600 bg-red-100',
-          icon: ArrowUp,
-        }
+        return { label: 'Saída', ...base, icon: ArrowUp }
       case 'ADJUSTMENT':
-        return {
-          label: 'Ajuste',
-          color: 'text-yellow-600 bg-yellow-100',
-          icon: RefreshCw,
-        }
+        return { label: 'Ajuste', ...base }
       case 'LOSS':
-        return {
-          label: 'Perda',
-          color: 'text-orange-600 bg-orange-100',
-          icon: RefreshCw,
-        }
+        return { label: 'Perda', ...base }
       case 'TRANSFER':
-        return {
-          label: 'Transferência',
-          color: 'text-blue-600 bg-blue-100',
-          icon: RefreshCw,
-        }
+        return { label: 'Transferência', ...base }
       default:
-        return {
-          label: type,
-          color: 'text-gray-600 bg-gray-100',
-          icon: RefreshCw,
-        }
+        return { label: type, ...base }
     }
   }
 
-  if (isLoading)
-  {return <p className='p-4 text-center text-gray-500'>Carregando...</p>}
-  if (error)
-  {return (
-    <p className='p-4 text-center text-red-500'>
-      Erro ao carregar movimentações
-    </p>
-  )}
+  if (isLoading) {
+    return (
+      <p className='p-4 text-center text-muted-foreground'>Carregando...</p>
+    )
+  }
+  if (error) {
+    return (
+      <p className='p-4 text-center text-destructive'>
+        Erro ao carregar movimentações
+      </p>
+    )
+  }
 
   return (
     <div className='space-y-4'>
-      <div className='overflow-x-auto bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100'>
+      <div className='overflow-x-auto bg-card rounded-2xl p-4 sm:p-6 shadow-sm border border-border'>
         {filteredData?.length ? (
-          <table className="min-w-full w-full table-auto border-collapse">
-            <thead className="hidden md:table-header-group">
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Data/Hora</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Produto</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Tipo</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Qtd</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Valor Unit.</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Total</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Motivo</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Usuário</th>
-                <th className="py-3 px-4 text-center font-semibold text-gray-700">Ações</th>
+          <table className='min-w-full w-full border-collapse'>
+            <thead className='hidden md:table-header-group'>
+              <tr className='border-b border-border bg-muted'>
+                <th className='py-3 px-4 text-left font-semibold text-foreground'>
+                  Data/Hora
+                </th>
+                <th className='py-3 px-4 text-left font-semibold text-foreground'>
+                  Produto
+                </th>
+                <th className='py-3 px-4 text-left font-semibold text-foreground'>
+                  Tipo
+                </th>
+                <th className='py-3 px-4 text-right font-semibold text-foreground'>
+                  Qtd
+                </th>
+                <th className='py-3 px-4 text-right font-semibold text-foreground'>
+                  Valor Unit.
+                </th>
+                <th className='py-3 px-4 text-right font-semibold text-foreground'>
+                  Total
+                </th>
+                <th className='py-3 px-4 text-left font-semibold text-foreground'>
+                  Motivo
+                </th>
+                <th className='py-3 px-4 text-left font-semibold text-foreground'>
+                  Usuário
+                </th>
+                <th className='py-3 px-4 text-center font-semibold text-foreground'>
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -185,63 +188,69 @@ export function InventoryMovementTable({
                 return (
                   <tr
                     key={movement.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none"
-                  >
-                    <td className="py-2 px-3 md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Data/Hora: </span>
+                    className='border-b border-border hover:bg-muted transition-colors md:table-row block md:border-0 md:hover:bg-transparent mb-4 md:mb-0 rounded-lg md:rounded-none'>
+                    <td className='py-2 px-3 md:table-cell block'>
+                      <span className='md:hidden font-semibold'>
+                        Data/Hora:{' '}
+                      </span>
                       {new Date(movement.createdAt).toLocaleString('pt-BR')}
                     </td>
 
-                    <td className="py-2 px-3 md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Produto: </span>
+                    <td className='py-2 px-3 md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Produto: </span>
                       {movement.product.name}
                     </td>
 
-                    <td className="py-2 px-3 md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Tipo: </span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}>
-                        <Icon className="w-3 h-3 mr-1" />
+                    <td className='py-2 px-3 md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Tipo: </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${config.color}`}>
+                        <Icon className='w-3 h-3 mr-1' />
                         {config.label}
                       </span>
                     </td>
 
-                    <td className="py-2 px-3 text-right md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Qtd: </span>
+                    <td className='py-2 px-3 text-right md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Qtd: </span>
                       {movement.quantity}
                     </td>
 
-                    <td className="py-2 px-3 text-right md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Valor Unit.: </span>
-                      {movement.unitCost ? `R$ ${Number(movement.unitCost).toFixed(2)}` : '-'}
+                    <td className='py-2 px-3 text-right md:table-cell block'>
+                      <span className='md:hidden font-semibold'>
+                        Valor Unit.:{' '}
+                      </span>
+                      {movement.unitCost
+                        ? `R$ ${Number(movement.unitCost).toFixed(2)}`
+                        : '-'}
                     </td>
 
-                    <td className="py-2 px-3 text-right md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Total: </span>
-                      {movement.totalCost ? `R$ ${Number(movement.totalCost).toFixed(2)}` : '-'}
+                    <td className='py-2 px-3 text-right md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Total: </span>
+                      {movement.totalCost
+                        ? `R$ ${Number(movement.totalCost).toFixed(2)}`
+                        : '-'}
                     </td>
 
-                    <td className="py-2 px-3 md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Motivo: </span>
+                    <td className='py-2 px-3 md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Motivo: </span>
                       {movement.reason}
                     </td>
 
-                    <td className="py-2 px-3 md:table-cell block">
-                      <span className="md:hidden font-semibold text-gray-700">Usuário: </span>
+                    <td className='py-2 px-3 md:table-cell block'>
+                      <span className='md:hidden font-semibold'>Usuário: </span>
                       {movement.user?.name || '-'}
                     </td>
 
-                    <td className="py-2 px-3 md:table-cell block flex space-x-2 mt-2 md:mt-0">
+                    <td className='py-2 px-3 md:table-cell block flex space-x-2 mt-2 md:mt-0'>
                       <Button
-                        className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none"
-                        onClick={() => setEditingMovement(movement)}
-                      >
-                        <Edit className="w-4 h-4" />
+                        className='p-2 text-green-600 bg-green-200 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
+                        onClick={() => setEditingMovement(movement)}>
+                        <Edit className='w-4 h-4' />
                       </Button>
                       <Button
-                        className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none"
-                        onClick={() => setDeletingMovement(movement)}
-                      >
-                        <Trash2 className="w-4 h-4" />
+                        className='p-2 text-red-600 bg-red-200 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
+                        onClick={() => setDeletingMovement(movement)}>
+                        <Trash2 className='w-4 h-4' />
                       </Button>
                     </td>
                   </tr>
@@ -251,13 +260,13 @@ export function InventoryMovementTable({
           </table>
         ) : (
           <div className='text-center py-12'>
-            <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <RefreshCw className='w-8 h-8 text-gray-400' />
+            <div className='w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4'>
+              <RefreshCw className='w-8 h-8 text-muted-foreground' />
             </div>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>
+            <h3 className='text-lg font-medium text-foreground mb-2'>
               Nenhuma movimentação encontrada
             </h3>
-            <p className='text-gray-500'>
+            <p className='text-muted-foreground'>
               Tente buscar com outro termo, período ou filtro de tipo.
             </p>
           </div>

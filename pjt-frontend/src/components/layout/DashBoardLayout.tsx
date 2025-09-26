@@ -26,12 +26,25 @@ function DashboardContent() {
     <div className="flex">
       <Sidebar />
 
-      <main className="flex-1 min-h-screen ml-0 lg:ml-64 bg-gray-50 relative">
-        <div className="fixed top-0 left-0 right-0 z-40 lg:ml-64">
+      <main
+        className="flex-1 min-h-screen ml-0 lg:ml-64 relative transition-colors duration-300"
+        style={{
+          backgroundColor: 'var(--color-bg-secondary)',
+          color: 'var(--color-text)',
+        }}
+      >
+        <div
+          className="fixed top-0 left-0 right-0 z-40 lg:ml-64"
+          style={{
+            backgroundColor: 'var(--color-bg)',
+            borderBottom: '1px solid var(--color-border)',
+            boxShadow: '0 2px 4px var(--color-shadow)',
+          }}
+        >
           <Header />
         </div>
 
-        <div className="p-3 md:p-6 mt-27">
+        <div className="p-3 md:p-6 mt-20">
           <Outlet />
         </div>
       </main>

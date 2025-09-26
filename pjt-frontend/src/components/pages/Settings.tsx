@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Save, Info, Shield } from 'lucide-react'
+import {
+  User,
+  Save,
+  Info,
+  Shield,
+  Palette,
+  CheckCircle,
+  Sun,
+  Moon,
+} from 'lucide-react'
 
 import axios from '@/lib/axios'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +22,7 @@ import { Label } from '@/components/ui/label'
 import { SubscriptionManagement } from '@/components/custom/management/SubscriptionManagement'
 import { BranchManagement } from '@/components/custom/branch/BranchManagement'
 import { useUser } from '@/contexts/UserContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,13 +38,33 @@ import {
 const userSchema = z.object({
   phone: z.string().optional(),
 })
-
 type UserFormData = z.infer<typeof userSchema>
 
+const modeOptions = [
+  { value: 'light', name: 'Claro', icon: Sun },
+  { value: 'dark', name: 'Escuro', icon: Moon },
+]
+
+const themeOptions = [
+  {
+    value: 'neutral',
+    name: 'Neutro',
+    description: 'Tons de preto, cinza e branco',
+    icon: Palette,
+    colors: ['#000000', '#666666', '#FFFFFF'],
+  },
+]
+
 export default function Settings() {
+  const { theme, mode, setTheme, setMode } = useTheme()
   const queryClient = useQueryClient()
   const { isAdmin } = useUser()
   const [resetSuccess, setResetSuccess] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.setAttribute('data-mode', mode)
+  }, [theme, mode])
 
   const { data: user } = useQuery({
     queryKey: ['user-profile'],
@@ -74,11 +104,11 @@ export default function Settings() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 mt-4'>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <Card>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
+            <CardTitle className='flex items-center gap-2 text-card-foreground'>
               <User className='h-5 w-5' />
               Dados Editáveis
             </CardTitle>
@@ -88,13 +118,16 @@ export default function Settings() {
               onSubmit={userForm.handleSubmit(onUserSubmit)}
               className='space-y-4'>
               <div>
-                <Label htmlFor='phone'>Telefone</Label>
+                <Label htmlFor='phone' className='text-card-foreground'>
+                  Telefone
+                </Label>
                 <Input
                   id='phone'
                   {...userForm.register('phone')}
                   placeholder='(11) 99999-9999'
+                  className='bg-input text-foreground border-border'
                 />
-                <p className='text-xs text-gray-500 mt-1'>
+                <p className='text-xs text-muted-foreground mt-1'>
                   Telefone de contato da empresa
                 </p>
               </div>
@@ -102,15 +135,17 @@ export default function Settings() {
               <Button
                 type='submit'
                 disabled={updateUser.isPending}
-                className='flex items-center gap-2'>
+                className='flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/80 cursor-pointer'>
                 <Save className='h-4 w-4' />
                 {updateUser.isPending ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
             </form>
 
-            <div className='mt-6 pt-6 border-t'>
-              <h4 className='font-medium text-gray-900 mb-3'>Dados Fixos</h4>
-              <div className='space-y-2 text-sm text-gray-600'>
+            <div className='mt-6 pt-6 border-t border-border'>
+              <h4 className='font-medium text-card-foreground mb-3'>
+                Dados Fixos
+              </h4>
+              <div className='space-y-2 text-sm text-muted-foreground'>
                 <p>
                   <strong>Nome:</strong> {user?.name || 'Não informado'}
                 </p>
@@ -129,7 +164,7 @@ export default function Settings() {
                   </p>
                 )}
               </div>
-              <p className='text-xs text-gray-500 mt-3'>
+              <p className='text-xs text-muted-foreground mt-3'>
                 Para alterar estes dados, entre em contato com o{' '}
                 {isAdmin ? 'suporte' : 'administrador'}.
               </p>
@@ -137,48 +172,57 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-          <h3 className='text-lg font-semibold text-gray-800 mb-6'>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h3 className='text-lg font-semibold text-card-foreground mb-6'>
             Configurações do Sistema
           </h3>
 
           <div className='space-y-6'>
             <div>
-              <h4 className='font-semibold text-gray-800 mb-4'>
+              <h4 className='font-semibold text-card-foreground mb-4'>
                 Backup e Segurança
               </h4>
               <div className='space-y-3'>
-                <div className='p-4 border border-gray-200 rounded-xl'>
+                <div className='p-4 border border-border rounded-xl'>
                   <div className='flex items-center justify-between mb-2'>
-                    <span className='font-medium'>Alterar Senha</span>
+                    <span className='font-medium text-card-foreground'>
+                      Alterar Senha
+                    </span>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button size='sm'>Alterar</Button>
+                        <Button
+                          size='sm'
+                          className='bg-secondary text-secondary-foreground hover:bg-secondary/80 cursor-pointer'>
+                          Alterar
+                        </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className='bg-card text-card-foreground border-border'>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <AlertDialogDescription className='text-muted-foreground'>
                             Enviaremos as instruções para redefinir sua senha no
                             email <strong>{user?.email}</strong>.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Não</AlertDialogCancel>
+                          <AlertDialogCancel className='bg-muted text-muted-foreground hover:bg-muted/80'>
+                            Não
+                          </AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => resetPasswordMutation.mutate()}>
+                            onClick={() => resetPasswordMutation.mutate()}
+                            className='bg-primary text-primary-foreground hover:bg-primary/80'>
                             Sim
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                  <p className='text-sm text-gray-500'>
+                  <p className='text-sm text-muted-foreground'>
                     Última alteração: 30 dias atrás
                   </p>
                   {resetSuccess && (
-                    <p className='text-sm text-green-600 mt-2'>
+                    <p className='text-sm text-secondary mt-2'>
                       Instruções enviadas para {user?.email}
                     </p>
                   )}
@@ -187,35 +231,29 @@ export default function Settings() {
             </div>
 
             <div>
-              <h4 className='font-semibold text-gray-800 mb-4'>Integrações</h4>
+              <h4 className='font-semibold text-card-foreground mb-4'>
+                Integrações
+              </h4>
               <div className='space-y-3'>
-                {/* {integrations.map((integration, index) => ( */}
-                <div className='flex items-center justify-between p-4 border border-gray-200 rounded-xl'>
+                <div className='flex items-center justify-between p-4 border border-border rounded-xl'>
                   <div className='flex items-center space-x-3'>
-                    <div className='w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center'>
-                      {/* <integration.icon className={`w-5 h-5 text-${integration.color}-600`} /> */}
-                    </div>
+                    <div className='w-10 h-10 bg-muted rounded-lg flex items-center justify-center'></div>
                     <div>
-                      {/* <span className="font-medium">{integration.name}</span> */}
-                      <p className='text-sm text-gray-500'>
-                        {/* {integration.status === 'connected' ? 'Conectado' : 'Não configurado'} */}
+                      <p className='text-sm text-muted-foreground'>
                       </p>
                     </div>
                   </div>
-                  {/* {integration.status === 'connected' ? ( */}
-                  <div className='w-3 h-3 bg-green-500 rounded-full'></div>
-                  {/* ) : ( */}
-                  <button className='text-sm text-purple-600 hover:text-purple-800 font-medium'>
+                  <div className='w-3 h-3 bg-secondary rounded-full'></div>
+                  <button className='text-sm font-medium text-primary hover:text-primary/80 cursor-pointer'>
                     Configurar
                   </button>
-                  {/* )} */}
                 </div>
-                {/* ))} */}
               </div>
             </div>
           </div>
         </div>
       </div>
+
       {isAdmin && (
         <>
           <BranchManagement />
@@ -223,43 +261,139 @@ export default function Settings() {
         </>
       )}
 
-      <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-        <h3 className='text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2'>
-          <Info className='w-5 h-5' />
-          Sobre o Sistema
-        </h3>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h3 className='mb-6 flex items-center gap-2 text-card-foreground'>
+            <Palette className='w-5 h-5' />
+            Aparência
+          </h3>
 
-        <div className='space-y-4'>
-          <div className='flex justify-between'>
-            <span className='text-gray-600'>Versão:</span>
-            <span className='font-semibold'>2.1.0</span>
+          <div className='space-y-6'>
+            <div>
+              <h4 className='mb-4 text-card-foreground'>Modo do Sistema</h4>
+              <div className='grid grid-cols-2 gap-3'>
+                {modeOptions.map((modeOption) => {
+                  const IconComponent = modeOption.icon
+                  return (
+                    <button
+                      key={modeOption.value}
+                      onClick={() =>
+                        setMode(modeOption.value as 'light' | 'dark')
+                      }
+                      className={`flex flex-col items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        mode === modeOption.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50'
+                      }`}>
+                      <div
+                        className={`w-16 h-12 border border-border rounded-lg mb-2 flex items-center justify-center ${
+                          modeOption.value === 'light'
+                            ? 'bg-background'
+                            : 'bg-muted'
+                        }`}>
+                        <IconComponent className='w-6 h-6 text-primary' />
+                      </div>
+                      <span className='font-medium text-card-foreground'>
+                        {modeOption.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h4 className='mb-4 text-card-foreground'>Esquema de Cores</h4>
+              <div className='space-y-4'>
+                {themeOptions.map((themeOption) => {
+                  const IconComponent = themeOption.icon
+                  return (
+                    <div
+                      key={themeOption.value}
+                      onClick={() => setTheme(themeOption.value)}
+                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        theme === themeOption.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50'
+                      }`}>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div className='flex items-center gap-3'>
+                          <div className='w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center'>
+                            <IconComponent className='w-5 h-5 text-primary' />
+                          </div>
+                          <div>
+                            <h5 className='font-semibold text-card-foreground'>
+                              {themeOption.name}
+                            </h5>
+                            <p className='text-sm text-muted-foreground'>
+                              {themeOption.description}
+                            </p>
+                          </div>
+                        </div>
+                        {theme === themeOption.value && (
+                          <CheckCircle className='w-5 h-5 text-primary' />
+                        )}
+                      </div>
+
+                      <div className='flex gap-2'>
+                        {themeOption.colors.map((color, index) => (
+                          <div
+                            key={index}
+                            className='w-6 h-6 rounded-full border-2 border-background'
+                            style={{ backgroundColor: color,  borderColor: 'var(--color-text)' }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div className='flex justify-between'>
-            <span className='text-gray-600'>Última Atualização:</span>
-            <span className='font-semibold'>15/12/2023</span>
-          </div>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h3 className='text-lg font-semibold text-card-foreground mb-6 flex items-center gap-2'>
+            <Info className='w-5 h-5' />
+            Sobre o Sistema
+          </h3>
 
-          <div className='flex justify-between'>
-            <span className='text-gray-600'>Licença:</span>
-            <span className='font-semibold'>Premium</span>
-          </div>
+          <div className='space-y-4'>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Versão:</span>
+              <span className='font-semibold text-card-foreground'>2.1.0</span>
+            </div>
 
-          <div className='flex justify-between'>
-            <span className='text-gray-600'>Suporte:</span>
-            <span className='font-semibold text-green-600'>Ativo</span>
-          </div>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Última Atualização:</span>
+              <span className='font-semibold text-card-foreground'>
+                15/12/2023
+              </span>
+            </div>
 
-          <div className='border-t pt-4 mt-6'>
-            <div className='flex space-x-3'>
-              <button className='flex-1 bg-purple-100 text-purple-700 py-2 px-4 rounded-xl font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2'>
-                <Info className='w-4 h-4' />
-                Ajuda
-              </button>
-              <button className='flex-1 bg-blue-100 text-blue-700 py-2 px-4 rounded-xl font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-2'>
-                <Shield className='w-4 h-4' />
-                Suporte
-              </button>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Licença:</span>
+              <span className='font-semibold text-card-foreground'>
+                Premium
+              </span>
+            </div>
+
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Suporte:</span>
+              <span className='font-semibold text-secondary'>Ativo</span>
+            </div>
+
+            <div className='border-t border-border pt-4 mt-6'>
+              <div className='flex space-x-3'>
+                <button className='flex-1 bg-muted text-card-foreground py-2 px-4 rounded-xl font-medium hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
+                  <Info className='w-4 h-4' />
+                  Ajuda
+                </button>
+                <button className='flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
+                  <Shield className='w-4 h-4' />
+                  Suporte
+                </button>
+              </div>
             </div>
           </div>
         </div>

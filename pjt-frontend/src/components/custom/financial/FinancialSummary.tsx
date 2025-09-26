@@ -69,17 +69,17 @@ export function FinancialSummary({
     {
       name: 'Receitas',
       value: summary?.totalIncome ?? 0,
-      color: '#D4AF37',
+      color: 'var(--color-chart-1)',
     },
     {
       name: 'Despesas',
       value: summary?.totalExpenses ?? 0,
-      color: '#EF4444',
+      color: 'var(--color-chart-2)',
     },
     {
       name: 'Investimentos',
       value: summary?.totalInvestments ?? 0,
-      color: '#3B82F6',
+      color: 'var(--color-chart-3)',
     },
   ]
 
@@ -107,40 +107,43 @@ export function FinancialSummary({
     },
   ].map((d) => ({ ...d, value: Number(d.value) }))
 
-  if (isLoading) {return <div className='p-4'>Carregando resumo...</div>}
-  if (error) {return <div className='p-4 text-red-600'>Erro ao carregar resumo financeiro</div>}
+  if (isLoading) {return <div className='p-4 text-[var(--color-foreground)]'>Carregando resumo...</div>}
+  if (error) {return <div className='p-4 text-[var(--color-destructive)]'>Erro ao carregar resumo financeiro</div>}
 
   return (
     <div className='space-y-6 mt-4'>
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-base'>
-            <Plus className='h-4 w-4' />
+          <CardTitle className='flex items-center gap-2 text-base text-[var(--color-foreground)]'>
+            <Plus className='h-4 w-4 text-[var(--color-primary)]' />
             Ações Rápidas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='flex flex-wrap gap-6'>
+          <div className='flex flex-wrap gap-4'>
             <Button
-              className='px-10 py-5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2'
+              className='px-10 py-5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'
               onClick={() => onNewTransaction?.('INCOME')}>
               <TrendingUp className='h-4 w-4' />
               Nova Receita
             </Button>
+
             <Button
-              className='px-10 py-5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2'
+              className='px-10 py-5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'
               onClick={() => onNewTransaction?.('EXPENSE')}>
               <TrendingDown className='h-4 w-4' />
               Nova Despesa
             </Button>
+
             <Button
-              className='px-10 py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2'
+              className='px-10 py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'
               onClick={onNewRecurringExpense}>
               <Calendar className='h-4 w-4' />
               Nova Despesa Fixa
             </Button>
+
             <Button
-              className='px-10 py-5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2'
+              className='px-10 py-5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'
               onClick={() => onNewTransaction?.('INVESTMENT')}>
               <PiggyBank className='h-4 w-4' />
               Novo Investimento
@@ -149,27 +152,26 @@ export function FinancialSummary({
         </CardContent>
       </Card>
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+        <div className='bg-[var(--color-card)] rounded-2xl p-6 shadow-sm border border-green-200'>
           <div className='flex items-center gap-3 mb-4'>
             <div className='w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center'>
               <TrendingUp className='w-5 h-5 text-green-600' />
             </div>
-            <h3 className='font-semibold text-gray-800'>Receitas</h3>
+            <h3 className='font-semibold text-gray-400'>Receitas</h3>
           </div>
           <div className='space-y-3'>
             <div className='text-2xl font-bold text-green-600'>
               {formatCurrencyBRL(summary?.totalIncome ?? 0)}
             </div>
-            <div className='space-y-2 text-sm'>
+            <div className='space-y-2 text-sm text-[var(--color-muted-foreground)]'>
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Atendimentos:</span>
+                <span>Atendimentos:</span>
                 <span className='font-medium'>
-                  {' '}
                   {formatCurrencyBRL(summary?.appointmentRevenue ?? 0)}
                 </span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Vendas Estoque:</span>
+                <span>Vendas Estoque:</span>
                 <span className='font-medium'>
                   {summary?.stockRevenue > 0 && (
                     <span>{formatCurrencyBRL(summary.stockRevenue)}</span>
@@ -180,23 +182,23 @@ export function FinancialSummary({
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+        <div className='bg-[var(--color-card)] rounded-2xl p-6 shadow-sm border border-red-200'>
           <div className='flex items-center gap-3 mb-4'>
             <div className='w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center'>
               <TrendingDown className='w-5 h-5 text-red-600' />
             </div>
-            <h3 className='font-semibold text-gray-800'>Despesas</h3>
+            <h3 className='font-semibold text-gray-400'>Despesas</h3>
           </div>
           <div className='space-y-3'>
             <div className='text-2xl font-bold text-red-600'>
               {formatCurrencyBRL(summary?.totalExpenses ?? 0)}
             </div>
-            <div className='space-y-2 text-sm'>
+            <div className='space-y-2 text-sm text-[var(--color-muted-foreground)]'>
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Gastos operacionais.</span>
+                <span>Gastos operacionais.</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Compras Estoque:</span>
+                <span>Compras Estoque:</span>
                 <span className='font-medium'>
                   {formatCurrencyBRL(summary.stockExpenses)}
                 </span>
@@ -205,27 +207,27 @@ export function FinancialSummary({
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+        <div className='bg-[var(--color-card)] rounded-2xl p-6 shadow-sm border border-gray-300'>
           <div className='flex items-center gap-3 mb-4'>
             <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
               <Target className='w-5 h-5 text-purple-600' />
             </div>
-            <h3 className='font-semibold text-gray-800'>Investimentos</h3>
+            <h3 className='font-semibold text-[var(--color-foreground)]'>Investimentos</h3>
           </div>
           <div className='space-y-3'>
             <div className='text-2xl font-bold text-purple-600'>
               {formatCurrencyBRL(summary?.totalInvestments ?? 0)}
             </div>
-            <div className='space-y-2 text-sm'>
+            <div className='space-y-2 text-sm text-[var(--color-muted-foreground)]'>
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Melhorias e equipamentos.</span>
+                <span>Melhorias e equipamentos.</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className='bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-sm'>
+      <div className='bg-[var(--color-primary)]/45 rounded-2xl p-6 text-[var(--color-primary-foreground)] shadow-sm'>
         <div className='flex items-center gap-3 mb-2'>
           <DollarSign className='w-6 h-6' />
           <h3 className='font-semibold'>Lucro Líquido</h3>
@@ -233,7 +235,7 @@ export function FinancialSummary({
         <div className='text-3xl font-bold'>
           {formatCurrencyBRL(summary?.netProfit ?? 0)}
         </div>
-        <p className='text-sm opacity-90 mt-1'>
+        <p className='text-sm opacity-90 mt-1 text-[var(--color-primary-foreground)]'>
           Receitas - Despesas - Investimentos
         </p>
       </div>
@@ -244,18 +246,18 @@ export function FinancialSummary({
           summary?.stockLosses > 0) && (
           <Card>
             <CardHeader className='mb-2'>
-              <CardTitle className='flex items-center gap-2'>
-                <TrendingUp className='h-5 w-5' />
+              <CardTitle className='flex items-center gap-2 text-[var(--color-foreground)]'>
+                <TrendingUp className='h-5 w-5 text-[var(--color-primary)]' />
                 Movimentações de Estoque
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
                 {summary?.stockRevenue > 0 && (
-                  <div className='flex justify-between items-center p-4 bg-green-50 rounded-xl'>
+                  <div className='flex justify-between items-center p-4 bg-[var(--color-muted)] rounded-xl'>
                     <div className='flex items-center gap-3'>
                       <Package className='w-5 h-5 text-green-600' />
-                      <span className='font-medium text-gray-800'>
+                      <span className='font-medium text-green-600'>
                         Vendas de Produtos
                       </span>
                     </div>
@@ -265,14 +267,14 @@ export function FinancialSummary({
                   </div>
                 )}
                 {summary?.stockExpenses > 0 && (
-                  <div className='flex justify-between items-center p-4 bg-red-50 rounded-xl'>
+                  <div className='flex justify-between items-center p-4 bg-[var(--color-muted)] rounded-xl'>
                     <div className='flex items-center gap-3'>
-                      <ShoppingCart className='w-5 h-5 text-red-600' />
-                      <span className='font-medium text-gray-800'>
+                      <ShoppingCart className='w-5 h-5 text-blue-600' />
+                      <span className='font-medium text-blue-600'>
                         Compras de Produtos
                       </span>
                     </div>
-                    <span className='font-bold text-red-600'>
+                    <span className='font-bold text-blue-600'>
                       {' '}
                       {formatCurrencyBRL(summary.stockExpenses)}
                     </span>
@@ -280,10 +282,10 @@ export function FinancialSummary({
                 )}
 
                 {summary?.stockLosses > 0 && (
-                  <div className='flex justify-between items-center p-4 bg-red-50 rounded-xl'>
+                  <div className='flex justify-between items-center p-4 bg-[var(--color-muted)] rounded-xl'>
                     <div className='flex items-center gap-3'>
                       <ShoppingCart className='w-5 h-5 text-red-600' />
-                      <span className='font-medium text-gray-800'>
+                      <span className='font-medium text-red-600'>
                         Perdas de Produtos
                       </span>
                     </div>
@@ -300,7 +302,7 @@ export function FinancialSummary({
 
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição Financeira</CardTitle>
+            <CardTitle className='text-[var(--color-foreground)]'>Distribuição Financeira</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='flex flex-col lg:flex-row items-center gap-4'>
@@ -325,7 +327,7 @@ export function FinancialSummary({
                 </ResponsiveContainer>
               </div>
 
-              <div className='flex-1 space-y-2'>
+              <div className='flex-1 space-y-2 text-[var(--color-foreground)]'>
                 {distributionData.map((d) => {
                   const perc = totalForDistribution
                     ? ((d.value / totalForDistribution) * 100).toFixed(1)
@@ -356,28 +358,28 @@ export function FinancialSummary({
 
       <Card>
         <CardHeader>
-          <CardTitle>Análise de Performance</CardTitle>
+          <CardTitle className='text-[var(--color-foreground)]'>Análise de Performance</CardTitle>
         </CardHeader>
         <CardContent>
           <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width='100%' height='100%'>
               <BarChart data={performanceData}>
-                <XAxis dataKey='name' />
-                <YAxis />
+                <XAxis dataKey='name' tick={{ fill: 'var(--color-muted-foreground)' }} />
+                <YAxis tick={{ fill: 'var(--color-muted-foreground)' }} />
                 <Tooltip formatter={(value: number) => `${value}%`} />
-                <Bar dataKey='value' fill='#8B5CF6' />
+                <Bar dataKey='value' fill='var(--color-chart-4)' />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className='mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3'>
+          <div className='mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[var(--color-foreground)]'>
             <div className='text-sm'>
-              <div className='text-xs text-gray-500'>Margem de Lucro</div>
+              <div className='text-xs text-[var(--color-muted-foreground)]'>Margem de Lucro</div>
               <div
                 className={`font-medium ${
                   (summary?.netProfit ?? 0) >= 0
-                    ? 'text-[#D4AF37]'
-                    : 'text-red-600'
+                    ? 'text-[var(--color-primary)]'
+                    : 'text-[var(--color-destructive)]'
                 }`}>
                 {summary?.totalIncome
                   ? `${(
@@ -389,8 +391,8 @@ export function FinancialSummary({
             </div>
 
             <div className='text-sm'>
-              <div className='text-xs text-gray-500'>ROI Investimentos</div>
-              <div className='font-medium text-blue-600'>
+              <div className='text-xs text-[var(--color-muted-foreground)]'>ROI Investimentos</div>
+              <div className='font-medium text-[var(--color-primary)]'>
                 {summary?.totalInvestments && summary?.totalInvestments > 0
                   ? `${(
                     ((summary.netProfit ?? 0) / summary.totalInvestments) *
@@ -401,7 +403,7 @@ export function FinancialSummary({
             </div>
 
             <div className='text-sm'>
-              <div className='text-xs text-gray-500'>
+              <div className='text-xs text-[var(--color-muted-foreground)]'>
                 Eficiência Operacional
               </div>
               <div className='font-medium'>

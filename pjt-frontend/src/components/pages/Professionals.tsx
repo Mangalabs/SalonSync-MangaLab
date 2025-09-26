@@ -2,7 +2,7 @@ import { ProfessionalTable } from '@/components/custom/professional/Professional
 
 export default function Professionals() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-4">
       <ProfessionalTable />
     </div>
   )

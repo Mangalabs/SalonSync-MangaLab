@@ -15,19 +15,19 @@ import { ClientSelector } from '../client/ClientSelector'
 import { ServiceSelector } from '../service/ServiceSelector'
 import { SchedulingFields } from '../scheduling/SchedulingFields'
 
-export function AppointmentForm({ 
-  onSuccess, 
+export function AppointmentForm({
+  onSuccess,
   mode = 'immediate',
   initialData,
-}: { 
-  onSuccess: () => void;
-  mode?: 'immediate' | 'scheduled';
-  initialData?: any;
+}: {
+  onSuccess: () => void
+  mode?: 'immediate' | 'scheduled'
+  initialData?: any
 }) {
   const isScheduled = mode === 'scheduled'
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
-  
+
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
     queryFn: async () => {
@@ -36,12 +36,23 @@ export function AppointmentForm({
     },
     enabled: isAdmin,
   })
-  
+
   const { professionals } = useFormQueries()
-  const { form, mutation } = useAppointmentForm(mode, professionals, onSuccess, initialData)
-  
-  const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form
-  
+  const { form, mutation } = useAppointmentForm(
+    mode,
+    professionals,
+    onSuccess,
+    initialData,
+  )
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = form
+
   React.useEffect(() => {
     if (!isAdmin && activeBranch?.id && !watch('branchId')) {
       setValue('branchId', activeBranch.id)
@@ -50,11 +61,15 @@ export function AppointmentForm({
   const selectedBranchId = watch('branchId')
   const selectedProfessional = watch('professionalId')
   const selectedDate = isScheduled ? watch('scheduledDate' as any) : undefined
-  
-  const branchData = useFormQueries(selectedProfessional, selectedDate, isScheduled, selectedBranchId)
+
+  const branchData = useFormQueries(
+    selectedProfessional,
+    selectedDate,
+    isScheduled,
+    selectedBranchId,
+  )
   const { availableSlots, refetchAvailableSlots } = branchData
-  
-  // Refetch horários quando profissional ou data mudar
+
   React.useEffect(() => {
     if (selectedProfessional && selectedDate && isScheduled) {
       refetchAvailableSlots?.()
@@ -62,17 +77,21 @@ export function AppointmentForm({
   }, [selectedProfessional, selectedDate, isScheduled, refetchAvailableSlots])
 
   const watchedServices = watch('serviceIds')
-  const total = useMemo(() => (
-    branchData.services
-      .filter((s) => watchedServices?.includes(s.id))
-      .reduce((sum, s) => sum + s.price, 0) || 0
-  ), [watchedServices, branchData.services])
+  const total = useMemo(
+    () =>
+      branchData.services
+        .filter((s) => watchedServices?.includes(s.id))
+        .reduce((sum, s) => sum + s.price, 0) || 0,
+    [watchedServices, branchData.services],
+  )
 
   return (
-    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-3">
+    <form
+      onSubmit={handleSubmit((data) => mutation.mutate(data))}
+      className='space-y-3'>
       {isAdmin && (
         <div>
-          <Label className="text-sm">Filial</Label>
+          <Label className='text-sm'>Filial</Label>
           <Combobox
             options={branches.map((branch: any) => ({
               value: branch.id,
@@ -85,33 +104,33 @@ export function AppointmentForm({
               setValue('clientId', '')
               setValue('serviceIds', [])
             }}
-            placeholder="Selecione uma filial"
-            searchPlaceholder="Pesquisar filial..."
+            placeholder='Selecione uma filial'
+            searchPlaceholder='Pesquisar filial...'
           />
           {errors.branchId && (
-            <p className="text-xs text-red-500">{errors.branchId.message}</p>
+            <p className='text-xs text-red-500'>{errors.branchId.message}</p>
           )}
         </div>
       )}
-      
-      <ProfessionalSelector 
-        control={control} 
-        professionals={branchData.professionals} 
-        errors={errors} 
+
+      <ProfessionalSelector
+        control={control}
+        professionals={branchData.professionals}
+        errors={errors}
         branchId={selectedBranchId}
       />
-      
-      <ClientSelector 
-        control={control} 
-        clients={branchData.clients} 
-        errors={errors} 
+
+      <ClientSelector
+        control={control}
+        clients={branchData.clients}
+        errors={errors}
         branchId={selectedBranchId}
       />
-      
-      <ServiceSelector 
-        control={control} 
-        services={branchData.services} 
-        errors={errors} 
+
+      <ServiceSelector
+        control={control}
+        services={branchData.services}
+        errors={errors}
       />
 
       {isScheduled && (
@@ -124,11 +143,20 @@ export function AppointmentForm({
         />
       )}
 
-      <div className="font-semibold text-sm sm:text-base text-[#D4AF37] bg-[#D4AF37]/10 p-2 rounded">
+      <div className='font-semibold text-sm sm:text-base text-[#D4AF37] bg-[#D4AF37]/10 p-2 rounded'>
         Total: R$ {total.toFixed(2)}
       </div>
-      <Button type="submit" disabled={isSubmitting} className="w-full text-sm h-8">
-        {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar' : (isScheduled ? 'Agendar' : 'Finalizar')}
+      <Button
+        type='submit'
+        disabled={isSubmitting}
+        className='w-full text-sm h-8 cursor-pointer'>
+        {isSubmitting
+          ? 'Salvando...'
+          : initialData
+            ? 'Atualizar'
+            : isScheduled
+              ? 'Agendar'
+              : 'Finalizar'}
       </Button>
     </form>
   )

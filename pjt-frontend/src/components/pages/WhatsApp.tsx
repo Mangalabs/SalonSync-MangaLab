@@ -22,7 +22,7 @@ export default function WhatsApp() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="h-6 w-6 text-[#D4AF37]" />
         <h1 className="text-3xl font-bold text-[#1A1A1A]">WhatsApp</h1>

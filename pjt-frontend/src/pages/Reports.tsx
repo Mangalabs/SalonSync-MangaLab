@@ -121,36 +121,69 @@ export default function Reports() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filtros de Relatório</h3>
-        <div className="space-y-4">
+    <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4'>
+      <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+        <h3 className='text-lg font-semibold text-foreground'>
+          Filtros de Relatório
+        </h3>
+        <div className='space-y-3'>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl" />
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl mt-2" />
+            <label className='block text-sm font-medium text-muted-foreground mb-2'>
+              Período
+            </label>
+            <input
+              type='date'
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className='w-full p-3 border border-border rounded-xl bg-input text-foreground'
+            />
+            <input
+              type='date'
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className='w-full p-3 border border-border rounded-xl bg-input text-foreground mt-2'
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filial</label>
-            <select className="w-full p-3 border border-gray-200 rounded-xl" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
-              <option value="all">Todas as Filiais</option>
-              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            <label className='block text-sm font-medium text-muted-foreground mb-2'>
+              Filial
+            </label>
+            <select
+              className='w-full p-3 border border-border rounded-xl bg-input text-foreground'
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}>
+              <option value='all'>Todas as Filiais</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
             </select>
           </div>
           <button
-            className={'w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2'}
+            className='w-full bg-primary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2 cursor-pointer'
             onClick={handleGenerateReport}
-            disabled={loadingReport}
-          >
-            {loadingReport ? 'Gerando...' : <><Search className="w-4 h-4" /> Gerar Relatório</>}
+            disabled={loadingReport}>
+            {loadingReport ? (
+              'Gerando...'
+            ) : (
+              <>
+                <Search className='w-4 h-4' /> Gerar Relatório
+              </>
+            )}
           </button>
           {reportData && (
             <button
-              className="w-full bg-blue-700 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 mt-2"
+              className='w-full bg-gradient-to-r from-secondary to-primary/70 text-secondary-foreground py-3 px-4 rounded-xl hover:opacity-80 flex items-center justify-center gap-2 mt-2 cursor-pointer'
               onClick={handleGenerateInsight}
-              disabled={loadingInsight}
-            >
-              {loadingInsight ? 'Gerando Insight...' : <><Bot size={20} /> Gerar Sugestões da IA</>}
+              disabled={loadingInsight}>
+              {loadingInsight ? (
+                'Gerando Insight...'
+              ) : (
+                <>
+                  <Bot size={20} /> Gerar Sugestões da IA
+                </>
+              )}
             </button>
           )}
           {reportData && <ExportButton onExport={handleExportReport} />}
@@ -158,41 +191,68 @@ export default function Reports() {
       </div>
 
       {reportData && (
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">{reportData.branchName} - {reportData.period.label}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-green-50 border-green-200 p-4 rounded-xl border">
-              <p className="text-green-600 font-semibold">Receitas</p>
-              <p className="text-2xl font-bold text-green-700">R$ {reportData.financial.totalIncome?.toFixed(2) || '0,00'}</p>
+        <div className='lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h3 className='text-lg font-semibold text-foreground mb-4'>
+            {reportData.branchName} - {reportData.period.label}
+          </h3>
+          <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-6'>
+            <div className='bg-muted border border-border p-4 rounded-xl'>
+              <p className='text-primary font-semibold'>Receitas</p>
+              <p className='text-2xl font-bold text-foreground'>
+                R$ {reportData.financial.totalIncome?.toFixed(2) || '0,00'}
+              </p>
             </div>
-            <div className="bg-red-50 border-red-200 p-4 rounded-xl border">
-              <p className="text-red-600 font-semibold">Despesas</p>
-              <p className="text-2xl font-bold text-red-700">R$ {reportData.financial.totalExpenses?.toFixed(2) || '0,00'}</p>
+            <div className='bg-muted border border-border p-4 rounded-xl'>
+              <p className='text-destructive font-semibold'>Despesas</p>
+              <p className='text-2xl font-bold text-destructive'>
+                R$ {reportData.financial.totalExpenses?.toFixed(2) || '0,00'}
+              </p>
             </div>
-            <div className="bg-blue-50 border-blue-200 p-4 rounded-xl border">
-              <p className="text-blue-600 font-semibold">Investimentos</p>
-              <p className="text-2xl font-bold text-blue-700">R$ {reportData.financial.totalInvestments?.toFixed(2) || '0,00'}</p>
+            <div className='bg-muted border border-border p-4 rounded-xl'>
+              <p className='text-primary font-semibold'>Investimentos</p>
+              <p className='text-2xl font-bold text-foreground'>
+                R$ {reportData.financial.totalInvestments?.toFixed(2) || '0,00'}
+              </p>
             </div>
-            <div className="bg-purple-50 border-purple-200 p-4 rounded-xl border">
-              <p className="text-purple-600 font-semibold">Lucro Líquido</p>
-              <p className={`text-2xl font-bold ${reportData.financial.netProfit >= 0 ? 'text-[#D4AF37]' : 'text-red-600'}`}>R$ {reportData.financial.netProfit?.toFixed(2) || '0,00'}</p>
+            <div className='bg-muted border border-border p-4 rounded-xl'>
+              <p className='text-primary font-semibold'>Lucro Líquido</p>
+              <p
+                className={`text-2xl font-bold ${
+                  reportData.financial.netProfit >= 0
+                    ? 'text-primary'
+                    : 'text-destructive'
+                }`}>
+                R$ {reportData.financial.netProfit?.toFixed(2) || '0,00'}
+              </p>
             </div>
-            <div className="bg-orange-50 border-orange-200 p-4 rounded-xl border">
-              <p className="text-orange-600 font-semibold">Atendimentos</p>
-              <p className="text-2xl font-bold text-orange-700">{reportData.appointments?.length || 0}</p>
+            <div className='bg-muted border border-border p-4 rounded-xl'>
+              <p className='text-primary font-semibold'>Atendimentos</p>
+              <p className='text-2xl font-bold text-foreground'>
+                {reportData.appointments?.length || 0}
+              </p>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-800 mb-3">Top 5 Serviços Mais Realizados</h4>
-            <div className="space-y-2">
+            <h4 className='font-semibold text-foreground mb-3'>
+              Top 5 Serviços Mais Realizados
+            </h4>
+            <div className='space-y-2'>
               {reportData.topServices.map((service, i) => (
-                <div key={i} className="flex justify-between items-center py-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-semibold">{i + 1}</span>
-                    <span className="text-gray-600">{service.name}</span>
+                <div
+                  key={i}
+                  className='flex justify-between items-center py-2 border-b border-border'>
+                  <div className='flex items-center space-x-2'>
+                    <span className='w-6 h-6 bg-muted text-foreground rounded-full flex items-center justify-center text-xs font-semibold'>
+                      {i + 1}
+                    </span>
+                    <span className='text-muted-foreground'>
+                      {service.name}
+                    </span>
                   </div>
-                  <span className="font-semibold text-gray-800">{service.appointments} atendimentos</span>
+                  <span className='font-semibold text-foreground'>
+                    {service.appointments} atendimentos
+                  </span>
                 </div>
               ))}
             </div>
@@ -201,19 +261,26 @@ export default function Reports() {
       )}
 
       {insights && (
-        <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sugestões da IA</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className='lg:col-span-3 bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h3 className='text-lg font-semibold text-foreground mb-4'>
+            Sugestões da IA
+          </h3>
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4'>
             {insights.map((insight) => (
-              <div key={insight.title} className="bg-purple-50 border-purple-200 border rounded-xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div className="text-sm font-semibold text-purple-700 mb-2">{insight.title}</div>
-                <div className="text-xs text-gray-700 flex-1">{insight.description}</div>
+              <div
+                key={insight.title}
+                className='bg-muted border border-border rounded-xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow'>
+                <div className='text-sm font-semibold text-foreground mb-2'>
+                  {insight.title}
+                </div>
+                <div className='text-xs text-muted-foreground flex-1'>
+                  {insight.description}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
     </div>
   )
 }

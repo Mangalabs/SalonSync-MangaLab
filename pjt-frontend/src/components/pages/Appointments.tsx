@@ -48,11 +48,10 @@ interface Appointment {
   branchId: string
 }
 
-const colorClasses = {
-  green: 'border-green-200 bg-green-50 text-green-700',
-  blue: 'border-blue-200 bg-blue-50 text-blue-700',
-  purple: 'border-purple-200 bg-purple-50 text-purple-700',
-  orange: 'border-orange-200 bg-orange-50 text-orange-700',
+const statusClasses = {
+  confirmed: 'border border-border bg-muted text-foreground',
+  pending: 'border border-border bg-muted text-muted-foreground',
+  completed: 'border border-border bg-muted opacity-70 text-foreground',
 }
 
 const normalizeDate = (date: Date) =>
@@ -89,7 +88,7 @@ export default function Appointments() {
           time: scheduledDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           duration: 30,
           status: a.status === 'SCHEDULED' ? 'confirmed' : a.status === 'COMPLETED' ? 'completed' : 'pending',
-          color: 'purple',
+          color: 'neutral',
           date: scheduledDate.toISOString().split('T')[0],
           scheduledAt: scheduledDate,
           branchId: a.branchId,
@@ -166,20 +165,20 @@ export default function Appointments() {
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
-      <div className='lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+      <div className='lg:col-span-3 bg-card rounded-2xl p-6 shadow-sm border border-border'>
         <div className='flex justify-between items-center mb-6'>
-          <h3 className='text-lg font-semibold text-gray-800 capitalize'>
+          <h3 className='text-lg font-semibold text-foreground capitalize'>
             Agenda - {monthYear} {activeBranch ? `(${activeBranch.name})` : ''}
           </h3>
           <div className='flex space-x-2'>
             <button
-              className='px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium hover:bg-purple-200 transition-colors flex items-center gap-2'
+              className='px-4 py-2 bg-button-bg text-button-text rounded-xl font-medium hover:bg-button-hover transition-colors flex items-center gap-2 cursor-pointer'
               onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
             >
               <ChevronLeft className='w-4 h-4' /> Anterior
             </button>
             <button
-              className='px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium hover:bg-purple-200 transition-colors flex items-center gap-2'
+              className='px-4 py-2 bg-button-bg text-button-text rounded-xl font-medium hover:bg-button-hover transition-colors flex items-center gap-2 cursor-pointer'
               onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
             >
               Próximo <ChevronRight className='w-4 h-4' />
@@ -190,7 +189,7 @@ export default function Appointments() {
         <div className='mb-8'>
           <div className='grid grid-cols-7 gap-1 mb-4'>
             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-              <div key={day} className='text-center py-2 text-sm font-semibold text-gray-600'>{day}</div>
+              <div key={day} className='text-center py-2 text-sm font-semibold text-muted-foreground'>{day}</div>
             ))}
           </div>
           <div className='grid grid-cols-7 gap-1'>
@@ -200,17 +199,31 @@ export default function Appointments() {
               const isSelected = date.toDateString() === selectedDate.toDateString()
               const dateKey = date.toISOString().split('T')[0]
               const hasAppointments = branchAppointments.some(a => a.date === dateKey && a.status !== 'completed')
+
               return (
                 <div
                   key={index}
-                  className={`relative h-16 border border-gray-100 rounded-lg p-2 cursor-pointer transition-all ${!isCurrentMonth ? 'text-gray-300 bg-gray-50' :
-                    isToday ? 'bg-purple-100 border-purple-300' :
-                      isSelected ? 'bg-purple-200 border-purple-400' : 'hover:bg-gray-50'
+                  className={`relative h-16 border border-border rounded-lg p-2 cursor-pointer transition-all ${
+                    !isCurrentMonth
+                      ? 'bg-muted text-muted-foreground'
+                      : isToday
+                        ? 'bg-accent/50 border-accent'
+                        : isSelected
+                          ? 'bg-secondary border-secondary'
+                          : 'hover:bg-muted'
                   }`}
                   onClick={() => setSelectedDate(normalizeDate(date))}
                 >
-                  <div className={`text-sm font-medium ${isCurrentMonth ? 'text-gray-800' : 'text-gray-400'}`}>{date.getDate()}</div>
-                  {hasAppointments && isCurrentMonth && <div className='mt-1'><div className='w-2 h-2 bg-purple-500 rounded-full'></div></div>}
+                  
+                  <div
+                    className="text-sm font-medium"
+                    style={{
+                      color: isCurrentMonth ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {date.getDate()}
+                  </div>
+                  {hasAppointments && isCurrentMonth && <div className='mt-1'><div className='w-2 h-2 bg-foreground rounded-full'></div></div>}
                 </div>
               )
             })}
@@ -218,13 +231,13 @@ export default function Appointments() {
         </div>
 
         <div>
-          <h4 className='font-semibold text-gray-800 mb-4 capitalize'>{formatDate(selectedDate)}</h4>
+          <h4 className='font-semibold text-foreground mb-4 capitalize'>{formatDate(selectedDate)}</h4>
           <div className='space-y-3'>
-            {isLoading && <p className='text-gray-500'>Carregando agendamentos...</p>}
+            {isLoading && <p className='text-muted-foreground'>Carregando agendamentos...</p>}
             {!isLoading && todayAppointments.map(appointment => (
               <div
                 key={appointment.id}
-                className={`flex items-center justify-between p-4 border rounded-xl transition-all ${colorClasses[appointment.color as keyof typeof colorClasses]}`}
+                className={`flex items-center justify-between p-4 rounded-xl transition-all ${statusClasses[appointment.status]}`}
               >
                 <div className='flex items-center space-x-4'>
                   <div className='text-center min-w-[60px]'>
@@ -233,26 +246,26 @@ export default function Appointments() {
                   </div>
                   <div className='w-px h-10 bg-current opacity-30'></div>
                   <div>
-                    <p className='font-semibold text-gray-800'>{appointment.client}</p>
-                    <p className='text-sm text-gray-600'>{appointment.service}</p>
+                    <p className='font-semibold'>{appointment.client}</p>
+                    <p className='text-sm text-muted-foreground'>{appointment.service}</p>
                     <p className='text-xs opacity-80'>{appointment.professional}</p>
                   </div>
                 </div>
                 <div className='flex space-x-2'>
                   <button
-                    className='p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors'
+                    className='p-2 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors cursor-pointer'
                     onClick={() => { setEditingAppointment(appointment); setShowForm(true) }}
                   >
                     <Edit className='w-4 h-4' />
                   </button>
                   <button
-                    className='p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors'
+                    className='p-2 text-green-600 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'
                     onClick={() => confirmAppointment.mutate(appointment.id)}
                   >
                     <Check className='w-4 h-4' />
                   </button>
                   <button
-                    className='p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors'
+                    className='p-2 text-red-600 hover:bg-red-200 rounded-lg transition-colors cursor-pointer'
                     onClick={() => setDeletingAppointment(appointment)}
                   >
                     <Trash2 className='w-4 h-4' />
@@ -262,9 +275,9 @@ export default function Appointments() {
             ))}
             {!isLoading && todayAppointments.length === 0 && (
               <div className='text-center py-12'>
-                <CalendarIcon className='w-16 h-16 text-gray-300 mx-auto mb-4' />
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Nenhum agendamento para hoje</h3>
-                <p className='text-gray-500'>Que tal agendar o primeiro atendimento do dia?</p>
+                <CalendarIcon className='w-16 h-16 text-muted-foreground mx-auto mb-4' />
+                <h3 className='text-lg font-medium mb-2'>Nenhum agendamento para hoje</h3>
+                <p className='text-muted-foreground'>Que tal agendar o primeiro atendimento do dia?</p>
               </div>
             )}
           </div>
@@ -272,17 +285,17 @@ export default function Appointments() {
       </div>
 
       <div className='space-y-6'>
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-          <h4 className='font-semibold text-gray-800 mb-4'>Novo Atendimento</h4>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h4 className='font-semibold text-foreground mb-4'>Novo Atendimento</h4>
           <div className='space-y-4'>
             <button
-              className='w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2'
+              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer'
               onClick={() => { setEditingAppointment(null); setShowForm(true) }}
             >
               <PlusCircle className='w-4 h-4' /> Agendar Atendimento
             </button>
             <button
-              className='w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2'
+              className='w-full bg-gradient-to-r from-secondary to-primary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer'
               onClick={() => setShowRegisterForm(true)}
             >
               <PlusCircle className='w-4 h-4' /> Registrar Atendimento
@@ -290,11 +303,11 @@ export default function Appointments() {
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-          <h4 className='font-semibold text-gray-800 mb-4'>Hoje</h4>
-          <div className='space-y-3'>
-            <div className='flex justify-between text-sm'>
-              <span className='text-gray-600'>Total Agendamentos:</span>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h4 className='font-semibold text-foreground mb-4'>Hoje</h4>
+          <div className='space-y-3 text-sm'>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Total Agendamentos:</span>
               <span className='font-semibold'>{todayAppointments.length}</span>
             </div>
             <div className='flex justify-between text-sm'>
@@ -312,27 +325,25 @@ export default function Appointments() {
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-          <h4 className='font-semibold text-gray-800 mb-4'>Próximos</h4>
+        <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
+          <h4 className='font-semibold text-foreground mb-4'>Próximos</h4>
           <div className='space-y-3'>
             {upcomingAppointments.map((appointment) => (
               <div
                 key={appointment.id}
-                className='flex items-center space-x-3 p-3 bg-gray-50 rounded-lg'
+                className='flex items-center space-x-3 p-3 bg-muted rounded-lg'
               >
-                <div className='w-2 h-2 bg-purple-500 rounded-full'></div>
+                <div className='w-2 h-2 bg-primary rounded-full'></div>
                 <div className='flex-1'>
-                  <p className='text-sm font-medium text-gray-800'>
-                    {appointment.client}
-                  </p>
-                  <p className='text-xs text-gray-500'>
+                  <p className='text-sm font-medium'>{appointment.client}</p>
+                  <p className='text-xs text-muted-foreground'>
                     {appointment.date} {appointment.time}
                   </p>
                 </div>
               </div>
             ))}
             {upcomingAppointments.length === 0 && (
-              <p className='text-sm text-gray-500'>
+              <p className='text-sm text-muted-foreground'>
                 Nenhum agendamento futuro.
               </p>
             )}
@@ -340,7 +351,7 @@ export default function Appointments() {
         </div>
       </div>
 
-      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditingAppointment(null) }}>
+      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) {setEditingAppointment(null)} }}>
         <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className='text-base sm:text-lg'>
