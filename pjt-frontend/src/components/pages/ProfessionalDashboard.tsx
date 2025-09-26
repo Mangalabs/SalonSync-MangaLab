@@ -8,20 +8,31 @@ import {
   Clock,
   Activity,
   Target,
+  PlusCircle,
+  UserPlus,
+  Users,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
+import { StatsCard } from '../ui/stats-card'
+import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
+import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import axios from '@/lib/axios'
 
 export default function ProfessionalDashboard() {
+  const navigate = useNavigate()
   const { activeBranch } = useBranch()
   const { user } = useUser()
   const [selectedPeriod, setSelectedPeriod] = useState('today')
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false)
+  const [showRegisterForm, setShowRegisterForm] = useState(false)
   
   const today = new Date().toISOString().split('T')[0]
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
@@ -286,12 +297,26 @@ export default function ProfessionalDashboard() {
   const scheduledAppointments = professionalData?.appointments?.filter((apt: any) => apt.status === 'SCHEDULED') || []
   const todayScheduled = professionalData?.todayAppointments?.filter((apt: any) => apt.status === 'SCHEDULED') || []
 
+  const quickActions = [
+    { id: 'appointments', icon: Calendar, label: 'Agendar Atendimento', openForm: true, color: 'blue' },
+    { id: 'register-appointment', icon: PlusCircle, label: 'Registrar Atendimento', openRegisterForm: true, color: 'purple' },
+    { id: 'clients', icon: UserPlus, label: 'Novo Cliente', route: '/dashboard/clients', color: 'orange' },
+    { id: 'view-clients', icon: Users, label: 'Ver Clientes', route: '/dashboard/clients', color: 'green' },
+  ]
+
+  const actionColors: Record<string, string> = {
+    purple: 'border-purple-300 hover:border-purple-400 hover:bg-purple-50 text-purple-600',
+    blue: 'border-blue-300 hover:border-blue-400 hover:bg-blue-50 text-blue-600',
+    green: 'border-green-300 hover:border-green-400 hover:bg-green-50 text-green-600',
+    orange: 'border-orange-300 hover:border-orange-400 hover:bg-orange-50 text-orange-600',
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Olá, {user?.name}! 👋</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Olá, {user?.name}! 👋</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {activeBranch?.name} • {getPeriodLabel()}
           </p>
         </div>
@@ -305,107 +330,102 @@ export default function ProfessionalDashboard() {
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Minha Comissão</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(professionalData?.commission?.summary?.totalCommission || 0)}
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
-                {professionalData?.commission?.summary?.totalAppointments || 0} atendimentos
-              </Badge>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
-        </Card>
+      <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+        <div className="flex justify-between items-center mb-3 md:mb-4">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800">Ações Rápidas</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          {quickActions.map(a => (
+            <button
+              key={a.id}
+              onClick={() => {
+                if (a.openForm) {setShowAppointmentForm(true)}
+                else if (a.openRegisterForm) {setShowRegisterForm(true)}
+                else if (a.route) {navigate(a.route)}
+              }}
+              className={`flex flex-col items-center p-3 md:p-4 rounded-lg border-2 border-dashed transition-all hover:shadow-md ${actionColors[a.color]}`}
+            >
+              <a.icon className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" />
+              <span className="text-xs md:text-sm font-medium text-center">{a.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Gerada</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(professionalData?.commission?.summary?.totalRevenue || 0)}
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
-                {professionalData?.commission?.professional?.commissionRate || 0}% taxa
-              </Badge>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agendamentos Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {todayScheduled.length}
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant={todayScheduled.length > 0 ? 'default' : 'secondary'} className="text-xs">
-                {todayScheduled.length > 0 ? 'Tem trabalho!' : 'Dia livre'}
-              </Badge>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-violet-500"></div>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <StatsCard 
+          title="Minha Comissão" 
+          value={formatCurrency(professionalData?.commission?.summary?.totalCommission || 0)} 
+          change={`${professionalData?.commission?.summary?.totalAppointments || 0} atendimentos`} 
+          changeType="neutral" 
+          icon={DollarSign} 
+          iconColor="green" 
+        />
+        <StatsCard 
+          title="Receita Gerada" 
+          value={formatCurrency(professionalData?.commission?.summary?.totalRevenue || 0)} 
+          change={`${professionalData?.commission?.professional?.commissionRate || 0}% taxa`} 
+          changeType="neutral" 
+          icon={TrendingUp} 
+          iconColor="blue" 
+        />
+        <StatsCard 
+          title="Agendamentos Hoje" 
+          value={todayScheduled.length.toString()} 
+          change={todayScheduled.length > 0 ? 'Tem trabalho!' : 'Dia livre'} 
+          changeType={todayScheduled.length > 0 ? 'positive' : 'neutral'} 
+          icon={Calendar} 
+          iconColor="purple" 
+        />
+        <StatsCard 
+          title="Atendimentos Concluídos" 
+          value={completedAppointments.length.toString()} 
+          change={getPeriodLabel()} 
+          changeType="positive" 
+          icon={CheckCircle} 
+          iconColor="orange" 
+        />
       </div>
 
       {todayScheduled.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Meus Agendamentos de Hoje
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {todayScheduled.map((appointment: any) => (
-                <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg bg-blue-50">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-sm">{appointment.client.name}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {new Date(appointment.scheduledAt).toLocaleTimeString('pt-BR', { 
-                          hour: '2-digit', 
-                          minute: '2-digit', 
-                        })}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {appointment.appointmentServices?.map((as: any) => as.service.name).join(', ')}
-                    </div>
+        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+            <Clock className="h-4 w-4 md:h-5 md:w-5" />
+            Meus Agendamentos de Hoje
+          </h3>
+          <div className="space-y-3">
+            {todayScheduled.map((appointment: any) => (
+              <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg bg-blue-50">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-sm">{appointment.client.name}</h4>
+                    <Badge variant="outline" className="text-xs">
+                      {new Date(appointment.scheduledAt).toLocaleTimeString('pt-BR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                      })}
+                    </Badge>
                   </div>
-                  <div className="text-sm font-semibold text-blue-600">
-                    {formatCurrency(Number(appointment.total))}
+                  <div className="text-xs text-gray-600">
+                    {appointment.appointmentServices?.map((as: any) => as.service.name).join(', ')}
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="text-sm font-semibold text-blue-600">
+                  {formatCurrency(Number(appointment.total))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              Últimos Atendimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
+            Últimos Atendimentos
+          </h3>
+          <div>
             {completedAppointments.length > 0 ? (
               <div className="space-y-2">
                 {completedAppointments.slice(0, 3).map((appointment: any) => (
@@ -433,17 +453,15 @@ export default function ProfessionalDashboard() {
                 <p className="text-sm">Nenhum atendimento no período</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              Próximos 3 Agendamentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+            <Calendar className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
+            Próximos 3 Agendamentos
+          </h3>
+          <div>
             {scheduledAppointments.length > 0 ? (
               <div className="space-y-2">
                 {scheduledAppointments.slice(0, 3).map((appointment: any) => (
@@ -475,18 +493,16 @@ export default function ProfessionalDashboard() {
                 <p className="text-sm">Nenhum agendamento futuro</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Minha Performance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+        <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+          <Target className="h-4 w-4 md:h-5 md:w-5" />
+          Minha Performance
+        </h3>
+        <div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
@@ -511,8 +527,26 @@ export default function ProfessionalDashboard() {
               <div className="text-sm text-muted-foreground">Taxa de comissão</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <Dialog open={showAppointmentForm} onOpenChange={(open) => setShowAppointmentForm(open)}>
+        <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Agendar Atendimento</DialogTitle>
+          </DialogHeader>
+          <ScheduledAppointmentForm onSuccess={() => setShowAppointmentForm(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRegisterForm} onOpenChange={(open) => setShowRegisterForm(open)}>
+        <DialogContent className="!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Registrar Atendimento</DialogTitle>
+          </DialogHeader>
+          <ImmediateAppointmentForm onSuccess={() => setShowRegisterForm(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

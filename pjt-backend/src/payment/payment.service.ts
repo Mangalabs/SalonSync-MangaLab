@@ -208,6 +208,9 @@ export class PaymentService {
         throw new UnauthorizedException('Usuário não encontrado');
       }
 
+      if (user.role !== 'ADMIN') {
+        return true;
+      }
       if (!user.customerId) {
         return false;
       }
