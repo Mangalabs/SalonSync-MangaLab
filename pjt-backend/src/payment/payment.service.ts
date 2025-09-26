@@ -290,13 +290,271 @@ export class PaymentService {
 
       const session = await stripeClient.billingPortal.sessions.create({
         customer: user.customerId,
-        return_url: 'https://example.com/account',
+        return_url:
+          'https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}',
       });
 
       return session;
+    } catch {
+      throw new Error('Não foi criar portal de usuário');
+    }
+  }
+
+  async createPriceForConnectedAccount(
+    token: string,
+    value: number,
+    planName: string,
+  ) {
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.accountId) {
+        throw new UnauthorizedException('Onboarding não concluído');
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const product = await stripeClient.products.create(
+        { name: planName },
+        { stripeAccount: user.accountId },
+      );
+
+      const price = await stripeClient.prices.create(
+        {
+          unit_amount: value * 100,
+          currency: 'brl',
+          recurring: { interval: 'month' },
+          product: product.id,
+        },
+        {
+          stripeAccount: user.accountId,
+        },
+      );
+
+      return price;
+    } catch {
+      throw new Error('Não foi criar preço');
+    }
+  }
+
+  async retrievePricesForConnectedAccount(token: string) {
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.accountId) {
+        throw new UnauthorizedException('Onboarding não concluído');
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const prices = await stripeClient.prices.list(
+        { active: true, expand: ['data.product'] },
+        { stripeAccount: user.accountId },
+      );
+      return prices.data;
+    } catch {
+      throw new Error('Não foi criar preço');
+    }
+  }
+
+  async updatePriceForConnectedAccount(
+    token: string,
+    value: number,
+    planName: string,
+    planId: string,
+    priceId: string,
+  ) {
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.accountId) {
+        throw new UnauthorizedException('Onboarding não concluído');
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const updatedProduct = await stripeClient.products.update(
+        planId,
+        { name: planName },
+        { stripeAccount: user.accountId },
+      );
+
+      const newPrice = await stripeClient.prices.create(
+        {
+          unit_amount: value * 100,
+          currency: 'brl',
+          recurring: { interval: 'month' },
+          product: planId,
+        },
+        { stripeAccount: user.accountId },
+      );
+
+      await stripeClient.prices.update(
+        priceId,
+        { active: false },
+        { stripeAccount: user.accountId },
+      );
+
+      return { newPrice, updatedProduct };
     } catch (e) {
       console.log(e);
-      throw new Error('Não foi criar portal de usuário');
+      throw new Error('Não foi criar preço');
+    }
+  }
+
+  async archivePriceForConnectedAccount(token: string, priceId: string) {
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.accountId) {
+        throw new UnauthorizedException('Onboarding não concluído');
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const archivedPrice = await stripeClient.prices.update(
+        priceId,
+        { active: false },
+        { stripeAccount: user.accountId },
+      );
+
+      return archivedPrice;
+    } catch {
+      throw new Error('Não foi criar preço');
+    }
+  }
+
+  async priceReadjustmentForConnectedAccount(
+    token: string,
+    priceId: string,
+    value: number,
+    productId: string,
+  ) {
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.accountId) {
+        throw new UnauthorizedException('Onboarding não concluído');
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const prices = await stripeClient.prices.list(
+        {
+          product: productId,
+          active: true,
+          limit: 100,
+        },
+        { stripeAccount: user.accountId },
+      );
+
+      let newPrice = prices.data.find(
+        (p) =>
+          p.unit_amount === value * 100 && p.recurring?.interval === 'month',
+      );
+
+      if (!newPrice) {
+        newPrice = await stripeClient.prices.create(
+          {
+            product: productId,
+            currency: 'brl',
+            unit_amount: value * 100,
+            recurring: { interval: 'month' },
+          },
+          { stripeAccount: user.accountId },
+        );
+      }
+
+      let hasMore = true;
+      let startingAfter: string | undefined = undefined;
+
+      while (hasMore) {
+        const subscriptions = await stripeClient.subscriptions.list(
+          {
+            price: priceId,
+            limit: 100,
+            starting_after: startingAfter,
+          },
+          { stripeAccount: user.accountId },
+        );
+
+        for (const subscription of subscriptions.data) {
+          if (!subscription.items.data.length) continue;
+
+          await stripeClient.subscriptions.update(
+            subscription.id,
+            {
+              items: [
+                {
+                  id: subscription.items.data[0].id,
+                  price: newPrice.id,
+                },
+              ],
+              proration_behavior: 'create_prorations',
+            },
+            { stripeAccount: user.accountId },
+          );
+        }
+
+        hasMore = subscriptions.has_more;
+        if (hasMore) {
+          startingAfter = subscriptions.data[subscriptions.data.length - 1].id;
+        }
+      }
+
+      await stripeClient.prices.update(
+        priceId,
+        { active: false },
+        { stripeAccount: user.accountId },
+      );
+    } catch (e) {
+      console.log(e);
+      throw new Error('Não foi criar preço');
     }
   }
 }

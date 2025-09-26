@@ -45,6 +45,7 @@ export class AuthService {
           avatar: true,
           role: true,
           customerId: true,
+          accountId: true,
         },
       });
 

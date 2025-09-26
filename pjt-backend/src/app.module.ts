@@ -20,6 +20,7 @@ import { BaseDataService } from './common/services/base-data.service';
 import { AiModule } from './ai/ai.module';
 import { ResetPasswordModule } from './resetPassword/resetPassword.module';
 import { PaymentModule } from './payment/paument.module';
+import { FidelityModule } from './fidelity/fidelity.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PaymentModule } from './payment/paument.module';
     WhatsAppModule,
     ResetPasswordModule,
     PaymentModule,
+    FidelityModule,
   ],
   controllers: [AppController],
   providers: [AppService, BaseDataService],

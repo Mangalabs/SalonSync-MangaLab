@@ -1,13 +1,24 @@
-import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Headers,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import {
   CreateCustomerDto,
   CreateCheckoutSessionDto,
   CreateAccountSessionDto,
+  CreatePriceForConnectedAccountDto,
+  UpdatePriceForConnectedAccountDto,
+  PriceReadjustmentForConnectedAccountDto,
 } from './dto/payment.dto';
 
 @Controller('payment')
-export class ResetPasswordController {
+export class PaymentController {
   constructor(private paymentService: PaymentService) {}
 
   @Post('create-customer')
@@ -52,5 +63,62 @@ export class ResetPasswordController {
   createPortalSession(@Headers('authorization') auth: string) {
     const token = auth?.replace('Bearer ', '');
     return this.paymentService.createPortalSession(token);
+  }
+
+  @Post('create-prices-for-connected-account')
+  createPriceForConnectedAccount(
+    @Headers('authorization') auth: string,
+    @Body() body: CreatePriceForConnectedAccountDto,
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.createPriceForConnectedAccount(
+      token,
+      body.value,
+      body.planName,
+    );
+  }
+
+  @Get('get-prices-for-connected-account')
+  retrievePricesForConnectedAccount(@Headers('authorization') auth: string) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.retrievePricesForConnectedAccount(token);
+  }
+
+  @Post('update-prices-for-connected-account')
+  updatePriceForConnectedAccount(
+    @Headers('authorization') auth: string,
+    @Body() body: UpdatePriceForConnectedAccountDto,
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.updatePriceForConnectedAccount(
+      token,
+      body.value,
+      body.planName,
+      body.planId,
+      body.priceId,
+    );
+  }
+
+  @Delete('archive-prices-for-connected-account/:priceId')
+  archivePriceForConnectedAccount(
+    @Headers('authorization') auth: string,
+    @Param('priceId') priceId: string,
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.archivePriceForConnectedAccount(token, priceId);
+  }
+
+  @Post('price-readjustment-for-connected-account')
+  priceReadjustmentForConnectedAccount(
+    @Headers('authorization') auth: string,
+    @Body() body: PriceReadjustmentForConnectedAccountDto,
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    return this.paymentService.priceReadjustmentForConnectedAccount(
+      token,
+      body.priceId,
+      body.value,
+      body.productId,
+    );
   }
 }
