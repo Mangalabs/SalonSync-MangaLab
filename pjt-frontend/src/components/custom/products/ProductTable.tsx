@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Edit, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
 import {
@@ -42,9 +41,9 @@ interface Product {
 }
 
 const statusConfig = {
-  low: 'bg-red-100 text-red-700',
-  normal: 'bg-yellow-100 text-yellow-700',
-  good: 'bg-green-100 text-green-700',
+  low: 'bg-destructive/20 text-destructive',
+  normal: 'bg-secondary/30 text-secondary-foreground',
+  good: 'bg-primary/20 text-primary',
 }
 
 export function ProductTable() {
@@ -85,49 +84,16 @@ export function ProductTable() {
   const handleAdjustment = (product: Product) => setAdjustingProduct(product)
 
   if (isLoading) {
-
+    return <p className='p-4 text-muted-foreground'>Carregando...</p>
+  }
+  if (error) {
+    return <p className='p-4 text-destructive'>Erro ao carregar produtos</p>
+  }
+  if (!data?.length) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <div className="overflow-x-auto bg-white border rounded-2xl shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-20" /></th>
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-12" /></th>
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-16" /></th>
-                <th className="py-3 px-4 text-left"><Skeleton className="h-4 w-12" /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-gray-100">
-                  <td className="py-3 px-4 flex items-center space-x-3">
-                    <Skeleton className="w-10 h-10 rounded-lg" />
-                    <Skeleton className="h-4 w-24" />
-                  </td>
-                  <td className="py-3 px-4"><Skeleton className="h-4 w-20" /></td>
-                  <td className="py-3 px-4"><Skeleton className="h-6 w-16" /></td>
-                  <td className="py-3 px-4"><Skeleton className="h-4 w-16" /></td>
-                  <td className="py-3 px-4"><Skeleton className="h-6 w-20" /></td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <Skeleton className="h-8 w-8" />
-                      <Skeleton className="h-8 w-8" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <p className='p-4 text-muted-foreground'>Nenhum produto encontrado</p>
     )
   }
-  if (error) {return <p className="p-4 text-red-500">Erro ao carregar produtos</p>}
-  if (!data?.length) {return <p className="p-4 text-gray-500">Nenhum produto encontrado</p>}
 
   const filteredProducts = data.filter(
     (p) =>
@@ -143,30 +109,30 @@ export function ProductTable() {
           placeholder='Buscar produtos...'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className='flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base'
+          className='flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm sm:text-base bg-input text-foreground'
         />
       </div>
 
-      <div className='overflow-x-auto bg-white border rounded-2xl shadow-sm'>
+      <div className='overflow-x-auto bg-card border border-border rounded-2xl shadow-sm'>
         <table className='min-w-full w-full table-auto border-collapse'>
           <thead className='hidden md:table-header-group'>
-            <tr className='border-b border-gray-200 bg-gray-50'>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+            <tr className='border-b border-border bg-muted'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Produto
               </th>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Categoria
               </th>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Estoque
               </th>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Preço
               </th>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Status
               </th>
-              <th className='py-3 px-4 text-left font-semibold text-gray-700'>
+              <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Ações
               </th>
             </tr>
@@ -183,30 +149,30 @@ export function ProductTable() {
               return (
                 <tr
                   key={product.id}
-                  className='border-b border-gray-100 hover:bg-gray-50 transition-colors md:table-row flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none'>
+                  className='border-b border-border hover:bg-muted/50 transition-colors md:table-row flex flex-col md:flex-row mb-4 md:mb-0 p-4 md:p-0 rounded-lg md:rounded-none'>
                   <td className='py-2 px-3 flex items-center space-x-3 md:table-cell block'>
-                    <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0'>
-                      <Package className='text-purple-600 w-5 h-5' />
+                    <div className='w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center shrink-0'>
+                      <Package className='text-primary w-5 h-5' />
                     </div>
                     <div className='flex flex-col'>
-                      <span className='font-medium text-gray-800 truncate'>
+                      <span className='font-medium text-foreground truncate'>
                         {product.name}
                       </span>
-                      <span className='text-sm text-gray-500 block md:hidden'>
+                      <span className='text-sm text-muted-foreground block md:hidden'>
                         Produto
                       </span>
                     </div>
                   </td>
 
-                  <td className='py-2 px-3 text-gray-600 md:table-cell block'>
-                    <span className='md:hidden font-semibold text-gray-700'>
+                  <td className='py-2 px-3 text-muted-foreground md:table-cell block'>
+                    <span className='md:hidden font-semibold text-foreground'>
                       Categoria:{' '}
                     </span>
                     {product.category}
                   </td>
 
                   <td className='py-2 px-3 md:table-cell block'>
-                    <span className='md:hidden font-semibold text-gray-700'>
+                    <span className='md:hidden font-semibold text-foreground'>
                       Estoque:{' '}
                     </span>
                     <span
@@ -215,15 +181,15 @@ export function ProductTable() {
                     </span>
                   </td>
 
-                  <td className='py-2 px-3 font-semibold text-gray-800 md:table-cell block'>
-                    <span className='md:hidden font-semibold text-gray-700'>
+                  <td className='py-2 px-3 font-semibold text-foreground md:table-cell block'>
+                    <span className='md:hidden font-semibold text-foreground'>
                       Preço:{' '}
                     </span>
                     R$ {Number(product.salePrice).toFixed(2).replace('.', ',')}
                   </td>
 
                   <td className='py-2 px-3 md:table-cell block'>
-                    <span className='md:hidden font-semibold text-gray-700'>
+                    <span className='md:hidden font-semibold text-foreground'>
                       Status:{' '}
                     </span>
                     <span
@@ -238,12 +204,12 @@ export function ProductTable() {
 
                   <td className='py-2 px-3 md:table-cell block flex space-x-2 flex-wrap mt-2 md:mt-0'>
                     <Button
-                      className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none'
+                      className='p-2 text-green-600 bg-green-200 hover:bg-green-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
                       onClick={() => handleAdjustment(product)}>
                       <Edit className='w-4 h-4' />
                     </Button>
                     <Button
-                      className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none'
+                      className='p-2 text-red-600 bg-red-200 hover:bg-red-100 rounded-lg transition-colors flex-1 md:flex-none cursor-pointer'
                       onClick={() => setDeletingProductId(product.id)}
                       disabled={deleteProduct.isPending}>
                       <Trash2 className='w-4 h-4' />
@@ -259,7 +225,7 @@ export function ProductTable() {
       <Dialog
         open={!!adjustingProduct}
         onOpenChange={() => setAdjustingProduct(null)}>
-        <DialogContent className='w-full max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+        <DialogContent className='w-full max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card text-foreground'>
           <DialogHeader>
             <DialogTitle>Editar Produto - {adjustingProduct?.name}</DialogTitle>
           </DialogHeader>
@@ -273,7 +239,7 @@ export function ProductTable() {
       <AlertDialog
         open={!!deletingProductId}
         onOpenChange={() => setDeletingProductId(null)}>
-        <AlertDialogContent className='max-w-[95vw]'>
+        <AlertDialogContent className='max-w-[95vw] bg-card text-foreground'>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
@@ -282,8 +248,11 @@ export function ProductTable() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className='bg-muted text-foreground hover:bg-muted/80'>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/80'
               onClick={() =>
                 deletingProductId && deleteProduct.mutate(deletingProductId)
               }

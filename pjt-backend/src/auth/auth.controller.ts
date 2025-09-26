@@ -55,7 +55,7 @@ export class AuthController {
       password: string;
       name: string;
       businessName: string;
-      branches?: { name: string }[];
+      branchName?: string;
       city: string;
       country: string;
       line1: string;

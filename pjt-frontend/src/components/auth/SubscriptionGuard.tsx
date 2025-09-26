@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
 import axios from '@/lib/axios'
-import { Skeleton } from '@/components/ui/skeleton'
 
 interface SubscriptionGuardProps {
   children: ReactNode;
@@ -40,10 +39,7 @@ export function SubscriptionGuard({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="space-y-4 text-center">
-          <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-          <Skeleton className="h-4 w-32 mx-auto" />
-        </div>
+        Carregando...
       </div>
     )
   }

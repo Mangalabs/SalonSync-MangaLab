@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 
 import { useUser } from '@/contexts/UserContext'
-import { Skeleton } from '@/components/ui/skeleton'
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -14,14 +13,7 @@ export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) 
   const { user, isLoading } = useUser()
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="space-y-4 text-center">
-          <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-          <Skeleton className="h-4 w-32 mx-auto" />
-        </div>
-      </div>
-    )
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
   if (!user) {

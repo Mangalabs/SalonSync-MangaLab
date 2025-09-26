@@ -63,7 +63,8 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryClient.invalidateQueries({ queryKey: ['products'] })
     queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-
+    queryClient.invalidateQueries({ queryKey: ['whatsapp-messages'] })
+    queryClient.invalidateQueries({ queryKey: ['whatsapp-config'] })
     queryClient.invalidateQueries({ queryKey: ['categories'] })
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })

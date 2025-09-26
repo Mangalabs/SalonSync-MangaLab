@@ -150,8 +150,7 @@ export class PaymentService {
       }
 
       const session = await stripeClient.checkout.sessions.create({
-        ui_mode: 'embedded',
-        allow_promotion_codes: true,
+        ui_mode: 'custom',
         customer: user.customerId as string,
         line_items: [
           {
@@ -160,14 +159,14 @@ export class PaymentService {
           },
         ],
         mode: 'subscription',
-        return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        // return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        // return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       });
 
       return { clientSecret: session.client_secret };
     } catch (e) {
-      console.log(e);
       if (e instanceof HttpException) throw e;
+
       throw new HttpException(
         'Não foi possível criar sessão de pagamento',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -374,7 +373,7 @@ export class PaymentService {
       );
       return prices.data;
     } catch {
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi recuperar preço');
     }
   }
 
@@ -428,7 +427,7 @@ export class PaymentService {
       return { newPrice, updatedProduct };
     } catch (e) {
       console.log(e);
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi atualizar preço');
     }
   }
 
@@ -459,7 +458,7 @@ export class PaymentService {
 
       return archivedPrice;
     } catch {
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi arquivar preço');
     }
   }
 
@@ -557,7 +556,7 @@ export class PaymentService {
       );
     } catch (e) {
       console.log(e);
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi reajustar preço');
     }
   }
 }

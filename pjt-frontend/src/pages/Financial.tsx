@@ -33,44 +33,43 @@ function PeriodFilter() {
     useFinancial()
 
   return (
-    <div className="space-y-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-      <h2 className="flex items-center gap-2 font-medium text-gray-700">
-        <Calendar className="h-4 w-4" /> Período{' '}
+    <div className='space-y-3 bg-card p-4 rounded-2xl shadow-sm border border-border'>
+      <h2 className='flex items-center gap-2 font-medium text-muted-foreground'>
+        <Calendar className='h-4 w-4' /> Período{' '}
         {activeBranch ? `(${activeBranch.name})` : ''}
       </h2>
 
-      <div className="flex flex-col sm:flex-row items-end gap-3">
-        <div className="flex-1">
-          <Label htmlFor="startDate" className="text-xs">
+      <div className='flex flex-col sm:flex-row items-end gap-3'>
+        <div className='flex-1'>
+          <Label htmlFor='startDate' className='text-xs text-muted-foreground'>
             Data Inicial
           </Label>
           <Input
-            id="startDate"
-            type="date"
+            id='startDate'
+            type='date'
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="text-sm h-8"
+            className='text-sm h-8 bg-input text-foreground border border-border'
           />
         </div>
 
-        <div className="flex-1">
-          <Label htmlFor="endDate" className="text-xs">
+        <div className='flex-1'>
+          <Label htmlFor='endDate' className='text-xs text-muted-foreground'>
             Data Final
           </Label>
           <Input
-            id="endDate"
-            type="date"
+            id='endDate'
+            type='date'
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="text-sm h-8"
+            className='text-sm h-8 bg-input text-foreground border border-border'
           />
         </div>
 
         <Button
-          variant="outline"
+          variant='outline'
           onClick={resetToToday}
-          className="w-full sm:w-auto text-sm h-8 bg-white"
-        >
+          className='w-full sm:w-auto text-sm h-8 bg-card text-foreground border border-border hover:bg-muted'>
           Hoje
         </Button>
       </div>
@@ -102,94 +101,103 @@ export default function Financial() {
 
   return (
     <FinancialProvider>
-      <div className="space-y-4 md:space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl md:text-3xl font-bold">Financeiro</h1>
+      <div className='space-y-4 md:space-y-6 mt-4'>
+        <div className='flex items-center justify-between'>
+          <h1 className='text-xl md:text-3xl font-bold text-foreground'>
+            Financeiro
+          </h1>
         </div>
 
         <PeriodFilter />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden bg-white w-full grid-cols-5 rounded-2xl p-2 shadow-sm border h-15 border-gray-100 flex flex-wrap gap-1">
+          <TabsList className='bg-card w-full grid-cols-5 rounded-2xl shadow-sm border border-border flex flex-wrap'>
             {tabs.map((tab) => {
               const IconComponent = tab.icon
               return (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-xl transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                  }`}
-                >
-                  <IconComponent className="w-4 h-4" />
-                  {tab.label}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium transition-all duration-200 text-xs sm:text-sm md:text-base
+                    ${
+                activeTab === tab.id
+                  ? 'bg-primary text-primary shadow-md'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                }`}>
+                  <IconComponent className='w-4 h-4 md:w-5 md:h-5 flex-shrink-0' />
+                  <span
+                    className='
+                      hidden sm:inline truncate
+                      text-xs sm:text-sm md:text-base
+                    '>
+                    {tab.label}
+                  </span>
                 </TabsTrigger>
               )
             })}
           </TabsList>
 
-          <TabsContent value="summary" className="space-y-4 md:space-y-6">
+          <TabsContent value='summary' className='space-y-4 md:space-y-6'>
             <FinancialSummary
               onNewTransaction={handleNewTransaction}
               onNewRecurringExpense={() => setRecurringExpenseDialogOpen(true)}
             />
           </TabsContent>
 
-          <TabsContent value="income" className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-base md:text-xl font-semibold flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-[#D4AF37]" />
+          <TabsContent value='income' className='space-y-4 md:space-y-6'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <h2 className='text-base md:text-xl font-semibold flex items-center gap-2 text-foreground'>
+                <TrendingUp className='h-4 w-4 md:h-5 md:w-5 text-primary' />
                 Receitas
               </h2>
               <Button
                 onClick={() => handleNewTransaction('INCOME')}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">+ Nova Receita</span>
-                <span className="sm:hidden">+ Receita</span>
+                className='bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'>
+                <span className='hidden sm:inline'>+ Nova Receita</span>
+                <span className='sm:hidden'>+ Receita</span>
               </Button>
             </div>
-            <FinancialTabContent type="INCOME" />
+            <FinancialTabContent type='INCOME' />
           </TabsContent>
 
-          <TabsContent value="expenses" className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-base md:text-xl font-semibold flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
+          <TabsContent value='expenses' className='space-y-4 md:space-y-6'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <h2 className='text-base md:text-xl font-semibold flex items-center gap-2 text-foreground'>
+                <TrendingDown className='h-4 w-4 md:h-5 md:w-5 text-destructive' />
                 Despesas
               </h2>
               <Button
                 onClick={() => handleNewTransaction('EXPENSE')}
-                className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">+ Nova Despesa</span>
-                <span className="sm:hidden">+ Despesa</span>
+                className='px-10 py-5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'>
+                <span className='hidden sm:inline'>+ Nova Despesa</span>
+                <span className='sm:hidden'>+ Despesa</span>
               </Button>
             </div>
-            <FinancialTabContent type="EXPENSE" />
+            <FinancialTabContent type='EXPENSE' />
           </TabsContent>
 
-          <TabsContent value="recurring" className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-base md:text-xl font-semibold flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+          <TabsContent value='recurring' className='space-y-4 md:space-y-6'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <h2 className='text-base md:text-xl font-semibold flex items-center gap-2 text-foreground'>
+                <TrendingDown className='h-4 w-4 md:h-5 md:w-5 text-primary' />
                 Despesas Fixas
               </h2>
               <Dialog
                 open={recurringExpenseDialogOpen}
-                onOpenChange={setRecurringExpenseDialogOpen}
-              >
+                onOpenChange={setRecurringExpenseDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-                    <span className="hidden sm:inline">+ Nova Despesa Fixa</span>
-                    <span className="sm:hidden">+ Fixa</span>
+                  <Button className='px-10 py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'>
+                    <span className='hidden sm:inline'>
+                      + Nova Despesa Fixa
+                    </span>
+                    <span className='sm:hidden'>+ Fixa</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className='bg-card text-foreground border border-border'>
                   <DialogHeader>
-                    <DialogTitle>Nova Despesa Fixa</DialogTitle>
+                    <DialogTitle className='text-foreground'>
+                      Nova Despesa Fixa
+                    </DialogTitle>
                   </DialogHeader>
                   <RecurringExpenseForm
                     onSuccess={() => setRecurringExpenseDialogOpen(false)}
@@ -200,31 +208,29 @@ export default function Financial() {
             <RecurringExpensesTabContent />
           </TabsContent>
 
-          <TabsContent value="investments" className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-base md:text-xl font-semibold flex items-center gap-2">
-                <PiggyBank className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
+          <TabsContent value='investments' className='space-y-4 md:space-y-6'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <h2 className='text-base md:text-xl font-semibold flex items-center gap-2 text-foreground'>
+                <PiggyBank className='h-4 w-4 md:h-5 md:w-5 text-primary' />
                 Investimentos
               </h2>
               <Button
                 onClick={() => handleNewTransaction('INVESTMENT')}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">+ Novo Investimento</span>
-                <span className="sm:hidden">+ Investimento</span>
+                className='px-10 py-5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-60 transition-opacity flex items-center gap-2 cursor-pointer'>
+                <span className='hidden sm:inline'>+ Novo Investimento</span>
+                <span className='sm:hidden'>+ Investimento</span>
               </Button>
             </div>
-            <FinancialTabContent type="INVESTMENT" />
+            <FinancialTabContent type='INVESTMENT' />
           </TabsContent>
         </Tabs>
 
         <Dialog
           open={transactionDialogOpen}
-          onOpenChange={setTransactionDialogOpen}
-        >
-          <DialogContent>
+          onOpenChange={setTransactionDialogOpen}>
+          <DialogContent className='bg-card text-foreground border border-border'>
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className='text-foreground'>
                 Nova{' '}
                 {transactionType === 'INCOME'
                   ? 'Receita'
@@ -242,8 +248,7 @@ export default function Financial() {
 
         <Dialog
           open={recurringExpenseDialogOpen}
-          onOpenChange={setRecurringExpenseDialogOpen}
-        >
+          onOpenChange={setRecurringExpenseDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nova Despesa Fixa</DialogTitle>

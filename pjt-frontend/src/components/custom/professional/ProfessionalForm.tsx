@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
-import { Checkbox } from '@/components/ui/checkbox'
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
@@ -23,7 +22,6 @@ const schema = z.object({
   baseSalary: z.union([z.number(), z.nan()]).optional(),
   salaryPayDay: z.union([z.number(), z.nan()]).optional(),
   branchId: z.string().min(1, 'Selecione uma filial'),
-  workingDays: z.array(z.number()).optional(),
 })
 
 type FormData = z.infer<typeof schema>;
@@ -80,7 +78,6 @@ export function ProfessionalForm({
       : {
         commissionRate: 0,
         branchId: !isAdmin ? activeBranch?.id : undefined,
-        workingDays: [1, 2, 3, 4, 5, 6], // Segunda a sábado por padrão
       },
   })
 
@@ -292,48 +289,6 @@ export function ProfessionalForm({
           </p>
         )}
       </div>
-
-      <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Dias de Trabalho</h3>
-        <div className="grid grid-cols-7 gap-2">
-          {[
-            { day: 0, label: 'Dom' },
-            { day: 1, label: 'Seg' },
-            { day: 2, label: 'Ter' },
-            { day: 3, label: 'Qua' },
-            { day: 4, label: 'Qui' },
-            { day: 5, label: 'Sex' },
-            { day: 6, label: 'Sáb' },
-          ].map(({ day, label }) => {
-            const workingDays = watch('workingDays') || []
-            const isChecked = workingDays.includes(day)
-            
-            return (
-              <div key={day} className="flex flex-col items-center">
-                <Checkbox
-                  id={`day-${day}`}
-                  checked={isChecked}
-                  onCheckedChange={(checked) => {
-                    const currentDays = watch('workingDays') || []
-                    if (checked) {
-                      setValue('workingDays', [...currentDays, day].sort())
-                    } else {
-                      setValue('workingDays', currentDays.filter(d => d !== day))
-                    }
-                  }}
-                />
-                <Label htmlFor={`day-${day}`} className="text-xs mt-1">
-                  {label}
-                </Label>
-              </div>
-            )
-          })}
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Selecione os dias da semana em que o profissional trabalha
-        </p>
-      </div>
-
       <Button
         type="submit"
         disabled={isSubmitting}

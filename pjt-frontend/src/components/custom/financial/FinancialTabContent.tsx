@@ -1,12 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Filter,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  Trash2,
-} from 'lucide-react'
+import { Filter, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -144,7 +138,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           } - ${apt.client?.name || 'Cliente'}`,
           amount: apt.total,
           date: apt.scheduledAt,
-          category: { name: 'Serviços', color: '#10B981' },
+          category: { name: 'Serviços', color: 'var(--color-accent)' },
           paymentMethod: 'CASH',
           reference: `Atendimento-${apt.id}`,
           isAppointment: true,
@@ -189,32 +183,33 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const filteredTransactions = useMemo(
     () =>
       calculations.allTransactions?.filter((t: any) => {
+        const matchesBranch =
+          !branchFilter || t.branchId === branchFilter
         const matchesCategory =
           categoryFilter === 'all' || t.category.name === categoryFilter
         const matchesPayment =
-          paymentMethodFilter === 'all' ||
-          t.paymentMethod === paymentMethodFilter
+          paymentMethodFilter === 'all' || t.paymentMethod === paymentMethodFilter
         const matchesSearch =
           searchTerm === '' ||
           t.description.toLowerCase().includes(searchTerm.toLowerCase())
-        return matchesCategory && matchesPayment && matchesSearch
+        return matchesBranch && matchesCategory && matchesPayment && matchesSearch
       }) || [],
     [
       calculations.allTransactions,
+      branchFilter,
       categoryFilter,
       paymentMethodFilter,
       searchTerm,
     ],
   )
 
-  if (isLoading) {
-    return <div className='p-4'>Carregando...</div>
-  }
-  if (error) {
-    return (
-      <div className='p-4 text-red-600'>Erro ao carregar dados financeiros</div>
-    )
-  }
+  if (isLoading) {return <div className='p-4 text-foreground'>Carregando...</div>}
+  if (error)
+  {return (
+    <div className='p-4 text-destructive'>
+    Erro ao carregar dados financeiros
+    </div>
+  )}
 
   const {
     totalFromTransactions,
@@ -229,24 +224,22 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const getTypeColor = () => {
     switch (type) {
       case 'INCOME':
-        return 'text-green-600'
+        return 'text-accent-foreground'
       case 'EXPENSE':
-        return 'text-red-600'
+        return 'text-destructive'
       case 'INVESTMENT':
-        return 'text-blue-600'
+        return 'text-primary'
     }
   }
 
-  const getPaymentMethodLabel = (method: string) => {
-    const labels = {
+  const getPaymentMethodLabel = (method: string) =>
+    ({
       CASH: 'Dinheiro',
       CARD: 'Cartão',
       PIX: 'PIX',
       TRANSFER: 'Transferência',
       OTHER: 'Outros',
-    }
-    return labels[method as keyof typeof labels] || method
-  }
+    }[method as keyof any] || method)
 
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2)}`
 
@@ -256,7 +249,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       toast.success('Transação excluída com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['financial-tab-data'] })
       setDeletingTransaction(null)
-    } catch (error) {
+    } catch {
       toast.error('Erro ao excluir transação')
     }
   }
@@ -268,9 +261,9 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
   return (
     <div className='space-y-6'>
-      <Card>
+      <Card className='bg-card'>
         <CardHeader className='pb-2'>
-          <CardTitle className='text-xl font-medium'>
+          <CardTitle className='text-xl font-medium text-foreground'>
             {type === 'INCOME'
               ? 'Receitas'
               : type === 'EXPENSE'
@@ -281,7 +274,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         <CardContent>
           <div className='flex justify-between items-start'>
             <div>
-              <p className='text-sm text-gray-600 mt-1'>
+              <p className='text-sm text-muted-foreground mt-1'>
                 Período:{' '}
                 {(() => {
                   try {
@@ -301,14 +294,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
             </div>
           </div>
 
-          <div
-            className={`text-2xl font-bold ${
-              type === 'INCOME'
-                ? 'text-green-600'
-                : type === 'EXPENSE'
-                  ? 'text-red-600'
-                  : 'text-blue-600'
-            }`}>
+          <div className={`text-2xl font-bold ${getTypeColor()}`}>
             Total do Período:{' '}
             {formatCurrency(
               type === 'INCOME'
@@ -322,17 +308,17 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       </Card>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        <Card>
+        <Card className='bg-card'>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-md font-medium'>
+            <CardTitle className='text-md font-medium text-foreground'>
               Transações Manuais
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-xl font-semibold'>
+            <div className='text-xl font-semibold text-foreground'>
               {summary?.transactions?.length || 0}
             </div>
-            <div className='text-gray-600'>
+            <div className='text-muted-foreground'>
               {formatCurrency(totalFromTransactions)}
             </div>
           </CardContent>
@@ -340,32 +326,33 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
         {type === 'INCOME' && (
           <>
-            <Card>
+            <Card className='bg-card'>
               <CardHeader className='pb-2'>
-                <CardTitle className='text-md font-medium'>
+                <CardTitle className='text-md font-medium text-foreground'>
                   Atendimentos
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='text-xl font-semibold'>
+                <div className='text-xl font-semibold text-foreground'>
                   {summary?.appointments?.length || 0}
                 </div>
-                <div className='text-md text-gray-600'>
+                <div className='text-md text-muted-foreground'>
                   {formatCurrency(totalFromAppointments)}
                 </div>
               </CardContent>
             </Card>
-            <Card>
+
+            <Card className='bg-card'>
               <CardHeader className='pb-2'>
-                <CardTitle className='text-md font-medium'>
+                <CardTitle className='text-md font-medium text-foreground'>
                   Vendas de Produtos
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='text-xl font-bold'>
+                <div className='text-xl font-bold text-foreground'>
                   {formatCurrency(stockRevenue)}
                 </div>
-                <p className='text-xs text-gray-500 mt-1'>
+                <p className='text-xs text-muted-foreground mt-1'>
                   Automático do estoque
                 </p>
               </CardContent>
@@ -374,18 +361,18 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         )}
 
         {type === 'EXPENSE' && (
-          <Card>
+          <Card className='bg-card'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-md font-medium'>
+              <CardTitle className='text-md font-medium text-foreground'>
                 Perdas de Estoque
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-xl font-semibold'>📉</div>
-              <div className='text-sm text-red-600'>
+              <div className='text-xl font-semibold text-foreground'>📉</div>
+              <div className='text-sm text-destructive'>
                 {formatCurrency(stockExpenses)}
               </div>
-              <p className='text-xs text-gray-500 mt-1'>
+              <p className='text-xs text-muted-foreground mt-1'>
                 Automático do estoque
               </p>
             </CardContent>
@@ -393,18 +380,18 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         )}
 
         {type === 'INVESTMENT' && (
-          <Card>
+          <Card className='bg-card'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+              <CardTitle className='text-sm font-medium text-foreground'>
                 Compra de Produtos
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-xl font-semibold'>🛒</div>
-              <div className='text-sm text-blue-600'>
+              <div className='text-xl font-semibold text-foreground'>🛒</div>
+              <div className='text-sm text-primary'>
                 {formatCurrency(stockExpenses)}
               </div>
-              <p className='text-xs text-gray-500 mt-1'>
+              <p className='text-xs text-muted-foreground mt-1'>
                 Automático do estoque
               </p>
             </CardContent>
@@ -413,9 +400,11 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       </div>
 
       {Object.keys(categorySummary).length > 0 && (
-        <Card>
+        <Card className='bg-card'>
           <CardHeader>
-            <CardTitle className='text-lg'>Por Categoria</CardTitle>
+            <CardTitle className='text-lg text-foreground'>
+              Por Categoria
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='grid grid-cols-1 grid-cols-2 gap-3'>
@@ -423,19 +412,18 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 ([category, data]: [string, any]) => (
                   <div
                     key={category}
-                    className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                    className='flex items-center justify-between p-3 bg-muted rounded-lg'>
                     <div className='flex items-center gap-2'>
                       <div>
-                        <div className='font-medium text-md text-gray-700'>
+                        <div className='font-medium text-md text-foreground'>
                           {category}
                         </div>
-                        <div className='text-xs text-gray-500'>
+                        <div className='text-xs text-muted-foreground'>
                           {data.count} transações
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`font-semibold ${getTypeColor()}, text-gray-800`}>
+                    <div className={`font-semibold ${getTypeColor()}`}>
                       {formatCurrency(data.total)}
                     </div>
                   </div>
@@ -446,12 +434,14 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         </Card>
       )}
 
-      <Card>
+      <Card className='bg-card'>
         <CardHeader>
           <div className='flex items-center justify-between'>
-            <CardTitle className='text-lg'>Transações Detalhadas</CardTitle>
+            <CardTitle className='text-lg text-foreground'>
+              Transações Detalhadas
+            </CardTitle>
             <Button
-              className='bg-white'
+              className='bg-button-bg text-button-text hover:bg-button-hover'
               variant='outline'
               size='sm'
               onClick={() => setShowFilters(!showFilters)}>
@@ -472,10 +462,11 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                 placeholder='Buscar descrição...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className='bg-input text-foreground'
               />
 
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
+                <SelectTrigger className='bg-input text-foreground'>
                   <SelectValue placeholder='Categoria' />
                 </SelectTrigger>
                 <SelectContent>
@@ -491,7 +482,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               <Select
                 value={paymentMethodFilter}
                 onValueChange={setPaymentMethodFilter}>
-                <SelectTrigger>
+                <SelectTrigger className='bg-input text-foreground'>
                   <SelectValue placeholder='Forma de pagamento' />
                 </SelectTrigger>
                 <SelectContent>
@@ -505,7 +496,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               </Select>
 
               <Button
-                className='bg-white'
+                className='bg-button-bg text-button-text hover:bg-button-hover'
                 variant='outline'
                 onClick={() => {
                   setSearchTerm('')
@@ -519,31 +510,46 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
 
           {filteredTransactions.length > 0 ? (
             <div
-              className={`rounded-md ${
+              className={`rounded-md overflow-x-auto ${
                 filteredTransactions.length > 10
                   ? 'max-h-[500px] overflow-y-auto'
                   : ''
               }`}>
-              <Table>
-                <TableHeader className='sticky top-0 bg-white z-10'>
+              <Table className='min-w-full text-xs sm:text-sm'>
+                <TableHeader className='sticky top-0 bg-card z-10 shadow-sm'>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Pagamento</TableHead>
-                    <TableHead className='text-right'>Valor</TableHead>
-                    <TableHead className='text-right'>Ações</TableHead>
+                    <TableHead className='w-[60px] sm:w-[90px] text-foreground'>
+                      Data
+                    </TableHead>
+                    <TableHead className='w-[100px] sm:w-[150px] text-foreground'>
+                      Descrição
+                    </TableHead>
+                    <TableHead className='hidden sm:table-cell w-[80px] sm:w-[120px] text-foreground'>
+                      Categoria
+                    </TableHead>
+                    <TableHead className='hidden md:table-cell w-[80px] sm:w-[120px] text-foreground'>
+                      Pagamento
+                    </TableHead>
+                    <TableHead className='text-right w-[70px] sm:w-[100px] text-foreground'>
+                      Valor
+                    </TableHead>
+                    <TableHead className='text-right w-[60px] sm:w-[90px] text-foreground'>
+                      Ações
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className='text-[11px] sm:text-xs md:text-sm text-foreground'>
                   {filteredTransactions.map((transaction: any) => {
                     const isStockRelated =
                       transaction.reference?.startsWith('Estoque-') ||
                       transaction.reference?.startsWith('Produto-')
                     const isAppointment = transaction.isAppointment
+
                     return (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
+                      <TableRow
+                        key={transaction.id}
+                        className='whitespace-nowrap h-6 sm:h-7 md:h-10'>
+                        <TableCell className='py-0.5 px-1 text-[10px] sm:text-[11px] md:text-sm'>
                           {(() => {
                             try {
                               const date = new Date(transaction.date)
@@ -555,33 +561,38 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                             }
                           })()}
                         </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className='font-medium flex items-center gap-2'>
+
+                        <TableCell className='max-w-[90px] sm:max-w-[150px] md:max-w-[250px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
+                          <div className='flex flex-col'>
+                            <div className='font-medium flex items-center gap-1'>
                               {isStockRelated && (
-                                <span className='text-md bg-blue-50 text-blue-500 px-2 py-1 rounded'>
+                                <span className='hidden sm:inline text-[8px] sm:text-[10px] bg-secondary text-secondary-foreground px-1 py-0.5 rounded'>
                                   📦 Estoque
                                 </span>
                               )}
                               {isAppointment && (
-                                <span className='text-md bg-green-50 text-green-500 px-2 py-1 rounded'>
+                                <span className='hidden sm:inline text-[8px] sm:text-[10px] bg-accent text-accent-foreground px-1 py-0.5 rounded'>
                                   📅 Atendimento
                                 </span>
                               )}
-                              <p className='text-base'>
+                              <p
+                                className='truncate text-[10px] sm:text-[11px] md:text-sm'
+                                title={transaction.description}>
                                 {transaction.description}
                               </p>
                             </div>
                             {transaction.reference && (
-                              <div className='text-xs text-gray-500'>
+                              <div className='hidden sm:block text-[9px] sm:text-[10px] text-muted-foreground truncate'>
                                 Ref: {transaction.reference}
                               </div>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+
+                        <TableCell className='hidden sm:table-cell py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
                           <Badge
                             variant='secondary'
+                            className='truncate max-w-[80px] sm:max-w-[120px] text-[9px] sm:text-[10px] md:text-xs'
                             style={{
                               backgroundColor:
                                 transaction.category.color + '20',
@@ -590,18 +601,22 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                             {transaction.category.name}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-sm'>
+
+                        <TableCell className='hidden md:table-cell text-[10px] sm:text-[11px] truncate py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
                           {getPaymentMethodLabel(transaction.paymentMethod)}
                         </TableCell>
+
                         <TableCell
-                          className={`text-right font-semibold ${getTypeColor()}`}>
+                          className={`text-right font-semibold ${getTypeColor()} text-[10px] sm:text-[11px] md:text-sm py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3`}>
                           {formatCurrency(Number(transaction.amount))}
                         </TableCell>
-                        <TableCell className='text-right'>
+
+                        <TableCell className='text-right py-0.5 px-1 sm:py-1 sm:px-2 md:py-2 md:px-3'>
                           <div className='flex items-center justify-end gap-1'>
                             {!isAppointment && (
                               <Button
-                                className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                                size='icon'
+                                className='p-0.5 sm:p-0.5 md:p-1 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 cursor-pointer'
                                 onClick={() =>
                                   setEditingTransaction(transaction)
                                 }>
@@ -609,7 +624,8 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                               </Button>
                             )}
                             <Button
-                              className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                              size='icon'
+                              className='p-0.5 sm:p-0.5 md:p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
                               onClick={() =>
                                 setDeletingTransaction(transaction)
                               }>
@@ -624,22 +640,22 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               </Table>
             </div>
           ) : (
-            <div className='space-y-2 text-center text-gray-500'>
+            <div className='space-y-2 text-center text-muted-foreground'>
               <p>Nenhuma transação encontrada com os filtros aplicados</p>
               {type === 'INVESTMENT' && (
-                <p className='text-xs text-blue-600'>
+                <p className='text-xs text-primary'>
                   💡 Dica: Transações de investimento são criadas
                   automaticamente ao cadastrar produtos com estoque inicial
                 </p>
               )}
               {type === 'INCOME' && (
-                <p className='text-xs text-green-600'>
+                <p className='text-xs text-accent-foreground'>
                   💡 Dica: Receitas são geradas automaticamente por atendimentos
                   e vendas de produtos
                 </p>
               )}
               {type === 'EXPENSE' && (
-                <p className='text-xs text-red-600'>
+                <p className='text-xs text-destructive'>
                   💡 Dica: Despesas incluem perdas de estoque registradas
                   automaticamente
                 </p>
@@ -652,7 +668,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       <Dialog
         open={!!editingTransaction}
         onOpenChange={() => setEditingTransaction(null)}>
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card text-foreground'>
           <DialogHeader>
             <DialogTitle>Editar Transação</DialogTitle>
           </DialogHeader>
@@ -669,7 +685,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       <AlertDialog
         open={!!deletingTransaction}
         onOpenChange={() => setDeletingTransaction(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className='bg-card text-foreground'>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
@@ -682,7 +698,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDeleteTransaction(deletingTransaction)}
-              className='bg-red-600 hover:bg-red-700'>
+              className='bg-destructive hover:bg-destructive-foreground'>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

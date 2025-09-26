@@ -34,7 +34,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -135,7 +134,6 @@ export function ProfessionalTable() {
       }
     },
     enabled: !!activeBranch,
-    retry: false,
   })
 
   const { data: branches = [] } = useQuery({
@@ -237,6 +235,10 @@ export function ProfessionalTable() {
     createEmployee.mutate({ ...data, workingDays: selectedWorkingDays })
   }
 
+  const toggleExpanded = (id: string) =>
+    setExpandedProfessional(expandedProfessional === id ? null : id)
+
+  if (isLoading) {return <p>Carregando...</p>}
   const toggleWorkingDay = (dayValue: number) => {
     setSelectedWorkingDays((prev) =>
       prev.includes(dayValue)
@@ -244,9 +246,6 @@ export function ProfessionalTable() {
         : [...prev, dayValue].sort()
     )
   }
-
-  const toggleExpanded = (id: string) =>
-    setExpandedProfessional(expandedProfessional === id ? null : id)
 
   if (isLoading) {
     return (
@@ -293,7 +292,7 @@ export function ProfessionalTable() {
       prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (prof.customRole?.title || prof.role)
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        .includes(searchTerm.toLowerCase()),
   )
 
   const filteredRoles = roles.filter((role: any) =>
@@ -304,51 +303,40 @@ export function ProfessionalTable() {
     <div className='space-y-6'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4'>
         <Button
-          className='w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:from-purple-600 hover:to-pink-600 transition-colors'
-          onClick={() => setCreatingNew(true)}
-        >
+          className='w-full sm:w-auto bg-primary text-primary-foreground px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/80 transition-colors'
+          onClick={() => setCreatingNew(true)}>
           <PlusCircle className='w-4 h-4' />
           Novo Profissional
         </Button>
 
-        <div className='flex items-center gap-2 w-full sm:w-64 bg-white border rounded-xl px-3 py-2 shadow-sm'>
-          <Search className='w-4 h-4 text-gray-400' />
+        <div className='flex items-center gap-2 w-full sm:w-64 bg-muted border border-border rounded-xl px-3 py-2 shadow-sm'>
+          <Search className='w-4 h-4 text-muted-foreground' />
           <input
             type='text'
             placeholder='Buscar profissional...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full border-none outline-none text-sm text-gray-700 placeholder-gray-400'
+            className='w-full border-none outline-none text-sm bg-transparent text-foreground placeholder:text-muted-foreground'
           />
         </div>
       </div>
 
-      <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-        <div className='hidden md:grid bg-gray-50 px-6 py-3 border-b border-gray-100 grid-cols-4 gap-4 font-semibold text-gray-700 text-sm'>
+      <div className='bg-card rounded-2xl shadow-sm border border-border overflow-hidden'>
+        <div className='hidden md:grid bg-muted px-6 py-3 border-b border-border grid-cols-4 gap-4 font-semibold text-muted-foreground text-sm'>
           <div>Nome</div>
           <div>Função</div>
           <div>Comissão</div>
           <div>Ações</div>
         </div>
 
-        <div className='divide-y divide-gray-100'>
-          {filteredProfessionals.length === 0 ? (
-            <div className='px-6 py-12 text-center text-gray-500'>
-              <PlusCircle className='w-12 h-12 mx-auto mb-4 text-gray-300' />
-              <p className='text-lg font-medium mb-2'>
-                Nenhum profissional cadastrado
-              </p>
-              <p className='text-sm'>
-                Adicione profissionais para começar a gerenciar sua equipe
-              </p>
-            </div>
-          ) : (
+        <div className='divide-y divide-border'>
+          {filteredProfessionals.length > 0 ? (
             filteredProfessionals.map((prof) => (
               <div key={prof.id}>
                 <div
-                  className={`px-4 sm:px-6 py-4 hover:bg-purple-50 transition-colors cursor-pointer 
+                  className={`px-4 sm:px-6 py-4 hover:bg-accent/10 transition-colors cursor-pointer 
                   grid grid-cols-1 md:grid-cols-4 gap-3 items-center 
-                  ${selectedProfessional === prof.id ? 'bg-[#D4AF37]/10' : ''}`}
+                  ${selectedProfessional === prof.id ? 'bg-accent/20' : ''}`}
                   onClick={() => {
                     toggleExpanded(prof.id)
                     queryClient.invalidateQueries({
@@ -360,68 +348,47 @@ export function ProfessionalTable() {
                     queryClient.invalidateQueries({
                       queryKey: ['professional', prof.id],
                     })
-                  }}
-                >
+                  }}>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold'>
+                    <div className='w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold'>
                       {prof.name[0]}
                     </div>
                     <div className='flex-1'>
-                      <div className='font-medium text-gray-800 truncate'>
+                      <div className='font-medium text-foreground truncate'>
                         {prof.name}
                       </div>
                     </div>
                     <div className='md:hidden ml-auto'>
                       {expandedProfessional === prof.id ? (
-                        <ChevronUp className='w-5 h-5 text-gray-400' />
+                        <ChevronUp className='w-5 h-5 text-muted-foreground' />
                       ) : (
-                        <ChevronDown className='w-5 h-5 text-gray-400' />
+                        <ChevronDown className='w-5 h-5 text-muted-foreground' />
                       )}
                     </div>
                   </div>
-                  <div className='flex-1'>
-                    <div className='font-medium text-gray-800 truncate'>
-                      {prof.name}
-                    </div>
-                    <div className='flex gap-1 mt-1'>
-                      {daysOfWeek.map((day) => {
-                        const isWorking = prof.workingDays?.some(
-                          (wd) => wd.dayOfWeek === day.value && wd.isActive
-                        )
-                        return (
-                          <span
-                            key={day.value}
-                            className={`text-xs px-1 py-0.5 rounded ${
-                              isWorking
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-400'
-                            }`}
-                          >
-                            {day.short}
-                          </span>
-                        )
-                      })}
-                    </div>
+
+                  <div className='text-muted-foreground text-sm md:text-base'>
+                    <span className='md:hidden font-semibold'>Função: </span>
+                    {prof.customRole?.title || prof.role}
                   </div>
 
-                  <div className='font-semibold text-purple-600 text-sm md:text-base'>
+                  <div className='font-semibold text-primary text-sm md:text-base'>
                     <span className='md:hidden font-semibold'>Comissão: </span>
                     {prof.customRole?.commissionRate || prof.commissionRate}%
                   </div>
 
                   <div className='flex gap-2'>
                     <Button
-                      className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                      className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'
                       onClick={(e) => {
                         e.stopPropagation()
                         setEditingProfessional(prof)
-                      }}
-                    >
+                      }}>
                       <Edit className='w-4 h-4' />
                       <span className='md:hidden ml-1 text-sm'>Editar</span>
                     </Button>
                     <Button
-                      className='flex-1 md:flex-none p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                      className='flex-1 md:flex-none p-2 text-red-600 bg-red-50 hover:bg-red-200 rounded-lg transition-colors cursor-pointer'
                       onClick={(e) => {
                         e.stopPropagation()
                         setDeletingProfessional(prof)
@@ -485,6 +452,10 @@ export function ProfessionalTable() {
                 )}
               </div>
             ))
+          ) : (
+            <div className='px-6 py-6 text-muted-foreground text-sm text-center'>
+              Nenhum profissional encontrado
+            </div>
           )}
         </div>
       </div>
@@ -494,10 +465,9 @@ export function ProfessionalTable() {
         onOpenChange={() => {
           setEditingProfessional(null)
           setCreatingNew(false)
-          setSelectedWorkingDays([1, 2, 3, 4, 5]) // Reset dias
-        }}
-      >
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          setSelectedWorkingDays([1, 2, 3, 4, 5])
+        }}>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
           <DialogHeader>
             <DialogTitle>
               {creatingNew ? 'Novo Funcionário' : 'Editar Funcionário'}
@@ -508,7 +478,27 @@ export function ProfessionalTable() {
               <Label htmlFor='name'>Nome Completo</Label>
               <Input id='name' {...register('name')} />
               {errors.name && (
-                <p className='text-xs text-red-500'>{errors.name.message}</p>
+                <p className='text-xs text-destructive'>
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor='email'>Email</Label>
+              <Input id='email' type='email' {...register('email')} />
+              {errors.email && (
+                <p className='text-xs text-destructive'>
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor='password'>Senha</Label>
+              <Input id='password' type='password' {...register('password')} />
+              {errors.password && (
+                <p className='text-xs text-destructive'>
+                  {errors.password.message}
+                </p>
               )}
             </div>
             {!editingProfessional && (
@@ -555,7 +545,7 @@ export function ProfessionalTable() {
                 </SelectContent>
               </Select>
               {errors.branchId && (
-                <p className='text-xs text-red-500'>
+                <p className='text-xs text-destructive'>
                   {errors.branchId.message}
                 </p>
               )}
@@ -617,12 +607,11 @@ export function ProfessionalTable() {
 
       <AlertDialog
         open={!!deletingProfessional}
-        onOpenChange={() => setDeletingProfessional(null)}
-      >
-        <AlertDialogContent>
+        onOpenChange={() => setDeletingProfessional(null)}>
+        <AlertDialogContent className='bg-card'>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Profissional</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className='text-muted-foreground'>
               Tem certeza que deseja excluir "{deletingProfessional?.name}"?
               <br />
               <br />
@@ -635,12 +624,11 @@ export function ProfessionalTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className='bg-[#DC2626] hover:bg-[#DC2626]/90'
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/80'
               onClick={() =>
                 deletingProfessional &&
                 deleteProfessional.mutate(deletingProfessional.id)
-              }
-            >
+              }>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -655,18 +643,16 @@ export function ProfessionalTable() {
             if (!open) {
               setEditingRole(null)
             }
-          }}
-        >
+          }}>
           <DialogTrigger asChild>
             <Button
               variant='outline'
-              className='border-[#D4AF37]/30 hover:bg-[#D4AF37]/10 text-gray-800 flex items-center gap-2 px-4 py-2 rounded-xl transition-colors'
-            >
+              className='border border-border hover:bg-accent/10 text-foreground flex items-center gap-2 px-4 py-2 rounded-xl transition-colors'>
               <Settings className='w-4 h-4' />
               Criar Função
             </Button>
           </DialogTrigger>
-          <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
             <DialogHeader>
               <DialogTitle>
                 {editingRole ? 'Editar Função' : 'Nova Função'}
@@ -684,37 +670,37 @@ export function ProfessionalTable() {
         </Dialog>
       </div>
       {roles.length > 0 && (
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6'>
-          <div className='flex justify-between items-center px-6 py-4 border-b border-gray-100'>
-            <h3 className='text-lg font-semibold text-gray-800'>
+        <div className='bg-card rounded-2xl shadow-sm border border-border overflow-hidden mt-6'>
+          <div className='flex justify-between items-center px-6 py-4 border-b border-border'>
+            <h3 className='text-lg font-semibold text-foreground'>
               Funções Criadas
             </h3>
           </div>
 
-          <div className='px-6 py-3 border-b border-gray-100 flex items-center gap-2'>
-            <Search className='w-4 h-4 text-gray-400' />
+          <div className='px-6 py-3 border-b border-border flex items-center gap-2'>
+            <Search className='w-4 h-4 text-muted-foreground' />
             <input
               type='text'
               placeholder='Buscar função...'
               value={roleSearchTerm}
               onChange={(e) => setRoleSearchTerm(e.target.value)}
-              className='w-full border-none outline-none text-sm text-gray-700 placeholder-gray-400'
+              className='w-full border-none outline-none text-sm bg-transparent text-foreground placeholder:text-muted-foreground'
             />
           </div>
 
           <div
-            className={`divide-y divide-gray-100 ${
+            className={`divide-y divide-border ${
               filteredRoles.length > 5 ? 'max-h-64 overflow-y-auto' : ''
-            }`}
-          >
+            }`}>
             {filteredRoles.map((role: any) => (
               <div
                 key={role.id}
-                className='px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors'
-              >
+                className='px-6 py-4 flex justify-between items-center hover:bg-accent/10 transition-colors'>
                 <div>
-                  <div className='font-medium text-gray-800'>{role.title}</div>
-                  <div className='text-gray-600 text-sm'>
+                  <div className='font-medium text-foreground'>
+                    {role.title}
+                  </div>
+                  <div className='text-muted-foreground text-sm'>
                     {role.commissionRate > 0
                       ? `${role.commissionRate}% comissão`
                       : 'Sem comissão'}
@@ -727,15 +713,14 @@ export function ProfessionalTable() {
                     setEditingRole(role)
                     setRoleOpen(true)
                   }}
-                  className='h-6 w-6 p-0'
-                >
+                  className='h-6 w-6 p-0 text-muted-foreground hover:text-foreground'>
                   <Edit className='h-3 w-3' />
                 </Button>
               </div>
             ))}
 
             {filteredRoles.length === 0 && (
-              <div className='px-6 py-4 text-gray-500 text-sm text-center'>
+              <div className='px-6 py-4 text-muted-foreground text-sm text-center'>
                 Nenhuma função encontrada
               </div>
             )}

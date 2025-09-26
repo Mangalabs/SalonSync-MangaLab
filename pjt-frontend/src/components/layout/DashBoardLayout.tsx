@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
+import { useState } from 'react'
 
 import { Sidebar } from '@/components/layout/Sidebar'
 import { useUser } from '@/contexts/UserContext'
@@ -9,7 +9,6 @@ import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Header } from '../custom/Header'
 
 function DashboardContent() {
-  const navigate = useNavigate()
   const { user, isAdmin } = useUser()
   const [showSetup, setShowSetup] = useState(false)
 
@@ -19,26 +18,33 @@ function DashboardContent() {
     setShowSetup(true)
   }
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/')
-    }
-  }, [navigate, user])
-
   if (showSetup) {
     return <FirstTimeSetup onComplete={() => setShowSetup(false)} />
   }
 
   return (
-    <div className='flex'>
+    <div className="flex">
       <Sidebar />
 
-      <main className='flex-1 min-h-screen ml-0 lg:ml-64 bg-gray-50 relative'>
-        <div className='fixed top-0 left-0 right-0 z-40 lg:ml-64'>
+      <main
+        className="flex-1 min-h-screen ml-0 lg:ml-64 relative transition-colors duration-300"
+        style={{
+          backgroundColor: 'var(--color-bg-secondary)',
+          color: 'var(--color-text)',
+        }}
+      >
+        <div
+          className="fixed top-0 left-0 right-0 z-40 lg:ml-64"
+          style={{
+            backgroundColor: 'var(--color-bg)',
+            borderBottom: '1px solid var(--color-border)',
+            boxShadow: '0 2px 4px var(--color-shadow)',
+          }}
+        >
           <Header />
         </div>
 
-        <div className='p-3 md:p-6 mt-27'>
+        <div className="p-3 md:p-6 mt-20">
           <Outlet />
         </div>
       </main>

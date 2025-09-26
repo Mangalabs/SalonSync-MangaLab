@@ -10,20 +10,20 @@ datasource db {
 model User {
   id             String          @id @default(uuid())
   email          String          @unique
-  customerId     String?         @unique
-  accountId      String?         @unique
   password       String
+  createdAt      DateTime        @default(now())
   name           String?
+  avatar         String?
   businessName   String?
   phone          String?
-  avatar         String?
   role           String          @default("ADMIN")
   isSuperAdmin   Boolean         @default(false)
-  createdAt      DateTime        @default(now())
+  customerId     String?         @unique
+  accountId      String?         @unique
   branches       Branch[]
+  resetLinks     ResetLinks[]
   services       Service[]
   stockMovements StockMovement[]
-  resetLinks     ResetLinks[]
 }
 
 model Branch {
@@ -31,12 +31,13 @@ model Branch {
   name                  String
   address               String?
   phone                 String?
-  logo                  String?
-  isActive              Boolean                @default(true)
   ownerId               String
   createdAt             DateTime               @default(now())
+  isActive              Boolean                @default(true)
+  logo                  String?
   appointments          Appointment[]
   owner                 User                   @relation(fields: [ownerId], references: [id])
+  branchSettings        BranchSettings?
   clients               Client[]
   expenseCategories     ExpenseCategory[]
   financialTransactions FinancialTransaction[]
@@ -46,51 +47,52 @@ model Branch {
   roles                 Role[]
   services              Service[]
   stockMovements        StockMovement[]
-
-  branchSettings        BranchSettings?
+  whatsappConfigs       WhatsAppConfig?
+  whatsappConversations WhatsAppConversation[]
+  whatsappMessages      WhatsAppMessage[]
 }
 
 model BranchSettings {
-  id                String   @id @default(uuid())
-  branchId          String   @unique
-  defaultStartTime  String   @default("09:00") // Horário padrão de início
-  defaultEndTime    String   @default("18:00") // Horário padrão de fim
-  lunchStartTime    String   @default("12:00") // Início do almoço
-  lunchEndTime      String   @default("14:00") // Fim do almoço
-  appointmentDuration Int    @default(60)      // Duração padrão em minutos
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  branch            Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid())
+  branchId            String   @unique
+  defaultStartTime    String   @default("09:00")
+  defaultEndTime      String   @default("18:00")
+  lunchStartTime      String   @default("12:00")
+  lunchEndTime        String   @default("14:00")
+  appointmentDuration Int      @default(60)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  branch              Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
 
 model Role {
   id             String         @id @default(uuid())
   title          String
   commissionRate Decimal        @default(0) @db.Decimal(5, 2)
-  baseSalary     Decimal?       @db.Decimal(10, 2)
-  salaryPayDay   Int?
   branchId       String
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  baseSalary     Decimal?       @db.Decimal(10, 2)
+  salaryPayDay   Int?
   professionals  Professional[]
   branch         Branch         @relation(fields: [branchId], references: [id])
 }
 
 model Professional {
-  id                String                    @id @default(uuid())
+  id                String                   @id @default(uuid())
   name              String
   role              String
-  active            Boolean                   @default(true)
-  commissionRate    Decimal                   @default(0) @db.Decimal(5, 2)
-  roleId            String?
+  active            Boolean                  @default(true)
   branchId          String
+  commissionRate    Decimal                  @default(0) @db.Decimal(5, 2)
+  roleId            String?
   appointments      Appointment[]
-  branch            Branch                    @relation(fields: [branchId], references: [id])
-  customRole        Role?                     @relation(fields: [roleId], references: [id])
-  recurringExpenses RecurringExpense[]
-  services          Service[]                 @relation("ProfessionalServices")
+  branch            Branch                   @relation(fields: [branchId], references: [id])
+  customRole        Role?                    @relation(fields: [roleId], references: [id])
   absences          ProfessionalAbsence[]
   workingDays       ProfessionalWorkingDay[]
+  recurringExpenses RecurringExpense[]
+  services          Service[]                @relation("ProfessionalServices")
 }
 
 model Service {
@@ -107,13 +109,13 @@ model Service {
 
 model Client {
   id           String        @id @default(uuid())
-  customerId   String?       @unique
   name         String
   phone        String?
   email        String?
-  branchId     String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  branchId     String
+  customerId   String?       @unique
   appointments Appointment[]
   branch       Branch        @relation(fields: [branchId], references: [id])
 }
@@ -122,11 +124,11 @@ model Appointment {
   id                     String                 @id @default(uuid())
   professionalId         String?
   clientId               String
-  branchId               String
   total                  Decimal                @db.Decimal(10, 2)
+  createdAt              DateTime               @default(now())
   scheduledAt            DateTime
   status                 AppointmentStatus      @default(SCHEDULED)
-  createdAt              DateTime               @default(now())
+  branchId               String
   branch                 Branch                 @relation(fields: [branchId], references: [id])
   client                 Client                 @relation(fields: [clientId], references: [id])
   professional           Professional?          @relation(fields: [professionalId], references: [id], onDelete: Restrict)
@@ -146,7 +148,6 @@ model AppointmentService {
 model Product {
   id             String          @id @default(uuid())
   name           String
-  sku            String?
   description    String?
   category       String
   brand          String?
@@ -161,6 +162,7 @@ model Product {
   branchId       String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  sku            String?
   branch         Branch          @relation(fields: [branchId], references: [id])
   stockMovements StockMovement[]
 }
@@ -169,7 +171,6 @@ model StockMovement {
   id        String            @id @default(uuid())
   productId String
   branchId  String
-  userId    String?
   type      StockMovementType
   quantity  Int
   unitCost  Decimal?          @db.Decimal(10, 2)
@@ -177,6 +178,7 @@ model StockMovement {
   reason    String?
   reference String?
   createdAt DateTime          @default(now())
+  userId    String?
   branch    Branch            @relation(fields: [branchId], references: [id])
   product   Product           @relation(fields: [productId], references: [id])
   user      User?             @relation(fields: [userId], references: [id])
@@ -201,13 +203,13 @@ model FinancialTransaction {
   amount             Decimal                  @db.Decimal(10, 2)
   type               FinancialTransactionType
   categoryId         String
+  appointmentId      String?
   paymentMethod      PaymentMethod            @default(CASH)
   reference          String?
-  recurringExpenseId String?
-  appointmentId      String?
   date               DateTime                 @default(now())
   branchId           String
   createdAt          DateTime                 @default(now())
+  recurringExpenseId String?
   appointment        Appointment?             @relation(fields: [appointmentId], references: [id])
   branch             Branch                   @relation(fields: [branchId], references: [id])
   category           ExpenseCategory          @relation(fields: [categoryId], references: [id])
@@ -222,9 +224,9 @@ model RecurringExpense {
   fixedAmount    Decimal?               @db.Decimal(10, 2)
   receiptDay     Int
   dueDay         Int
-  professionalId String?
   isActive       Boolean                @default(true)
   branchId       String
+  professionalId String?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
   transactions   FinancialTransaction[]
@@ -233,17 +235,113 @@ model RecurringExpense {
   professional   Professional?          @relation(fields: [professionalId], references: [id])
 }
 
+model WhatsAppConfig {
+  id            String         @id @default(uuid())
+  branchId      String         @unique
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  accessToken   String?
+  aiEnabled     Boolean?       @default(false)
+  aiPersonality String?
+  autoResponses Json?
+  businessHours Json?
+  businessId    String?
+  errorCount    Int?           @default(0)
+  lastSync      DateTime?
+  phoneNumber   String?        @unique
+  phoneNumberId String?        @unique
+  refreshToken  String?
+  status        WhatsAppStatus @default(PENDING)
+  verifyToken   String?        @unique
+  wabaId        String?
+  ChatMessage   ChatMessage[]
+  branch        Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([phoneNumber])
+  @@index([status])
+  @@index([verifyToken])
+}
+
+model WhatsAppMessage {
+  id         String   @id @default(uuid())
+  branchId   String
+  messageSid String   @unique
+  from       String
+  to         String
+  body       String
+  status     String
+  direction  String
+  createdAt  DateTime @default(now())
+  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
 
 model ResetLinks {
+  id         String   @id @default(uuid())
+  userId     String
+  resetToken String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppConversation {
   id            String   @id @default(uuid())
-  userId        String
-  resetToken    String
+  branchId      String
+  phoneNumber   String
+  currentStep   String   @default("GREETING")
+  selectedData  Json?
+  lastMessageAt DateTime @default(now())
+  isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch        Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  @@unique([resetToken])
+  @@unique([branchId, phoneNumber])
+}
+
+model ProfessionalAbsence {
+  id             String       @id @default(uuid())
+  professionalId String
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  type           AbsenceType  @default(VACATION)
+  isRecurring    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+}
+
+model ProfessionalWorkingDay {
+  id             String       @id @default(uuid())
+  professionalId String
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, dayOfWeek])
+}
+
+model ChatMessage {
+  id               String         @id
+  whatsappConfigId String
+  phone            String
+  message          String
+  messageType      String
+  direction        String
+  messageId        String?
+  status           String?
+  metadata         Json?
+  timestamp        DateTime       @default(now())
+  WhatsAppConfig   WhatsAppConfig @relation(fields: [whatsappConfigId], references: [id], onDelete: Cascade)
+
+  @@index([timestamp])
+  @@index([whatsappConfigId, phone])
 }
 
 enum AppointmentStatus {
@@ -251,8 +349,6 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
 }
-
-
 
 enum StockMovementType {
   IN
@@ -276,33 +372,6 @@ enum PaymentMethod {
   OTHER
 }
 
-model ProfessionalAbsence {
-  id             String       @id @default(uuid())
-  professionalId String
-  startDate      DateTime
-  endDate        DateTime
-  reason         String?
-  type           AbsenceType  @default(VACATION)
-  isRecurring    Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-}
-
-model ProfessionalWorkingDay {
-  id             String       @id @default(uuid())
-  professionalId String
-  dayOfWeek      Int          // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
-  startTime      String       // Formato HH:MM
-  endTime        String       // Formato HH:MM
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-
-  @@unique([professionalId, dayOfWeek])
-}
-
 enum AbsenceType {
   VACATION
   SICK_LEAVE
@@ -311,4 +380,11 @@ enum AbsenceType {
   OTHER
 }
 
-
+enum WhatsAppStatus {
+  PENDING
+  CONNECTING
+  CONNECTED
+  ERROR
+  SUSPENDED
+  DISCONNECTED
+}

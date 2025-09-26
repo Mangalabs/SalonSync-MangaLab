@@ -24,30 +24,30 @@ import {
 import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
 
 interface Appointment {
-  id: string;
-  scheduledAt: string | Date | null;
-  status?: string;
-  professional: { name: string } | null;
-  client: { name: string } | null;
+  id: string
+  scheduledAt: string | Date | null
+  status?: string
+  professional: { name: string } | null
+  client: { name: string } | null
   appointmentServices?: {
-    service: { name: string; price: string };
-  }[];
-  total?: string;
-  rating?: number;
-  branchId?: string;
+    service: { name: string; price: string }
+  }[]
+  total?: string
+  rating?: number
+  branchId?: string
 }
 
 interface AppointmentHistory {
-  id: string;
-  date: string;
-  time: string;
-  client: string;
-  services: string[];
-  professional: string;
-  duration: number;
-  price: number;
-  status?: string;
-  rating?: number;
+  id: string
+  date: string
+  time: string
+  client: string
+  services: string[]
+  professional: string
+  duration: number
+  price: number
+  status?: string
+  rating?: number
 }
 
 export default function AppointmentHistory() {
@@ -173,140 +173,85 @@ export default function AppointmentHistory() {
 
   return (
     <div className='space-y-6 p-6'>
-      <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end'>
-        <div className='flex flex-col'>
-          <label className='text-gray-600 text-sm mb-1'>Profissional</label>
-          <select
-            value={filterProfessional}
-            onChange={(e) => setFilterProfessional(e.target.value)}
-            className='px-3 py-2 border rounded-lg'>
-            <option value='all'>Todos</option>
-            {professionals.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className='bg-muted p-4 rounded-2xl border border-border flex flex-wrap gap-4 items-end'>
+        {[
+          { label: 'Profissional', value: filterProfessional, onChange: setFilterProfessional, options: ['all', ...professionals] },
+          { label: 'Serviço', value: filterService, onChange: setFilterService, options: ['all', ...services] },
+        ].map(({ label, value, onChange, options }) => (
+          <div key={label} className='flex flex-col'>
+            <label className='text-muted-foreground text-sm mb-1'>{label}</label>
+            <select
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className='px-3 py-2 border border-border rounded-lg bg-card text-card-foreground focus:ring-2 focus:ring-ring'
+            >
+              {options.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        ))}
 
-        <div className='flex flex-col'>
-          <label className='text-gray-600 text-sm mb-1'>Serviço</label>
-          <select
-            value={filterService}
-            onChange={(e) => setFilterService(e.target.value)}
-            className='px-3 py-2 border rounded-lg'>
-            <option value='all'>Todos</option>
-            {services.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className='flex flex-col'>
-          <label className='text-gray-600 text-sm mb-1'>Data Início</label>
-          <input
-            type='date'
-            value={filterStartDate}
-            onChange={(e) => setFilterStartDate(e.target.value)}
-            className='px-3 py-2 border rounded-lg'
-          />
-        </div>
-
-        <div className='flex flex-col'>
-          <label className='text-gray-600 text-sm mb-1'>Data Fim</label>
-          <input
-            type='date'
-            value={filterEndDate}
-            onChange={(e) => setFilterEndDate(e.target.value)}
-            className='px-3 py-2 border rounded-lg'
-          />
-        </div>
+        {['Data Início', 'Data Fim'].map((label, idx) => (
+          <div key={label} className='flex flex-col'>
+            <label className='text-muted-foreground text-sm mb-1'>{label}</label>
+            <input
+              type='date'
+              value={idx === 0 ? filterStartDate : filterEndDate}
+              onChange={(e) => idx === 0 ? setFilterStartDate(e.target.value) : setFilterEndDate(e.target.value)}
+              className='px-3 py-2 border border-border rounded-lg bg-card text-card-foreground focus:ring-2 focus:ring-ring'
+            />
+          </div>
+        ))}
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        <div className='lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
-          <h3 className='text-lg font-semibold text-gray-800 mb-4'>
-            Histórico de Atendimentos
-          </h3>
-
-          <div
-            className={`overflow-x-auto ${
-              filteredHistory.length > 7
-                ? 'overflow-y-scroll max-h-[500px]'
-                : ''
-            }`}>
+        <div className='lg:col-span-2 bg-card rounded-2xl p-6 border border-border shadow-sm'>
+          <h3 className='text-lg font-semibold text-foreground mb-4'>Histórico de Atendimentos</h3>
+          <div className={`overflow-x-auto ${filteredHistory.length > 7 ? 'overflow-y-scroll max-h-[500px]' : ''}`}>
             <table className='w-full'>
               <thead>
-                <tr className='border-b border-gray-200'>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Data
-                  </th>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Cliente
-                  </th>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Serviços
-                  </th>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Profissional
-                  </th>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Valor
-                  </th>
-                  <th className='text-left py-3 px-2 font-medium text-gray-700 text-sm'>
-                    Ações
-                  </th>
+                <tr className='border-b border-border'>
+                  {['Data','Cliente','Serviços','Profissional','Valor','Ações'].map(h => (
+                    <th key={h} className='text-left py-3 px-2 font-medium text-muted-foreground text-sm'>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredHistory.map((appointment) => (
                   <tr
                     key={appointment.id}
-                    className='border-b border-gray-100 hover:bg-gray-50 transition-colors'>
+                    className='border-b border-border hover:bg-hover transition-colors'
+                  >
                     <td className='py-3 px-2 text-sm'>
-                      <div className='text-gray-800 font-medium'>
-                        {appointment.date
-                          ? new Date(appointment.date).toLocaleDateString(
-                            'pt-BR',
-                          )
-                          : '-'}
+                      <div className='text-foreground font-medium'>
+                        {appointment.date ? new Date(appointment.date).toLocaleDateString('pt-BR') : '-'}
                       </div>
-                      <div className='text-gray-500 text-xs'>
+                      <div className='text-muted-foreground text-xs'>
                         {appointment.time || '-'}
                       </div>
                     </td>
-                    <td className='py-3 px-2 text-sm font-medium text-gray-800'>
-                      {appointment.client}
+                    <td className='py-3 px-2 text-sm font-medium text-foreground'>{appointment.client}</td>
+                    <td className='py-3 px-2 text-sm text-muted-foreground'>
+                      {appointment.services.length > 0 ? appointment.services.join(', ') : '-'}
+                      <div className='text-xs text-muted-foreground'>{appointment.duration}min</div>
                     </td>
-                    <td className='py-3 px-2 text-sm text-gray-600'>
-                      {appointment.services.length > 0
-                        ? appointment.services.join(', ')
-                        : '-'}
-                      <div className='text-xs text-gray-500'>
-                        {appointment.duration}min
-                      </div>
-                    </td>
-                    <td className='py-3 px-2 text-sm text-gray-600'>
-                      {appointment.professional}
-                    </td>
-                    <td className='py-3 px-2 text-sm font-medium text-gray-800'>
+                    <td className='py-3 px-2 text-sm text-muted-foreground'>{appointment.professional}</td>
+                    <td className='py-3 px-2 text-sm font-medium text-foreground'>
                       R$ {appointment.price.toFixed(2).replace('.', ',')}
                     </td>
                     <td className='py-3 px-2 text-sm flex gap-2'>
                       <Button
-                        className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                        className='p-2 text-green-600 bg-green-200 hover:bg-green-100 rounded-lg transition-colors cursor-pointer'
                         onClick={() => setEditingAppointment(appointment)}
                       >
                         <Edit className='w-4 h-4' />
                       </Button>
                       <Button
-                        className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                        className='p-2 text-red-600 bg-red-200 hover:bg-red-100 rounded-lg transition-colors cursor-pointer'
                         onClick={() => setDeletingAppointment(appointment)}
                       >
                         <Trash2 className='w-4 h-4' />
-                        
                       </Button>
                     </td>
                   </tr>
@@ -317,42 +262,31 @@ export default function AppointmentHistory() {
         </div>
 
         <div className='space-y-6'>
-          <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+          <div className='bg-card rounded-2xl p-6 border border-border shadow-sm'>
             <div className='flex items-center gap-3 mb-4'>
-              <Trophy className='w-5 h-5 text-yellow-500' />
-              <h4 className='font-semibold text-gray-800'>
-                Melhor Profissional
-              </h4>
+              <Trophy className='w-5 h-5 text-accent-foreground' />
+              <h4 className='font-semibold text-foreground'>Melhor Profissional</h4>
             </div>
             {topProfessional ? (
               <div className='text-center'>
-                <div className='w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-lg font-bold'>
+                <div className='w-16 h-16 mx-auto bg-secondary rounded-full flex items-center justify-center text-secondary-foreground text-lg font-bold'>
                   {topProfessional.name.charAt(0)}
                 </div>
-                <h5 className='mt-3 font-semibold text-gray-800'>
-                  {topProfessional.name}
-                </h5>
-                <p className='text-sm text-gray-600'>
-                  {topProfessional.appointments} atendimentos concluídos
-                </p>
-                <p className='text-sm text-gray-600'>
-                  Receita: R${' '}
-                  {topProfessional.revenue.toFixed(2).replace('.', ',')}
+                <h5 className='mt-3 font-semibold text-foreground'>{topProfessional.name}</h5>
+                <p className='text-sm text-muted-foreground'>{topProfessional.appointments} atendimentos concluídos</p>
+                <p className='text-sm text-muted-foreground'>
+                  Receita: R$ {topProfessional.revenue.toFixed(2).replace('.', ',')}
                 </p>
               </div>
             ) : (
-              <p className='text-sm text-gray-500'>
-                Nenhum profissional disponível
-              </p>
+              <p className='text-sm text-muted-foreground'>Nenhum profissional disponível</p>
             )}
           </div>
         </div>
       </div>
 
-      <Dialog
-        open={!!editingAppointment}
-        onOpenChange={() => setEditingAppointment(null)}>
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+      <Dialog open={!!editingAppointment} onOpenChange={() => setEditingAppointment(null)}>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card text-card-foreground border border-border rounded-2xl shadow-sm'>
           <DialogHeader>
             <DialogTitle>Editar Atendimento</DialogTitle>
           </DialogHeader>
@@ -366,19 +300,16 @@ export default function AppointmentHistory() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={!!deletingAppointment}
-        onOpenChange={() => setDeletingAppointment(null)}>
-        <AlertDialogContent>
+      <AlertDialog open={!!deletingAppointment} onOpenChange={() => setDeletingAppointment(null)}>
+        <AlertDialogContent className='bg-card text-card-foreground border border-border rounded-2xl shadow-sm'>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este atendimento? Esta ação não
-              pode ser desfeita.
+              Tem certeza que deseja excluir este atendimento? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className='bg-muted text-muted-foreground hover:bg-hover'>{'Cancelar'}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deletingAppointment) {
@@ -386,7 +317,9 @@ export default function AppointmentHistory() {
                   setDeletingAppointment(null)
                 }
               }}
-              disabled={deleteMutation.isLoading}>
+              disabled={deleteMutation.isLoading}
+              className='bg-destructive text-destructive-foreground hover:bg-hover'
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -14,7 +14,6 @@ import {
 import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -198,35 +197,7 @@ export function AppointmentTable({
     setExpandedMonths(newExpanded)
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i}>
-                <Skeleton className="h-4 w-20 mb-1" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border rounded-lg">
-              <div className="p-4 bg-gray-50 border-b">
-                <Skeleton className="h-6 w-32" />
-              </div>
-              <div className="p-4">
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) {return <p className="p-4">Carregando...</p>}
 
   if (filter === 'SCHEDULED') {
     return (

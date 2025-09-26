@@ -28,11 +28,11 @@ import {
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ProductSaleForm } from '@/components/custom/products/ProductSaleForm'
-import { StatsCard } from '../ui/stats-card'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
+
+import { StatsCard } from '../ui/stats-card'
 
 const formatDate = (d: Date) => d.toLocaleDateString('sv')
 const formatCurrency = (v: number) => `R$ ${v.toFixed(2)}`
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard-summary', startDate, endDate, activeBranch?.id],
     queryFn: async () => {
-      if (!activeBranch?.id) return null
+      if (!activeBranch?.id) {return null}
       const params = new URLSearchParams({ startDate, endDate, branchId: activeBranch.id })
       const [financial, appointments, professionals, clients, movements] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
@@ -154,68 +154,30 @@ export default function AdminDashboard() {
   ]
 
   const actionColors: Record<string, string> = {
-    purple: 'border-purple-300 hover:border-purple-400 hover:bg-purple-50 text-purple-600',
-    blue: 'border-blue-300 hover:border-blue-400 hover:bg-blue-50 text-blue-600',
-    green: 'border-green-300 hover:border-green-400 hover:bg-green-50 text-green-600',
-    orange: 'border-orange-300 hover:border-orange-400 hover:bg-orange-50 text-orange-600',
+    purple: 'border-purple-300 hover:border-purple-400 hover:bg-purple-800/5 text-purple-600',
+    blue: 'border-blue-300 hover:border-blue-400 hover:bg-blue-800/5  text-blue-600',
+    green: 'border-green-300 hover:border-green-400 hover:bg-green-800/5  text-green-600',
+    orange: 'border-orange-300 hover:border-orange-400 hover:bg-orange-800/5  text-orange-600',
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4 md:space-y-6">
-        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-3 md:mb-4">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-8 w-28" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center p-3 md:p-4 rounded-lg border-2 border-dashed border-gray-200">
-                <Skeleton className="w-6 h-6 mb-2" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
-                <Skeleton className="w-10 h-10 rounded-full" />
-              </div>
-              <Skeleton className="h-3 w-20" />
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
-            <Skeleton className="h-5 w-40 mb-4" />
-            <Skeleton className="h-48 md:h-56 lg:h-67 w-full" />
-          </div>
-          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
-            <Skeleton className="h-5 w-40 mb-4" />
-            <Skeleton className="h-48 md:h-56 lg:h-67 w-full" />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) {return <div className="text-center py-20">Carregando dados do dashboard...</div>}
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+    <div className="space-y-4 md:space-y-6" style={{ backgroundColor: 'var(--color-background)', minHeight: '80vh', padding: '1rem' }}>
+      <div
+        className="rounded-2xl p-3 md:p-4 shadow-sm border"
+        style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}
+      >
         <div className="flex justify-between items-center mb-3 md:mb-4">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800">Ações Rápidas</h3>
+          <h3 style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Ações Rápidas</h3>
           <button
             onClick={() => fixHistoricalMutation.mutate()}
             disabled={fixHistoricalMutation.isPending}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 disabled:opacity-50"
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded"
+            style={{
+              backgroundColor: 'var(--color-button-bg)',
+              color: 'var(--color-button-text)',
+            }}
           >
             <RefreshCw className={`h-3 w-3 ${fixHistoricalMutation.isPending ? 'animate-spin' : ''}`} />
             Corrigir Histórico
@@ -231,7 +193,7 @@ export default function AdminDashboard() {
                 else if (a.openSaleForm) {setShowSaleForm(true)}
                 else if (a.route) {navigate(a.route)}
               }}
-              className={`flex flex-col items-center p-3 md:p-4 rounded-lg border-2 border-dashed transition-all hover:shadow-md ${actionColors[a.color]}`}
+              className={`flex flex-col items-center p-3 md:p-4 rounded-lg cursor-pointer border-2 border-dashed transition-all hover:shadow-md ${actionColors[a.color]}`}
             >
               <a.icon className="w-5 h-8 md:w-6 md:h-18 mb-1 md:mb-2" />
               <span className="text-xs md:text-sm font-medium text-center">{a.label}</span>
@@ -248,13 +210,16 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4">Faturamento Semanal</h3>
+        <div
+          className="rounded-2xl p-3 md:p-4 shadow-sm border"
+          style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}
+        >
+          <h3 style={{ color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '0.75rem' }}>Faturamento Semanal</h3>
           <div className="h-48 md:h-56 lg:h-67">
-            <ResponsiveContainer>
-              <LineChart data={weeklyRevenueData}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
+            <ResponsiveContainer >
+              <LineChart data={weeklyRevenueData} >
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }}/>
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888888' }}/>
                 <Tooltip formatter={v => formatCurrency(v as number)} />
                 <Line type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2.5} dot={({ cx, cy, payload }) => (<circle cx={cx} cy={cy} r={payload.isToday ? 5 : 2.5} fill={payload.isToday ? '#281CF1' : '#8B5CF6'} />)} />
               </LineChart>
@@ -262,8 +227,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4">Serviços Mais Populares</h3>
+        <div
+          className="rounded-2xl p-3 md:p-4 shadow-sm border"
+          style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}
+        >
+          <h3 style={{ color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '0.75rem' }}>Serviços Mais Populares</h3>
           <div className="h-48 md:h-56 lg:h-67">
             <ResponsiveContainer>
               <PieChart>

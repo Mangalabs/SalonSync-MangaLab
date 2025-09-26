@@ -127,18 +127,6 @@ export class BranchesService {
       const secret = this.config.get<string>('JWT_SECRET') || 'secret';
       const decoded = jwt.verify(token, secret) as { sub: string };
 
-      // Verificar quantas filiais o usuário possui
-      const branchesCount = await this.prisma.branch.count({
-        where: {
-          ownerId: decoded.sub,
-        },
-      });
-
-      // Se é a única filial, não permitir exclusão
-      if (branchesCount <= 1) {
-        throw new Error('Não é possível excluir a única filial. Crie outra filial antes de excluir esta.');
-      }
-
       await this.prisma.branch.delete({
         where: {
           id,
@@ -146,9 +134,6 @@ export class BranchesService {
         },
       });
     } catch (error) {
-      if (error.message.includes('única filial')) {
-        throw error;
-      }
       throw new UnauthorizedException('Token inválido');
     }
   }

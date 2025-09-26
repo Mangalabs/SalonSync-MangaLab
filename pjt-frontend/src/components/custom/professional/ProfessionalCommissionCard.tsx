@@ -53,7 +53,7 @@ export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommi
     }
   }
 
-  if (!professional) {return <p>Carregando profissional...</p>}
+  if (!professional) {return <p className="text-muted-foreground">Carregando profissional...</p>}
 
   const isLoading = fetchingProfessional || fetchingMonthly || fetchingDaily
 
@@ -84,13 +84,13 @@ export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommi
   const maxCommission = Math.max(...last7Days.map(d => d.commission), 0)
 
   return (
-    <div className="bg-gray-50 px-6 py-6 space-y-6">
-      <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-        <h4 className="text-xl font-semibold text-gray-800">{professional.name}</h4>
+    <div className="bg-background px-6 py-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-border pb-4">
+        <h4 className="text-xl font-semibold text-foreground">{professional.name}</h4>
         <Button
           size="sm"
           onClick={handleRefresh}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/80 cursor-pointer"
           disabled={isLoading}
         >
           <RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? 'animate-spin' : ''}`} />
@@ -99,20 +99,20 @@ export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommi
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-card">
           <CardHeader className="flex justify-between items-center">
-            <CardTitle>Comissão Mensal</CardTitle>
-            <DollarSign className="text-green-500 w-5 h-5" />
+            <CardTitle className="text-foreground">Comissão Mensal</CardTitle>
+            <DollarSign className="text-primary w-5 h-5" />
           </CardHeader>
           <CardContent>
             {fetchingMonthly ? (
-              <p className="text-gray-500">Carregando...</p>
+              <p className="text-muted-foreground">Carregando...</p>
             ) : (
               <>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-primary">
                   R$ {monthlyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {monthlyCommission?.summary?.totalAppointments || 0} atendimentos este mês
                 </p>
               </>
@@ -120,20 +120,20 @@ export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommi
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card">
           <CardHeader className="flex justify-between items-center">
-            <CardTitle>Comissão Hoje</CardTitle>
-            <DollarSign className="text-blue-500 w-5 h-5" />
+            <CardTitle className="text-foreground">Comissão Hoje</CardTitle>
+            <DollarSign className="text-secondary w-5 h-5" />
           </CardHeader>
           <CardContent>
             {fetchingDaily ? (
-              <p className="text-gray-500">Carregando...</p>
+              <p className="text-muted-foreground">Carregando...</p>
             ) : (
               <>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-secondary">
                   R$ {dailyCommission?.summary?.totalCommission?.toFixed(2) || '0,00'}
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {dailyCommission?.summary?.totalAppointments || 0} atendimentos hoje
                 </p>
               </>
@@ -142,24 +142,36 @@ export function ProfessionalCommissionCard({ professionalId }: ProfessionalCommi
         </Card>
       </div>
 
-      <Card>
+      <Card className="bg-card">
         <CardHeader className="flex justify-between items-center">
-          <CardTitle>Performance dos Últimos 7 Dias</CardTitle>
-          <BarChart3 className="w-5 h-5 text-purple-500" />
+          <CardTitle className="text-foreground">Performance dos Últimos 7 Dias</CardTitle>
+          <BarChart3 className="w-5 h-5 text-primary" />
         </CardHeader>
         <CardContent className="grid grid-cols-7 gap-3">
           {fetchingMonthly ? (
-            <p className="text-gray-500 col-span-7 text-center">Carregando gráfico...</p>
+            <p className="text-muted-foreground col-span-7 text-center">Carregando gráfico...</p>
           ) : (
             last7Days.map(day => {
               const height = maxCommission > 0 ? Math.max((day.commission / maxCommission) * 100, 5) : 5
               return (
                 <div key={day.date} className="text-center">
                   <div className="h-20 flex items-end justify-center mb-2">
-                    <div className="w-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-md" style={{ height: `${height}%` }} />
+                    <div
+                      className="w-6 rounded-t-md"
+                      style={{
+                        height: `${height}%`,
+                        background: 'linear-gradient(to top, var(--color-chart-3), var(--color-chart-1))',
+                      }}
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {day.dayName} {day.day}
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">
+                    R$ {day.commission.toFixed(2)}
                   </div>
                   <div className="text-sm text-gray-600">{day.dayName} {day.day}</div>
-                  <div className="text-sm font-semibold text-purple-600">R$ {day.commission.toFixed(2)}</div>
+                  <div className="text-sm font-semibold text-foreground">R$ {day.commission.toFixed(2)}</div>
                 </div>
               )
             })
