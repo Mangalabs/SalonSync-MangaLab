@@ -10,7 +10,19 @@ import axios from '@/lib/axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 const branchSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -25,7 +37,6 @@ interface Branch {
   name: string
   address?: string
   phone?: string
-  isActive: boolean
   manager?: string
 }
 
@@ -33,6 +44,7 @@ export function BranchManagement() {
   const [showAddBranch, setShowAddBranch] = useState(false)
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
   const [search, setSearch] = useState('')
+  const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null)
   const queryClient = useQueryClient()
 
   const { data: branches = [], isLoading } = useQuery<Branch[]>({
@@ -106,7 +118,41 @@ export function BranchManagement() {
     [branches, search],
   )
 
-  if (isLoading) {return <div>Carregando filiais...</div>}
+  const canDeleteBranch = () => {
+    return branches.length > 1
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full mb-4" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -203,13 +249,47 @@ export function BranchManagement() {
                 >
                   <Edit className='w-4 h-4' />
                 </Button>
-                <Button
-                  className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
-                  onClick={() => deleteBranch.mutate(branch.id)}
-                  disabled={deleteBranch.isPending}
-                >
-                  <Trash2 className='w-4 h-4' />     
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className={`p-2 rounded-lg transition-colors ${
+                        canDeleteBranch()
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                          : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                      }`}
+                      onClick={() => {
+                        if (!canDeleteBranch()) {
+                          toast.error('Não é possível excluir a única filial')
+                        } else {
+                          setBranchToDelete(branch)
+                        }
+                      }}
+                      disabled={deleteBranch.isPending || !canDeleteBranch()}
+                      title={!canDeleteBranch() ? 'Não é possível excluir a única filial' : 'Excluir filial'}
+                    >
+                      <Trash2 className='w-4 h-4' />     
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a filial <strong>{branch.name}</strong>?
+                        <br /><br />
+                        Esta ação não pode ser desfeita e todos os dados relacionados a esta filial serão perdidos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteBranch.mutate(branch.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Excluir Filial
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </div>

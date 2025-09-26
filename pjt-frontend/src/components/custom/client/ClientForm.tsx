@@ -140,7 +140,7 @@ export function ClientForm({
           <p className="text-sm text-red-500">{errors.email.message}</p>
         )}
       </div>
-      <Button type="submit" disabled={mutation.isPending}>
+      <Button className='flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2' type="submit" disabled={mutation.isPending}>
         {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
       </Button>
     </form>

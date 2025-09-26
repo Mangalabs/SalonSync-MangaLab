@@ -16,14 +16,16 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<any | null>(null)
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Clientes</h1>
+    <div className="container mx-auto px-3 sm:px-6 py-4 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1A1A1A]">
+          Clientes
+        </h1>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition-opacity"
+              className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition-opacity"
               onClick={() => {
                 setEditingClient(null)
                 setOpen(true)
@@ -32,7 +34,7 @@ export default function Clients() {
               + Novo cliente
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="w-[95%] sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
@@ -46,12 +48,14 @@ export default function Clients() {
         </Dialog>
       </div>
 
-      <ClientTable
-        onEdit={(client) => {
-          setEditingClient(client)
-          setOpen(true)
-        }}
-      />
+      <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
+        <ClientTable
+          onEdit={(client) => {
+            setEditingClient(client)
+            setOpen(true)
+          }}
+        />
+      </div>
     </div>
   )
 }

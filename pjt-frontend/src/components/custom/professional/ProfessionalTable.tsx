@@ -1,12 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { PlusCircle, Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  Search,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,8 +35,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-import { ProfessionalForm } from './ProfessionalForm'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+
 import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
+import { RoleForm } from '../forms/RoleForm'
 
 type Professional = {
   id: string
@@ -33,22 +61,67 @@ type Professional = {
   }
 }
 
+const employeeSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  roleId: z.string().min(1, 'Selecione uma função'),
+  branchId: z.string().min(1, 'Selecione uma filial'),
+})
+type EmployeeFormData = z.infer<typeof employeeSchema>
+
 export function ProfessionalTable() {
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
-  const [expandedProfessional, setExpandedProfessional] = useState<string | null>(null)
-  const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null)
-  const [deletingProfessional, setDeletingProfessional] = useState<Professional | null>(null)
-  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null)
+  const [expandedProfessional, setExpandedProfessional] = useState<
+    string | null
+  >(null)
+  const [editingProfessional, setEditingProfessional] =
+    useState<Professional | null>(null)
+  const [deletingProfessional, setDeletingProfessional] =
+    useState<Professional | null>(null)
+  const [selectedProfessional, setSelectedProfessional] = useState<
+    string | null
+  >(null)
   const [creatingNew, setCreatingNew] = useState(false)
+  const [roleOpen, setRoleOpen] = useState(false)
+  const [editingRole, setEditingRole] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleSearchTerm, setRoleSearchTerm] = useState('')
 
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get('/api/professionals')
-      return res.data.filter((p: Professional) => p.branchId === activeBranch?.id)
+      try {
+        const res = await axios.get('/api/professionals')
+        return res.data.filter(
+          (p: Professional) => p.branchId === activeBranch?.id
+        )
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return []
+        }
+        throw error
+      }
     },
     enabled: !!activeBranch,
+    retry: false,
+  })
+
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => {
+      const res = await axios.get('/api/branches')
+      return res.data
+    },
+  })
+
+  const { data: roles = [], refetch: refreshRoles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const res = await axios.get('/api/roles')
+      return res.data
+    },
   })
 
   const deleteProfessional = useMutation({
@@ -61,88 +134,226 @@ export function ProfessionalTable() {
       setDeletingProfessional(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao excluir profissional')
+      toast.error(
+        error.response?.data?.message || 'Erro ao excluir profissional'
+      )
       setDeletingProfessional(null)
     },
   })
 
-  const toggleExpanded = (id: string) => setExpandedProfessional(expandedProfessional === id ? null : id)
+  const createEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      const selectedRole = roles.find((role: any) => role.id === data.roleId)
+      const employeeData = {
+        ...data,
+        role: selectedRole?.title || 'Profissional',
+        commissionRate: selectedRole?.commissionRate || 0,
+      }
+      await axios.post('/api/auth/create-employee', employeeData)
+    },
+    onSuccess: () => {
+      toast.success('Funcionário criado com sucesso!')
+      reset()
+      setCreatingNew(false)
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      queryClient.invalidateQueries({ queryKey: ['professionals'] })
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao criar funcionário')
+    },
+  })
 
-  if (isLoading) {return <p>Carregando...</p>}
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<EmployeeFormData>({
+    resolver: zodResolver(employeeSchema),
+    defaultValues: { branchId: activeBranch?.id || '' },
+  })
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">{activeBranch?.name}</h3>
-          <Button
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl flex items-center gap-2"
-            onClick={() => setCreatingNew(true)}
-          >
-            <PlusCircle className="w-4 h-4" />
-            Novo Profissional
-          </Button>
-        </div>
+  const onSubmit = (data: EmployeeFormData) => {
+    createEmployee.mutate(data)
+  }
 
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-          <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700">
-            <div>Nome</div>
-            <div>Função</div>
-            <div>Comissão</div>
-            <div>Ações</div>
+  const toggleExpanded = (id: string) =>
+    setExpandedProfessional(expandedProfessional === id ? null : id)
+
+  if (isLoading) {
+    return (
+      <div className='space-y-6'>
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+          <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
+            <Skeleton className='h-6 w-48' />
+            <Skeleton className='h-10 w-40' />
           </div>
-        </div>
-
-        <div className="divide-y divide-gray-100">
-          {professionals.map((prof) => (
-            <div key={prof.id}>
+          <div className='bg-gray-50 px-6 py-4 border-b border-gray-100'>
+            <div className='grid grid-cols-4 gap-4'>
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-20' />
+              <Skeleton className='h-4 w-16' />
+            </div>
+          </div>
+          <div className='divide-y divide-gray-100'>
+            {Array.from({ length: 5 }).map((_, i) => (
               <div
-                className={`px-6 py-4 hover:bg-purple-50 transition-colors cursor-pointer grid grid-cols-4 gap-4 items-center ${selectedProfessional === prof.id ? 'bg-[#D4AF37]/10' : ''}`}
-                onClick={() => {
-                  toggleExpanded(prof.id)
-                  setSelectedProfessional(prof.id)
-                  queryClient.invalidateQueries({ queryKey: ['monthly-commission', prof.id] })
-                  queryClient.invalidateQueries({ queryKey: ['daily-commission', prof.id] })
-                  queryClient.invalidateQueries({ queryKey: ['professional', prof.id] })
-                }}
+                key={i}
+                className='px-6 py-4 grid grid-cols-4 gap-4 items-center'
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
-                    {prof.name[0]}
-                  </div>
-                  <div className="font-medium text-gray-800">{prof.name}</div>
-                  <div className="ml-auto">
-                    {expandedProfessional === prof.id ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                  </div>
+                <div className='flex items-center gap-3'>
+                  <Skeleton className='w-10 h-10 rounded-full' />
+                  <Skeleton className='h-5 w-32' />
                 </div>
-                <div className="text-gray-700">{prof.customRole?.title || prof.role}</div>
-                <div className="font-semibold text-purple-600">{prof.customRole?.commissionRate || prof.commissionRate}%</div>
-                <div className="flex space-x-2">
-                  <Button
-                    className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingProfessional(prof)
-                    }}
-                  >
-                    <Edit className='w-4 h-4' />
-                  </Button>
-                  <Button
-                    className='p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeletingProfessional(prof)
-                    }}
-                  >
-                    <Trash2 className='w-4 h-4' />
-                    
-                  </Button>
+                <Skeleton className='h-4 w-24' />
+                <Skeleton className='h-4 w-12' />
+                <div className='flex space-x-2'>
+                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='h-8 w-8' />
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-              {expandedProfessional === prof.id && <ProfessionalCommissionCard professionalId={prof.id} />}
+  const filteredProfessionals = professionals.filter(
+    (prof) =>
+      prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (prof.customRole?.title || prof.role)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  )
+
+  const filteredRoles = roles.filter((role: any) =>
+    role.title.toLowerCase().includes(roleSearchTerm.toLowerCase())
+  )
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4'>
+        <Button
+          className='w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:from-purple-600 hover:to-pink-600 transition-colors'
+          onClick={() => setCreatingNew(true)}
+        >
+          <PlusCircle className='w-4 h-4' />
+          Novo Profissional
+        </Button>
+
+        <div className='flex items-center gap-2 w-full sm:w-64 bg-white border rounded-xl px-3 py-2 shadow-sm'>
+          <Search className='w-4 h-4 text-gray-400' />
+          <input
+            type='text'
+            placeholder='Buscar profissional...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='w-full border-none outline-none text-sm text-gray-700 placeholder-gray-400'
+          />
+        </div>
+      </div>
+
+      <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+        <div className='hidden md:grid bg-gray-50 px-6 py-3 border-b border-gray-100 grid-cols-4 gap-4 font-semibold text-gray-700 text-sm'>
+          <div>Nome</div>
+          <div>Função</div>
+          <div>Comissão</div>
+          <div>Ações</div>
+        </div>
+
+        <div className='divide-y divide-gray-100'>
+          {professionals.length === 0 ? (
+            <div className='px-6 py-12 text-center text-gray-500'>
+              <PlusCircle className='w-12 h-12 mx-auto mb-4 text-gray-300' />
+              <p className='text-lg font-medium mb-2'>
+                Nenhum profissional cadastrado
+              </p>
+              <p className='text-sm'>
+                Adicione profissionais para começar a gerenciar sua equipe
+              </p>
             </div>
-          ))}
+          ) : (
+            professionals.map((prof) => (
+              <div key={prof.id}>
+                <div
+                  className={`px-4 sm:px-6 py-4 hover:bg-purple-50 transition-colors cursor-pointer 
+                  grid grid-cols-1 md:grid-cols-4 gap-3 items-center 
+                  ${selectedProfessional === prof.id ? 'bg-[#D4AF37]/10' : ''}`}
+                  onClick={() => {
+                    toggleExpanded(prof.id)
+                    queryClient.invalidateQueries({
+                      queryKey: ['monthly-commission', prof.id],
+                    })
+                    queryClient.invalidateQueries({
+                      queryKey: ['daily-commission', prof.id],
+                    })
+                    queryClient.invalidateQueries({
+                      queryKey: ['professional', prof.id],
+                    })
+                  }}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div className='w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold'>
+                      {prof.name[0]}
+                    </div>
+                    <div className='flex-1'>
+                      <div className='font-medium text-gray-800 truncate'>
+                        {prof.name}
+                      </div>
+                    </div>
+                    <div className='md:hidden ml-auto'>
+                      {expandedProfessional === prof.id ? (
+                        <ChevronUp className='w-5 h-5 text-gray-400' />
+                      ) : (
+                        <ChevronDown className='w-5 h-5 text-gray-400' />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className='text-gray-700 text-sm md:text-base'>
+                    <span className='md:hidden font-semibold'>Função: </span>
+                    {prof.customRole?.title || prof.role}
+                  </div>
+
+                  <div className='font-semibold text-purple-600 text-sm md:text-base'>
+                    <span className='md:hidden font-semibold'>Comissão: </span>
+                    {prof.customRole?.commissionRate || prof.commissionRate}%
+                  </div>
+
+                  <div className='flex gap-2'>
+                    <Button
+                      className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingProfessional(prof)
+                      }}
+                    >
+                      <Edit className='w-4 h-4' />
+                      <span className='md:hidden ml-1 text-sm'>Editar</span>
+                    </Button>
+                    <Button
+                      className='flex-1 md:flex-none p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeletingProfessional(prof)
+                      }}
+                    >
+                      <Trash2 className='w-4 h-4' />
+                      <span className='md:hidden ml-1 text-sm'>Excluir</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {expandedProfessional === prof.id && (
+                  <ProfessionalCommissionCard professionalId={prof.id} />
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -153,27 +364,95 @@ export function ProfessionalTable() {
           setCreatingNew(false)
         }}
       >
-        <DialogContent>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>{creatingNew ? 'Novo Profissional' : 'Editar Profissional'}</DialogTitle>
+            <DialogTitle>
+              {creatingNew ? 'Novo Funcionário' : 'Editar Funcionário'}
+            </DialogTitle>
           </DialogHeader>
-          <ProfessionalForm
-            initialData={editingProfessional}
-            onSuccess={() => {
-              setEditingProfessional(null)
-              setCreatingNew(false)
-            }}
-          />
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-3'>
+            <div>
+              <Label htmlFor='name'>Nome Completo</Label>
+              <Input id='name' {...register('name')} />
+              {errors.name && (
+                <p className='text-xs text-red-500'>{errors.name.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor='email'>Email</Label>
+              <Input id='email' type='email' {...register('email')} />
+              {errors.email && (
+                <p className='text-xs text-red-500'>{errors.email.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor='password'>Senha</Label>
+              <Input id='password' type='password' {...register('password')} />
+              {errors.password && (
+                <p className='text-xs text-red-500'>
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label>Filial</Label>
+              <Select
+                onValueChange={(v) => setValue('branchId', v)}
+                defaultValue={activeBranch?.id}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Selecione a filial' />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((b: any) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.branchId && (
+                <p className='text-xs text-red-500'>
+                  {errors.branchId.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label>Função</Label>
+              <Select onValueChange={(v) => setValue('roleId', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder='Selecione a função' />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r: any) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.roleId && (
+                <p className='text-xs text-red-500'>{errors.roleId.message}</p>
+              )}
+            </div>
+            <Button type='submit' disabled={isSubmitting} className='w-full'>
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deletingProfessional} onOpenChange={() => setDeletingProfessional(null)}>
+      <AlertDialog
+        open={!!deletingProfessional}
+        onOpenChange={() => setDeletingProfessional(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Profissional</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir "{deletingProfessional?.name}"?
-              <br /><br />
+              <br />
+              <br />
               Esta ação não pode ser desfeita e irá:
               <br />• Remover o profissional do sistema
               <br />• Desativar despesas fixas relacionadas
@@ -183,14 +462,113 @@ export function ProfessionalTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[#DC2626] hover:bg-[#DC2626]/90"
-              onClick={() => deletingProfessional && deleteProfessional.mutate(deletingProfessional.id)}
+              className='bg-[#DC2626] hover:bg-[#DC2626]/90'
+              onClick={() =>
+                deletingProfessional &&
+                deleteProfessional.mutate(deletingProfessional.id)
+              }
             >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4'>
+        <Dialog
+          open={roleOpen}
+          onOpenChange={(open) => {
+            setRoleOpen(open)
+            if (!open) {
+              setEditingRole(null)
+            }
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button
+              variant='outline'
+              className='border-[#D4AF37]/30 hover:bg-[#D4AF37]/10 text-gray-800 flex items-center gap-2 px-4 py-2 rounded-xl transition-colors'
+            >
+              <Settings className='w-4 h-4' />
+              Criar Função
+            </Button>
+          </DialogTrigger>
+          <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>
+                {editingRole ? 'Editar Função' : 'Nova Função'}
+              </DialogTitle>
+            </DialogHeader>
+            <RoleForm
+              initialData={editingRole}
+              onSuccess={() => {
+                setRoleOpen(false)
+                setEditingRole(null)
+                refreshRoles()
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+      {roles.length > 0 && (
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6'>
+          <div className='flex justify-between items-center px-6 py-4 border-b border-gray-100'>
+            <h3 className='text-lg font-semibold text-gray-800'>
+              Funções Criadas
+            </h3>
+          </div>
+
+          <div className='px-6 py-3 border-b border-gray-100 flex items-center gap-2'>
+            <Search className='w-4 h-4 text-gray-400' />
+            <input
+              type='text'
+              placeholder='Buscar função...'
+              value={roleSearchTerm}
+              onChange={(e) => setRoleSearchTerm(e.target.value)}
+              className='w-full border-none outline-none text-sm text-gray-700 placeholder-gray-400'
+            />
+          </div>
+
+          <div
+            className={`divide-y divide-gray-100 ${
+              filteredRoles.length > 5 ? 'max-h-64 overflow-y-auto' : ''
+            }`}
+          >
+            {filteredRoles.map((role: any) => (
+              <div
+                key={role.id}
+                className='px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors'
+              >
+                <div>
+                  <div className='font-medium text-gray-800'>{role.title}</div>
+                  <div className='text-gray-600 text-sm'>
+                    {role.commissionRate > 0
+                      ? `${role.commissionRate}% comissão`
+                      : 'Sem comissão'}
+                  </div>
+                </div>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    setEditingRole(role)
+                    setRoleOpen(true)
+                  }}
+                  className='h-6 w-6 p-0'
+                >
+                  <Edit className='h-3 w-3' />
+                </Button>
+              </div>
+            ))}
+
+            {filteredRoles.length === 0 && (
+              <div className='px-6 py-4 text-gray-500 text-sm text-center'>
+                Nenhuma função encontrada
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
