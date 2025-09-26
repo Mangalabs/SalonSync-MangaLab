@@ -41,6 +41,7 @@ export class AuthController {
       roleId?: string;
       commissionRate?: number;
       branchId: string;
+      workingDays?: number[];
     },
   ) {
     return this.authService.createEmployee(body);

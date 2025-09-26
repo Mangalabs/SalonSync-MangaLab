@@ -146,6 +146,7 @@ export class AuthService {
     roleId?: string;
     commissionRate?: number;
     branchId: string;
+    workingDays?: number[];
   }) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
@@ -174,8 +175,8 @@ export class AuthService {
       throw new ConflictException('Filial não encontrada');
     }
 
-    // Criar Professional automaticamente
-    await this.prisma.professional.create({
+    // Criar Professional automaticamente com dias de trabalho
+    const professional = await this.prisma.professional.create({
       data: {
         name: data.name,
         role: data.role || 'Profissional',
@@ -184,6 +185,23 @@ export class AuthService {
         roleId: data.roleId,
       },
     });
+
+    // Criar dias de trabalho se especificados
+    if (data.workingDays && data.workingDays.length > 0) {
+      await Promise.all(
+        data.workingDays.map(dayOfWeek =>
+          this.prisma.professionalWorkingDay.create({
+            data: {
+              professionalId: professional.id,
+              dayOfWeek,
+              startTime: '09:00',
+              endTime: '18:00',
+              isActive: true,
+            },
+          })
+        )
+      );
+    }
 
     return { id: user.id, email: user.email, name: user.name, role: user.role };
   }
