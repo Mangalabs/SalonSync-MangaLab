@@ -1,18 +1,3 @@
-/*
-  Warnings:
-
-  - A unique constraint covering the columns `[branchId]` on the table `WhatsAppConfig` will be added. If there are existing duplicate values, this will fail.
-  - A unique constraint covering the columns `[phoneNumber]` on the table `WhatsAppConfig` will be added. If there are existing duplicate values, this will fail.
-  - A unique constraint covering the columns `[phoneNumberId]` on the table `WhatsAppConfig` will be added. If there are existing duplicate values, this will fail.
-  - A unique constraint covering the columns `[verifyToken]` on the table `WhatsAppConfig` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `accessToken` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `businessId` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `phoneNumber` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `phoneNumberId` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `verifyToken` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `wabaId` to the `WhatsAppConfig` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
 CREATE TYPE "AbsenceType" AS ENUM ('VACATION', 'SICK_LEAVE', 'PERSONAL', 'TRAINING', 'OTHER');
 
@@ -20,23 +5,26 @@ CREATE TYPE "AbsenceType" AS ENUM ('VACATION', 'SICK_LEAVE', 'PERSONAL', 'TRAINI
 CREATE TYPE "WhatsAppStatus" AS ENUM ('PENDING', 'CONNECTING', 'CONNECTED', 'ERROR', 'SUSPENDED', 'DISCONNECTED');
 
 -- AlterTable
-ALTER TABLE "WhatsAppConfig" ADD COLUMN     "accessToken" TEXT NOT NULL,
-ADD COLUMN     "aiEnabled" BOOLEAN NOT NULL DEFAULT false,
+ALTER TABLE "WhatsAppConfig" ADD COLUMN "accessToken" TEXT,
+ADD COLUMN     "aiEnabled" BOOLEAN DEFAULT false,
 ADD COLUMN     "aiPersonality" TEXT,
 ADD COLUMN     "autoResponses" JSONB,
 ADD COLUMN     "businessHours" JSONB,
-ADD COLUMN     "businessId" TEXT NOT NULL,
-ADD COLUMN     "errorCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "businessId" TEXT,
+ADD COLUMN     "errorCount" INTEGER DEFAULT 0,
 ADD COLUMN     "lastSync" TIMESTAMP(3),
-ADD COLUMN     "phoneNumber" TEXT NOT NULL,
-ADD COLUMN     "phoneNumberId" TEXT NOT NULL,
+ADD COLUMN     "phoneNumber" TEXT,
+ADD COLUMN     "phoneNumberId" TEXT,
 ADD COLUMN     "refreshToken" TEXT,
 ADD COLUMN     "status" "WhatsAppStatus" NOT NULL DEFAULT 'PENDING',
-ADD COLUMN     "verifyToken" TEXT NOT NULL,
-ADD COLUMN     "wabaId" TEXT NOT NULL,
-ALTER COLUMN "accountSid" DROP NOT NULL,
-ALTER COLUMN "authTokenEncrypted" DROP NOT NULL,
-ALTER COLUMN "whatsappNumber" DROP NOT NULL;
+ADD COLUMN     "verifyToken" TEXT,
+ADD COLUMN     "wabaId" TEXT;
+
+ALTER TABLE "WhatsAppConfig" 
+DROP COLUMN "accountSid",
+DROP COLUMN "authTokenEncrypted",
+DROP COLUMN "whatsappNumber";
+
 
 -- CreateTable
 CREATE TABLE "BranchSettings" (

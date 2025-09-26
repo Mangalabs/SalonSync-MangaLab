@@ -96,6 +96,18 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     },
   })
 
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const response = await axios.get(
+        '/api/payment/get-prices-for-connected-account'
+      )
+
+      setPrices(response.data)
+    }
+
+    fetchPrices()
+  }, [])
+
   const filteredClients = clients?.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,18 +190,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     window.alert('Url copiada para área de transferência (CRTL + V)')
   }
 
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const response = await axios.get(
-        '/api/payment/get-prices-for-connected-account'
-      )
-
-      setPrices(response.data)
-    }
-
-    fetchPrices()
-  }, [])
-
   if (isLoading) {
     return <p className='p-4'>Carregando...</p>
   }
@@ -256,8 +256,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
             <div className=' text-blue-800 px-2 rounded-xl flex items-center'>
               <p>
-                {client.subscription.planName
-                  ? client.subscription.planName
+                {client.subscription?.planName
+                  ? client.subscription?.planName
                   : 'Sem Assinatura'}
               </p>
             </div>

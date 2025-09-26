@@ -26,6 +26,17 @@ export class PaymentController {
     return await this.paymentService.createCustomer(body);
   }
 
+  @Post('account')
+  async createAccount(@Headers('authorization') auth: string) {
+    const token = auth?.replace('Bearer ', '');
+    return await this.paymentService.createAccount(token);
+  }
+
+  @Post('account_session')
+  async createAccountSession(@Body() body: CreateAccountSessionDto) {
+    return await this.paymentService.createAccountSession(body);
+  }
+
   @Post('create-checkout-session')
   async createCheckoutSession(@Body() body: CreateCheckoutSessionDto) {
     return await this.paymentService.createCheckoutSession(body);

@@ -8,7 +8,11 @@ import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateCustomerDto, CreateCheckoutSessionDto } from './dto/payment.dto';
+import {
+  CreateCustomerDto,
+  CreateCheckoutSessionDto,
+  CreateAccountSessionDto,
+} from './dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -54,6 +58,67 @@ export class PaymentService {
       return updatedUser;
     } catch {
       throw new Error('Não foi possível criar usuário');
+    }
+  }
+
+  async createAccount(token: string) {
+    if (!token) {
+      throw new UnauthorizedException('Token não fornecido');
+    }
+
+    try {
+      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
+      const decoded = jwt.verify(token, secret) as { sub: string };
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      if (user.accountId) {
+        return await stripeClient.accounts.retrieve(user.accountId);
+      }
+
+      const account = await stripeClient.accounts.create({});
+
+      await this.prisma.user.update({
+        where: { id: decoded.sub },
+        data: {
+          accountId: account.id,
+        },
+      });
+
+      return account;
+    } catch (e) {
+      console.log(e);
+      throw new Error('Não foi possível criar conta de pagamento');
+    }
+  }
+
+  async createAccountSession(data: CreateAccountSessionDto) {
+    try {
+      const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
+
+      const accountSession = await stripeClient.accountSessions.create({
+        account: data.account,
+        components: {
+          account_onboarding: { enabled: true },
+          account_management: { enabled: true },
+          payments: { enabled: true },
+          payouts: { enabled: true },
+        },
+      });
+
+      return {
+        client_secret: accountSession.client_secret,
+      };
+    } catch {
+      throw new Error('Não foi possível criar sessão de conta');
     }
   }
 
@@ -308,7 +373,7 @@ export class PaymentService {
       );
       return prices.data;
     } catch {
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi recuperar preço');
     }
   }
 
@@ -362,7 +427,7 @@ export class PaymentService {
       return { newPrice, updatedProduct };
     } catch (e) {
       console.log(e);
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi atualizar preço');
     }
   }
 
@@ -393,7 +458,7 @@ export class PaymentService {
 
       return archivedPrice;
     } catch {
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi arquivar preço');
     }
   }
 
@@ -491,7 +556,7 @@ export class PaymentService {
       );
     } catch (e) {
       console.log(e);
-      throw new Error('Não foi criar preço');
+      throw new Error('Não foi reajustar preço');
     }
   }
 }
