@@ -92,6 +92,7 @@ model Service {
 
 model Client {
   id           String        @id @default(uuid())
+  customerId   String?       @unique
   name         String
   phone        String?
   email        String?

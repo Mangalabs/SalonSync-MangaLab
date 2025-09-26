@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
@@ -42,4 +42,50 @@ export class CreateCheckoutSessionDto {
   @IsString()
   @IsNotEmpty()
   priceId: string;
+}
+
+export class CreatePriceForConnectedAccountDto {
+  @IsNumber()
+  @IsNotEmpty()
+  value: number;
+
+  @IsString()
+  @IsNotEmpty()
+  planName: string;
+}
+
+export class UpdatePriceForConnectedAccountDto {
+  @IsNumber()
+  value: number;
+
+  @IsString()
+  @IsNotEmpty()
+  planId: string;
+
+  @IsString()
+  planName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  priceId: string;
+}
+
+export class PriceReadjustmentForConnectedAccountDto {
+  @IsString()
+  @IsNotEmpty()
+  priceId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  value: number;
+}
+
+export class CreateAccountSessionDto {
+  @IsString()
+  @IsNotEmpty()
+  account: string;
 }

@@ -10,6 +10,7 @@ import {
   Calendar,
   Scissors,
   ShoppingCart,
+  Star,
   X,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -111,6 +112,12 @@ const menuSections = [
     title: 'Sistema',
     items: [
       {
+        to: '/dashboard/fidelity',
+        icon: Star,
+        label: 'Fidelidade',
+        roles: ['ADMIN', 'PROFESSIONAL'],
+      },
+      {
         to: '/dashboard/settings',
         icon: Settings,
         label: 'Configurações',
@@ -124,20 +131,22 @@ const getNavItems = (userRole: string) =>
   menuSections.map((section) => ({
     ...section,
     items: section.items.filter((item) =>
-      userRole === 'SUPERADMIN' ? true : item.roles.includes(userRole),
+      userRole === 'SUPERADMIN' ? true : item.roles.includes(userRole)
     ),
   }))
 
 const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
   <div
     className='p-6 border-b flex items-center justify-between'
-    style={{ borderColor: 'var(--color-sidebar-border)' }}>
+    style={{ borderColor: 'var(--color-sidebar-border)' }}
+  >
     <div className='flex items-center space-x-3'>
       <div
         className='w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r'
         style={{
           backgroundImage: 'var(--color-gradient)',
-        }}>
+        }}
+      >
         <Scissors
           className='w-5 h-5'
           style={{ color: 'var(--color-button-text)' }}
@@ -146,7 +155,8 @@ const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
       <div>
         <h1
           className='text-xl font-bold'
-          style={{ color: 'var(--color-sidebar-foreground)' }}>
+          style={{ color: 'var(--color-sidebar-foreground)' }}
+        >
           SalonSync
         </h1>
         <p className='text-xs' style={{ color: 'var(--color-text-secondary)' }}>
@@ -160,7 +170,8 @@ const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
         size='sm'
         onClick={onClose}
         className='p-1'
-        style={{ color: 'var(--color-text-secondary)' }}>
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
         <X size={20} />
       </Button>
     )}
@@ -178,7 +189,8 @@ const NavItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
       key={label}
       onClick={onClick}
       className={`${baseClass} ${gradientHover}`}
-      style={{ color: 'var(--color-text-secondary)' }}>
+      style={{ color: 'var(--color-text-secondary)' }}
+    >
       <Icon className='w-5 h-5' />
       <span>{label}</span>
     </button>
@@ -195,7 +207,8 @@ const NavItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
             : gradientHover
         }`
       }
-      style={{ color: 'var(--color-text-secondary)' }}>
+      style={{ color: 'var(--color-text-secondary)' }}
+    >
       <Icon className='w-5 h-5' />
       <span>{label}</span>
     </NavLink>
@@ -209,8 +222,11 @@ export function Sidebar() {
   const navSections = getNavItems(user?.role || 'ADMIN')
 
   const handleNavClick = (item?: any) => {
-    if (item?.opensSaleForm) {setShowSaleForm(true)}
-    else {close()}
+    if (item?.opensSaleForm) {
+      setShowSaleForm(true)
+    } else {
+      close()
+    }
   }
 
   const SidebarContent = () => (
@@ -223,7 +239,8 @@ export function Sidebar() {
               <div key={idx} className='mb-4'>
                 <div
                   className='text-xs font-semibold uppercase tracking-wider mb-1 px-4'
-                  style={{ color: 'var(--color-text-secondary)' }}>
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
                   {section.title}
                 </div>
                 <div className='space-y-1'>
@@ -236,7 +253,7 @@ export function Sidebar() {
                   ))}
                 </div>
               </div>
-            ),
+            )
         )}
       </nav>
     </>
@@ -249,7 +266,8 @@ export function Sidebar() {
           isOpen
             ? 'opacity-100 pointer-events-auto'
             : 'opacity-0 pointer-events-none'
-        }`}>
+        }`}
+      >
         <div className='absolute inset-0' onClick={close} />
         <aside
           className={`absolute left-0 top-0 w-64 h-full flex flex-col transform transition-transform duration-300 ${
@@ -260,7 +278,8 @@ export function Sidebar() {
             color: 'var(--color-sidebar-foreground)',
             borderRight: '1px solid var(--color-sidebar-border)',
             boxShadow: '0 2px 10px var(--color-shadow)',
-          }}>
+          }}
+        >
           <SidebarContent />
         </aside>
       </div>
@@ -272,7 +291,8 @@ export function Sidebar() {
           color: 'var(--color-sidebar-foreground)',
           borderRight: '1px solid var(--color-sidebar-border)',
           boxShadow: '0 2px 10px var(--color-shadow)',
-        }}>
+        }}
+      >
         <SidebarContent />
       </aside>
 

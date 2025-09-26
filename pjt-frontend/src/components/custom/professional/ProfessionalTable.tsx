@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
 import { RoleForm } from '../forms/RoleForm'
@@ -57,16 +58,43 @@ type Professional = {
     title: string
     commissionRate: number
   }
+  workingDays?: {
+    dayOfWeek: number
+    startTime: string
+    endTime: string
+    isActive: boolean
+  }[]
 }
 
-const employeeSchema = z.object({
+const createEmployeeSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
   roleId: z.string().min(1, 'Selecione uma função'),
   branchId: z.string().min(1, 'Selecione uma filial'),
+  workingDays: z.array(z.number()).optional(),
 })
-type EmployeeFormData = z.infer<typeof employeeSchema>
+
+const editProfessionalSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  email: z.string().optional(),
+  password: z.string().optional(),
+  roleId: z.string().min(1, 'Selecione uma função'),
+  branchId: z.string().min(1, 'Selecione uma filial'),
+  workingDays: z.array(z.number()).optional(),
+})
+type EmployeeFormData = z.infer<typeof createEmployeeSchema>
+type EditProfessionalFormData = z.infer<typeof editProfessionalSchema>
+
+const daysOfWeek = [
+  { value: 0, label: 'Domingo', short: 'Dom' },
+  { value: 1, label: 'Segunda-feira', short: 'Seg' },
+  { value: 2, label: 'Terça-feira', short: 'Ter' },
+  { value: 3, label: 'Quarta-feira', short: 'Qua' },
+  { value: 4, label: 'Quinta-feira', short: 'Qui' },
+  { value: 5, label: 'Sexta-feira', short: 'Sex' },
+  { value: 6, label: 'Sábado', short: 'Sáb' },
+]
 
 export function ProfessionalTable() {
   const queryClient = useQueryClient()
@@ -86,12 +114,24 @@ export function ProfessionalTable() {
   const [editingRole, setEditingRole] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [roleSearchTerm, setRoleSearchTerm] = useState('')
+  const [selectedWorkingDays, setSelectedWorkingDays] = useState<number[]>([
+    1, 2, 3, 4, 5,
+  ]) // Segunda a sexta por padrão
 
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
-      const res = await axios.get('/api/professionals')
-      return res.data.filter((p: Professional) => p.branchId === activeBranch?.id)
+      try {
+        const res = await axios.get('/api/professionals?include=workingDays')
+        return res.data.filter(
+          (p: Professional) => p.branchId === activeBranch?.id
+        )
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return []
+        }
+        throw error
+      }
     },
     enabled: !!activeBranch,
   })
@@ -122,31 +162,59 @@ export function ProfessionalTable() {
       setDeletingProfessional(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao excluir profissional')
+      toast.error(
+        error.response?.data?.message || 'Erro ao excluir profissional'
+      )
       setDeletingProfessional(null)
     },
   })
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
-      const selectedRole = roles.find((role: any) => role.id === data.roleId)
-      const employeeData = {
-        ...data,
-        role: selectedRole?.title || 'Profissional',
-        commissionRate: selectedRole?.commissionRate || 0,
+      if (editingProfessional) {
+        // Editar profissional existente
+        const updateData = {
+          name: data.name,
+          roleId: data.roleId,
+          workingDays: selectedWorkingDays,
+        }
+        await axios.patch(
+          `/api/professionals/${editingProfessional.id}`,
+          updateData
+        )
+      } else {
+        // Criar novo funcionário
+        const selectedRole = roles.find((role: any) => role.id === data.roleId)
+        const employeeData = {
+          ...data,
+          role: selectedRole?.title || 'Profissional',
+          commissionRate: selectedRole?.commissionRate || 0,
+          workingDays: selectedWorkingDays,
+        }
+        await axios.post('/api/auth/create-employee', employeeData)
       }
-      await axios.post('/api/auth/create-employee', employeeData)
     },
     onSuccess: () => {
-      toast.success('Funcionário criado com sucesso!')
+      toast.success(
+        editingProfessional
+          ? 'Profissional atualizado com sucesso!'
+          : 'Funcionário criado com sucesso!'
+      )
       reset()
       setCreatingNew(false)
+      setEditingProfessional(null)
+      setSelectedWorkingDays([1, 2, 3, 4, 5])
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       queryClient.invalidateQueries({ queryKey: ['professionals'] })
       queryClient.invalidateQueries({ queryKey: ['roles'] })
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar funcionário')
+      toast.error(
+        error.response?.data?.message ||
+          (editingProfessional
+            ? 'Erro ao atualizar profissional'
+            : 'Erro ao criar funcionário')
+      )
     },
   })
 
@@ -156,19 +224,68 @@ export function ProfessionalTable() {
     reset,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<EmployeeFormData>({
-    resolver: zodResolver(employeeSchema),
+  } = useForm<EmployeeFormData | EditProfessionalFormData>({
+    resolver: zodResolver(
+      editingProfessional ? editProfessionalSchema : createEmployeeSchema
+    ),
     defaultValues: { branchId: activeBranch?.id || '' },
   })
 
   const onSubmit = (data: EmployeeFormData) => {
-    createEmployee.mutate(data)
+    createEmployee.mutate({ ...data, workingDays: selectedWorkingDays })
   }
 
   const toggleExpanded = (id: string) =>
     setExpandedProfessional(expandedProfessional === id ? null : id)
 
   if (isLoading) {return <p>Carregando...</p>}
+  const toggleWorkingDay = (dayValue: number) => {
+    setSelectedWorkingDays((prev) =>
+      prev.includes(dayValue)
+        ? prev.filter((d) => d !== dayValue)
+        : [...prev, dayValue].sort()
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className='space-y-6'>
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+          <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
+            <Skeleton className='h-6 w-48' />
+            <Skeleton className='h-10 w-40' />
+          </div>
+          <div className='bg-gray-50 px-6 py-4 border-b border-gray-100'>
+            <div className='grid grid-cols-4 gap-4'>
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-20' />
+              <Skeleton className='h-4 w-16' />
+            </div>
+          </div>
+          <div className='divide-y divide-gray-100'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className='px-6 py-4 grid grid-cols-4 gap-4 items-center'
+              >
+                <div className='flex items-center gap-3'>
+                  <Skeleton className='w-10 h-10 rounded-full' />
+                  <Skeleton className='h-5 w-32' />
+                </div>
+                <Skeleton className='h-4 w-24' />
+                <Skeleton className='h-4 w-12' />
+                <div className='flex space-x-2'>
+                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const filteredProfessionals = professionals.filter(
     (prof) =>
@@ -179,7 +296,7 @@ export function ProfessionalTable() {
   )
 
   const filteredRoles = roles.filter((role: any) =>
-    role.title.toLowerCase().includes(roleSearchTerm.toLowerCase()),
+    role.title.toLowerCase().includes(roleSearchTerm.toLowerCase())
   )
 
   return (
@@ -275,7 +392,55 @@ export function ProfessionalTable() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setDeletingProfessional(prof)
-                      }}>
+                      }}
+                    >
+                      <Trash2 className='w-4 h-4' />
+                      <span className='md:hidden ml-1 text-sm'>Excluir</span>
+                    </Button>
+                  </div>
+
+                  <div className='text-gray-700 text-sm md:text-base'>
+                    <span className='md:hidden font-semibold'>Função: </span>
+                    {prof.customRole?.title || prof.role}
+                  </div>
+
+                  <div className='font-semibold text-purple-600 text-sm md:text-base'>
+                    <span className='md:hidden font-semibold'>Comissão: </span>
+                    {prof.customRole?.commissionRate || prof.commissionRate}%
+                  </div>
+
+                  <div className='flex gap-2'>
+                    <Button
+                      className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingProfessional(prof)
+                        // Preencher formulário com dados existentes
+                        reset({
+                          name: prof.name,
+                          roleId: prof.customRole?.id || '',
+                          branchId: prof.branchId,
+                          email: '', // Não temos email no Professional
+                          password: '', // Não mostrar senha existente
+                        })
+                        // Preencher dias de trabalho
+                        const workingDays =
+                          prof.workingDays
+                            ?.filter((wd) => wd.isActive)
+                            .map((wd) => wd.dayOfWeek) || []
+                        setSelectedWorkingDays(workingDays)
+                      }}
+                    >
+                      <Edit className='w-4 h-4' />
+                      <span className='md:hidden ml-1 text-sm'>Editar</span>
+                    </Button>
+                    <Button
+                      className='flex-1 md:flex-none p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeletingProfessional(prof)
+                      }}
+                    >
                       <Trash2 className='w-4 h-4' />
                       <span className='md:hidden ml-1 text-sm'>Excluir</span>
                     </Button>
@@ -300,6 +465,7 @@ export function ProfessionalTable() {
         onOpenChange={() => {
           setEditingProfessional(null)
           setCreatingNew(false)
+          setSelectedWorkingDays([1, 2, 3, 4, 5])
         }}>
         <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
           <DialogHeader>
@@ -335,11 +501,38 @@ export function ProfessionalTable() {
                 </p>
               )}
             </div>
+            {!editingProfessional && (
+              <>
+                <div>
+                  <Label htmlFor='email'>Email</Label>
+                  <Input id='email' type='email' {...register('email')} />
+                  {errors.email && (
+                    <p className='text-xs text-red-500'>
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor='password'>Senha</Label>
+                  <Input
+                    id='password'
+                    type='password'
+                    {...register('password')}
+                  />
+                  {errors.password && (
+                    <p className='text-xs text-red-500'>
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
             <div>
               <Label>Filial</Label>
               <Select
                 onValueChange={(v) => setValue('branchId', v)}
-                defaultValue={activeBranch?.id}>
+                defaultValue={editingProfessional?.branchId || activeBranch?.id}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder='Selecione a filial' />
                 </SelectTrigger>
@@ -359,7 +552,10 @@ export function ProfessionalTable() {
             </div>
             <div>
               <Label>Função</Label>
-              <Select onValueChange={(v) => setValue('roleId', v)}>
+              <Select
+                onValueChange={(v) => setValue('roleId', v)}
+                defaultValue={editingProfessional?.customRole?.id || ''}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder='Selecione a função' />
                 </SelectTrigger>
@@ -372,16 +568,38 @@ export function ProfessionalTable() {
                 </SelectContent>
               </Select>
               {errors.roleId && (
-                <p className='text-xs text-destructive'>
-                  {errors.roleId.message}
-                </p>
+                <p className='text-xs text-red-500'>{errors.roleId.message}</p>
               )}
             </div>
-            <Button
-              type='submit'
-              disabled={isSubmitting}
-              className='w-full bg-primary text-primary-foreground hover:bg-primary/80'>
-              {isSubmitting ? 'Salvando...' : 'Salvar'}
+
+            <div>
+              <Label>Dias de Trabalho</Label>
+              <div className='grid grid-cols-7 gap-1 mt-2'>
+                {daysOfWeek.map((day) => (
+                  <button
+                    key={day.value}
+                    type='button'
+                    onClick={() => toggleWorkingDay(day.value)}
+                    className={`p-2 text-xs rounded-lg border transition-colors ${
+                      selectedWorkingDays.includes(day.value)
+                        ? 'bg-purple-100 border-purple-300 text-purple-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {day.short}
+                  </button>
+                ))}
+              </div>
+              <p className='text-xs text-gray-500 mt-1'>
+                Selecione os dias em que o profissional estará disponível
+              </p>
+            </div>
+            <Button type='submit' disabled={isSubmitting} className='w-full'>
+              {isSubmitting
+                ? 'Salvando...'
+                : editingProfessional
+                ? 'Atualizar'
+                : 'Criar Funcionário'}
             </Button>
           </form>
         </DialogContent>

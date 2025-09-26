@@ -26,6 +26,7 @@ import TestBranch from './pages/TestBranch'
 import NewAppointment from './components/pages/NewAppointments'
 import Help from './components/pages/Help'
 import Sales from './components/pages/Sales'
+import Fidelity from './components/pages/Fidelity'
 
 export default function App() {
   return (
@@ -154,6 +155,14 @@ export default function App() {
                 element={
                   <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                     <Settings />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path='fidelity'
+                element={
+                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                    <Fidelity />
                   </RoleGuard>
                 }
               />

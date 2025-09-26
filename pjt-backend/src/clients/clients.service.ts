@@ -2,7 +2,11 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
+
+import Stripe from 'stripe';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Client } from '@prisma/client';
 import {
@@ -17,11 +21,10 @@ export class ClientsService extends BaseDataService {
   }
 
   async findAll(user: UserContext): Promise<Client[]> {
+    const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
     let branchIds: string[];
 
-    // Se branchId específico foi fornecido, usar apenas ele
     if (user.branchId && user.role === 'ADMIN') {
-      // Verificar se admin tem acesso a esta filial
       const allowedBranchIds = await this.getUserBranchIds({
         ...user,
         branchId: undefined,
@@ -35,9 +38,74 @@ export class ClientsService extends BaseDataService {
       branchIds = await this.getUserBranchIds(user);
     }
 
-    return this.prisma.client.findMany({
+    const completeUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!completeUser) {
+      throw new HttpException(
+        'Usuário criador não encontrado',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    let subscriptions: Stripe.ApiList<Stripe.Subscription>;
+    const subMap = new Map<
+      string,
+      { planName: string; subscriptionId: string }
+    >();
+    if (completeUser.accountId) {
+      subscriptions = await stripeClient.subscriptions.list(
+        {
+          status: 'active',
+          expand: ['data.items.data.price'], // só até price
+          limit: 100,
+        },
+        { stripeAccount: completeUser.accountId },
+      );
+
+      const productIds = new Set<string>();
+      subscriptions.data.forEach((sub) => {
+        sub.items.data.forEach((item) => {
+          productIds.add(item.price.product as string);
+        });
+      });
+
+      const products = await stripeClient.products.list(
+        { limit: 100, active: true },
+        { stripeAccount: completeUser.accountId },
+      );
+
+      const productMap = new Map(products.data.map((p) => [p.id, p]));
+
+      subscriptions.data.forEach((sub) => {
+        const customerId = sub.customer as string;
+        const productId = sub.items.data[0].price.product as string;
+        const product = productMap.get(productId);
+
+        if (product) {
+          subMap.set(customerId, {
+            planName: product.name,
+            subscriptionId: sub.id,
+          });
+        }
+      });
+    }
+
+    const clients = await this.prisma.client.findMany({
       where: { branchId: { in: branchIds } },
       orderBy: { name: 'asc' },
+    });
+
+    return clients.map((client) => {
+      if (!client.customerId) {
+        return { ...client, subscription: null };
+      }
+
+      return {
+        ...client,
+        subscription: subMap.get(client.customerId) ?? null,
+      };
     });
   }
 
@@ -54,7 +122,6 @@ export class ClientsService extends BaseDataService {
       throw new Error('Name is required but not provided');
     }
 
-    // Use targetBranchId if provided, otherwise use getTargetBranchId logic
     const branchId = targetBranchId || (await this.getTargetBranchId(user));
 
     const clientData = {
