@@ -82,9 +82,9 @@ export function Header() {
   )
 
   return (
-    <header className='shadow-lg border-b bg-background border-border'>
-      <div className='mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='flex justify-between items-center h-27'>
+    <header className='shadow-lg border-b bg-background border-border/30'>
+      <div className='mx-auto px-4 sm:px-6 lg:px-9'>
+        <div className='flex justify-between items-center h-23'>
           <div className='flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0'>
             <button
               onClick={toggle}
