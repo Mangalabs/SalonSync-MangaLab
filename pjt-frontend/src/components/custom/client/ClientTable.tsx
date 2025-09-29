@@ -59,7 +59,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const queryClient = useQueryClient()
   const { user } = useUser()
   const { activeBranch } = useBranch()
-  const [prices, setPrices] = useState([])
   const [selectedPrice, setSelectedPrice] = useState(null)
   const [planUrlLoading, setPlanUrlLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -68,17 +67,21 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [showPlanSelection, setShowPlanSelection] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const response = await axios.get(
-        '/api/payment/get-prices-for-connected-account',
-      )
-
-      setPrices(response.data)
-    }
-
-    fetchPrices()
-  }, [])
+  const { data: prices = [] } = useQuery({
+    queryKey: ['payment-prices'],
+    queryFn: async () => {
+      try {
+        const response = await axios.get('/api/payment/get-prices-for-connected-account')
+        return response.data
+      } catch (error) {
+        return []
+      }
+    },
+    enabled: false, // Desabilitar por enquanto
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const {
     data: clients,

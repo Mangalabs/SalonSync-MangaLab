@@ -109,7 +109,7 @@ const menuSections = [
         to: '/dashboard/fidelity',
         icon: Star,
         label: 'Fidelidade',
-        roles: ['ADMIN', 'PROFESSIONAL'],
+        roles: ['ADMIN'],
       },
       {
         to: '/dashboard/settings',
