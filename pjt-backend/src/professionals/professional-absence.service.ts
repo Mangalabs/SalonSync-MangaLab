@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { BaseDataService, UserContext } from '@/common/services/base-data.service';
+import {
+  BaseDataService,
+  UserContext,
+} from '@/common/services/base-data.service';
 
 @Injectable()
 export class ProfessionalAbsenceService extends BaseDataService {
@@ -59,27 +62,37 @@ export class ProfessionalAbsenceService extends BaseDataService {
   }
 
   async findAll(user: UserContext, professionalId?: string) {
-    const branchIds = await this.getUserBranchIds(user);
-    
-    const where: any = {
-      professional: {
-        branchId: { in: branchIds },
-      },
-    };
+    try {
+      const branchIds = await this.getUserBranchIds(user);
 
-    if (professionalId) {
-      where.professionalId = professionalId;
-    }
+      if (!branchIds || branchIds.length === 0) {
+        return [];
+      }
 
-    return this.prisma.professionalAbsence.findMany({
-      where,
-      include: {
+      const where: any = {
         professional: {
-          select: { name: true },
+          branchId: { in: branchIds },
         },
-      },
-      orderBy: { startDate: 'desc' },
-    });
+      };
+
+      if (professionalId) {
+        where.professionalId = professionalId;
+      }
+
+      const absences = await this.prisma.professionalAbsence.findMany({
+        where,
+        include: {
+          professional: {
+            select: { name: true },
+          },
+        },
+        orderBy: { startDate: 'desc' },
+      });
+
+      return absences;
+    } catch (error) {
+      return [];
+    }
   }
 
   async update(
@@ -139,7 +152,7 @@ export class ProfessionalAbsenceService extends BaseDataService {
   async getUpcomingAbsences(user: UserContext) {
     const branchIds = await this.getUserBranchIds(user);
     const today = new Date();
-    
+
     return this.prisma.professionalAbsence.findMany({
       where: {
         professional: {

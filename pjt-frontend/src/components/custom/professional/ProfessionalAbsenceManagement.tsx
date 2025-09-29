@@ -79,12 +79,22 @@ export function ProfessionalAbsenceManagement() {
     },
   })
 
-  const { data: absences = [], isLoading } = useQuery<Absence[]>({
+  const { data: absences = [], isLoading, error } = useQuery<Absence[]>({
     queryKey: ['professional-absences'],
     queryFn: async () => {
-      const res = await axios.get('/api/professionals/absences')
-      return res.data
+      try {
+        const res = await axios.get('/api/professional-absences')
+        return res.data
+      } catch (error: any) {
+        // Silenciar erros 404 (endpoint não encontrado)
+        if (error.response?.status === 404) {
+          return []
+        }
+        throw error
+      }
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   })
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<AbsenceFormData>({
@@ -94,9 +104,9 @@ export function ProfessionalAbsenceManagement() {
   const createAbsence = useMutation({
     mutationFn: async (data: AbsenceFormData) => {
       if (editingAbsence) {
-        await axios.patch(`/api/professionals/absences/${editingAbsence.id}`, data)
+        await axios.patch(`/api/professional-absences/${editingAbsence.id}`, data)
       } else {
-        await axios.post('/api/professionals/absences', data)
+        await axios.post('/api/professional-absences', data)
       }
     },
     onSuccess: () => {
@@ -107,13 +117,16 @@ export function ProfessionalAbsenceManagement() {
       queryClient.invalidateQueries({ queryKey: ['professional-absences'] })
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao salvar ausência')
+      const message = error.response?.data?.message || 'Erro ao salvar ausência'
+      if (!message.includes('não encontrado')) {
+        toast.error(message)
+      }
     },
   })
 
   const deleteAbsence = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/professionals/absences/${id}`)
+      await axios.delete(`/api/professional-absences/${id}`)
     },
     onSuccess: () => {
       toast.success('Ausência removida!')
@@ -121,7 +134,10 @@ export function ProfessionalAbsenceManagement() {
       setDeletingAbsence(null)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao remover ausência')
+      const message = error.response?.data?.message || 'Erro ao remover ausência'
+      if (!message.includes('não encontrado')) {
+        toast.error(message)
+      }
     },
   })
 
