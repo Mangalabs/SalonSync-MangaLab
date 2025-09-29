@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { DiscordLoggerFilter } from './discord-logger.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,8 @@ async function bootstrap() {
       whitelist: false,
     }),
   );
+
+  app.useGlobalFilters(new DiscordLoggerFilter());
 
   const config = new DocumentBuilder()
     .setTitle('API de Agendamentos')
