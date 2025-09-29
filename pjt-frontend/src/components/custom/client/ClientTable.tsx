@@ -9,6 +9,7 @@ import {
   Building2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
@@ -70,7 +71,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   useEffect(() => {
     const fetchPrices = async () => {
       const response = await axios.get(
-        '/api/payment/get-prices-for-connected-account'
+        '/api/payment/get-prices-for-connected-account',
       )
 
       setPrices(response.data)
@@ -112,18 +113,18 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.includes(searchTerm) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   if (isLoading) {
     return (
-      <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-card rounded-2xl p-6 shadow-sm border-theme'>
         <div className='mb-6'>
           <Skeleton className='h-12 w-full rounded-xl' />
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className='border border-gray-200 rounded-xl p-6'>
+            <div key={i} className='border-theme rounded-xl p-6'>
               <div className='flex items-center space-x-3 mb-4'>
                 <Skeleton className='w-12 h-12 rounded-full' />
                 <div className='flex-1 space-y-2'>
@@ -168,12 +169,11 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           clientId: client.id,
           email: client.email,
           accountId: user.accountId,
-        }
+        },
       )
-      console.log(response.data)
       setPlanUrlLoading(false)
       navigator.clipboard.writeText(response.data)
-      window.alert('Url copiada para área de transferência (CRTL + V)')
+      toast.success('Url copiada para área de transferência (CRTL + V)')
     }
   }
 
@@ -187,7 +187,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     })
     setPlanUrlLoading(false)
     navigator.clipboard.writeText(response.data)
-    window.alert('Url copiada para área de transferência (CRTL + V)')
+    toast.success('Url copiada para área de transferência (CRTL + V)')
   }
 
   if (isLoading) {

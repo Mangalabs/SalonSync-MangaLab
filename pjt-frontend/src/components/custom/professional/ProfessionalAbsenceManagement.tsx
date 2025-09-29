@@ -11,8 +11,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,12 +69,13 @@ const absenceTypeLabels = {
   OTHER: 'Outro',
 }
 
-const absenceTypeColors = {
-  VACATION: 'bg-blue-100 text-blue-700',
-  SICK_LEAVE: 'bg-red-100 text-red-700',
-  PERSONAL: 'bg-yellow-100 text-yellow-700',
-  TRAINING: 'bg-green-100 text-green-700',
-  OTHER: 'bg-gray-100 text-gray-700',
+const absenceTypeColors: Record<string, string> = {
+  VACATION: 'bg-[var(--color-primary-10)] text-[var(--color-primary)]',
+  SICK_LEAVE:
+    'bg-[var(--color-destructive)]/10 text-[var(--color-destructive)]',
+  PERSONAL: 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
+  TRAINING: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]',
+  OTHER: 'bg-[var(--color-muted)] text-[var(--color-muted-foreground)]',
 }
 
 export function ProfessionalAbsenceManagement() {
@@ -79,38 +92,42 @@ export function ProfessionalAbsenceManagement() {
     },
   })
 
-  const { data: absences = [], isLoading, error } = useQuery<Absence[]>({
+  const { data: absences = [], isLoading } = useQuery<Absence[]>({
     queryKey: ['professional-absences'],
     queryFn: async () => {
-      try {
-        const res = await axios.get('/api/professional-absences')
-        return res.data
-      } catch (error: any) {
-        // Silenciar erros 404 (endpoint não encontrado)
-        if (error.response?.status === 404) {
-          return []
-        }
-        throw error
-      }
+      const res = await axios.get('/api/professional-absences')
+      return res.data
     },
     retry: false,
     refetchOnWindowFocus: false,
   })
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<AbsenceFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<AbsenceFormData>({
     resolver: zodResolver(absenceSchema),
   })
 
   const createAbsence = useMutation({
     mutationFn: async (data: AbsenceFormData) => {
       if (editingAbsence) {
-        await axios.patch(`/api/professional-absences/${editingAbsence.id}`, data)
+        await axios.patch(
+          `/api/professional-absences/${editingAbsence.id}`,
+          data,
+        )
       } else {
         await axios.post('/api/professional-absences', data)
       }
     },
     onSuccess: () => {
-      toast.success(editingAbsence ? 'Ausência atualizada!' : 'Ausência registrada!')
+      toast.success(
+        editingAbsence ? 'Ausência atualizada!' : 'Ausência registrada!',
+      )
       reset()
       setShowForm(false)
       setEditingAbsence(null)
@@ -134,7 +151,8 @@ export function ProfessionalAbsenceManagement() {
       setDeletingAbsence(null)
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Erro ao remover ausência'
+      const message =
+        error.response?.data?.message || 'Erro ao remover ausência'
       if (!message.includes('não encontrado')) {
         toast.error(message)
       }
@@ -163,24 +181,27 @@ export function ProfessionalAbsenceManagement() {
     setShowForm(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
-  }
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('pt-BR')
 
   const isDateRangeValid = () => {
     const startDate = watch('startDate')
     const endDate = watch('endDate')
-    if (!startDate || !endDate) return true
+    if (!startDate || !endDate) {return true}
     return new Date(startDate) <= new Date(endDate)
   }
 
-  if (isLoading) return <div>Carregando ausências...</div>
+  if (isLoading)
+  {return (
+    <div className='text-[var(--color-foreground)]'>
+      Carregando ausências...
+    </div>
+  )}
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <Calendar className="w-5 h-5" />
+    <div className='bg-[var(--color-card)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] text-[var(--color-foreground)]'>
+      <div className='flex items-center justify-between mb-6'>
+        <h3 className='text-lg font-semibold flex items-center gap-2 text-[var(--color-foreground)]'>
+          <Calendar className='w-5 h-5 text-[var(--color-foreground)]' />
           Ausências dos Profissionais
         </h3>
 
@@ -188,27 +209,27 @@ export function ProfessionalAbsenceManagement() {
           <DialogTrigger asChild>
             <Button
               onClick={handleNew}
-              className="bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
+              className='bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-20)] flex items-center gap-2'>
+              <Plus className='w-4 h-4' />
               Nova Ausência
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className='bg-[var(--color-card)] text-[var(--color-foreground)]'>
             <DialogHeader>
-              <DialogTitle>{editingAbsence ? 'Editar Ausência' : 'Registrar Nova Ausência'}</DialogTitle>
+              <DialogTitle>
+                {editingAbsence ? 'Editar Ausência' : 'Registrar Nova Ausência'}
+              </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
               <div>
-                <Label htmlFor="professionalId">Profissional</Label>
+                <Label htmlFor='professionalId'>Profissional</Label>
                 <Select
                   value={watch('professionalId')}
-                  onValueChange={(value) => setValue('professionalId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um profissional" />
+                  onValueChange={(value) => setValue('professionalId', value)}>
+                  <SelectTrigger className='border border-[var(--color-border)] bg-[var(--color-input-background)]'>
+                    <SelectValue placeholder='Selecione um profissional' />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className='bg-[var(--color-card)] text-[var(--color-foreground)] border border-[var(--color-border)]'>
                     {professionals.map((prof) => (
                       <SelectItem key={prof.id} value={prof.id}>
                         {prof.name}
@@ -217,53 +238,60 @@ export function ProfessionalAbsenceManagement() {
                   </SelectContent>
                 </Select>
                 {errors.professionalId && (
-                  <p className="text-sm text-red-500">{errors.professionalId.message}</p>
+                  <p className='text-sm text-[var(--color-destructive)]'>
+                    {errors.professionalId.message}
+                  </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <Label htmlFor="startDate">Data de Início</Label>
+                  <Label htmlFor='startDate'>Data de Início</Label>
                   <Input
-                    id="startDate"
-                    type="date"
+                    id='startDate'
+                    type='date'
                     {...register('startDate')}
+                    className='border border-[var(--color-border)] bg-[var(--color-input-background)]'
                   />
                   {errors.startDate && (
-                    <p className="text-sm text-red-500">{errors.startDate.message}</p>
+                    <p className='text-sm text-[var(--color-destructive)]'>
+                      {errors.startDate.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="endDate">Data de Fim</Label>
+                  <Label htmlFor='endDate'>Data de Fim</Label>
                   <Input
-                    id="endDate"
-                    type="date"
+                    id='endDate'
+                    type='date'
                     {...register('endDate')}
+                    className='border border-[var(--color-border)] bg-[var(--color-input-background)]'
                   />
                   {errors.endDate && (
-                    <p className="text-sm text-red-500">{errors.endDate.message}</p>
+                    <p className='text-sm text-[var(--color-destructive)]'>
+                      {errors.endDate.message}
+                    </p>
                   )}
                 </div>
               </div>
 
               {!isDateRangeValid() && (
-                <div className="flex items-center gap-2 text-red-600 text-sm">
-                  <AlertTriangle className="w-4 h-4" />
-                  A data de fim deve ser posterior à data de início
+                <div className='flex items-center gap-2 text-[var(--color-destructive)] text-sm'>
+                  <AlertTriangle className='w-4 h-4' />A data de fim deve ser
+                  posterior à data de início
                 </div>
               )}
 
               <div>
-                <Label htmlFor="type">Tipo de Ausência</Label>
+                <Label htmlFor='type'>Tipo de Ausência</Label>
                 <Select
                   value={watch('type')}
-                  onValueChange={(value) => setValue('type', value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
+                  onValueChange={(value) => setValue('type', value as any)}>
+                  <SelectTrigger className='border border-[var(--color-border)] bg-[var(--color-input-background)]'>
+                    <SelectValue placeholder='Selecione o tipo' />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className='bg-[var(--color-card)] text-[var(--color-foreground)] border border-[var(--color-border)]'>
                     {Object.entries(absenceTypeLabels).map(([key, label]) => (
                       <SelectItem key={key} value={key}>
                         {label}
@@ -272,32 +300,39 @@ export function ProfessionalAbsenceManagement() {
                   </SelectContent>
                 </Select>
                 {errors.type && (
-                  <p className="text-sm text-red-500">{errors.type.message}</p>
+                  <p className='text-sm text-[var(--color-destructive)]'>
+                    {errors.type.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="reason">Motivo (Opcional)</Label>
+                <Label htmlFor='reason'>Motivo (Opcional)</Label>
                 <Textarea
-                  id="reason"
+                  id='reason'
                   {...register('reason')}
-                  placeholder="Descreva o motivo da ausência..."
+                  placeholder='Descreva o motivo da ausência...'
+                  className='border border-[var(--color-border)] bg-[var(--color-input-background)]'
                 />
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className='flex justify-end gap-3 mt-6'>
                 <Button
-                  type="button"
-                  variant="outline"
+                  type='button'
+                  variant='outline'
                   onClick={() => setShowForm(false)}
-                >
+                  className='border border-[var(--color-border)] text-[var(--color-foreground)] hover:bg-[var(--color-hover)]'>
                   Cancelar
                 </Button>
                 <Button
-                  type="submit"
+                  type='submit'
                   disabled={createAbsence.isPending || !isDateRangeValid()}
-                >
-                  {createAbsence.isPending ? 'Salvando...' : editingAbsence ? 'Atualizar' : 'Salvar'}
+                  className='bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-20)]'>
+                  {createAbsence.isPending
+                    ? 'Salvando...'
+                    : editingAbsence
+                      ? 'Atualizar'
+                      : 'Salvar'}
                 </Button>
               </div>
             </form>
@@ -305,42 +340,48 @@ export function ProfessionalAbsenceManagement() {
         </Dialog>
       </div>
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {absences.map((absence) => (
-          <div key={absence.id} className="border border-gray-200 rounded-xl p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="font-semibold text-gray-800">{absence.professional.name}</h4>
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${absenceTypeColors[absence.type]}`}>
+          <div
+            key={absence.id}
+            className='border border-[var(--color-border)] rounded-xl p-4 bg-[var(--color-card)]'>
+            <div className='flex items-start justify-between'>
+              <div className='flex-1'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <h4 className='font-semibold text-[var(--color-foreground)]'>
+                    {absence.professional.name}
+                  </h4>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      absenceTypeColors[absence.type]
+                    }`}>
                     {absenceTypeLabels[absence.type]}
                   </span>
                 </div>
-                <div className="text-sm text-gray-600 mb-1">
-                  <strong>Período:</strong> {formatDate(absence.startDate)} até {formatDate(absence.endDate)}
+                <div className='text-sm text-[var(--color-muted-foreground)] mb-1'>
+                  <strong>Período:</strong> {formatDate(absence.startDate)} até{' '}
+                  {formatDate(absence.endDate)}
                 </div>
                 {absence.reason && (
-                  <div className="text-sm text-gray-600">
+                  <div className='text-sm text-[var(--color-muted-foreground)]'>
                     <strong>Motivo:</strong> {absence.reason}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size='sm'
+                  variant='outline'
                   onClick={() => handleEdit(absence)}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  <Edit className="w-4 h-4" />
+                  className='text-[var(--color-primary)] hover:text-[var(--color-primary-foreground)] border border-[var(--color-border)]'>
+                  <Edit className='w-4 h-4' />
                 </Button>
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size='sm'
+                  variant='outline'
                   onClick={() => setDeletingAbsence(absence)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
+                  className='text-[var(--color-destructive)] hover:text-[var(--color-destructive-foreground)] border border-[var(--color-border)]'>
+                  <Trash2 className='w-4 h-4' />
                 </Button>
               </div>
             </div>
@@ -348,30 +389,41 @@ export function ProfessionalAbsenceManagement() {
         ))}
 
         {absences.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma ausência registrada</h3>
-            <p className="text-gray-500">Registre ausências para evitar agendamentos em dias indisponíveis.</p>
+          <div className='text-center py-12'>
+            <Calendar className='w-16 h-16 text-[var(--color-muted-foreground)] mx-auto mb-4' />
+            <h3 className='text-lg font-medium text-[var(--color-foreground)] mb-2'>
+              Nenhuma ausência registrada
+            </h3>
+            <p className='text-[var(--color-muted-foreground)]'>
+              Registre ausências para evitar agendamentos em dias indisponíveis.
+            </p>
           </div>
         )}
       </div>
 
-      <AlertDialog open={!!deletingAbsence} onOpenChange={() => setDeletingAbsence(null)}>
-        <AlertDialogContent>
+      <AlertDialog
+        open={!!deletingAbsence}
+        onOpenChange={() => setDeletingAbsence(null)}>
+        <AlertDialogContent className='bg-[var(--color-card)] text-[var(--color-foreground)] border border-[var(--color-border)]'>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta ausência de <strong>{deletingAbsence?.professional.name}</strong>?
-              <br /><br />
+              Tem certeza que deseja excluir esta ausência de{' '}
+              <strong>{deletingAbsence?.professional.name}</strong>?
+              <br />
+              <br />
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className='border border-[var(--color-border)] text-[var(--color-foreground)] hover:bg-[var(--color-hover)]'>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingAbsence && deleteAbsence.mutate(deletingAbsence.id)}
-              className="bg-red-600 hover:bg-red-700"
-            >
+              onClick={() =>
+                deletingAbsence && deleteAbsence.mutate(deletingAbsence.id)
+              }
+              className='bg-[var(--color-destructive)] hover:bg-[var(--color-destructive)]/80 text-[var(--color-destructive-foreground)]'>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

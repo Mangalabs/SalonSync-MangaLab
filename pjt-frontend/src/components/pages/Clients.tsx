@@ -29,17 +29,20 @@ export default function Clients() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              className='bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-60 transition-opacity cursor-pointer'
-              style={{
-                backgroundColor: 'var(--color-button-bg)',
-                color: 'var(--color-button-text)',
-              }}
+              className="
+                bg-primary
+                text-secondary
+                py-3 px-4 rounded-xl font-medium 
+                hover:opacity-80 transition-opacity cursor-pointer
+              "
               onClick={() => {
                 setEditingClient(null)
                 setOpen(true)
-              }}>
+              }}
+            >
               + Novo cliente
             </Button>
+
           </DialogTrigger>
           <DialogContent
             className='w-[95%] sm:max-w-lg '>

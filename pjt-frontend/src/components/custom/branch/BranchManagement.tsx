@@ -117,17 +117,15 @@ export function BranchManagement() {
     [branches, search],
   )
 
-  const canDeleteBranch = () => {
-    return branches.length > 1
-  }
+  const canDeleteBranch = () => branches.length > 1
 
-  if (isLoading) {return <div>Carregando filiais...</div>}
+  if (isLoading) {return <div className="text-foreground">Carregando filiais...</div>}
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+    <div className="bg-card border-theme rounded-2xl p-6 shadow-sm border border-border">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <MapPin className="w-5 h-5" />
+        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-primary" />
           Filiais
         </h3>
 
@@ -135,40 +133,40 @@ export function BranchManagement() {
           <DialogTrigger asChild>
             <button
               onClick={handleNew}
-              className="bg-purple-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+              className="bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Nova Filial
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-card text-foreground">
             <DialogHeader>
               <DialogTitle>{editingBranch ? 'Editar Filial' : 'Adicionar Nova Filial'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <Label htmlFor="name">Nome da Filial</Label>
-                <Input id="name" {...register('name')} />
-                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                <Input id="name" {...register('name')} className="bg-input text-foreground border-theme" />
+                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
               </div>
 
               <div>
                 <Label htmlFor="address">Endereço</Label>
-                <Input id="address" {...register('address')} />
-                {errors.address && <p className="text-sm text-red-500">{errors.address.message}</p>}
+                <Input id="address" {...register('address')} className="bg-input text-foreground border-theme" />
+                {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
               </div>
 
               <div>
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" {...register('phone')} />
-                {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
+                <Input id="phone" {...register('phone')} className="bg-input text-foreground border-theme" />
+                {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
               </div>
 
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   type="button"
                   onClick={() => setShowAddBranch(false)}
-                  className="px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+                  className="px-4 py-2 border border-muted text-muted-foreground rounded-xl font-medium hover:bg-hover transition-colors"
                 >
                   Cancelar
                 </button>
@@ -187,25 +185,26 @@ export function BranchManagement() {
             placeholder="Buscar filiais..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className="bg-input text-foreground border-theme"
           />
-          <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         </div>
       </div>
 
       <div className={`space-y-4 ${filteredBranches.length > 5 ? 'max-h-[400px] overflow-y-auto' : ''}`}>
         {filteredBranches.map((branch) => (
-          <div key={branch.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+          <div key={branch.id} className="border border-theme rounded-xl p-4 hover:shadow-md transition-shadow bg-card text-foreground">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Building className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-gray-800">{branch.name}</h4>
+                    <h4 className="font-semibold text-foreground">{branch.name}</h4>
                   </div>
-                  {branch.address && <p className="text-gray-600 text-sm mb-1">{branch.address}</p>}
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  {branch.address && <p className="text-muted-foreground text-sm mb-1">{branch.address}</p>}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     {branch.phone && <span>📞 {branch.phone}</span>}
                     {branch.manager && <span>👤 {branch.manager}</span>}
                   </div>
@@ -213,18 +212,18 @@ export function BranchManagement() {
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  className='p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors'
+                  className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors cursor-pointer"
                   onClick={() => handleEdit(branch)}
                 >
-                  <Edit className='w-4 h-4' />
+                  <Edit className="w-4 h-4" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       className={`p-2 rounded-lg transition-colors ${
                         canDeleteBranch()
-                          ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                          : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors cursor-pointer'
+                          : 'text-muted-foreground bg-muted cursor-not-allowed'
                       }`}
                       onClick={() => {
                         if (!canDeleteBranch()) {
@@ -236,10 +235,10 @@ export function BranchManagement() {
                       disabled={deleteBranch.isPending || !canDeleteBranch()}
                       title={!canDeleteBranch() ? 'Não é possível excluir a única filial' : 'Excluir filial'}
                     >
-                      <Trash2 className='w-4 h-4' />     
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-card text-foreground border-theme">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -252,7 +251,7 @@ export function BranchManagement() {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => deleteBranch.mutate(branch.id)}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Excluir Filial
                       </AlertDialogAction>
@@ -263,7 +262,7 @@ export function BranchManagement() {
             </div>
           </div>
         ))}
-        {filteredBranches.length === 0 && <p className="text-gray-500 text-center py-4">Nenhuma filial encontrada.</p>}
+        {filteredBranches.length === 0 && <p className="text-muted-foreground text-center py-4">Nenhuma filial encontrada.</p>}
       </div>
     </div>
   )
