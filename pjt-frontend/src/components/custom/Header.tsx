@@ -14,14 +14,17 @@ import {
 import { isAuthenticated, logout } from '@/lib/auth'
 import { useBranch } from '@/contexts/BranchContext'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { useUser } from '@/contexts/UserContext'
 
 export function Header() {
   const navigate = useNavigate()
   const { activeBranch, branches, setActiveBranch } = useBranch()
   const { toggle } = useSidebar()
+  const { user } = useUser()
 
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false)
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false)
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
 
   const branchRef = useRef<HTMLDivElement>(null)
@@ -30,22 +33,34 @@ export function Header() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (branchRef.current && !branchRef.current.contains(e.target as Node)) {setShowBranchDropdown(false)}
-      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {setShowNotificationDropdown(false)}
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {setShowProfileDropdown(false)}
+      if (branchRef.current && !branchRef.current.contains(e.target as Node)) {
+        setShowBranchDropdown(false)
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(e.target as Node)
+      ) {
+        setShowNotificationDropdown(false)
+      }
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setShowProfileDropdown(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const toggleDropdown =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    (setter: Function, ...others: Function[]) =>
-      (e: React.MouseEvent) => {
-        e.stopPropagation()
-        setter((prev: boolean) => !prev)
-        others.forEach((fn) => fn(false))
-      }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+      (setter: Function, ...others: Function[]) =>
+        (e: React.MouseEvent) => {
+          e.stopPropagation()
+          setter((prev: boolean) => !prev)
+          others.forEach((fn) => fn(false))
+        }
 
   const selectBranch = (branch: typeof activeBranch) => {
     setActiveBranch(branch)
@@ -182,13 +197,15 @@ export function Header() {
                     className='flex items-center space-x-2 sm:space-x-3 p-2 rounded-xl transition-colors duration-200 bg-muted text-foreground cursor-pointer'>
                     <div className='w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg bg-secondary'>
                       <span className='text-secondary-foreground font-semibold'>
-                        A
+                        {user?.name?.[0] || 'U'}
                       </span>
                     </div>
                     <div className='text-left hidden lg:block'>
-                      <div className='text-foreground font-medium'>Admin</div>
+                      <div className='text-foreground font-medium'>
+                        {user?.name || 'Usuário'}
+                      </div>
                       <div className='text-muted-foreground text-sm'>
-                        Proprietário
+                        {user?.email || 'sem-email@exemplo.com'}
                       </div>
                     </div>
                     <ChevronDown className='w-4 h-4 hidden sm:block text-muted-foreground' />
@@ -198,13 +215,15 @@ export function Header() {
                 <div className='p-4 border-b flex items-center space-x-3 bg-popover border-border'>
                   <div className='w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-secondary'>
                     <span className='text-secondary-foreground font-semibold text-lg'>
-                      A
+                      {user?.name?.[0] || 'U'}
                     </span>
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='text-foreground font-medium'>Admin</div>
+                    <div className='text-foreground font-medium'>
+                      {user?.name || 'Usuário'}
+                    </div>
                     <div className='text-muted-foreground text-sm'>
-                      Proprietário
+                      {user?.email || 'sem-email@exemplo.com'}
                     </div>
                   </div>
                 </div>
