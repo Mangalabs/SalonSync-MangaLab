@@ -84,7 +84,7 @@ export function ServiceTable() {
 
   if (isLoading) {
     return (
-      <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-card rounded-2xl p-6 shadow-sm border border-theme'>
         <div className='flex justify-between items-center mb-6'>
           <Skeleton className='h-6 w-48' />
           <Skeleton className='h-10 w-32' />
@@ -93,7 +93,7 @@ export function ServiceTable() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className='border border-gray-200 rounded-xl overflow-hidden'>
+              className='border border-theme rounded-xl overflow-hidden bg-card shadow-sm'>
               <Skeleton className='h-32 w-full' />
               <div className='p-6 space-y-3'>
                 <Skeleton className='h-5 w-32' />

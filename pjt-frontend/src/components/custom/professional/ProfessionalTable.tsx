@@ -249,12 +249,15 @@ export function ProfessionalTable() {
   if (isLoading) {
     return (
       <div className='space-y-6'>
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-          <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
+        <div className='bg-card rounded-2xl shadow-sm border-theme overflow-hidden'>
+          <div className='p-6 border-b border-theme flex justify-between items-center'>
             <Skeleton className='h-6 w-48' />
             <Skeleton className='h-10 w-40' />
           </div>
-          <div className='bg-gray-50 px-6 py-4 border-b border-gray-100'>
+
+          <div
+            className='px-6 py-4 border-b border-theme'
+            style={{ backgroundColor: 'var(--color-muted)' }}>
             <div className='grid grid-cols-4 gap-4'>
               <Skeleton className='h-4 w-16' />
               <Skeleton className='h-4 w-16' />
@@ -262,7 +265,10 @@ export function ProfessionalTable() {
               <Skeleton className='h-4 w-16' />
             </div>
           </div>
-          <div className='divide-y divide-gray-100'>
+
+          <div
+            className='divide-y'
+            style={{ borderColor: 'var(--color-border)' }}>
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -271,8 +277,10 @@ export function ProfessionalTable() {
                   <Skeleton className='w-10 h-10 rounded-full' />
                   <Skeleton className='h-5 w-32' />
                 </div>
+
                 <Skeleton className='h-4 w-24' />
                 <Skeleton className='h-4 w-12' />
+
                 <div className='flex space-x-2'>
                   <Skeleton className='h-8 w-8' />
                   <Skeleton className='h-8 w-8' />
