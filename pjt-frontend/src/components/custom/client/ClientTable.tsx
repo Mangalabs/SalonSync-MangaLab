@@ -67,6 +67,18 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [showPlanSelection, setShowPlanSelection] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const response = await axios.get(
+        '/api/payment/get-prices-for-connected-account'
+      )
+
+      setPrices(response.data)
+    }
+
+    fetchPrices()
+  }, [])
+
   const {
     data: clients,
     isLoading,
@@ -95,18 +107,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       setDeletingClientId(null)
     },
   })
-
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const response = await axios.get(
-        '/api/payment/get-prices-for-connected-account'
-      )
-
-      setPrices(response.data)
-    }
-
-    fetchPrices()
-  }, [])
 
   const filteredClients = clients?.filter(
     (client) =>
