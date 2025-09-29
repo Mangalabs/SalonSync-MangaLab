@@ -25,7 +25,6 @@ export class ProfessionalsController {
   @ApiResponse({ status: 200, description: 'Lista de profissionais' })
   findAll(
     @Query('branchId') branchId: string,
-    @Query('include') include: string,
     @Req() req: AuthenticatedRequest,
   ) {
     // Para admin, usar branchId do query se fornecido, senão usar do contexto
@@ -36,7 +35,7 @@ export class ProfessionalsController {
       id: req.user.id,
       role: req.user.role,
       branchId: targetBranchId,
-    }, include);
+    });
   }
 
   @Get(':id')
@@ -108,7 +107,9 @@ export class ProfessionalsController {
   }
 
   @Get(':id/salary-commission-data')
-  @ApiOperation({ summary: 'Buscar dados de salário e comissão para despesas fixas' })
+  @ApiOperation({
+    summary: 'Buscar dados de salário e comissão para despesas fixas',
+  })
   @ApiResponse({ status: 200, description: 'Dados obtidos com sucesso' })
   getSalaryCommissionData(
     @Param('id') id: string,
