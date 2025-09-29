@@ -204,6 +204,7 @@ export class AppointmentsService extends BaseDataService {
       return [];
     }
 
+    const targetDate = new Date(date + 'T00:00:00-03:00');
     const startDate = new Date(date + 'T00:00:00-03:00');
     const endDate = new Date(date + 'T23:59:59-03:00');
 
@@ -211,6 +212,45 @@ export class AppointmentsService extends BaseDataService {
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return [];
     }
+
+    // Verificar se o profissional está ausente nesta data
+    const absence = await this.prisma.professionalAbsence.findFirst({
+      where: {
+        professionalId,
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+    });
+
+    if (absence) {
+      console.log(`❌ Professional ${professionalId} is absent on ${date}:`, {
+        reason: absence.reason,
+        type: absence.type,
+      });
+      return [];
+    }
+
+    // Verificar dia da semana (0 = Domingo, 1 = Segunda, etc.)
+    const dayOfWeek = targetDate.getDay();
+    
+    // Buscar configuração de dia de trabalho do profissional
+    const workingDay = await this.prisma.professionalWorkingDay.findUnique({
+      where: {
+        professionalId_dayOfWeek: {
+          professionalId,
+          dayOfWeek,
+        },
+      },
+    });
+
+    // Se o profissional não trabalha neste dia da semana, retornar vazio
+    if (!workingDay || !workingDay.isActive) {
+      console.log(`❌ Professional ${professionalId} does not work on day ${dayOfWeek} (${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dayOfWeek]})`);
+      return [];
+    }
+
+    // Gerar horários baseados na configuração do profissional
+    const workingHours = this.generateTimeSlots(workingDay.startTime, workingDay.endTime);
 
     // Buscar agendamentos existentes para o profissional na data
     const existingAppointments = await this.prisma.appointment.findMany({
@@ -228,21 +268,13 @@ export class AppointmentsService extends BaseDataService {
     });
 
     console.log(`🕐 Checking available slots for professional ${professionalId} on ${date}:`, {
+      dayOfWeek,
+      workingDay: workingDay ? `${workingDay.startTime}-${workingDay.endTime}` : 'default',
       existingAppointments: existingAppointments.map(apt => ({
         id: apt.id.substring(0, 8),
         time: apt.scheduledAt.toISOString().substring(11, 16)
       }))
     });
-
-    const workingHours = [
-      '09:00',
-      '10:00',
-      '11:00',
-      '14:00',
-      '15:00',
-      '16:00',
-      '17:00',
-    ];
     
     // Extrair horários ocupados (formato HH:MM) - converter para horário local
     const bookedTimes = existingAppointments.map((apt) => {
@@ -261,6 +293,31 @@ export class AppointmentsService extends BaseDataService {
     });
 
     return availableSlots;
+  }
+
+  private generateTimeSlots(startTime: string, endTime: string): string[] {
+    const slots: string[] = [];
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    
+    // Gerar slots de 60 em 60 minutos
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += 60) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      
+      // Pular horário de almoço (12:00-14:00)
+      if (hour >= 12 && hour < 14) {
+        continue;
+      }
+      
+      const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      slots.push(timeSlot);
+    }
+    
+    return slots;
   }
 
   async confirmAppointment(id: string): Promise<Appointment> {

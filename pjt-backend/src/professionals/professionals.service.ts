@@ -16,7 +16,7 @@ export class ProfessionalsService extends BaseDataService {
     super(prisma);
   }
 
-  async findAll(user: UserContext, include?: string): Promise<Professional[]> {
+  async findAll(user: UserContext): Promise<Professional[]> {
     let branchIds: string[];
 
     // Se branchId específico foi fornecido, usar apenas ele
@@ -35,8 +35,6 @@ export class ProfessionalsService extends BaseDataService {
       branchIds = await this.getUserBranchIds(user);
     }
 
-    const includeWorkingDays = include?.includes('workingDays');
-    
     return this.prisma.professional.findMany({
       where: { branchId: { in: branchIds } },
       include: {
@@ -46,17 +44,6 @@ export class ProfessionalsService extends BaseDataService {
         customRole: {
           select: { id: true, title: true, commissionRate: true },
         },
-        ...(includeWorkingDays && {
-          workingDays: {
-            where: { isActive: true },
-            select: {
-              dayOfWeek: true,
-              startTime: true,
-              endTime: true,
-              isActive: true,
-            },
-          },
-        }),
       },
     });
   }
@@ -83,6 +70,7 @@ export class ProfessionalsService extends BaseDataService {
       roleId?: string;
       baseSalary?: number;
       salaryPayDay?: number;
+      workingDays?: number[];
     },
     user: UserContext,
     targetBranchId?: string,
@@ -91,7 +79,7 @@ export class ProfessionalsService extends BaseDataService {
 
     const branchId = await this.getTargetBranchId(user, targetBranchId);
 
-    const { roleId, ...professionalData } = data;
+    const { roleId, workingDays, ...professionalData } = data;
     const createData: any = {
       ...professionalData,
       branchId,
@@ -126,6 +114,24 @@ export class ProfessionalsService extends BaseDataService {
 
       // Criar despesa fixa automática se tiver salário configurado
       await this.createSalaryRecurringExpense(professional, branchId, tx);
+
+      // Criar dias de trabalho se especificados
+      if (workingDays && workingDays.length > 0) {
+        await Promise.all(
+          workingDays.map(dayOfWeek =>
+            tx.professionalWorkingDay.create({
+              data: {
+                professionalId: professional.id,
+                dayOfWeek,
+                startTime: '09:00',
+                endTime: '18:00',
+                isActive: true,
+              },
+            })
+          )
+        );
+        console.log(`✅ Working days created for ${professional.name}:`, workingDays);
+      }
 
       console.log(
         `✅ Professional creation completed for: ${professional.name}`,
@@ -209,10 +215,11 @@ export class ProfessionalsService extends BaseDataService {
         roleId?: string;
         baseSalary?: number;
         salaryPayDay?: number;
+        workingDays?: number[];
       }
     >,
   ): Promise<Professional> {
-    const { roleId, baseSalary, salaryPayDay, ...professionalData } = data;
+    const { roleId, baseSalary, salaryPayDay, workingDays, ...professionalData } = data;
 
     const updateData: any = { ...professionalData };
 
@@ -236,6 +243,32 @@ export class ProfessionalsService extends BaseDataService {
 
       // Sincronizar despesa fixa se salário foi alterado
       await this.syncSalaryRecurringExpense(professional, tx);
+
+      // Atualizar dias de trabalho se especificados
+      if (workingDays !== undefined) {
+        // Remover dias existentes
+        await tx.professionalWorkingDay.deleteMany({
+          where: { professionalId: id },
+        });
+
+        // Criar novos dias se especificados
+        if (workingDays.length > 0) {
+          await Promise.all(
+            workingDays.map(dayOfWeek =>
+              tx.professionalWorkingDay.create({
+                data: {
+                  professionalId: id,
+                  dayOfWeek,
+                  startTime: '09:00',
+                  endTime: '18:00',
+                  isActive: true,
+                },
+              })
+            )
+          );
+          console.log(`✅ Working days updated for ${professional.name}:`, workingDays);
+        }
+      }
 
       console.log(`✅ Professional update completed for: ${professional.name}`);
       return professional;
