@@ -18,7 +18,8 @@ export class ProfessionalAbsenceController {
 
   @Post()
   async create(
-    @Body() data: {
+    @Body()
+    data: {
       professionalId: string;
       startDate: string;
       endDate: string;
@@ -47,12 +48,6 @@ export class ProfessionalAbsenceController {
     @Req() req: AuthenticatedRequest,
     @Query('professionalId') professionalId?: string,
   ) {
-    console.log('🔍 GET /professionals/absences called with user:', {
-      id: req.user?.id,
-      role: req.user?.role,
-      branchId: req.user?.branchId,
-    });
-    
     return this.absenceService.findAll(
       {
         id: req.user.id,
@@ -62,10 +57,9 @@ export class ProfessionalAbsenceController {
       professionalId,
     );
   }
-  
+
   @Get('test')
   async test() {
-    console.log('🧪 Test endpoint called');
     return { message: 'Test endpoint working', timestamp: new Date() };
   }
 
@@ -81,7 +75,8 @@ export class ProfessionalAbsenceController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() data: {
+    @Body()
+    data: {
       startDate?: string;
       endDate?: string;
       reason?: string;

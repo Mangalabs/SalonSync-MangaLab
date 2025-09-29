@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { BaseDataService, UserContext } from '@/common/services/base-data.service';
+import {
+  BaseDataService,
+  UserContext,
+} from '@/common/services/base-data.service';
 
 @Injectable()
 export class ProfessionalAbsenceService extends BaseDataService {
@@ -61,21 +64,11 @@ export class ProfessionalAbsenceService extends BaseDataService {
   async findAll(user: UserContext, professionalId?: string) {
     try {
       const branchIds = await this.getUserBranchIds(user);
-      
-      console.log('🔍 Debug findAll absences:', {
-        userId: user.id,
-        userRole: user.role,
-        userBranchId: user.branchId,
-        branchIds,
-        professionalId,
-      });
-      
-      // Se não há filiais acessíveis, retornar array vazio
+
       if (!branchIds || branchIds.length === 0) {
-        console.log('❌ No accessible branches, returning empty array');
         return [];
       }
-      
+
       const where: any = {
         professional: {
           branchId: { in: branchIds },
@@ -95,11 +88,9 @@ export class ProfessionalAbsenceService extends BaseDataService {
         },
         orderBy: { startDate: 'desc' },
       });
-      
-      console.log('✅ Found absences:', absences.length);
+
       return absences;
     } catch (error) {
-      console.log('❌ Error finding absences:', error);
       return [];
     }
   }
@@ -161,7 +152,7 @@ export class ProfessionalAbsenceService extends BaseDataService {
   async getUpcomingAbsences(user: UserContext) {
     const branchIds = await this.getUserBranchIds(user);
     const today = new Date();
-    
+
     return this.prisma.professionalAbsence.findMany({
       where: {
         professional: {
