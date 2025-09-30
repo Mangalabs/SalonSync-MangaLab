@@ -205,7 +205,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
         backgroundColor: 'var(--color-bg-secondary)',
         borderColor: 'var(--color-border)',
       }}>
-      {/* Barra de busca */}
       <div className='mb-4 sm:mb-6 relative'>
         <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5' />
         <input

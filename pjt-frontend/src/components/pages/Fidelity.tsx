@@ -36,6 +36,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { FidelityForm } from '@/components/custom/fidelity/FidelityForm'
 import { ReadjustmentForm } from '@/components/custom/fidelity/ReadjustmentForm'
 import { Button } from '@/components/ui/button'
@@ -56,6 +58,7 @@ export default function Fidelity() {
   const [prices, setPrices] = useState<any[]>([])
   const [deletingPlan, setDeletingPlan] = useState(null)
   const [readjustmentPlan, setReadjustmentPlan] = useState(null)
+  const [search, setSearch] = useState('')
 
   const stripeConnectInstance = useStripeConnect(connectedAccountId)
 
@@ -102,6 +105,10 @@ export default function Fidelity() {
     { id: 'plans', label: 'Planos', icon: ChartCandlestick },
     { id: 'config', label: 'Configurações', icon: FileStack },
   ]
+
+  const filteredPrices = prices.filter((price) =>
+    price.product.name.toLowerCase().includes(search.toLowerCase()),
+  )
 
   return (
     <div className='space-y-6'>
@@ -163,31 +170,38 @@ export default function Fidelity() {
                     <PlusCircle className='w-4 h-4' />
                     Novo Plano
                   </Button>
+                  <Input
+                    placeholder='Buscar plano...'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className='max-w-xs'
+                  />
                 </div>
 
-                <div className='bg-muted p-4 border border-theme rounded-lg mb-4'>
-                  <div className='grid grid-cols-3 gap-4 font-semibold text-foreground'>
-                    <div>Nome</div>
-                    <div>Valor</div>
-                    <div>Ações</div>
-                  </div>
-                </div>
-
-                <div className='divide-y divide-theme'>
-                  {prices.map((price) => (
-                    <div key={price.id}>
-                      <div className='grid grid-cols-4 gap-4 items-center px-4 py-3 hover:bg-muted transition-colors rounded-lg'>
-                        <div className='flex items-center gap-3'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPrices.map((price) => (
+                      <TableRow key={price.id}>
+                        <TableCell className='flex items-center'>
                           <div className='w-20 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold'>
                             {price.product.name}
                           </div>
-                          <div className='font-medium text-foreground'>
+                        </TableCell>
+                        <TableCell>
+                          <span className='font-medium text-foreground'>
                             R${(price.unit_amount / 100).toFixed(2)}
-                          </div>
-                        </div>
-                        <div className='flex space-x-2 col-span-2'>
+                          </span>
+                        </TableCell>
+                        <TableCell className='flex space-x-2'>
                           <Button
-                            className='p-0.5 sm:p-0.5 md:p-1 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 cursor-pointer'
+                            className='p-0.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors h-8 w-8 cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation()
                               setEditingPlan(price)
@@ -195,7 +209,7 @@ export default function Fidelity() {
                             <Edit className='w-4 h-4' />
                           </Button>
                           <Button
-                            className='p-0.5 sm:p-0.5 md:p-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 cursor-pointer'
+                            className='p-0.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors h-8 w-8 cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation()
                               setDeletingPlan(price)
@@ -203,18 +217,18 @@ export default function Fidelity() {
                             <Trash2 className='w-4 h-4' />
                           </Button>
                           <Button
-                            className='p-0.5 sm:p-0.5 md:p-1 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-md transition-colors h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 cursor-pointer'
+                            className='p-0.5 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-md transition-colors h-8 w-8 cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation()
                               setReadjustmentPlan(price)
                             }}>
                             <BanknoteArrowUp className='w-4 h-4' />
                           </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </TabsContent>
 
               <TabsContent
