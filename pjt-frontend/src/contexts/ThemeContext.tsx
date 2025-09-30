@@ -1,4 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from 'react'
+import { toast } from 'sonner'
+
+import axios from '@/lib/axios'
+import { useUser } from '@/contexts/UserContext'
 
 export type ThemeType = 'neutro'
 export type ModeType = 'light' | 'dark'
@@ -32,10 +42,13 @@ const themeInfoMap: Record<ThemeType, ThemeInfo> = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeType>('neutro')
-  const [mode, setMode] = useState<ModeType>('light')
+  const { user } = useUser()
+  const isMountingRef = useRef(false)
 
-  const toggleTheme = () => {
+  const [theme, setTheme] = useState<ThemeType>(user?.theme || 'neutro')
+  const [mode, setMode] = useState<ModeType>(user?.themeMode || 'light')
+
+  const toggleTheme = async () => {
     const themes: ThemeType[] = ['neutro']
     const currentIndex = themes.indexOf(theme)
     const nextIndex = (currentIndex + 1) % themes.length
@@ -49,31 +62,46 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const currentThemeInfo = themeInfoMap[theme]
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('beauty-theme') as ThemeType
-    const savedMode = localStorage.getItem('beauty-mode') as ModeType
-
-    if (savedTheme && ['neutro', 'barbearia', 'salao'].includes(savedTheme)) {
-      setTheme(savedTheme)
-    }
-    if (savedMode && ['light', 'dark'].includes(savedMode)) {
-      setMode(savedMode)
-    }
+    isMountingRef.current = true
   }, [])
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      'transition',
-      'background-color 0.3s ease, color 0.3s ease',
-    )
-    document.documentElement.setAttribute('data-theme', theme)
-    document.documentElement.classList.toggle('dark', mode === 'dark')
+    if (user?.theme && ['neutro', 'barbearia', 'salao'].includes(user.theme)) {
+      setTheme(user.theme)
+    }
+    if (user?.themeMode && ['light', 'dark'].includes(user.themeMode)) {
+      setMode(user.themeMode)
+    }
+  }, [user])
 
-    localStorage.setItem('beauty-theme', theme)
-    localStorage.setItem('beauty-mode', mode)
+  useEffect(() => {
+    const updateTheme = async () => {
+      document.documentElement.style.setProperty(
+        'transition',
+        'background-color 0.3s ease, color 0.3s ease'
+      )
+      document.documentElement.setAttribute('data-theme', theme)
+      document.documentElement.classList.toggle('dark', mode === 'dark')
 
-    setTimeout(() => {
-      document.documentElement.style.removeProperty('transition')
-    }, 300)
+      try {
+        await axios.patch('/api/auth/profile', {
+          theme: theme,
+          themeMode: mode,
+        })
+      } catch {
+        toast.error('Erro ao salvar personalização')
+      }
+
+      setTimeout(() => {
+        document.documentElement.style.removeProperty('transition')
+      }, 300)
+    }
+
+    if (!isMountingRef.current) {
+      updateTheme()
+    } else {
+      isMountingRef.current = false
+    }
   }, [theme, mode])
 
   return (
@@ -86,7 +114,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
         toggleMode,
         currentThemeInfo,
-      }}>
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   )
