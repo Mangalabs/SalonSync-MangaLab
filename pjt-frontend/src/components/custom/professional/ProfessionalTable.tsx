@@ -620,7 +620,7 @@ export function ProfessionalTable() {
           </DialogContent>
         </Dialog>
       </div>
-      {roles.length > 0 && (
+      {roles.length > 0 ? (
         <div className='bg-card rounded-2xl shadow-sm border border-border overflow-hidden mt-6'>
           <div className='flex justify-between items-center px-6 py-4 border-b border-border'>
             <h3 className='text-lg font-semibold text-foreground'>
@@ -643,39 +643,41 @@ export function ProfessionalTable() {
             className={`divide-y divide-border ${
               filteredRoles.length > 5 ? 'max-h-64 overflow-y-auto' : ''
             }`}>
-            {filteredRoles.map((role: any) => (
-              <div
-                key={role.id}
-                className='px-6 py-4 flex justify-between items-center hover:bg-accent/10 transition-colors'>
-                <div>
-                  <div className='font-medium text-foreground'>
-                    {role.title}
+            {filteredRoles.length > 0 ? (
+              filteredRoles.map((role: any) => (
+                <div
+                  key={role.id}
+                  className='px-6 py-4 flex justify-between items-center hover:bg-accent/10 transition-colors'>
+                  <div>
+                    <div className='font-medium text-foreground'>{role.title}</div>
+                    <div className='text-muted-foreground text-sm'>
+                      {role.commissionRate > 0
+                        ? `${role.commissionRate}% comissão`
+                        : 'Sem comissão'}
+                    </div>
                   </div>
-                  <div className='text-muted-foreground text-sm'>
-                    {role.commissionRate > 0
-                      ? `${role.commissionRate}% comissão`
-                      : 'Sem comissão'}
-                  </div>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => {
+                      setEditingRole(role)
+                      setRoleOpen(true)
+                    }}
+                    className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'>
+                    <Edit className='h-3 w-3' />
+                  </Button>
                 </div>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => {
-                    setEditingRole(role)
-                    setRoleOpen(true)
-                  }}
-                  className='flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'>
-                  <Edit className='h-3 w-3' />
-                </Button>
-              </div>
-            ))}
-
-            {filteredRoles.length === 0 && (
-              <div className='px-6 py-4 text-muted-foreground text-sm text-center'>
+              ))
+            ) : (
+              <div className='px-6 py-6 text-muted-foreground text-sm text-center'>
                 Nenhuma função encontrada
               </div>
             )}
           </div>
+        </div>
+      ) : (
+        <div className='bg-card rounded-2xl shadow-sm border border-border p-6 mt-6 text-center text-muted-foreground'>
+          Nenhuma função criada nesta filial ainda.
         </div>
       )}
     </div>
