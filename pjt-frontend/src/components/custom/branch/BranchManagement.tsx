@@ -133,7 +133,8 @@ export function BranchManagement() {
           <DialogTrigger asChild>
             <button
               onClick={handleNew}
-              className="bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+              className="bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/90 flex items-center gap-2 
+                hover:opacity-80 transition-opacity cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Nova Filial
