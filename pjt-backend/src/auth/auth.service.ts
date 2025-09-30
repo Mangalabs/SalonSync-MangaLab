@@ -46,6 +46,8 @@ export class AuthService {
           role: true,
           customerId: true,
           accountId: true,
+          theme: true,
+          themeMode: true,
         },
       });
 
