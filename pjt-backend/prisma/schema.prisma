@@ -20,6 +20,8 @@ model User {
   isSuperAdmin   Boolean         @default(false)
   customerId     String?         @unique
   accountId      String?         @unique
+  theme          String?         @default("neutro")
+  themeMode      String?         @default("light")
   branches       Branch[]
   resetLinks     ResetLinks[]
   services       Service[]

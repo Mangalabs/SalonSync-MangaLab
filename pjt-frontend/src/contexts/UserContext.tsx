@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
 import axios from '@/lib/axios'
+import type { ThemeType, ModeType } from '@/contexts/ThemeContext'
 
 interface User {
   id: string
@@ -14,6 +15,8 @@ interface User {
   branchName?: string
   customerId?: string
   accountId?: string
+  theme?: ThemeType
+  themeMode?: ModeType
 }
 
 interface UserContextType {

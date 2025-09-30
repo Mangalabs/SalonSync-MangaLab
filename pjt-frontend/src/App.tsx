@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { PrivateRoute } from '@/lib/PrivateRoute'
 import Settings from '@/components/pages/Settings'
 import Professionals from '@/components/pages/Professionals'
@@ -33,146 +34,148 @@ export default function App() {
     <ErrorBoundary>
       <NetworkIndicator />
       <UserProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/request-reset' element={<ResetPasswordRequest />} />
-            <Route path='/resetpassword' element={<ResetPassword />} />
-            <Route path='/register' element={<Register />} />
-            <Route path='/checkout' element={<CheckoutPage />} />
-
-            <Route
-              path='/dashboard'
-              element={
-                <PrivateRoute>
-                  <BranchProvider>
-                    <DashboardLayout />
-                  </BranchProvider>
-                </PrivateRoute>
-              }
-            >
-              <Route
-                index
-                element={
-                  <SubscriptionGuard>
-                    <Dashboard />
-                  </SubscriptionGuard>
-                }
-              />
-              <Route
-                path='professionals'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN']}>
-                    <SubscriptionGuard>
-                      <Professionals />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='services'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
-                    <SubscriptionGuard>
-                      <Services />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='clients'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
-                    <SubscriptionGuard>
-                      <Clients />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
+        <ThemeProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='/request-reset' element={<ResetPasswordRequest />} />
+              <Route path='/resetpassword' element={<ResetPassword />} />
+              <Route path='/register' element={<Register />} />
+              <Route path='/checkout' element={<CheckoutPage />} />
 
               <Route
-                path='appointments'
+                path='/dashboard'
                 element={
-                  <SubscriptionGuard>
-                    <NewAppointment />
-                  </SubscriptionGuard>
+                  <PrivateRoute>
+                    <BranchProvider>
+                      <DashboardLayout />
+                    </BranchProvider>
+                  </PrivateRoute>
                 }
-              />
+              >
+                <Route
+                  index
+                  element={
+                    <SubscriptionGuard>
+                      <Dashboard />
+                    </SubscriptionGuard>
+                  }
+                />
+                <Route
+                  path='professionals'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN']}>
+                      <SubscriptionGuard>
+                        <Professionals />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='services'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <SubscriptionGuard>
+                        <Services />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='clients'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <SubscriptionGuard>
+                        <Clients />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
 
-              <Route
-                path='sales'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                <Route
+                  path='appointments'
+                  element={
                     <SubscriptionGuard>
-                      <Sales />
+                      <NewAppointment />
                     </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
+                  }
+                />
 
-              <Route
-                path='inventory'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
-                    <SubscriptionGuard>
-                      <Inventory />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='reports'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN']}>
-                    <SubscriptionGuard>
-                      <Reports />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='financial'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN']}>
-                    <SubscriptionGuard>
-                      <Financial />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='settings'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
-                    <Settings />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='fidelity'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
-                    <Fidelity />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path='test-branch'
-                element={
-                  <RoleGuard allowedRoles={['ADMIN']}>
-                    <SubscriptionGuard>
-                      <TestBranch />
-                    </SubscriptionGuard>
-                  </RoleGuard>
-                }
-              />
-              <Route path='help' element={<Help />} />
-            </Route>
+                <Route
+                  path='sales'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <SubscriptionGuard>
+                        <Sales />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
 
-            <Route path='*' element={<Home />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster />
+                <Route
+                  path='inventory'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <SubscriptionGuard>
+                        <Inventory />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='reports'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN']}>
+                      <SubscriptionGuard>
+                        <Reports />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='financial'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN']}>
+                      <SubscriptionGuard>
+                        <Financial />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='settings'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <Settings />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='fidelity'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
+                      <Fidelity />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='test-branch'
+                  element={
+                    <RoleGuard allowedRoles={['ADMIN']}>
+                      <SubscriptionGuard>
+                        <TestBranch />
+                      </SubscriptionGuard>
+                    </RoleGuard>
+                  }
+                />
+                <Route path='help' element={<Help />} />
+              </Route>
+
+              <Route path='*' element={<Home />} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+        </ThemeProvider>
       </UserProvider>
     </ErrorBoundary>
   )

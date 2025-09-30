@@ -47,7 +47,7 @@ const modeOptions = [
 
 const themeOptions = [
   {
-    value: 'neutral',
+    value: 'neutro',
     name: 'Neutro',
     description: 'Tons de preto, cinza e branco',
     icon: Palette,
