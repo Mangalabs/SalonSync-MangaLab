@@ -59,7 +59,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const queryClient = useQueryClient()
   const { user } = useUser()
   const { activeBranch } = useBranch()
-  const [prices, setPrices] = useState([])
   const [selectedPrice, setSelectedPrice] = useState(null)
   const [planUrlLoading, setPlanUrlLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -68,17 +67,23 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [showPlanSelection, setShowPlanSelection] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const response = await axios.get(
-        '/api/payment/get-prices-for-connected-account',
-      )
-
-      setPrices(response.data)
-    }
-
-    fetchPrices()
-  }, [])
+  const { data: prices = [] } = useQuery({
+    queryKey: ['payment-prices'],
+    queryFn: async () => {
+      try {
+        const response = await axios.get(
+          '/api/payment/get-prices-for-connected-account'
+        )
+        return response.data
+      } catch (error) {
+        return []
+      }
+    },
+    enabled: true,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const {
     data: clients,
@@ -99,7 +104,9 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       await axios.delete(`/api/clients/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients', activeBranch?.id] })
+      queryClient.invalidateQueries({
+        queryKey: ['clients', activeBranch?.id],
+      })
       setDeletingClientId(null)
     },
     onError: (error: any) => {
@@ -113,7 +120,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.includes(searchTerm) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (isLoading) {
@@ -169,7 +176,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           clientId: client.id,
           email: client.email,
           accountId: user.accountId,
-        },
+        }
       )
       setPlanUrlLoading(false)
       navigator.clipboard.writeText(response.data)
@@ -204,7 +211,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       style={{
         backgroundColor: 'var(--color-bg-secondary)',
         borderColor: 'var(--color-border)',
-      }}>
+      }}
+    >
       <div className='mb-4 sm:mb-6 relative'>
         <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5' />
         <input
@@ -222,12 +230,14 @@ export function ClientTable({ onEdit }: ClientTableProps) {
             <div
               key={client.id}
               className='border border-border rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card'
-              style={{ backgroundColor: 'var(--color-card)' }}>
+              style={{ backgroundColor: 'var(--color-card)' }}
+            >
               <div className='flex items-center justify-between mb-4 gap-4'>
                 <div className='flex items-center space-x-3 flex-1 min-w-0'>
                   <div
                     className='w-12 h-12 rounded-full flex items-center justify-center'
-                    style={{ background: 'var(--color-accent)' }}>
+                    style={{ background: 'var(--color-accent)' }}
+                  >
                     <span className='text-accent-foreground font-semibold text-lg'>
                       {client.name.charAt(0).toUpperCase()}
                     </span>
@@ -251,10 +261,9 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
                 <div>
                   {client.subscription?.planName ? (
-                    <span className="px-3 py-2 bg-yellow-100 border border-yellow-200 text-yellow-600 font-semibold shadow-sm rounded-lg text-sm transition-all duration-200 uppercase flex items-center justify-center">
+                    <span className='px-3 py-2 bg-yellow-100 border border-yellow-200 text-yellow-600 font-semibold shadow-sm rounded-lg text-sm transition-all duration-200 uppercase flex items-center justify-center'>
                       {client.subscription.planName}
                     </span>
-
                   ) : (
                     <span className='text-xs text-muted-foreground px-3 py-2 bg-gray-100 font-semibold rounded-lg transition-all duration-200 uppercase flex items-center justify-center'>
                       Sem Assinatura
@@ -266,13 +275,15 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <div className='grid grid-cols-2 gap-2 mb-2'>
                 <Button
                   onClick={() => onEdit(client)}
-                  className='bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
+                  className='bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'
+                >
                   <Edit className='w-3 h-3' />
                   Editar
                 </Button>
                 <Button
                   onClick={() => handleSchedule(client)}
-                  className='bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1'>
+                  className='bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1'
+                >
                   <Calendar className='w-3 h-3' />
                   Agendar
                 </Button>
@@ -281,14 +292,16 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <div className='grid grid-cols-2 gap-2'>
                 <Button
                   onClick={() => handleFidelityButtonClicked(client)}
-                  className='bg-yellow-100 text-yellow-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-1'>
+                  className='bg-yellow-100 text-yellow-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-1'
+                >
                   <Star className='w-3 h-3' />
                   Fidelidade
                 </Button>
                 <Button
                   onClick={() => setDeletingClientId(client.id)}
                   disabled={deleteClient.isPending}
-                  className='bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1'>
+                  className='bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1'
+                >
                   <Trash2 className='w-3 h-3' />
                   Excluir
                 </Button>
@@ -312,13 +325,15 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
       <AlertDialog
         open={!!deletingClientId}
-        onOpenChange={() => setDeletingClientId(null)}>
+        onOpenChange={() => setDeletingClientId(null)}
+      >
         <AlertDialogContent
           className='max-w-[95vw] sm:max-w-md'
           style={{
             backgroundColor: 'var(--color-card)',
             borderColor: 'var(--color-border)',
-          }}>
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className='text-base sm:text-lg text-foreground'>
               Confirmar exclusão
@@ -338,7 +353,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               }
               disabled={deleteClient.isPending}
               className='text-xs sm:text-sm text-destructive-foreground'
-              style={{ backgroundColor: 'var(--color-destructive)' }}>
+              style={{ backgroundColor: 'var(--color-destructive)' }}
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -348,7 +364,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent
           className='max-w-[95vw] max-h-[90vh] overflow-y-auto sm:max-w-2xl'
-          style={{ backgroundColor: 'var(--color-card)' }}>
+          style={{ backgroundColor: 'var(--color-card)' }}
+        >
           <DialogHeader>
             <DialogTitle className='text-base sm:text-lg text-foreground'>
               Novo Agendamento
@@ -372,7 +389,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <Button
                 variant='outline'
                 className='flex items-center gap-2'
-                disabled={isLoading}>
+                disabled={isLoading}
+              >
                 <span className='hidden sm:inline'>
                   {selectedPrice?.product?.name || 'Selecionar Plano'}
                 </span>
@@ -384,7 +402,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
                 <DropdownMenuItem
                   key={price.id}
                   onClick={() => setSelectedPrice(price)}
-                  className={'flex items-center gap-2'}>
+                  className={'flex items-center gap-2'}
+                >
                   <Building2 size={16} />
                   <div className='flex-1'>
                     <div className='font-medium'>{price.product.name}</div>
@@ -396,7 +415,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           <Button
             disabled={!selectedPrice || planUrlLoading}
             onClick={() => handleGenerateUrl()}
-            className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
+            className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'
+          >
             {planUrlLoading ? 'Gerando Url...' : 'Gerar URL do Cliente'}
           </Button>
         </DialogContent>

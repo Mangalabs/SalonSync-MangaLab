@@ -58,10 +58,7 @@ export class ProfessionalAbsenceController {
     );
   }
 
-  @Get('test')
-  async test() {
-    return { message: 'Test endpoint working', timestamp: new Date() };
-  }
+
 
   @Get('upcoming')
   async getUpcoming(@Req() req: AuthenticatedRequest) {
