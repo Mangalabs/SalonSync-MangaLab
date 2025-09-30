@@ -142,12 +142,7 @@ export class PaymentService {
         limit: 1,
       });
 
-      if (subscriptions.data.length > 0) {
-        throw new HttpException(
-          'Este usuário já possui uma assinatura ativa.',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      const alreadyCreated = subscriptions.data.length > 0;
 
       const session = await stripeClient.checkout.sessions.create({
         ui_mode: 'custom',
@@ -163,7 +158,7 @@ export class PaymentService {
         return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       });
 
-      return { clientSecret: session.client_secret };
+      return { clientSecret: session.client_secret, alreadyCreated };
     } catch (e) {
       if (e instanceof HttpException) throw e;
 
