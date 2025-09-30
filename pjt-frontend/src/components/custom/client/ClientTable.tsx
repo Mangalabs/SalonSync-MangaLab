@@ -223,72 +223,75 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               key={client.id}
               className='border border-border rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card'
               style={{ backgroundColor: 'var(--color-card)' }}>
-              <div className='flex items-center space-x-3 mb-4'>
-                <div
-                  className='w-12 h-12 rounded-full flex items-center justify-center'
-                  style={{ background: 'var(--color-accent)' }}>
-                  <span className='text-accent-foreground font-semibold text-lg'>
-                    {client.name.charAt(0).toUpperCase()}
-                  </span>
+              <div className='flex items-center justify-between mb-4 gap-4'>
+                <div className='flex items-center space-x-3 flex-1 min-w-0'>
+                  <div
+                    className='w-12 h-12 rounded-full flex items-center justify-center'
+                    style={{ background: 'var(--color-accent)' }}>
+                    <span className='text-accent-foreground font-semibold text-lg'>
+                      {client.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <h4 className='font-semibold text-foreground truncate'>
+                      {client.name}
+                    </h4>
+                    {client.phone && (
+                      <p className='text-sm text-muted-foreground truncate'>
+                        {client.phone}
+                      </p>
+                    )}
+                    {client.email && (
+                      <p className='text-xs text-muted-foreground truncate'>
+                        {client.email}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <h4 className='font-semibold text-foreground truncate'>
-                    {client.name}
-                  </h4>
-                  {client.phone && (
-                    <p className='text-sm text-muted-foreground truncate'>
-                      {client.phone}
-                    </p>
-                  )}
-                  {client.email && (
-                    <p className='text-xs text-muted-foreground truncate'>
-                      {client.email}
-                    </p>
+
+                <div>
+                  {client.subscription?.planName ? (
+                    <span className="px-3 py-2 bg-yellow-100 border border-yellow-200 text-yellow-600 font-semibold shadow-sm rounded-lg text-sm transition-all duration-200 uppercase flex items-center justify-center">
+                      {client.subscription.planName}
+                    </span>
+
+                  ) : (
+                    <span className='text-xs text-muted-foreground px-3 py-2 bg-gray-100 font-semibold rounded-lg transition-all duration-200 uppercase flex items-center justify-center'>
+                      Sem Assinatura
+                    </span>
                   )}
                 </div>
-              </div>
-
-              <p className='text-sm text-muted-foreground mb-2'>
-                Último atendimento: {client.lastVisit || '—'}
-              </p>
-
-              <div className='mb-4'>
-                <span className='text-xs text-muted-foreground'>
-                  {client.subscription?.planName
-                    ? client.subscription?.planName
-                    : 'Sem Assinatura'}
-                </span>
               </div>
 
               <div className='grid grid-cols-2 gap-2 mb-2'>
-                <button
+                <Button
                   onClick={() => onEdit(client)}
                   className='bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
                   <Edit className='w-3 h-3' />
                   Editar
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => handleSchedule(client)}
                   className='bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1'>
                   <Calendar className='w-3 h-3' />
                   Agendar
-                </button>
+                </Button>
               </div>
 
               <div className='grid grid-cols-2 gap-2'>
-                <button
+                <Button
                   onClick={() => handleFidelityButtonClicked(client)}
                   className='bg-yellow-100 text-yellow-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-1'>
                   <Star className='w-3 h-3' />
                   Fidelidade
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setDeletingClientId(client.id)}
                   disabled={deleteClient.isPending}
                   className='bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1'>
                   <Trash2 className='w-3 h-3' />
                   Excluir
-                </button>
+                </Button>
               </div>
             </div>
           ))
@@ -390,12 +393,12 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
+          <Button
             disabled={!selectedPrice || planUrlLoading}
             onClick={() => handleGenerateUrl()}
             className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
             {planUrlLoading ? 'Gerando Url...' : 'Gerar URL do Cliente'}
-          </button>
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
