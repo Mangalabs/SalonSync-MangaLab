@@ -36,7 +36,9 @@ export default function NewAppointment() {
             style={{ backgroundColor: 'var(--color-muted)' }}>
             <button
               onClick={() => setMode('schedule')}
-              className={'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2'}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                mode !== 'schedule' ? 'cursor-pointer' : ''
+              }`}
               style={{
                 backgroundColor:
                   mode === 'schedule' ? 'var(--color-card)' : 'transparent',
@@ -54,7 +56,9 @@ export default function NewAppointment() {
             </button>
             <button
               onClick={() => setMode('register')}
-              className={'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2'}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                mode !== 'register' ? 'cursor-pointer' : ''
+              }`}
               style={{
                 backgroundColor:
                   mode === 'register' ? 'var(--color-card)' : 'transparent',

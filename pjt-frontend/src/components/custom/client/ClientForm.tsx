@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,8 +14,8 @@ import { useBranch } from '@/contexts/BranchContext'
 
 const createClientSchema = (isAdmin: boolean) => z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  phone: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
+  phone: z.string().min(1, 'Telefone é obrigatório'),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
   ...(isAdmin && { branchId: z.string().min(1, 'Selecione uma filial') }),
 })
 
@@ -65,9 +66,24 @@ export function ClientForm({
       name: initialData?.name || '',
       phone: initialData?.phone || '',
       email: initialData?.email || '',
-      branchId: !isAdmin ? activeBranch?.id : undefined,
+      branchId: !isAdmin ? activeBranch?.id : initialData?.branchId || undefined,
     },
   })
+
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name || '',
+        phone: initialData.phone || '',
+        email: initialData.email || '',
+        branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
+      })
+      
+      if (isAdmin && initialData.branchId) {
+        setValue('branchId', initialData.branchId)
+      }
+    }
+  }, [initialData, activeBranch, isAdmin, reset, setValue])
 
   const selectedBranchId = watch('branchId')
   
@@ -80,8 +96,6 @@ export function ClientForm({
       }
       const branchIdToUse = selectedBranchId || data.branchId
       const headers = branchIdToUse ? { 'x-branch-id': branchIdToUse } : {}
-      
-
       
       if (isEditing) {
         return axios.patch(`/api/clients/${initialData.id}`, payload, { headers })
@@ -96,6 +110,8 @@ export function ClientForm({
     },
   })
 
+  const selectedBranchName = branches.find((branch: any) => branch.id === selectedBranchId)?.name
+
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
@@ -106,7 +122,7 @@ export function ClientForm({
           <Label htmlFor="branchId">Filial</Label>
           <Select onValueChange={(value) => setValue('branchId', value)}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
+              <SelectValue placeholder={selectedBranchName || 'Selecione uma filial'} />
             </SelectTrigger>
             <SelectContent>
               {branches.map((branch: any) => (
@@ -131,7 +147,7 @@ export function ClientForm({
       </div>
       <div>
         <Label htmlFor="phone">Telefone</Label>
-        <Input id="phone" {...register('phone')} />
+        <Input id="phone" {...register('phone')} format='phone' />
       </div>
       <div>
         <Label htmlFor="email">Email</Label>
