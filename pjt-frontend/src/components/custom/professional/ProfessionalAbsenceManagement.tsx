@@ -209,7 +209,10 @@ export function ProfessionalAbsenceManagement() {
           <DialogTrigger asChild>
             <Button
               onClick={handleNew}
-              className='bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-20)] flex items-center gap-2'>
+              className=' bg-primary
+                text-secondary
+                py-3 px-4 rounded-xl font-medium 
+                hover:opacity-80 transition-opacity cursor-pointer'>
               <Plus className='w-4 h-4' />
               Nova Ausência
             </Button>

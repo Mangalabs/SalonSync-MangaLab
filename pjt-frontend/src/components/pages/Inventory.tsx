@@ -72,7 +72,10 @@ export default function Inventory() {
             {activeTab === 'products' ? (
               <Dialog open={productOpen} onOpenChange={setProductOpen}>
                 <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-secondary hover:text-secondary-foreground px-3 sm:px-4 py-2 text-sm sm:text-base cursor-pointer">
+                  <Button className=" bg-primary
+                text-secondary
+                py-3 px-4 rounded-xl font-medium 
+                hover:opacity-80 transition-opacity cursor-pointer">
                     <PlusCircle className="w-4 h-4" />
                     Novo Produto
                   </Button>
@@ -87,7 +90,10 @@ export default function Inventory() {
             ) : (
               <Dialog open={movementOpen} onOpenChange={setMovementOpen}>
                 <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-secondary hover:text-secondary-foreground px-3 sm:px-4 py-2 text-sm sm:text-base cursor-pointer">
+                  <Button className="bg-primary
+                text-secondary
+                py-3 px-4 rounded-xl font-medium 
+                hover:opacity-80 transition-opacity">
                     <PlusCircle className="w-4 h-4" />
                     Nova Movimentação
                   </Button>
