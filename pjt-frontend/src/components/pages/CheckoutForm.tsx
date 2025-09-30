@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CheckoutProvider , PaymentElement, useCheckout } from '@stripe/react-stripe-js'
+import {
+  CheckoutProvider,
+  PaymentElement,
+  useCheckout,
+} from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
 import api from '@/lib/axios'
@@ -29,8 +33,8 @@ function Form() {
 
       <div>
         <Button
-          type="submit"
-          className="w-full mt-4 cursor-pointer"
+          type='submit'
+          className='w-full mt-4 cursor-pointer'
           disabled={loading}
           onClick={handleClick}
         >
@@ -44,6 +48,7 @@ function Form() {
 
 function CheckoutLazyElement({ selectedPlan, userId }) {
   const [error, setError] = useState('')
+  const [subscriptionExist, setSubscriptionExist] = useState(false)
 
   let stripePromise: PromiseLike<Stripe> | null = null
 
@@ -63,6 +68,11 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
         userId: userId,
       })
 
+      setSubscriptionExist(response.data.alreadyCreated)
+      if (response.data.alreadyCreated === true) {
+        setError('Usuário já tem uma assinatura ativa')
+      }
+
       return response.data.clientSecret
     } catch (err) {
       if (err.response?.data?.message) {
@@ -77,9 +87,9 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
   return (
     <>
       <CheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
-        <Form />
+        {!subscriptionExist && <Form />}
       </CheckoutProvider>
-      {error && <p className="text-xl text-red-600 text-center">{error}</p>}
+      {error && <p className='text-xl text-red-600 text-center'>{error}</p>}
     </>
   )
 }
@@ -98,7 +108,7 @@ export default function CheckoutForm() {
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-        },
+        }
       )
 
       const result = await res.json()
@@ -110,7 +120,7 @@ export default function CheckoutForm() {
       const result = await api.get('/api/payment/get-user-subscriptions')
 
       const activeSubscription = result.data.find(
-        (sub) => sub.status === 'active' || sub.status === 'trialing',
+        (sub) => sub.status === 'active' || sub.status === 'trialing'
       )
 
       setSelectedPlan({
@@ -150,8 +160,8 @@ export default function CheckoutForm() {
       )}
 
       {!user && (
-        <div className="mt-4 text-center">
-          <a href="/login" className="text-sm text-[#D4AF37] hover:underline">
+        <div className='mt-4 text-center'>
+          <a href='/login' className='text-sm text-[#D4AF37] hover:underline'>
             Já tem conta? Faça login aqui
           </a>
         </div>
