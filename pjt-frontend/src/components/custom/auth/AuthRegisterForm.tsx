@@ -110,13 +110,14 @@ export function RegisterForm() {
     <div className="w-full max-w-4xl mx-auto">
       <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center pb-6">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Scissors className="text-white w-8 h-8" />
+          <div className="flex items-center mx-auto p-4">
+            <img
+              src="/salonSync-icon.png"
+              alt="SalonSync - Sistema de Gestão"
+              className="w-full h-[80px] object-cover mt-5"
+            />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            SalonSync
-          </CardTitle>
-          <h3 className="text-xl font-semibold text-gray-800 mt-2">
+          <h3 className="text-xl font-semibold text-gray-800">
             Registrar Empresa
           </h3>
           <p className="text-gray-600 mt-1">Crie sua conta de administrador</p>

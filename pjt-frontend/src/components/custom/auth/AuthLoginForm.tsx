@@ -58,7 +58,7 @@ export function LoginForm() {
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             SalonSync
           </CardTitle>
-          <p className="text-gray-600 mt-2 font-medium">Bem-vindo de volta</p>
+          <p className="text-gray-600 mt-2 font-medium">Bem-vndo de volta</p>
         </CardHeader>
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

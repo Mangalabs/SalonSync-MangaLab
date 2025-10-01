@@ -129,7 +129,7 @@ export function Header() {
                       setShowNotificationDropdown,
                       setShowProfileDropdown,
                     )}
-                    className='flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shadow-sm bg-muted text-foreground border border-border cursor-pointer'>
+                    className='flex items-center space-x-2 px-3 sm:px-4 p-3 rounded-xl transition-all duration-200 bg-muted text-foreground  cursor-pointer'>
                     <Building className='w-5 h-5 text-secondary-foreground' />
                     <span className='hidden sm:inline font-medium'>
                       {activeBranch?.name}
@@ -165,26 +165,6 @@ export function Header() {
               </Dropdown>
 
               <Dropdown
-                isOpen={showNotificationDropdown}
-                refEl={notificationRef}
-                button={
-                  <button
-                    onClick={toggleDropdown(
-                      setShowNotificationDropdown,
-                      setShowBranchDropdown,
-                      setShowProfileDropdown,
-                    )}
-                    className='relative p-2.5 rounded-xl transition-colors duration-200 bg-muted text-foreground'>
-                    <Bell className='w-6 h-6' />
-                    <span className='absolute -top-1 -right-1 text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium shadow-lg bg-destructive text-destructive-foreground'>
-                      3
-                    </span>
-                  </button>
-                }
-                children={''}
-              />
-
-              <Dropdown
                 isOpen={showProfileDropdown}
                 refEl={profileRef}
                 button={
@@ -194,7 +174,7 @@ export function Header() {
                       setShowBranchDropdown,
                       setShowNotificationDropdown,
                     )}
-                    className='flex items-center space-x-2 sm:space-x-3 p-2 rounded-xl transition-colors duration-200 bg-muted text-foreground cursor-pointer'>
+                    className='flex items-center space-x-2 sm:space-x-3 p-1 rounded-xl transition-colors duration-200 bg-muted text-foreground cursor-pointer'>
                     <div className='w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg bg-secondary'>
                       <span className='text-secondary-foreground font-semibold'>
                         {user?.name?.[0] || 'U'}
