@@ -19,6 +19,9 @@ services:
     command: npx prisma migrate dev
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/salonSync?schema=public
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
       
   app:
     build: .
@@ -35,6 +38,9 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: salonSync
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
   nginx:
     image: nginx:latest
