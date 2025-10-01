@@ -3,50 +3,42 @@ version: '3.8'
 services:
   postgres:
     image: postgres:17.5-bookworm
-    ports:
-      - '5432:5432'
+    container_name: salonSyncPostgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: salonSync
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    network_mode: "host"
 
   migrate:
-    build: . # Or use a pre-built image
+    build: .
+    network_mode: "host"
     depends_on:
       - postgres
     command: npx prisma migrate dev
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/salonSync?schema=public
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-      
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/salonSync?schema=public
+
   app:
     build: .
     container_name: salonSyncAPI
-    ports:
-      - "3000:3000"
+    network_mode: "host"
     depends_on:
       - postgres
     command: npm start
     environment:
-      DB_HOST: postgres
+      DB_HOST: localhost
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: salonSync
     restart: unless-stopped
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
 
   nginx:
     image: nginx:latest
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: "host"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./cert.pem:/etc/ssl/certs/cert.pem
