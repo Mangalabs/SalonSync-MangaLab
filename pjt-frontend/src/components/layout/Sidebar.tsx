@@ -131,32 +131,15 @@ const getNavItems = (userRole: string) =>
 
 const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
   <div
-    className='p-6 border-b flex items-center justify-between'
+    className='border-b flex items-center justify-between bg-secondary'
     style={{ borderColor: 'var(--color-sidebar-border)' }}
   >
-    <div className='flex items-center space-x-3'>
-      <div
-        className='w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r'
-        style={{
-          backgroundImage: 'var(--color-gradient)',
-        }}
-      >
-        <Scissors
-          className='w-5 h-5'
-          style={{ color: 'var(--color-button-text)' }}
-        />
-      </div>
-      <div>
-        <h1
-          className='text-xl font-bold'
-          style={{ color: 'var(--color-sidebar-foreground)' }}
-        >
-          SalonSync
-        </h1>
-        <p className='text-xs' style={{ color: 'var(--color-text-secondary)' }}>
-          Sistema de Gestão
-        </p>
-      </div>
+    <div className="flex items-center mx-auto p-4">
+      <img
+        src="/salonSync-icon.png"
+        alt="SalonSync - Sistema de Gestão"
+        className="w-full h-[60px] object-cover"
+      />
     </div>
     {onClose && (
       <Button

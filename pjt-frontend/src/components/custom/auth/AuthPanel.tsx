@@ -55,13 +55,14 @@ export function AuthPanel() {
     <div className="flex flex-col items-center justify-center h-full space-y-6 px-4 md:px-6">
       <div className="w-full max-w-md space-y-6">
         <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Scissors className="text-white w-8 h-8" />
+          <CardHeader className="text-center pb-2">
+            <div className="flex items-center mx-auto p-4">
+              <img
+                src="/salonSync-icon.png"
+                alt="SalonSync - Sistema de Gestão"
+                className="w-full h-[70px] object-cover mt-5"
+              />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              SalonSync
-            </CardTitle>
             <p className="text-gray-600 mt-2 font-medium">Bem-vindo de volta</p>
           </CardHeader>
           <CardContent className="px-8 pb-8">
