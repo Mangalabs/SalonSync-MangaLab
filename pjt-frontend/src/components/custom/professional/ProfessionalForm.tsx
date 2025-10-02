@@ -1,60 +1,60 @@
-import { z } from 'zod'
 import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
 
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Combobox } from '@/components/ui/combobox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import axios from '@/lib/axios'
-import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
+import { RoleForm } from '../forms/RoleForm'
 
-const schema = z.object({
-  name: z.string().min(2, 'Informe o nome'),
-  role: z.string().min(2, 'Informe a função'),
-  commissionRate: z
-    .number()
-    .min(0)
-    .max(100, 'Comissão deve ser entre 0 e 100%'),
-  roleId: z.string().optional(),
-  baseSalary: z.union([z.number(), z.nan()]).optional(),
-  salaryPayDay: z.union([z.number(), z.nan()]).optional(),
+const createEmployeeSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  roleId: z.string().min(1, 'Selecione uma função'),
   branchId: z.string().min(1, 'Selecione uma filial'),
-  workingDays: z.array(z.number()).optional(),
 })
 
-type FormData = z.infer<typeof schema>;
+const editProfessionalSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  roleId: z.string().min(1, 'Selecione uma função'),
+  branchId: z.string().min(1, 'Selecione uma filial'),
+})
 
-export function ProfessionalForm({
-  onSuccess,
-  initialData,
-}: {
-  onSuccess: () => void;
-  initialData?: {
-    id: string;
-    name: string;
-    role: string;
-    commissionRate?: number;
-    roleId?: string;
-    branchId?: string;
-  } | null;
-}) {
+type EmployeeFormData = z.infer<typeof createEmployeeSchema>
+type EditProfessionalFormData = z.infer<typeof editProfessionalSchema>
+
+const daysOfWeek = [
+  { value: 0, label: 'Domingo', short: 'Dom' },
+  { value: 1, label: 'Segunda-feira', short: 'Seg' },
+  { value: 2, label: 'Terça-feira', short: 'Ter' },
+  { value: 3, label: 'Quarta-feira', short: 'Qua' },
+  { value: 4, label: 'Quinta-feira', short: 'Qui' },
+  { value: 5, label: 'Sexta-feira', short: 'Sex' },
+  { value: 6, label: 'Sábado', short: 'Sáb' },
+]
+
+interface ProfessionalFormProps {
+  onSuccess: () => void
+  editingProfessional?: any
+  branches: any[]
+  roles: any[]
+  refreshRoles: () => void
+}
+
+export function ProfessionalForm({ onSuccess, editingProfessional, branches, roles, refreshRoles }: ProfessionalFormProps) {
   const queryClient = useQueryClient()
-  const isEditing = !!initialData
-  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
-
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const res = await axios.get('/api/branches')
-      return res.data
-    },
-    enabled: isAdmin,
-  })
+  const [selectedWorkingDays, setSelectedWorkingDays] = useState<number[]>([1, 2, 3, 4, 5])
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
 
   const {
     register,
@@ -62,285 +62,213 @@ export function ProfessionalForm({
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: initialData
-      ? {
-        name: initialData.name,
-        role: initialData.role,
-        roleId: initialData.roleId || (initialData as any).customRole?.id,
-        commissionRate:
-            (initialData as any).customRole?.commissionRate ||
-            initialData.commissionRate ||
-            0,
-        baseSalary: (initialData as any).baseSalary || undefined,
-        salaryPayDay: (initialData as any).salaryPayDay || undefined,
-        branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
-      }
-      : {
-        commissionRate: 0,
-        branchId: !isAdmin ? activeBranch?.id : undefined,
-        workingDays: [1, 2, 3, 4, 5, 6], // Segunda a sábado por padrão
-      },
-  })
-
-  const selectedBranchId = watch('branchId')
-
-  const { data: roles = [] } = useQuery({
-    queryKey: ['roles', selectedBranchId],
-    queryFn: async () => {
-      try {
-        const params = new URLSearchParams()
-        if (selectedBranchId) {params.append('branchId', selectedBranchId)}
-        const res = await axios.get(`/api/roles?${params}`)
-        return res.data
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          return []
-        }
-        throw error
-      }
+  } = useForm<EmployeeFormData | EditProfessionalFormData>({
+    resolver: zodResolver(editingProfessional ? editProfessionalSchema : createEmployeeSchema),
+    defaultValues: { 
+      branchId: editingProfessional?.branchId || activeBranch?.id || '',
+      name: editingProfessional?.name || '',
+      roleId: editingProfessional?.customRole?.id || '',
     },
-    enabled: !!selectedBranchId,
   })
 
-  const selectedRoleId = watch('roleId')
-  const selectedRole = roles.find((role: any) => role.id === selectedRoleId)
-  const isCustomRole = selectedRoleId === 'custom' || !selectedRoleId
-
-  const handleRoleChange = (roleId: string) => {
-    setValue('roleId', roleId)
-    const role = roles.find((r: any) => r.id === roleId)
-    if (role) {
-      setValue('role', role.title)
-      setValue('commissionRate', role.commissionRate || 0)
-      setValue('baseSalary', role.baseSalary ? Number(role.baseSalary) : undefined)
-      setValue('salaryPayDay', role.salaryPayDay || undefined)
-    } else {
-      setValue('baseSalary', undefined)
-      setValue('salaryPayDay', undefined)
-    }
-  }
-
-  const mutation = useMutation({
-    mutationFn: async (data: FormData) => {
-
-      const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
-      if (isEditing) {
-        const res = await axios.patch(
-          `/api/professionals/${initialData.id}`,
-          data,
-          { headers },
-        )
-        return res.data
+  const createEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      if (editingProfessional) {
+        const updateData = {
+          name: data.name,
+          roleId: data.roleId,
+          workingDays: selectedWorkingDays,
+        }
+        await axios.patch(`/api/professionals/${editingProfessional.id}`, updateData)
       } else {
-        const res = await axios.post('/api/professionals', data, { headers })
-        return res.data
+        const selectedRole = roles.find((role: any) => role.id === data.roleId)
+        const employeeData = {
+          ...data,
+          role: selectedRole?.title || 'Profissional',
+          commissionRate: selectedRole?.commissionRate || 0,
+          workingDays: selectedWorkingDays,
+        }
+        await axios.post('/api/auth/create-employee', employeeData)
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
       queryClient.invalidateQueries({ queryKey: ['professionals'] })
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
       onSuccess()
     },
-    onError: () => {
-    },
+    onError: () => {},
   })
 
+  const onSubmit = (data: EmployeeFormData) => {
+    createEmployee.mutate({ ...data, workingDays: selectedWorkingDays })
+  }
+
   return (
-    <form
-      onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="space-y-4"
-    >
-      {isAdmin && (
-        <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Combobox
-            options={branches.map((branch: any) => ({
-              value: branch.id,
-              label: branch.name,
-            }))}
-            value={watch('branchId')}
-            onValueChange={(value) => setValue('branchId', value)}
-            placeholder="Selecione uma filial"
-            searchPlaceholder="Pesquisar filial..."
-          />
-          {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
-          )}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Nome Completo
+        </label>
+        <input
+          {...register('name')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          placeholder="Digite o nome completo"
+        />
+        {errors.name && (
+          <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
+        )}
+      </div>
+
+      {!editingProfessional && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              {...register('email')}
+              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+              placeholder="email@exemplo.com"
+            />
+            {errors.email && (
+              <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Senha
+            </label>
+            <input
+              type="password"
+              {...register('password')}
+              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+              placeholder="Mínimo 6 caracteres"
+            />
+            {errors.password && (
+              <p className="text-xs text-destructive mt-1">{errors.password.message}</p>
+            )}
+          </div>
         </div>
       )}
 
-      <div>
-        <Label htmlFor="name">Nome do Funcionário</Label>
-        <Input placeholder="Nome" {...register('name')} />
-        {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
-        )}
-      </div>
-      <div>
-        {roles.length > 0 ? (
-          <>
-            <Combobox
-              options={[
-                { value: 'custom', label: 'Função personalizada' },
-                ...roles.map((role: any) => ({
-                  value: role.id,
-                  label: `${role.title} (${role.commissionRate}%)`,
-                })),
-              ]}
-              value={selectedRoleId || 'custom'}
-              onValueChange={handleRoleChange}
-              placeholder="Selecione uma função"
-              searchPlaceholder="Pesquisar função..."
-            />
-            {selectedRoleId === 'custom' && (
-              <div className="mt-2">
-                <Input placeholder="Nome da função" {...register('role')} />
-                {errors.role && (
-                  <p className="text-sm text-red-500">{errors.role.message}</p>
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <Input placeholder="Função (ex: Barbeiro)" {...register('role')} />
-            {errors.role && (
-              <p className="text-sm text-red-500">{errors.role.message}</p>
-            )}
-          </>
-        )}
-      </div>
-      
-      <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">
-          Configuração de Salário 
-          {!isCustomRole && selectedRole?.baseSalary && (
-            <span className="text-xs font-normal text-gray-500">
-              (Herdado da função: R$ {Number(selectedRole.baseSalary).toFixed(2)})
-            </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Filial
+          </label>
+          <select
+            value={watch('branchId') || ''}
+            onChange={(e) => setValue('branchId', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione a filial</option>
+            {branches.map((b: any) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          {errors.branchId && (
+            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
           )}
-        </h3>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder={selectedRole?.baseSalary ? `Padrão: R$ ${Number(selectedRole.baseSalary).toFixed(2)}` : 'Salário base (R$)'}
-              {...register('baseSalary', { valueAsNumber: true })}
-              disabled={!isCustomRole && selectedRole?.baseSalary}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {isCustomRole 
-                ? 'Valor fixo mensal personalizado'
-                : selectedRole?.baseSalary 
-                  ? 'Definido pela função selecionada'
-                  : 'Valor fixo mensal (comissões serão somadas)'
-              }
-            </p>
-          </div>
-          
-          <div>
-            <Input
-              type="number"
-              min="1"
-              max="31"
-              placeholder={selectedRole?.salaryPayDay ? `Padrão: Dia ${selectedRole.salaryPayDay}` : 'Dia do pagamento'}
-              {...register('salaryPayDay', { valueAsNumber: true })}
-              disabled={!isCustomRole && selectedRole?.salaryPayDay}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {isCustomRole 
-                ? 'Dia do mês personalizado'
-                : selectedRole?.salaryPayDay 
-                  ? 'Definido pela função selecionada'
-                  : 'Dia do mês para gerar despesa'
-              }
-            </p>
-          </div>
         </div>
-        
-        {!isCustomRole && selectedRole && (
-          <p className="text-xs text-blue-600 mt-2">
-            ℹ️ Para personalizar salário, selecione "Função personalizada"
-          </p>
-        )}
-      </div>
-      <div>
-        <div className="flex items-center">
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            step="0.1"
-            placeholder="Comissão (%)"
-            {...register('commissionRate', { valueAsNumber: true })}
-            disabled={selectedRole && selectedRoleId !== 'custom'}
-          />
-          <span className="ml-2">%</span>
-        </div>
-        {errors.commissionRate && (
-          <p className="text-sm text-red-500">
-            {errors.commissionRate.message}
-          </p>
-        )}
-        {selectedRole && selectedRoleId !== 'custom' && (
-          <p className="text-xs text-[#737373] mt-1">
-            Comissão definida pela função selecionada
-          </p>
-        )}
-      </div>
 
-      <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Dias de Trabalho</h3>
-        <div className="grid grid-cols-7 gap-2">
-          {[
-            { day: 0, label: 'Dom' },
-            { day: 1, label: 'Seg' },
-            { day: 2, label: 'Ter' },
-            { day: 3, label: 'Qua' },
-            { day: 4, label: 'Qui' },
-            { day: 5, label: 'Sex' },
-            { day: 6, label: 'Sáb' },
-          ].map(({ day, label }) => {
-            const workingDays = watch('workingDays') || []
-            const isChecked = workingDays.includes(day)
-            
-            return (
-              <div key={day} className="flex flex-col items-center">
-                <Checkbox
-                  id={`day-${day}`}
-                  checked={isChecked}
-                  onCheckedChange={(checked) => {
-                    const currentDays = watch('workingDays') || []
-                    if (checked) {
-                      setValue('workingDays', [...currentDays, day].sort())
-                    } else {
-                      setValue('workingDays', currentDays.filter(d => d !== day))
-                    }
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-foreground">
+              Função
+            </label>
+            <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Criar função
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nova Função</DialogTitle>
+                </DialogHeader>
+                <RoleForm 
+                  onSuccess={() => {
+                    refreshRoles()
+                    setIsRoleDialogOpen(false)
                   }}
                 />
-                <Label htmlFor={`day-${day}`} className="text-xs mt-1">
-                  {label}
-                </Label>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <select
+            value={watch('roleId') || ''}
+            onChange={(e) => setValue('roleId', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione a função</option>
+            {roles.map((r: any) => (
+              <option key={r.id} value={r.id}>
+                {r.title}
+              </option>
+            ))}
+          </select>
+          {errors.roleId && (
+            <p className="text-xs text-destructive mt-1">{errors.roleId.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          Dias de Trabalho
+        </label>
+        <div className="grid grid-cols-7 gap-3">
+          {daysOfWeek.map((day) => {
+            const selected = selectedWorkingDays.includes(day.value)
+            return (
+              <div
+                key={day.value}
+                onClick={() => {
+                  if (selected) {
+                    setSelectedWorkingDays(selectedWorkingDays.filter(d => d !== day.value))
+                  } else {
+                    setSelectedWorkingDays([...selectedWorkingDays, day.value].sort())
+                  }
+                }}
+                className={`border rounded-xl p-3 cursor-pointer transition-all text-center ${
+                  selected
+                    ? 'border-primary bg-accent/20'
+                    : 'border-border hover:border-primary hover:bg-accent/10'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-1">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-primary rounded"
+                  />
+                  <span className="text-xs font-medium">{day.short}</span>
+                </div>
               </div>
             )
           })}
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Selecione os dias da semana em que o profissional trabalha
+        <p className="text-xs text-muted-foreground mt-2">
+          Selecione os dias em que o profissional estará disponível
         </p>
       </div>
 
-      <Button
+      <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-primary text-white"
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
       >
-        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
-      </Button>
+        {isSubmitting ? 'Salvando...' : editingProfessional ? 'Atualizar Profissional' : 'Criar Funcionário'}
+      </button>
     </form>
   )
 }
