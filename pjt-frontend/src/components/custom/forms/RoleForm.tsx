@@ -45,6 +45,7 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
@@ -93,98 +94,114 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue('branchId', value)} defaultValue={!isAdmin ? activeBranch?.id : initialData?.branchId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Filial
+          </label>
+          <select
+            value={watch('branchId') || ''}
+            onChange={(e) => setValue('branchId', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione uma filial</option>
+            {branches.map((branch: any) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
           {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
           )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="title">Título da Função</Label>
-        <Input
-          id="title"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Título da Função
+        </label>
+        <input
           {...register('title')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           placeholder="Ex: Barbeiro, Manicure, Gerente"
         />
         {errors.title && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.title.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.title.message}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="commissionRate">Porcentagem de Comissão (%)</Label>
-        <Input
-          id="commissionRate"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Porcentagem de Comissão (%)
+        </label>
+        <input
           type="number"
           step="0.01"
           min="0"
           max="100"
           {...register('commissionRate', { valueAsNumber: true })}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           placeholder="0"
         />
         {errors.commissionRate && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.commissionRate.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.commissionRate.message}</p>
         )}
-        <p className="text-xs text-[#737373] mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Deixe 0 se não houver comissão para esta função
         </p>
       </div>
 
-      <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Configuração de Salário (Opcional)</h3>
+      <div className="border-t border-border pt-6">
+        <h3 className="text-sm font-medium text-foreground mb-4">
+          Configuração de Salário (Opcional)
+        </h3>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="baseSalary">Salário Base (R$)</Label>
-            <Input
-              id="baseSalary"
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Salário Base (R$)
+            </label>
+            <input
               type="number"
               step="0.01"
               min="0"
               {...register('baseSalary', { valueAsNumber: true })}
+              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
               placeholder="0,00"
             />
-            <p className="text-xs text-[#737373] mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Valor fixo mensal para esta função
             </p>
           </div>
           
           <div>
-            <Label htmlFor="salaryPayDay">Dia do Pagamento</Label>
-            <Input
-              id="salaryPayDay"
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Dia do Pagamento
+            </label>
+            <input
               type="number"
               min="1"
               max="31"
               {...register('salaryPayDay', { valueAsNumber: true })}
+              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
               placeholder="5"
             />
-            <p className="text-xs text-[#737373] mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Dia do mês para gerar despesa
             </p>
           </div>
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar' : 'Criar Função'}
-      </Button>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
+      >
+        {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar Função' : 'Criar Função'}
+      </button>
     </form>
   )
 }
