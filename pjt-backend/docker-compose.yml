@@ -29,6 +29,18 @@ services:
     networks:
       - backend
 
+  migrate:
+    build: 
+      context: .
+      network: host
+    depends_on:
+      - postgres
+    command: npx prisma migrate dev
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/salonSync?schema=public
+    networks:
+      - backend
+
   nginx:
     image: nginx:latest
     container_name: salonSyncNginx
