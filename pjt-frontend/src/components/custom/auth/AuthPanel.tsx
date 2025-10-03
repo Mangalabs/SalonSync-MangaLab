@@ -40,7 +40,7 @@ export function AuthPanel() {
       const result = await res.json()
 
       if (!res.ok) {
-        setErro(result.message || 'Erro ao fazer login')
+        setErro(result.message.message || 'Erro ao fazer login')
         return
       }
 
