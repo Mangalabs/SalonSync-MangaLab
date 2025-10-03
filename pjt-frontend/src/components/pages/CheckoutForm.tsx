@@ -1,52 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  CheckoutProvider,
-  PaymentElement,
-  useCheckout,
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout,
 } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
 import api from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
-import { Button } from '@/components/ui/button'
 import { PlanCard } from '@/components/custom/PlanCard'
 
-function Form() {
-  const { confirm } = useCheckout()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleClick = () => {
-    setLoading(true)
-    confirm().then((result) => {
-      if (result.type === 'error') {
-        setError(result.error)
-      }
-      setLoading(false)
-    })
-  }
-
-  return (
-    <form>
-      <PaymentElement options={{ layout: 'accordion' }} />
-
-      <div>
-        <Button
-          type='submit'
-          className='w-full mt-4 cursor-pointer'
-          disabled={loading}
-          onClick={handleClick}
-        >
-          Pagar
-        </Button>
-        {error && <div>{error.message}</div>}
-      </div>
-    </form>
-  )
-}
-
 function CheckoutLazyElement({ selectedPlan, userId }) {
+  //TODO: tratamento de erros
   const [error, setError] = useState('')
   const [subscriptionExist, setSubscriptionExist] = useState(false)
 
@@ -85,12 +50,9 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
   }
 
   return (
-    <>
-      <CheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
-        {!subscriptionExist && <Form />}
-      </CheckoutProvider>
-      {error && <p className='text-xl text-red-600 text-center'>{error}</p>}
-    </>
+    <EmbeddedCheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
+      <EmbeddedCheckout />
+    </EmbeddedCheckoutProvider>
   )
 }
 
@@ -141,7 +103,15 @@ export default function CheckoutForm() {
 
   return (
     <div>
-      <div>
+      {!user && (
+        <div className='mt-4 text-center'>
+          <a href='/login' className='text-sm text-[#D4AF37] hover:underline'>
+            Já tem conta? Faça login aqui
+          </a>
+        </div>
+      )}
+
+      <div className='flex'>
         {products.map((product) => (
           <PlanCard
             key={product.id}
@@ -157,14 +127,6 @@ export default function CheckoutForm() {
           selectedPlan={selectedPlan.default_price.id}
           userId={userId}
         />
-      )}
-
-      {!user && (
-        <div className='mt-4 text-center'>
-          <a href='/login' className='text-sm text-[#D4AF37] hover:underline'>
-            Já tem conta? Faça login aqui
-          </a>
-        </div>
       )}
     </div>
   )

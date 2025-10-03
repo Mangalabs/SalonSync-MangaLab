@@ -154,8 +154,9 @@ export class PaymentService {
           },
         ],
         mode: 'subscription',
-        // return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        //TODO: return URL
+        return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        // return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       });
 
       return { clientSecret: session.client_secret, alreadyCreated };
