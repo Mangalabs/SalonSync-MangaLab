@@ -157,6 +157,7 @@ export class PaymentService {
         //TODO: return URL
         return_url: `https://salondash.mangalab.io/dashboard?session_id={CHECKOUT_SESSION_ID}`,
         // return_url: `http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        allow_promotion_codes: true,
       });
 
       return { clientSecret: session.client_secret, alreadyCreated };
