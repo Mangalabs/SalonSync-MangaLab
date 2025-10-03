@@ -117,159 +117,170 @@ export function AdjustmentStockForm({
   if (!product) {return null}
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name">Nome do Produto</Label>
-          <Input
-            id="name"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Nome do Produto
+          </label>
+          <input
             {...register('name')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="Nome do produto"
           />
           {errors.name && (
-            <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="category">Categoria</Label>
-          <Input
-            id="category"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Categoria
+          </label>
+          <input
             {...register('category')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="Categoria do produto"
           />
           {errors.category && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.category.message}
-            </p>
+            <p className="text-xs text-destructive mt-1">{errors.category.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="brand">Marca (opcional)</Label>
-          <Input
-            id="brand"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Marca (opcional)
+          </label>
+          <input
             {...register('brand')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="Marca do produto"
           />
         </div>
 
         <div>
-          <Label htmlFor="unit">Unidade</Label>
-          <Select
-            onValueChange={(value) => setValue('unit', value)}
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Unidade
+          </label>
+          <select
+            onChange={(e) => setValue('unit', e.target.value)}
             defaultValue={product?.unit}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a unidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="un">Unidade (un)</SelectItem>
-              <SelectItem value="kg">Quilograma (kg)</SelectItem>
-              <SelectItem value="g">Grama (g)</SelectItem>
-              <SelectItem value="l">Litro (l)</SelectItem>
-              <SelectItem value="ml">Mililitro (ml)</SelectItem>
-              <SelectItem value="m">Metro (m)</SelectItem>
-              <SelectItem value="cm">Centímetro (cm)</SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="">Selecione a unidade</option>
+            <option value="un">Unidade (un)</option>
+            <option value="kg">Quilograma (kg)</option>
+            <option value="g">Grama (g)</option>
+            <option value="l">Litro (l)</option>
+            <option value="ml">Mililitro (ml)</option>
+            <option value="m">Metro (m)</option>
+            <option value="cm">Centímetro (cm)</option>
+          </select>
         </div>
 
         <div>
-          <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
-          <Input
-            id="costPrice"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Preço de Custo (R$)
+          </label>
+          <input
             type="number"
             step="0.01"
             min="0"
             {...register('costPrice', { valueAsNumber: true })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="0,00"
           />
           {errors.costPrice && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.costPrice.message}
-            </p>
+            <p className="text-xs text-destructive mt-1">{errors.costPrice.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
-          <Input
-            id="salePrice"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Preço de Venda (R$)
+          </label>
+          <input
             type="number"
             step="0.01"
             min="0"
             {...register('salePrice', { valueAsNumber: true })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="0,00"
           />
           {errors.salePrice && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.salePrice.message}
-            </p>
+            <p className="text-xs text-destructive mt-1">{errors.salePrice.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="minStock">Estoque Mínimo</Label>
-          <Input
-            id="minStock"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Estoque Mínimo
+          </label>
+          <input
             type="number"
             min="0"
             {...register('minStock', { valueAsNumber: true })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="0"
           />
           {errors.minStock && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.minStock.message}
-            </p>
+            <p className="text-xs text-destructive mt-1">{errors.minStock.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="quantity">Nova Quantidade em Estoque</Label>
-          <Input
-            id="quantity"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Nova Quantidade em Estoque
+          </label>
+          <input
             type="number"
             min="0"
             {...register('quantity', { valueAsNumber: true })}
-            placeholder="Quantidade atual: {product.currentStock}"
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder={`Quantidade atual: ${product.currentStock}`}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Atual: {product.currentStock} {product.unit}
           </p>
           {errors.quantity && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.quantity.message}
-            </p>
+            <p className="text-xs text-destructive mt-1">{errors.quantity.message}</p>
           )}
         </div>
       </div>
 
       <div>
-        <Label htmlFor="reason">Motivo da Alteração</Label>
-        <Textarea
-          id="reason"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Motivo da Alteração
+        </label>
+        <textarea
           {...register('reason')}
-          placeholder="Descreva o motivo da alteração do produto e estoque"
           rows={3}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground resize-none"
+          placeholder="Descreva o motivo da alteração do produto e estoque"
         />
         {errors.reason && (
-          <p className="text-sm text-red-600 mt-1">{errors.reason.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.reason.message}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="reference">Referência (opcional)</Label>
-        <Input
-          id="reference"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Referência (opcional)
+        </label>
+        <input
           {...register('reference')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           placeholder="Documento, nota, etc."
         />
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
+      >
         {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
-      </Button>
+      </button>
     </form>
   )
 }

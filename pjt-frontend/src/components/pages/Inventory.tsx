@@ -80,7 +80,7 @@ export default function Inventory() {
                     Novo Produto
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-full max-w-md sm:max-w-lg bg-card text-foreground">
+                <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
                   <DialogHeader>
                     <DialogTitle>Novo Produto</DialogTitle>
                   </DialogHeader>
@@ -98,7 +98,7 @@ export default function Inventory() {
                     Nova Movimentação
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-full max-w-md sm:max-w-lg bg-card text-foreground">
+                <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
                   <DialogHeader>
                     <DialogTitle>Registrar Movimentação</DialogTitle>
                   </DialogHeader>

@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { AppointmentForm } from '@/components/custom/forms/AppointmentForm'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -362,17 +362,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       </AlertDialog>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent
-          className='max-w-[95vw] max-h-[90vh] overflow-y-auto sm:max-w-2xl'
-          style={{ backgroundColor: 'var(--color-card)' }}
-        >
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle className='text-base sm:text-lg text-foreground'>
               Novo Agendamento
             </DialogTitle>
           </DialogHeader>
           <AppointmentForm
-            mode='scheduled'
             onSuccess={() => setShowForm(false)}
           />
         </DialogContent>

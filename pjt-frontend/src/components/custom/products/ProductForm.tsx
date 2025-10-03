@@ -135,138 +135,177 @@ export function ProductForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Combobox
-            options={branches.map((branch: any) => ({
-              value: branch.id,
-              label: branch.name,
-            }))}
-            value={watch('branchId')}
-            onValueChange={(value) => setValue('branchId', value)}
-            placeholder="Selecione uma filial"
-            searchPlaceholder="Pesquisar filial..."
-          />
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Filial
+          </label>
+          <select
+            value={watch('branchId') || ''}
+            onChange={(e) => setValue('branchId', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione uma filial</option>
+            {branches.map((branch: any) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
           {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
           )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="name">Nome do Produto</Label>
-        <Input id="name" {...register('name')} placeholder="Ex: Shampoo Anticaspa" />
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Nome do Produto
+        </label>
+        <input
+          {...register('name')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          placeholder="Ex: Shampoo Anticaspa"
+        />
         {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
         )}
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="category">Categoria</Label>
-          <Input id="category" {...register('category')} placeholder="Ex: Cabelo, Barba, Pele" />
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Categoria
+          </label>
+          <input
+            {...register('category')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="Ex: Cabelo, Barba, Pele"
+          />
           {errors.category && (
-            <p className="text-sm text-red-500">{errors.category.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.category.message}</p>
           )}
         </div>
         
         <div>
-          <Label htmlFor="brand">Marca</Label>
-          <Input id="brand" {...register('brand')} placeholder="Ex: L'Oréal, Pantene" />
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Marca
+          </label>
+          <input
+            {...register('brand')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="Ex: L'Oréal, Pantene"
+          />
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="unit">Unidade de Medida</Label>
-          <Combobox
-            options={unitOptions}
-            value={watch('unit')}
-            onValueChange={(value) => setValue('unit', value)}
-            placeholder="Selecione a unidade"
-            searchPlaceholder="Pesquisar unidade..."
-          />
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Unidade de Medida
+          </label>
+          <select
+            value={watch('unit') || ''}
+            onChange={(e) => setValue('unit', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione a unidade</option>
+            {unitOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           {errors.unit && (
-            <p className="text-sm text-red-500">{errors.unit.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.unit.message}</p>
           )}
         </div>
         
         <div>
-          <Label htmlFor="initialStock">Quantidade Inicial</Label>
-          <Input 
-            id="initialStock" 
-            type="number" 
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Quantidade Inicial
+          </label>
+          <input
+            type="number"
             min="0"
             {...register('initialStock', { 
               valueAsNumber: true,
               setValueAs: (value) => value === '' ? 0 : parseInt(value, 10) || 0,
-            })} 
-            placeholder="0" 
+            })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="0"
           />
           {errors.initialStock && (
-            <p className="text-sm text-red-500">{errors.initialStock.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.initialStock.message}</p>
           )}
-          <p className="text-xs text-[#737373] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Quantidade em {selectedUnit || 'unidades'}
           </p>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
-          <Input 
-            id="costPrice" 
-            type="number" 
-            step="0.01" 
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Preço de Custo (R$)
+          </label>
+          <input
+            type="number"
+            step="0.01"
             min="0"
             {...register('costPrice', { 
               valueAsNumber: true,
               setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
-            })} 
-            placeholder="0,00" 
+            })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="0,00"
           />
           {errors.costPrice && (
-            <p className="text-sm text-red-500">{errors.costPrice.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.costPrice.message}</p>
           )}
-          <p className="text-xs text-[#737373] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Quanto você paga pelo produto
           </p>
         </div>
         
         <div>
-          <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
-          <Input 
-            id="salePrice" 
-            type="number" 
-            step="0.01" 
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Preço de Venda (R$)
+          </label>
+          <input
+            type="number"
+            step="0.01"
             min="0"
             {...register('salePrice', { 
               valueAsNumber: true,
               setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
-            })} 
-            placeholder="0,00" 
+            })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="0,00"
           />
           {errors.salePrice && (
-            <p className="text-sm text-red-500">{errors.salePrice.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.salePrice.message}</p>
           )}
-          <p className="text-xs text-[#737373] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Preço usado nas vendas
           </p>
         </div>
       </div>
       
-      <div className="bg-[#D4AF37]/10 p-3 rounded-md border border-[#D4AF37]/20">
-        <p className="text-sm text-[#8B4513]">
+      <div className="bg-accent/20 border border-accent/30 rounded-xl p-4">
+        <p className="text-sm text-foreground">
           💡 <strong>Dica:</strong> {!isEditing ? 'O produto será criado com a quantidade inicial definida. ' : ''}Use os botões + e - na tabela de estoque para ajustes posteriores.
         </p>
       </div>
       
-      <Button type="submit" disabled={mutation.isPending}>
+      <button
+        type="submit"
+        disabled={mutation.isPending}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
+      >
         {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Produto' : 'Criar Produto'}
-      </Button>
+      </button>
     </form>
   )
 }
