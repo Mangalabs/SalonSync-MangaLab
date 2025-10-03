@@ -79,9 +79,10 @@ export const getConfig = (
     'FRONTEND_URL',
     'http://localhost:5173',
   ),
+  //TODO: Verify logic
   ALLOWED_ORIGINS: configService.get<string>(
     'ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:5173,https://salondash.mangalab.io',
+    'http://localhost:3000,http://localhost:5173,https://salondash.mangalab.io,https://dashboard.salonsync.com.br',
   ),
 
   ENABLE_DEBUG: configService.get<boolean>('ENABLE_DEBUG', true),
