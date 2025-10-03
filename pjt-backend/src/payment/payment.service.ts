@@ -145,7 +145,7 @@ export class PaymentService {
       const alreadyCreated = subscriptions.data.length > 0;
 
       const session = await stripeClient.checkout.sessions.create({
-        ui_mode: 'custom',
+        ui_mode: 'embedded',
         customer: user.customerId as string,
         line_items: [
           {
