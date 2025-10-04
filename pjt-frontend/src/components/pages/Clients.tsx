@@ -44,8 +44,7 @@ export default function Clients() {
             </Button>
 
           </DialogTrigger>
-          <DialogContent
-            className='w-[95%] sm:max-w-lg '>
+          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? 'Editar Cliente' : 'Novo Cliente'}

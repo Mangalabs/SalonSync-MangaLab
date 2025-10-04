@@ -303,12 +303,15 @@ export function InventoryMovementTable({
         open={!!editingMovement}
         onOpenChange={() => setEditingMovement(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle>Editar Movimentação</DialogTitle>
           </DialogHeader>
           {editingMovement && (
-            <StockMovementForm onSuccess={() => setEditingMovement(null)} />
+            <StockMovementForm 
+              initialData={editingMovement}
+              onSuccess={() => setEditingMovement(null)} 
+            />
           )}
         </DialogContent>
       </Dialog>

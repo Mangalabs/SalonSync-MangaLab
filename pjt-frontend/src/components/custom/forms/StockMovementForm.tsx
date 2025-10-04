@@ -174,162 +174,170 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
 
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Select 
-            onValueChange={(value) => setValue('branchId', value)} 
-            defaultValue={!isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined)}
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Filial
+          </label>
+          <select
+            value={!isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : watch('branchId') || '')}
+            onChange={(e) => setValue('branchId', e.target.value)}
             disabled={isEditing}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground disabled:opacity-50"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value="">Selecione uma filial</option>
+            {branches.map((branch: any) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
           {isEditing && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               A filial não pode ser alterada durante a edição
             </p>
           )}
           {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
           )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="productId">Produto</Label>
-        <Select 
-          key={`product-${initialData?.product.id || 'new'}-${products.length}`}
-          onValueChange={(value) => setValue('productId', value)}
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Produto
+        </label>
+        <select
           value={watch('productId') || ''}
+          onChange={(e) => setValue('productId', e.target.value)}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione um produto" />
-          </SelectTrigger>
-          <SelectContent>
-            {products.map((product: any) => (
-              <SelectItem key={product.id} value={product.id}>
-                {product.name} (Estoque: {product.currentStock})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <option value="">Selecione um produto</option>
+          {products.map((product: any) => (
+            <option key={product.id} value={product.id}>
+              {product.name} (Estoque: {product.currentStock})
+            </option>
+          ))}
+        </select>
         {errors.productId && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.productId.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.productId.message}</p>
         )}
       </div>
 
-      <div>
-        <Label htmlFor="type">Tipo de Movimentação</Label>
-        <Select 
-          onValueChange={(value) => setValue('type', value as any)}
-          defaultValue={initialData?.type}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="IN">Entrada</SelectItem>
-            <SelectItem value="OUT">Saída</SelectItem>
-            <SelectItem value="ADJUSTMENT">Ajuste</SelectItem>
-            <SelectItem value="LOSS">Perda</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.type && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.type.message}</p>
-        )}
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Tipo de Movimentação
+          </label>
+          <select
+            value={watch('type') || ''}
+            onChange={(e) => setValue('type', e.target.value as any)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione o tipo</option>
+            <option value="IN">Entrada</option>
+            <option value="OUT">Saída</option>
+            <option value="ADJUSTMENT">Ajuste</option>
+            <option value="LOSS">Perda</option>
+          </select>
+          {errors.type && (
+            <p className="text-xs text-destructive mt-1">{errors.type.message}</p>
+          )}
+        </div>
 
-      <div>
-        <Label htmlFor="quantity">Quantidade</Label>
-        <Input
-          id="quantity"
-          type="number"
-          min="1"
-          {...register('quantity', { valueAsNumber: true })}
-          placeholder="Digite a quantidade"
-        />
-        {errors.quantity && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.quantity.message}</p>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Quantidade
+          </label>
+          <input
+            type="number"
+            min="1"
+            {...register('quantity', { valueAsNumber: true })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="Digite a quantidade"
+          />
+          {errors.quantity && (
+            <p className="text-xs text-destructive mt-1">{errors.quantity.message}</p>
+          )}
+        </div>
       </div>
 
       {(movementType === 'IN' || movementType === 'OUT') && (
         <div>
-          <Label htmlFor="unitCost">Custo Unitário (R$)</Label>
-          <Input
-            id="unitCost"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Custo Unitário (R$)
+          </label>
+          <input
             type="number"
             step="0.01"
             min="0"
             {...register('unitCost', { valueAsNumber: true })}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="0,00"
           />
-          <p className="text-xs text-[#737373] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {movementType === 'IN' ? 'Custo de compra do produto' : 'Valor de venda do produto'}
           </p>
         </div>
       )}
 
       <div>
-        <Label htmlFor="reason">Motivo</Label>
-        <Textarea
-          id="reason"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Motivo
+        </label>
+        <textarea
           {...register('reason')}
-          placeholder="Descreva o motivo da movimentação"
           rows={3}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground resize-none"
+          placeholder="Descreva o motivo da movimentação"
         />
         {errors.reason && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.reason.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.reason.message}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="reference">Referência (opcional)</Label>
-        <Input
-          id="reference"
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Referência (opcional)
+        </label>
+        <input
           {...register('reference')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           placeholder="Nota fiscal, pedido, etc."
         />
       </div>
 
       {isAdmin && (
         <div>
-          <Label htmlFor="soldById">Usuário Responsável (opcional)</Label>
-          <Select 
-            onValueChange={(value) => setValue('soldById', value === 'none' ? undefined : value)}
-            defaultValue={initialData?.user?.id || 'none'}
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Usuário Responsável (opcional)
+          </label>
+          <select
+            value={initialData?.user?.id || 'none'}
+            onChange={(e) => setValue('soldById', e.target.value === 'none' ? undefined : e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o usuário responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Admin (você)</SelectItem>
-              {professionals.map((professional: any) => (
-                <SelectItem key={professional.id} value={professional.id}>
-                  {professional.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-gray-500 mt-1">
+            <option value="none">Admin (você)</option>
+            {professionals.map((professional: any) => (
+              <option key={professional.id} value={professional.id}>
+                {professional.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-1">
             Deixe "Admin (você)" se você está fazendo a movimentação
           </p>
         </div>
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
+      >
         {isSubmitting ? (isEditing ? 'Atualizando...' : 'Registrando...') : (isEditing ? 'Atualizar Movimentação' : 'Registrar Movimentação')}
-      </Button>
+      </button>
     </form>
   )
 }

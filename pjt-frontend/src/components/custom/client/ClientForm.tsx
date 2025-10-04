@@ -12,6 +12,15 @@ import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 
+const formatPhone = (value: string) => {
+  const cleaned = value.replace(/\D/g, '')
+  const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/)
+  if (match) {
+    return `(${match[1]}) ${match[2]}-${match[3]}`
+  }
+  return value
+}
+
 const createClientSchema = (isAdmin: boolean) => z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   phone: z.string().min(1, 'Telefone é obrigatório'),
@@ -115,50 +124,86 @@ export function ClientForm({
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="space-y-4"
+      className="space-y-6"
     >
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue('branchId', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder={selectedBranchName || 'Selecione uma filial'} />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch: any) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Filial
+          </label>
+          <select
+            value={watch('branchId') || ''}
+            onChange={(e) => setValue('branchId', e.target.value)}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          >
+            <option value="">Selecione uma filial</option>
+            {branches.map((branch: any) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
           {errors.branchId && (
-            <p className="text-sm text-red-500">{errors.branchId.message}</p>
+            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
           )}
         </div>
       )}
       
       <div>
-        <Label htmlFor="name">Nome</Label>
-        <Input id="name" {...register('name')} />
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Nome
+        </label>
+        <input
+          {...register('name')}
+          className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+          placeholder="Nome completo do cliente"
+        />
         {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
+          <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
         )}
       </div>
-      <div>
-        <Label htmlFor="phone">Telefone</Label>
-        <Input id="phone" {...register('phone')} format='phone' />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Telefone
+          </label>
+          <input
+            {...register('phone')}
+            onChange={(e) => {
+              const formatted = formatPhone(e.target.value)
+              e.target.value = formatted
+              setValue('phone', formatted)
+            }}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="(11) 99999-9999"
+            maxLength={15}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Email (opcional)
+          </label>
+          <input
+            type="email"
+            {...register('email')}
+            className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+            placeholder="email@exemplo.com"
+          />
+          {errors.email && (
+            <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+          )}
+        </div>
       </div>
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" {...register('email')} />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
-        )}
-      </div>
-      <Button className='flex-1 bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2 cursor-pointer' type="submit" disabled={mutation.isPending}>
-        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
-      </Button>
+      
+      <button
+        type="submit"
+        disabled={mutation.isPending}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer"
+      >
+        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Cliente' : 'Salvar Cliente'}
+      </button>
     </form>
   )
 }

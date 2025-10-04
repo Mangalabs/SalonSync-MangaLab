@@ -269,7 +269,7 @@ export function ProductTable() {
       <Dialog
         open={!!adjustingProduct}
         onOpenChange={() => setAdjustingProduct(null)}>
-        <DialogContent className='w-full max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card text-foreground'>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
           <DialogHeader>
             <DialogTitle>Editar Produto - {adjustingProduct?.name}</DialogTitle>
           </DialogHeader>
