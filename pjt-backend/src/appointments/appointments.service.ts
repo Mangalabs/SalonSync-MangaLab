@@ -37,8 +37,7 @@ export class AppointmentsService extends BaseDataService {
       },
     });
     if (existingAppointment) {
-      const localTime = new Date(data.scheduledAt.getTime() - (3 * 60 * 60 * 1000));
-      const timeStr = localTime.toISOString().substring(11, 16);
+      const timeStr = data.scheduledAt.toISOString().substring(11, 16);
       console.log('⚠️ CONFLICT: Appointment already exists at this time:', {
         existing: existingAppointment.id,
         client: existingAppointment.client?.name,
@@ -276,10 +275,9 @@ export class AppointmentsService extends BaseDataService {
       }))
     });
     
-    // Extrair horários ocupados (formato HH:MM) - converter para horário local
+    // Extrair horários ocupados (formato HH:MM) - usar diretamente da string ISO
     const bookedTimes = existingAppointments.map((apt) => {
-      const localTime = new Date(apt.scheduledAt.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
-      const timeStr = localTime.toISOString().substring(11, 16);
+      const timeStr = apt.scheduledAt.toISOString().substring(11, 16);
       return timeStr;
     });
 
@@ -320,7 +318,7 @@ export class AppointmentsService extends BaseDataService {
     return slots;
   }
 
-  async confirmAppointment(id: string): Promise<Appointment> {
+  async confirmAppointment(id: string, newScheduledAt?: Date): Promise<Appointment> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
       include: {
@@ -335,11 +333,26 @@ export class AppointmentsService extends BaseDataService {
       throw new NotFoundException('Agendamento não encontrado');
     }
 
+    // Verificar se o dia do agendamento já chegou
+    const now = new Date();
+    const appointmentDate = new Date(appointment.scheduledAt.toISOString().split('T')[0]);
+    const today = new Date(now.toISOString().split('T')[0]);
+    
+    if (appointmentDate > today) {
+      const dateStr = appointment.scheduledAt.toISOString().substring(0, 10);
+      throw new Error(`Não é possível confirmar agendamento de dia futuro. Agendado para ${dateStr}. Aguarde o dia do agendamento.`);
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      // Atualizar status do appointment
+      // Atualizar status do appointment e horário se fornecido
+      const updateData: any = { status: 'COMPLETED' };
+      if (newScheduledAt) {
+        updateData.scheduledAt = newScheduledAt;
+      }
+      
       const updatedAppointment = await tx.appointment.update({
         where: { id },
-        data: { status: 'COMPLETED' },
+        data: updateData,
         include: {
           professional: {
             include: {
@@ -479,8 +492,7 @@ export class AppointmentsService extends BaseDataService {
       },
     });
     if (conflictingAppointment) {
-      const localTime = new Date(data.scheduledAt.getTime() - (3 * 60 * 60 * 1000));
-      const timeStr = localTime.toISOString().substring(11, 16);
+      const timeStr = data.scheduledAt.toISOString().substring(11, 16);
       throw new Error(`Já existe um agendamento às ${timeStr} com ${conflictingAppointment.client?.name || 'outro cliente'}`);
     }
 

@@ -39,14 +39,13 @@ export function useAppointmentForm(
 
   const getDefaultValues = () => {
     if (initialData) {
-      const scheduledAt = new Date(initialData.scheduledAt)
       return {
         professionalId: initialData.professionalId || initialData.professional?.id || '',
         clientId: initialData.clientId || initialData.client?.id || '',
         serviceIds: initialData.appointmentServices?.map((as: any) => as.service.id) || [],
         ...(isScheduled && {
-          scheduledDate: scheduledAt.toISOString().split('T')[0],
-          scheduledTime: scheduledAt.toTimeString().slice(0, 5),
+          scheduledDate: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[0] : initialData.scheduledAt?.toString()?.split('T')[0] || '',
+          scheduledTime: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[1]?.slice(0, 5) || '' : initialData.scheduledAt?.toString()?.split('T')[1]?.slice(0, 5) || '',
         }),
         ...(isAdmin && { branchId: initialData.branchId || '' }),
       }
@@ -92,12 +91,17 @@ export function useAppointmentForm(
       let status: string
       
       if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
-        // Criar data no horário local para evitar problemas de fuso horário
-        const localDate = new Date(`${data.scheduledDate}T${data.scheduledTime}:00`)
-        scheduledAt = localDate.toISOString()
+        scheduledAt = `${data.scheduledDate}T${data.scheduledTime}:00.000Z`
         status = 'SCHEDULED'
       } else {
-        scheduledAt = new Date().toISOString()
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, '0')
+        const day = String(now.getDate()).padStart(2, '0')
+        const hours = String(now.getHours()).padStart(2, '0')
+        const minutes = String(now.getMinutes()).padStart(2, '0')
+        const seconds = String(now.getSeconds()).padStart(2, '0')
+        scheduledAt = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`
         status = 'COMPLETED'
       }
       

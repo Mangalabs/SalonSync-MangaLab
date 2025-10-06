@@ -115,7 +115,11 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
 
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
-      const scheduledAt = `${data.scheduledDate}T${data.scheduledTime}:00`
+      // Compensar diferença de fuso horário do backend (adicionar 3 horas)
+      const [hours, minutes] = data.scheduledTime.split(':')
+      const adjustedHours = String((parseInt(hours) + 3) % 24).padStart(2, '0')
+      const scheduledAt = `${data.scheduledDate}T${adjustedHours}:${minutes}:00.000Z`
+      
       const appointmentDate = new Date(data.scheduledDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
