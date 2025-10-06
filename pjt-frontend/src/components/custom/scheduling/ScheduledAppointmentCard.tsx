@@ -141,8 +141,8 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
               </Button>
             )}
             {!canConfirm && (
-              <div className="text-xs text-muted-foreground">
-                Aguarde o dia agendado
+              <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                ⏰ Só é possível confirmar no dia agendado
               </div>
             )}
           </div>
