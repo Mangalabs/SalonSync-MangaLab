@@ -93,10 +93,7 @@ export default function Appointments() {
           service: a.appointmentServices?.[0]?.service?.name ?? 'Serviço',
           professionalId: a.professional?.id ?? '',
           professional: a.professional?.name ?? 'Profissional',
-          time: scheduledDate.toLocaleTimeString('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          time: a.scheduledAt.split('T')[1]?.slice(0, 5) || '00:00',
           duration: 30,
           status:
             a.status === 'SCHEDULED'
@@ -179,6 +176,10 @@ export default function Appointments() {
       queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
       queryClient.invalidateQueries({ queryKey: ['professional'] })
       queryClient.invalidateQueries({ queryKey: ['financial'] })
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao confirmar agendamento'
+      alert(message)
     },
   })
 
@@ -349,11 +350,34 @@ export default function Appointments() {
                       }}>
                       <Edit className='w-4 h-4' />
                     </button>
-                    <button
-                      className='p-2 text-green-600 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'
-                      onClick={() => confirmAppointment.mutate(appointment.id)}>
-                      <Check className='w-4 h-4' />
-                    </button>
+                    {(() => {
+                      const appointmentDate = new Date(appointment.scheduledAt.toISOString().split('T')[0])
+                      const today = new Date(new Date().toISOString().split('T')[0])
+                      const canConfirm = appointmentDate <= today
+                      
+                      if (canConfirm) {
+                        return (
+                          <button
+                            className='p-2 text-green-600 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'
+                            onClick={() => confirmAppointment.mutate(appointment.id)}>
+                            <Check className='w-4 h-4' />
+                          </button>
+                        )
+                      }
+                      
+                      return (
+                        <div className='relative group'>
+                          <button
+                            className='p-2 text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed'
+                            disabled>
+                            <Check className='w-4 h-4' />
+                          </button>
+                          <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded border border-amber-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10'>
+                            ⏰ Só é possível confirmar no dia agendado
+                          </div>
+                        </div>
+                      )
+                    })()}
                     <button
                       className='p-2 text-red-600 hover:bg-red-200 rounded-lg transition-colors cursor-pointer'
                       onClick={() => setDeletingAppointment(appointment)}>

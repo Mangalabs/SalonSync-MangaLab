@@ -105,7 +105,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
 
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
-      const scheduledAt = `${data.date}T${data.time}:00`
+      const scheduledAt = `${data.date}T${data.time}:00.000Z`
       const appointmentDate = new Date(data.date)
       const today = new Date()
       today.setHours(0, 0, 0, 0)

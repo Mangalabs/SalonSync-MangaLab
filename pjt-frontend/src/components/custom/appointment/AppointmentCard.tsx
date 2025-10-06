@@ -95,11 +95,8 @@ export function AppointmentCard({
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               <span className="font-medium text-xs">
-                {aptDate.toLocaleDateString('pt-BR')} às{' '}
-                {aptDate.toLocaleTimeString('pt-BR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {appointment.scheduledAt.split('T')[0].split('-').reverse().join('/')} às{' '}
+                {appointment.scheduledAt.split('T')[1]?.slice(0, 5)}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -196,11 +193,8 @@ export function AppointmentCard({
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span className="font-medium text-sm sm:text-base">
-            {aptDate.toLocaleDateString('pt-BR')} às{' '}
-            {aptDate.toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {appointment.scheduledAt.split('T')[0].split('-').reverse().join('/')} às{' '}
+            {appointment.scheduledAt.split('T')[1]?.slice(0, 5)}
           </span>
         </div>
         <div className="flex items-center gap-1">
