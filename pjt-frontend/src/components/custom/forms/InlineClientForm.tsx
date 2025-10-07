@@ -67,7 +67,7 @@ export function InlineClientForm({ onSuccess, branchId }: InlineClientFormProps)
         <Input
           id="phone"
           {...register('phone')}
-          placeholder="(11) 99999-9999"
+          format="phone"
           className="h-8"
         />
       </div>

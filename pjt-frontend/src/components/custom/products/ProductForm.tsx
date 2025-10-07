@@ -18,9 +18,9 @@ const productSchema = z.object({
   category: z.string().min(1, 'Categoria é obrigatória'),
   unit: z.string().min(1, 'Unidade é obrigatória'),
   brand: z.string().optional().or(z.literal('')),
-  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0').nullable().optional(),
-  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0').nullable().optional(),
-  initialStock: z.number().min(0, 'Quantidade inicial deve ser maior ou igual a 0').nullable().optional(),
+  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0').max(99999999.99, 'Preço de custo não pode exceder R$ 99.999.999,99').nullable().optional(),
+  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0').max(99999999.99, 'Preço de venda não pode exceder R$ 99.999.999,99').nullable().optional(),
+  initialStock: z.number().min(0, 'Quantidade inicial deve ser maior ou igual a 0').max(999999999, 'Quantidade não pode exceder 999.999.999 unidades').nullable().optional(),
   branchId: z.string().min(1, 'Selecione uma filial'),
 })
 
@@ -84,18 +84,18 @@ export function ProductForm({
       category: initialData.category || 'Geral',
       brand: initialData.brand || '',
       unit: initialData.unit || 'un',
-      costPrice: Number(initialData.costPrice) || 0,
-      salePrice: Number(initialData.salePrice) || 0,
-      initialStock: Number(initialData.currentStock) || 0,
+      costPrice: initialData.costPrice ? Number(initialData.costPrice) : undefined,
+      salePrice: initialData.salePrice ? Number(initialData.salePrice) : undefined,
+      initialStock: initialData.currentStock ? Number(initialData.currentStock) : undefined,
       branchId: (initialData as any).branchId || (!isAdmin ? activeBranch?.id : undefined),
     } : {
       name: '',
       category: 'Geral',
       brand: '',
       unit: 'un',
-      costPrice: 0,
-      salePrice: 0,
-      initialStock: 0,
+      costPrice: undefined,
+      salePrice: undefined,
+      initialStock: undefined,
       branchId: !isAdmin ? activeBranch?.id : undefined,
     },
   })
@@ -106,9 +106,9 @@ export function ProductForm({
     mutationFn: async (data: ProductFormData) => {
       const payload = {
         ...data,
-        costPrice: data.costPrice || 0,
-        salePrice: data.salePrice || 0,
-        initialStock: data.initialStock || 0,
+        costPrice: data.costPrice ?? 0,
+        salePrice: data.salePrice ?? 0,
+        initialStock: data.initialStock ?? 0,
         brand: data.brand || undefined,
       }
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
@@ -229,18 +229,19 @@ export function ProductForm({
           <input
             type="number"
             min="0"
+            max="999999999"
             {...register('initialStock', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseInt(value, 10) || 0,
+              setValueAs: (value) => value === '' ? undefined : parseInt(value, 10) || undefined,
             })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0"
+            placeholder="Digite a quantidade inicial"
           />
           {errors.initialStock && (
             <p className="text-xs text-destructive mt-1">{errors.initialStock.message}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            Quantidade em {selectedUnit || 'unidades'}
+            Quantidade em {selectedUnit || 'unidades'} (máx: 999.999.999)
           </p>
         </div>
       </div>
@@ -254,18 +255,19 @@ export function ProductForm({
             type="number"
             step="0.01"
             min="0"
+            max="99999999.99"
             {...register('costPrice', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
+              setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
             })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0,00"
+            placeholder="Digite o preço de custo"
           />
           {errors.costPrice && (
             <p className="text-xs text-destructive mt-1">{errors.costPrice.message}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            Quanto você paga pelo produto
+            Quanto você paga pelo produto (máx: R$ 99.999.999,99)
           </p>
         </div>
         
@@ -277,18 +279,19 @@ export function ProductForm({
             type="number"
             step="0.01"
             min="0"
+            max="99999999.99"
             {...register('salePrice', { 
               valueAsNumber: true,
-              setValueAs: (value) => value === '' ? 0 : parseFloat(value) || 0,
+              setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
             })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0,00"
+            placeholder="Digite o preço de venda"
           />
           {errors.salePrice && (
             <p className="text-xs text-destructive mt-1">{errors.salePrice.message}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            Preço usado nas vendas
+            Preço usado nas vendas (máx: R$ 99.999.999,99)
           </p>
         </div>
       </div>

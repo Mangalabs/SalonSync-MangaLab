@@ -124,7 +124,7 @@ export default function Settings() {
                 <Input
                   id='phone'
                   {...userForm.register('phone')}
-                  placeholder='(11) 99999-9999'
+                  format='phone'
                   className='bg-input text-foreground border-border'
                 />
                 <p className='text-xs text-muted-foreground mt-1'>
