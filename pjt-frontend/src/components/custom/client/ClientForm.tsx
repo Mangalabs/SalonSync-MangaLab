@@ -12,14 +12,7 @@ import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 
-const formatPhone = (value: string) => {
-  const cleaned = value.replace(/\D/g, '')
-  const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/)
-  if (match) {
-    return `(${match[1]}) ${match[2]}-${match[3]}`
-  }
-  return value
-}
+
 
 const createClientSchema = (isAdmin: boolean) => z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -168,16 +161,11 @@ export function ClientForm({
           <label className="block text-sm font-medium text-foreground mb-2">
             Telefone
           </label>
-          <input
+          <Input
             {...register('phone')}
-            onChange={(e) => {
-              const formatted = formatPhone(e.target.value)
-              e.target.value = formatted
-              setValue('phone', formatted)
-            }}
+            format="phone"
+            onRawChange={(rawValue) => setValue('phone', rawValue)}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="(11) 99999-9999"
-            maxLength={15}
           />
         </div>
         

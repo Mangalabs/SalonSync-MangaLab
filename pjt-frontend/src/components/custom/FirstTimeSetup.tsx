@@ -124,7 +124,7 @@ export function FirstTimeSetup({ onComplete }: FirstTimeSetupProps) {
               <Input 
                 id="phone" 
                 {...register('phone')} 
-                placeholder="(11) 99999-9999"
+                format="phone"
               />
             </div>
 

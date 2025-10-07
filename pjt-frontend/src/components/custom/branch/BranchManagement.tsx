@@ -159,7 +159,7 @@ export function BranchManagement() {
 
               <div>
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" {...register('phone')} className="bg-input text-foreground border-theme" />
+                <Input id="phone" {...register('phone')} format="phone" className="bg-input text-foreground border-theme" />
                 {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
               </div>
 

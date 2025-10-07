@@ -101,6 +101,11 @@ export default function CheckoutForm() {
     fetchPrices()
   }, [user])
 
+  // Se o usuário tem assinatura ativa, não mostra os planos
+  if (selectedPlan && selectedPlan.id && user?.customerId) {
+    return null
+  }
+
   return (
     <div>
       {!user && (
