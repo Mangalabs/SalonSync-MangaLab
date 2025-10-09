@@ -105,12 +105,12 @@ const menuSections = [
   {
     title: 'Sistema',
     items: [
-      {
-        to: '/dashboard/fidelity',
-        icon: Star,
-        label: 'Fidelidade',
-        roles: ['ADMIN'],
-      },
+      // {
+      //   to: '/dashboard/fidelity',
+      //   icon: Star,
+      //   label: 'Fidelidade',
+      //   roles: ['ADMIN'],
+      // },
       {
         to: '/dashboard/settings',
         icon: Settings,

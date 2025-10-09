@@ -11,7 +11,7 @@ import {
   Menu,
 } from 'lucide-react'
 
-import { isAuthenticated, logout } from '@/lib/auth'
+import { isAuthenticated } from '@/lib/auth'
 import { useBranch } from '@/contexts/BranchContext'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useUser } from '@/contexts/UserContext'
@@ -20,7 +20,7 @@ export function Header() {
   const navigate = useNavigate()
   const { activeBranch, branches, setActiveBranch } = useBranch()
   const { toggle } = useSidebar()
-  const { user } = useUser()
+  const { user, logout } = useUser()
 
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
   const [showNotificationDropdown, setShowNotificationDropdown] =
@@ -69,7 +69,6 @@ export function Header() {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
   }
 
   const Dropdown = ({
