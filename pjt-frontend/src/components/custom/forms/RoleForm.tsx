@@ -15,8 +15,8 @@ import { useBranch } from '@/contexts/BranchContext'
 const roleSchema = z.object({
   title: z.string().min(2, 'Título deve ter no mínimo 2 caracteres'),
   commissionRate: z.number().min(0).max(100).optional(),
-  baseSalary: z.union([z.number(), z.nan()]).optional(),
-  salaryPayDay: z.union([z.number(), z.nan()]).optional(),
+  baseSalary: z.number().min(0, 'Salário deve ser maior ou igual a 0').max(99999999.99, 'Salário não pode exceder R$ 99.999.999,99').optional(),
+  salaryPayDay: z.number().min(1, 'Dia deve ser entre 1 e 31').max(31, 'Dia deve ser entre 1 e 31').optional(),
   branchId: z.string().min(1, 'Selecione uma filial'),
 })
 
@@ -51,12 +51,12 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
     resolver: zodResolver(roleSchema),
     defaultValues: initialData ? {
       title: initialData.title,
-      commissionRate: initialData.commissionRate || 0,
+      commissionRate: initialData.commissionRate || undefined,
       baseSalary: initialData.baseSalary || undefined,
       salaryPayDay: initialData.salaryPayDay || undefined,
       branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
     } : {
-      commissionRate: 0,
+      commissionRate: undefined,
       branchId: !isAdmin ? activeBranch?.id : undefined,
     },
   })
@@ -141,9 +141,12 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
           step="0.01"
           min="0"
           max="100"
-          {...register('commissionRate', { valueAsNumber: true })}
+          {...register('commissionRate', { 
+            valueAsNumber: true,
+            setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+          })}
           className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-          placeholder="0"
+          placeholder="Digite a porcentagem de comissão"
         />
         {errors.commissionRate && (
           <p className="text-xs text-destructive mt-1">{errors.commissionRate.message}</p>
@@ -167,9 +170,13 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
               type="number"
               step="0.01"
               min="0"
-              {...register('baseSalary', { valueAsNumber: true })}
+              max="99999999.99"
+              {...register('baseSalary', { 
+                valueAsNumber: true,
+                setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+              })}
               className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              placeholder="0,00"
+              placeholder="Digite o salário base"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Valor fixo mensal para esta função
@@ -184,9 +191,12 @@ export function RoleForm({ onSuccess, initialData }: RoleFormProps) {
               type="number"
               min="1"
               max="31"
-              {...register('salaryPayDay', { valueAsNumber: true })}
+              {...register('salaryPayDay', { 
+                valueAsNumber: true,
+                setValueAs: (value) => value === '' ? undefined : parseInt(value, 10) || undefined,
+              })}
               className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              placeholder="5"
+              placeholder="Digite o dia do pagamento"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Dia do mês para gerar despesa

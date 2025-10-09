@@ -19,8 +19,8 @@ import { useBranch } from '@/contexts/BranchContext'
 const movementSchema = z.object({
   productId: z.string().min(1, 'Selecione um produto'),
   type: z.enum(['IN', 'OUT', 'ADJUSTMENT', 'LOSS']),
-  quantity: z.number().min(1, 'Quantidade deve ser maior que 0'),
-  unitCost: z.number().optional(),
+  quantity: z.number().min(1, 'Quantidade deve ser maior que 0').max(999999999, 'Quantidade não pode exceder 999.999.999 unidades'),
+  unitCost: z.number().min(0, 'Valor deve ser maior ou igual a 0').max(99999999.99, 'Valor não pode exceder R$ 99.999.999,99').optional(),
   reason: z.string().min(1, 'Informe o motivo'),
   reference: z.string().optional(),
   branchId: z.string().min(1, 'Selecione uma filial'),
@@ -80,7 +80,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
       branchId: !isAdmin ? activeBranch?.id : (initialData ? activeBranch?.id : undefined),
       productId: initialData?.product.id || '',
       type: initialData?.type || undefined,
-      quantity: initialData?.quantity || 0,
+      quantity: initialData?.quantity || undefined,
       unitCost: initialData?.unitCost || undefined,
       reason: initialData?.reason || '',
       reference: initialData?.reference || '',
@@ -253,7 +253,11 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
           <input
             type="number"
             min="1"
-            {...register('quantity', { valueAsNumber: true })}
+            max="999999999"
+            {...register('quantity', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseInt(value, 10) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="Digite a quantidade"
           />
@@ -272,12 +276,16 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
             type="number"
             step="0.01"
             min="0"
-            {...register('unitCost', { valueAsNumber: true })}
+            max="99999999.99"
+            {...register('unitCost', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder="0,00"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            {movementType === 'IN' ? 'Custo de compra do produto' : 'Valor de venda do produto'}
+            {movementType === 'IN' ? 'Custo de compra do produto' : 'Valor de venda do produto'} (máx: R$ 99.999.999,99)
           </p>
         </div>
       )}

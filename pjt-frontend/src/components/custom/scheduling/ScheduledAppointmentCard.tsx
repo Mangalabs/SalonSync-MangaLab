@@ -39,7 +39,6 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao confirmar agendamento')
-    
     },
   })
 
@@ -58,9 +57,13 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
   })
 
   const appointmentDate = new Date(appointment.scheduledAt)
-  const today = new Date()
-  const isToday = appointmentDate.toDateString() === today.toDateString()
-  const isPast = appointmentDate < today
+  const now = new Date()
+  const isToday = appointmentDate.toDateString() === now.toDateString()
+  const isPast = appointmentDate < now
+  // Só pode confirmar se o dia já chegou
+  const appointmentDateOnly = new Date(appointment.scheduledAt.split('T')[0])
+  const todayOnly = new Date(new Date().toISOString().split('T')[0])
+  const canConfirm = appointmentDateOnly <= todayOnly
 
   return (
     <div className={`border rounded-lg shadow-sm ${
@@ -85,11 +88,11 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
         <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3 md:h-4 md:w-4" />
-            <span>{appointmentDate.toLocaleDateString('pt-BR')}</span>
+            <span>{appointment.scheduledAt.split('T')[0].split('-').reverse().join('/')}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3 md:h-4 md:w-4" />
-            <span>{appointmentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>{appointment.scheduledAt.split('T')[1]?.slice(0, 5)}</span>
           </div>
         </div>
 
@@ -126,7 +129,7 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
               <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               Cancelar
             </Button>
-            {(isToday || isPast) && (
+            {canConfirm && (
               <Button
                 size="sm"
                 onClick={() => confirmMutation.mutate()}
@@ -136,6 +139,11 @@ export function ScheduledAppointmentCard({ appointment }: { appointment: Schedul
                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Confirmar
               </Button>
+            )}
+            {!canConfirm && (
+              <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                ⏰ Só é possível confirmar no dia agendado
+              </div>
             )}
           </div>
         </div>

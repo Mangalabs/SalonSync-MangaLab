@@ -103,8 +103,12 @@ export class AppointmentsController {
     status: 200,
     description: 'Agendamento confirmado com sucesso',
   })
-  confirmAppointment(@Param('id') id: string): Promise<Appointment> {
-    return this.apptService.confirmAppointment(id);
+  confirmAppointment(
+    @Param('id') id: string,
+    @Body() body?: { scheduledAt?: string }
+  ): Promise<Appointment> {
+    const newScheduledAt = body?.scheduledAt ? new Date(body.scheduledAt) : undefined;
+    return this.apptService.confirmAppointment(id, newScheduledAt);
   }
 
   @Post(':id/cancel')

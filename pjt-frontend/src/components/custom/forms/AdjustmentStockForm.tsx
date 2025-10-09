@@ -23,11 +23,11 @@ const adjustmentSchema = z.object({
   category: z.string().min(1, 'Categoria é obrigatória'),
   brand: z.string().optional(),
   unit: z.string().min(1, 'Unidade é obrigatória'),
-  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0'),
-  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0'),
-  minStock: z.number().min(0, 'Estoque mínimo deve ser maior ou igual a 0'),
+  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0').max(99999999.99, 'Preço de custo não pode exceder R$ 99.999.999,99'),
+  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0').max(99999999.99, 'Preço de venda não pode exceder R$ 99.999.999,99'),
+  minStock: z.number().min(0, 'Estoque mínimo deve ser maior ou igual a 0').max(999999999, 'Estoque mínimo não pode exceder 999.999.999 unidades'),
   // Ajuste de estoque
-  quantity: z.number().min(0, 'Quantidade deve ser maior ou igual a 0'),
+  quantity: z.number().min(0, 'Quantidade deve ser maior ou igual a 0').max(999999999, 'Quantidade não pode exceder 999.999.999 unidades'),
   reason: z.string().min(1, 'Informe o motivo do ajuste'),
   reference: z.string().optional(),
 })
@@ -69,10 +69,10 @@ export function AdjustmentStockForm({
       category: product?.category || '',
       brand: product?.brand || '',
       unit: product?.unit || 'un',
-      costPrice: product?.costPrice || 0,
-      salePrice: product?.salePrice || 0,
-      minStock: product?.minStock || 0,
-      quantity: product?.currentStock || 0,
+      costPrice: product?.costPrice || undefined,
+      salePrice: product?.salePrice || undefined,
+      minStock: product?.minStock || undefined,
+      quantity: product?.currentStock || undefined,
       reason: 'Ajuste de produto e estoque',
     },
   })
@@ -186,9 +186,13 @@ export function AdjustmentStockForm({
             type="number"
             step="0.01"
             min="0"
-            {...register('costPrice', { valueAsNumber: true })}
+            max="99999999.99"
+            {...register('costPrice', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0,00"
+            placeholder="Digite o preço de custo"
           />
           {errors.costPrice && (
             <p className="text-xs text-destructive mt-1">{errors.costPrice.message}</p>
@@ -203,9 +207,13 @@ export function AdjustmentStockForm({
             type="number"
             step="0.01"
             min="0"
-            {...register('salePrice', { valueAsNumber: true })}
+            max="99999999.99"
+            {...register('salePrice', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0,00"
+            placeholder="Digite o preço de venda"
           />
           {errors.salePrice && (
             <p className="text-xs text-destructive mt-1">{errors.salePrice.message}</p>
@@ -219,9 +227,13 @@ export function AdjustmentStockForm({
           <input
             type="number"
             min="0"
-            {...register('minStock', { valueAsNumber: true })}
+            max="999999999"
+            {...register('minStock', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseInt(value, 10) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            placeholder="0"
+            placeholder="Digite o estoque mínimo"
           />
           {errors.minStock && (
             <p className="text-xs text-destructive mt-1">{errors.minStock.message}</p>
@@ -235,7 +247,11 @@ export function AdjustmentStockForm({
           <input
             type="number"
             min="0"
-            {...register('quantity', { valueAsNumber: true })}
+            max="999999999"
+            {...register('quantity', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? undefined : parseInt(value, 10) || undefined,
+            })}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
             placeholder={`Quantidade atual: ${product.currentStock}`}
           />

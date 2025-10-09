@@ -127,7 +127,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
     if (product?.salePrice) {
       setValue('unitPrice', Number(product.salePrice))
     } else {
-      setValue('unitPrice', 0)
+      setValue('unitPrice', undefined)
     }
   }
 

@@ -13,7 +13,7 @@ import { useBranch } from '@/contexts/BranchContext'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
-  price: z.coerce.number().positive('Preço deve ser maior que zero'),
+  price: z.coerce.number().positive('Preço deve ser maior que zero').max(99999999.99, 'Preço não pode exceder R$ 99.999.999,99'),
   branchId: z.string().optional(),
 })
 
@@ -49,7 +49,7 @@ export function ServiceForm({
     resolver: zodResolver(schema),
     defaultValues: {
       name: initialData?.name || '',
-      price: initialData ? Number(initialData.price) : 0,
+      price: initialData ? Number(initialData.price) : undefined,
       branchId: !isAdmin ? activeBranch?.id : (initialData?.branchId || undefined),
     },
   })
@@ -126,11 +126,14 @@ export function ServiceForm({
         <Label htmlFor="price">Preço (R$)</Label>
         <Input
           id="price"
-          placeholder="0,00"
+          placeholder="Digite o preço do serviço"
           type="number"
           step="0.01"
           min="0"
-          {...register('price')}
+          max="99999999.99"
+          {...register('price', {
+            setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+          })}
         />
         {errors.price && (
           <p className="text-sm text-red-500">{errors.price.message}</p>

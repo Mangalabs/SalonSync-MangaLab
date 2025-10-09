@@ -1,4 +1,5 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -16,6 +17,7 @@ import { FinancialModule } from './financial/financial.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { BaseDataService } from './common/services/base-data.service';
+import { ValidationErrorInterceptor } from './common/interceptors/validation-error.interceptor';
 import { AiModule } from './ai/ai.module';
 import { ResetPasswordModule } from './resetPassword/resetPassword.module';
 import { PaymentModule } from './payment/paument.module';
@@ -42,7 +44,14 @@ import { FidelityModule } from './fidelity/fidelity.module';
     FidelityModule,
   ],
   controllers: [AppController],
-  providers: [AppService, BaseDataService],
+  providers: [
+    AppService, 
+    BaseDataService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ValidationErrorInterceptor,
+    },
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { AppointmentForm } from '@/components/custom/appointment/AppointmentForm'
+import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 
 interface Appointment {
   id: string
@@ -89,10 +89,9 @@ export default function AppointmentHistory() {
   const normalizedAppointments: AppointmentHistory[] = branchAppointments.map(
     (apt) => {
       const dateObj = apt.scheduledAt ? new Date(apt.scheduledAt) : null
-      const dateStr = dateObj ? dateObj.toISOString().split('T')[0] : ''
-      const timeStr = dateObj
-        ? dateObj.toISOString().split('T')[1]?.slice(0, 5) || ''
-        : ''
+      const scheduledAtStr = typeof apt.scheduledAt === 'string' ? apt.scheduledAt : apt.scheduledAt?.toString() || ''
+      const dateStr = dateObj && scheduledAtStr ? scheduledAtStr.split('T')[0] : ''
+      const timeStr = dateObj && scheduledAtStr ? scheduledAtStr.split('T')[1]?.slice(0, 5) || '' : ''
 
       const serviceNames = Array.isArray(apt.appointmentServices)
         ? apt.appointmentServices.map((s) => s.service.name)
@@ -225,7 +224,7 @@ export default function AppointmentHistory() {
                   >
                     <td className='py-3 px-2 text-sm'>
                       <div className='text-foreground font-medium'>
-                        {appointment.date ? new Date(appointment.date).toLocaleDateString('pt-BR') : '-'}
+                        {appointment.date ? appointment.date.split('-').reverse().join('/') : '-'}
                       </div>
                       <div className='text-muted-foreground text-xs'>
                         {appointment.time || '-'}
@@ -286,14 +285,21 @@ export default function AppointmentHistory() {
       </div>
 
       <Dialog open={!!editingAppointment} onOpenChange={() => setEditingAppointment(null)}>
-        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card text-card-foreground border border-border rounded-2xl shadow-sm'>
+        <DialogContent className='!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Editar Atendimento</DialogTitle>
           </DialogHeader>
           {editingAppointment && (
-            <AppointmentForm
-              mode='immediate'
-              initialData={editingAppointment}
+            <ImmediateAppointmentForm
+              initialData={{
+                id: editingAppointment.id,
+                clientId: editingAppointment.client,
+                professionalId: editingAppointment.professional,
+                serviceIds: editingAppointment.services,
+                scheduledAt: `${editingAppointment.date}T${editingAppointment.time}:00.000Z`,
+                total: editingAppointment.price.toString(),
+                status: 'COMPLETED'
+              }}
               onSuccess={() => setEditingAppointment(null)}
             />
           )}
