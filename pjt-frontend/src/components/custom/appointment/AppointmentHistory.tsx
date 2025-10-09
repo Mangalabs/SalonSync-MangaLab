@@ -88,6 +88,7 @@ export default function AppointmentHistory() {
 
   const normalizedAppointments: AppointmentHistory[] = branchAppointments.map(
     (apt) => {
+      console.log('Appointment data:', apt)
       const dateObj = apt.scheduledAt ? new Date(apt.scheduledAt) : null
       const scheduledAtStr = typeof apt.scheduledAt === 'string' ? apt.scheduledAt : apt.scheduledAt?.toString() || ''
       const dateStr = dateObj && scheduledAtStr ? scheduledAtStr.split('T')[0] : ''
@@ -106,6 +107,7 @@ export default function AppointmentHistory() {
         professional: apt.professional?.name || 'Profissional removido',
         duration: 45,
         price: Number(apt.total) || 0,
+        paymentMethod: apt.paymentMethod || 'N/A',
         status:
           apt.status === 'COMPLETED'
             ? 'completed'
@@ -211,7 +213,7 @@ export default function AppointmentHistory() {
             <table className='w-full'>
               <thead>
                 <tr className='border-b border-border'>
-                  {['Data','Cliente','Serviços','Profissional','Valor','Ações'].map(h => (
+                  {['Data','Cliente','Serviços','Profissional','Valor','Pagamento','Ações'].map(h => (
                     <th key={h} className='text-left py-3 px-2 font-medium text-muted-foreground text-sm'>{h}</th>
                   ))}
                 </tr>
@@ -238,6 +240,13 @@ export default function AppointmentHistory() {
                     <td className='py-3 px-2 text-sm text-muted-foreground'>{appointment.professional}</td>
                     <td className='py-3 px-2 text-sm font-medium text-foreground'>
                       R$ {appointment.price.toFixed(2).replace('.', ',')}
+                    </td>
+                    <td className='py-3 px-2 text-sm text-muted-foreground'>
+                      {appointment.paymentMethod === 'CASH' ? 'Dinheiro' :
+                       appointment.paymentMethod === 'CARD' ? 'Cartão' :
+                       appointment.paymentMethod === 'PIX' ? 'PIX' :
+                       appointment.paymentMethod === 'TRANSFER' ? 'Transferência' :
+                       appointment.paymentMethod === 'OTHER' ? 'Outros' : 'N/A'}
                     </td>
                     <td className='py-3 px-2 text-sm flex gap-2'>
                       <Button
