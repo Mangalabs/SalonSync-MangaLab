@@ -130,7 +130,7 @@ export default function AdminDashboard() {
 
   const revenueForDate = (date: string) =>
     appointments
-      .filter((a) => formatDate(new Date(a.scheduledAt)) === date)
+      .filter((a) => formatDate(new Date(a.scheduledAt)) === date && a.status === 'COMPLETED')
       .reduce((s, a) => s + +a.total, 0) +
     movements
       .filter((m) => formatDate(new Date(m.createdAt)) === date)
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
 
     appointments.forEach((a) => {
       const d = formatDate(new Date(a.scheduledAt))
-      if (totals[d] !== undefined) {
+      if (totals[d] !== undefined && a.status === 'COMPLETED') {
         totals[d] += +a.total
       }
     })

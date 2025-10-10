@@ -21,6 +21,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
+import { AppointmentConfirmationForm } from '@/components/custom/appointment/AppointmentConfirmationForm'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +67,7 @@ export default function Appointments() {
     useState<Appointment | null>(null)
   const [deletingAppointment, setDeletingAppointment] =
     useState<Appointment | null>(null)
-  const [completingAppointment, setCompletingAppointment] =
+  const [confirmingAppointment, setConfirmingAppointment] =
     useState<Appointment | null>(null)
   const [selectedDate, setSelectedDate] = useState(() =>
     normalizeDate(new Date()),
@@ -164,24 +165,7 @@ export default function Appointments() {
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
     .slice(0, 5)
 
-  const confirmAppointment = useMutation({
-    mutationFn: async (appointmentId: string) => {
-      await axios.post(`/api/appointments/${appointmentId}/confirm`)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
-      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-commission'] })
-      queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
-      queryClient.invalidateQueries({ queryKey: ['professional'] })
-      queryClient.invalidateQueries({ queryKey: ['financial'] })
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Erro ao confirmar agendamento'
-      alert(message)
-    },
-  })
+
 
   const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
@@ -359,7 +343,7 @@ export default function Appointments() {
                         return (
                           <button
                             className='p-2 text-green-600 hover:bg-green-200 rounded-lg transition-colors cursor-pointer'
-                            onClick={() => confirmAppointment.mutate(appointment.id)}>
+                            onClick={() => setConfirmingAppointment(appointment)}>
                             <Check className='w-4 h-4' />
                           </button>
                         )
@@ -540,6 +524,22 @@ export default function Appointments() {
           <ImmediateAppointmentForm
             onSuccess={() => setShowRegisterForm(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!confirmingAppointment}
+        onOpenChange={() => setConfirmingAppointment(null)}>
+        <DialogContent className='!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Confirmar Agendamento</DialogTitle>
+          </DialogHeader>
+          {confirmingAppointment && (
+            <AppointmentConfirmationForm
+              appointment={confirmingAppointment}
+              onSuccess={() => setConfirmingAppointment(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

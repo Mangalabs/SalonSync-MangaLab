@@ -13,6 +13,7 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
     professionalId: z.string().min(1, 'Selecione um profissional'),
     clientId: z.string().min(1, 'Selecione um cliente'),
     serviceIds: z.array(z.string()).min(1, 'Selecione ao menos um serviço'),
+    ...(!isScheduled && { paymentMethod: z.string().optional() }),
     ...(isAdmin && { branchId: z.string().min(1, 'Selecione uma filial') }),
   }
   
@@ -43,6 +44,7 @@ export function useAppointmentForm(
         professionalId: initialData.professionalId || initialData.professional?.id || '',
         clientId: initialData.clientId || initialData.client?.id || '',
         serviceIds: initialData.appointmentServices?.map((as: any) => as.service.id) || [],
+        ...(!isScheduled && { paymentMethod: initialData.paymentMethod || 'CASH' }),
         ...(isScheduled && {
           scheduledDate: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[0] : initialData.scheduledAt?.toString()?.split('T')[0] || '',
           scheduledTime: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[1]?.slice(0, 5) || '' : initialData.scheduledAt?.toString()?.split('T')[1]?.slice(0, 5) || '',
@@ -62,6 +64,7 @@ export function useAppointmentForm(
       professionalId: '', 
       clientId: '', 
       serviceIds: [],
+      paymentMethod: 'CASH',
       ...(isAdmin && { branchId: '' }),
     }
   }
@@ -118,6 +121,7 @@ export function useAppointmentForm(
         serviceIds: data.serviceIds,
         scheduledAt,
         status,
+        ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
       }
       
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}

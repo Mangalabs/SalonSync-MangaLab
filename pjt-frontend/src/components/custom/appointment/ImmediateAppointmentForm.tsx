@@ -186,6 +186,22 @@ export function ImmediateAppointmentForm({
           </div>
 
           <div>
+            <label className='block text-sm font-medium text-foreground mb-2'>
+              Método de Pagamento
+            </label>
+            <select
+              value={watch('paymentMethod') || 'CASH'}
+              onChange={(e) => setValue('paymentMethod', e.target.value)}
+              className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+              <option value='CASH'>Dinheiro</option>
+              <option value='CARD'>Cartão</option>
+              <option value='PIX'>PIX</option>
+              <option value='TRANSFER'>Transferência</option>
+              <option value='OTHER'>Outros</option>
+            </select>
+          </div>
+
+          <div>
             <label className='block text-sm font-medium text-foreground mb-3'>
               Serviços Realizados
             </label>
