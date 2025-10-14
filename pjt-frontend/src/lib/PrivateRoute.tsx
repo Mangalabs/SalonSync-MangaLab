@@ -8,5 +8,5 @@ interface Props {
 }
 
 export function PrivateRoute({ children }: Props) {
-  return isAuthenticated() ? children : <Navigate to="/login" replace />
+  return isAuthenticated() ? children : <Navigate to="/" replace />
 }

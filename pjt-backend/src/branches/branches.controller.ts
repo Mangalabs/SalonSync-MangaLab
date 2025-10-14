@@ -20,6 +20,11 @@ export class BranchesController {
     return this.branchesService.findAll(token);
   }
 
+  @Get('test-public')
+  testPublic() {
+    return { message: 'Endpoint público funcionando!', timestamp: new Date().toISOString() };
+  }
+
   @Post()
   create(
     @Body()
@@ -53,5 +58,10 @@ export class BranchesController {
   delete(@Param('id') id: string, @Headers('authorization') auth: string) {
     const token = auth?.replace('Bearer ', '');
     return this.branchesService.delete(id, token);
+  }
+
+  @Get('public/test')
+  publicTest() {
+    return { message: 'API pública funcionando!', timestamp: new Date().toISOString() };
   }
 }
