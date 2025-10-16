@@ -9,11 +9,13 @@ export function BookingLinkGenerator() {
   const { user } = useUser()
   const [copied, setCopied] = useState(false)
 
-  if (!activeBranch || !user?.businessName) {
+  if (!activeBranch) {
     return null
   }
 
-  const bookingUrl = `${window.location.origin}/booking/${user.businessName}/${activeBranch.name}`
+  // For professionals, get business name from branch owner, for admins use their business name
+  const businessName = user?.businessName || 'business'
+  const bookingUrl = `${window.location.origin}/booking/${businessName}/${activeBranch.name}`
 
   const copyToClipboard = async () => {
     try {
@@ -30,8 +32,8 @@ export function BookingLinkGenerator() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Agendamento - ${user.businessName}`,
-          text: `Agende seu horário em ${user.businessName} - ${activeBranch.name}`,
+          title: `Agendamento - ${businessName}`,
+          text: `Agende seu horário em ${businessName} - ${activeBranch.name}`,
           url: bookingUrl
         })
       } catch (error) {
@@ -61,7 +63,7 @@ export function BookingLinkGenerator() {
       <div className="space-y-4">
         <div className="bg-muted/50 rounded-xl p-4">
           <p className="text-sm font-medium text-foreground mb-2">Filial Ativa:</p>
-          <p className="text-sm text-muted-foreground">{user.businessName} - {activeBranch.name}</p>
+          <p className="text-sm text-muted-foreground">{businessName} - {activeBranch.name}</p>
         </div>
 
         <div className="bg-muted/50 rounded-xl p-4">
