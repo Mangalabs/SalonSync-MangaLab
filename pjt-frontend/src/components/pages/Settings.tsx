@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubscriptionManagement } from '@/components/custom/management/SubscriptionManagement'
 import { BranchManagement } from '@/components/custom/branch/BranchManagement'
+import { BookingLinkGenerator } from '@/components/custom/BookingLinkGenerator'
 import { useUser } from '@/contexts/UserContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import {
@@ -254,6 +255,8 @@ export default function Settings() {
         </div>
       </div>
 
+      <BookingLinkGenerator />
+      
       {isAdmin && (
         <>
           <BranchManagement />

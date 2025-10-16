@@ -22,6 +22,16 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(private prisma: PrismaService) {}
 
   async use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    console.log('🔍 Auth middleware - Path:', req.path, '- Updated!');
+    
+    // Verificar se a rota é pública
+    if (req.path.startsWith('/public/')) {
+      console.log('✅ Public route detected, skipping auth');
+      return next();
+    }
+    
+    console.log('🔒 Private route, checking auth');
+
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
 

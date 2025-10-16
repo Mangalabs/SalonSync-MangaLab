@@ -28,6 +28,7 @@ import TestBranch from './pages/TestBranch'
 import NewAppointment from './components/pages/NewAppointments'
 import Help from './components/pages/Help'
 import Sales from './components/pages/Sales'
+import BookingPage from './pages/booking/BookingPage'
 
 export default function App() {
   return (
@@ -171,6 +172,7 @@ export default function App() {
                 <Route path='help' element={<Help />} />
               </Route>
 
+              <Route path='/booking/:businessSlug/:branchSlug' element={<BookingPage />} />
               <Route path='*' element={<Home />} />
             </Routes>
           </BrowserRouter>

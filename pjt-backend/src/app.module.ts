@@ -22,6 +22,7 @@ import { AiModule } from './ai/ai.module';
 import { ResetPasswordModule } from './resetPassword/resetPassword.module';
 import { PaymentModule } from './payment/paument.module';
 import { FidelityModule } from './fidelity/fidelity.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { FidelityModule } from './fidelity/fidelity.module';
     ResetPasswordModule,
     PaymentModule,
     FidelityModule,
+    PublicModule,
   ],
   controllers: [AppController],
   providers: [
@@ -65,6 +67,8 @@ export class AppModule {
         { path: 'payment/create-checkout-session', method: RequestMethod.POST },
         { path: 'payment/create-customer', method: RequestMethod.POST },
         { path: 'payment/retrieve-products', method: RequestMethod.GET },
+        { path: 'test', method: RequestMethod.GET },
+        { path: 'public/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
   }
