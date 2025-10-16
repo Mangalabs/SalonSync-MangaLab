@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
+import { QueueService } from './queue.service';
 import { Appointment } from '@prisma/client';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
@@ -18,7 +19,10 @@ import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 @ApiTags('appointments')
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly apptService: AppointmentsService) {}
+  constructor(
+    private readonly apptService: AppointmentsService,
+    private readonly queueService: QueueService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Criar novo agendamento' })
@@ -60,6 +64,19 @@ export class AppointmentsController {
       },
       { professionalId, startDate, endDate },
     );
+  }
+
+  @Get('queue-stats')
+  @ApiOperation({ summary: 'Obter estatísticas da fila de atendimento' })
+  @ApiResponse({ status: 200, description: 'Estatísticas da fila' })
+  getQueueStats(
+    @Query('date') date: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    const branchId = req.user.branchId || '';
+    console.log('Queue stats request - branchId:', branchId, 'date:', targetDate);
+    return this.queueService.getQueueStats(branchId, targetDate);
   }
 
   @Get('available-slots/:professionalId/:date')
@@ -159,4 +176,5 @@ export class AppointmentsController {
       targetBranchId,
     );
   }
+
 }

@@ -101,6 +101,7 @@ model Service {
   id                  String               @id @default(uuid())
   name                String
   price               Decimal              @db.Decimal(10, 2)
+  duration            Int                  @default(30)
   branchId            String?
   ownerId             String
   appointmentServices AppointmentService[]
