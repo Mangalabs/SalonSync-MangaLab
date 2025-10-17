@@ -8,6 +8,7 @@ import {
   Check,
   Trash2,
   Calendar as CalendarIcon,
+  Users,
 } from 'lucide-react'
 
 import axios from '@/lib/axios'
@@ -22,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import { AppointmentConfirmationForm } from '@/components/custom/appointment/AppointmentConfirmationForm'
+import { QueueView } from '@/components/custom/appointment/QueueView'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +63,7 @@ const normalizeDate = (date: Date) =>
 
 export default function Appointments() {
   const { activeBranch } = useBranch()
+  const [viewMode, setViewMode] = useState<'calendar' | 'queue'>('calendar')
   const [showForm, setShowForm] = useState(false)
   const [showRegisterForm, setShowRegisterForm] = useState(false)
   const [editingAppointment, setEditingAppointment] =
@@ -178,7 +181,50 @@ export default function Appointments() {
   })
 
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
+    <div className='space-y-6'>
+      {/* Toggle de Visualização */}
+      <div className='bg-card rounded-2xl p-4 shadow-sm border border-border'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h2 className='text-xl font-semibold text-foreground'>Agenda</h2>
+            <p className='text-sm text-muted-foreground'>Gerencie os agendamentos da sua equipe</p>
+          </div>
+          
+          <div className='flex items-center gap-2 p-1 bg-muted rounded-xl'>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                viewMode !== 'calendar' ? 'cursor-pointer' : ''
+              }`}
+              style={{
+                backgroundColor: viewMode === 'calendar' ? 'var(--color-card)' : 'transparent',
+                color: viewMode === 'calendar' ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
+                boxShadow: viewMode === 'calendar' ? '0 2px 4px var(--color-shadow)' : 'none',
+              }}>
+              <CalendarIcon className='w-4 h-4' />
+              Calendário
+            </button>
+            <button
+              onClick={() => setViewMode('queue')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                viewMode !== 'queue' ? 'cursor-pointer' : ''
+              }`}
+              style={{
+                backgroundColor: viewMode === 'queue' ? 'var(--color-card)' : 'transparent',
+                color: viewMode === 'queue' ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
+                boxShadow: viewMode === 'queue' ? '0 2px 4px var(--color-shadow)' : 'none',
+              }}>
+              <Users className='w-4 h-4' />
+              Fila
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {viewMode === 'queue' ? (
+        <QueueView />
+      ) : (
+        <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
       <div className='lg:col-span-3 bg-card rounded-2xl p-6 shadow-sm border border-border'>
         <div className='flex justify-between items-center mb-6'>
           <h3 className='text-lg font-semibold text-foreground capitalize'>
@@ -569,6 +615,8 @@ export default function Appointments() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </div>
+      )}
     </div>
   )
 }

@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Calendar as CalendarIcon, Clock, Info } from 'lucide-react'
 
 import AppointmentHistory from '@/components/custom/appointment/AppointmentHistory'
-import { BookingLinkGenerator } from '@/components/custom/BookingLinkGenerator'
 
 import Appointments from './Appointments'
 
@@ -98,8 +97,6 @@ export default function NewAppointment() {
           </div>
         </div>
       </div>
-
-      <BookingLinkGenerator />
 
       {mode === 'schedule' ? <Appointments /> : <AppointmentHistory />}
     </div>

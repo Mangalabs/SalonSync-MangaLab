@@ -103,7 +103,7 @@ export class ServicesService extends BaseDataService {
   }
 
   async create(
-    data: { name: string; price: number },
+    data: { name: string; price: number; duration?: number },
     user: UserContext,
     targetBranchId?: string,
   ) {
@@ -124,6 +124,7 @@ export class ServicesService extends BaseDataService {
         data: {
           name: data.name,
           price: data.price,
+          duration: data.duration || 30,
           branchId, // null = global, string = específico da filial
           ownerId: user.id,
         },
@@ -146,6 +147,7 @@ export class ServicesService extends BaseDataService {
         data: {
           name: data.name,
           price: data.price,
+          duration: data.duration || 30,
           branchId,
           ownerId: branch.ownerId, // Serviço pertence ao dono da filial
         },
@@ -155,7 +157,7 @@ export class ServicesService extends BaseDataService {
 
   async update(
     id: string,
-    data: { name?: string; price?: number },
+    data: { name?: string; price?: number; duration?: number },
     user?: UserContext,
     targetBranchId?: string,
   ) {

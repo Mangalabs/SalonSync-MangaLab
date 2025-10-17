@@ -23,8 +23,8 @@ export class CreateServiceDto {
   @ApiProperty({ description: 'Duração em minutos' })
   @IsOptional()
   @IsNumber()
-  @Min(1, { message: 'Duração deve ser maior que zero' })
-  @Max(1440, { message: 'Duração não pode exceder 24 horas (1440 minutos)' })
+  @Min(15, { message: 'Duração deve ser no mínimo 15 minutos' })
+  @Max(180, { message: 'Duração não pode exceder 180 minutos' })
   @Transform(({ value }) => typeof value === 'string' ? parseInt(value, 10) : value)
-  durationMin?: number;
+  duration?: number;
 }

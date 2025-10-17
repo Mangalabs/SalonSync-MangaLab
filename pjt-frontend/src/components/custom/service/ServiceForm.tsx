@@ -14,6 +14,7 @@ import { useBranch } from '@/contexts/BranchContext'
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
   price: z.coerce.number().positive('Preço deve ser maior que zero').max(99999999.99, 'Preço não pode exceder R$ 99.999.999,99'),
+  duration: z.coerce.number().min(15, 'Duração mínima de 15 minutos').max(180, 'Duração máxima de 180 minutos'),
   branchId: z.string().optional(),
 })
 
@@ -24,7 +25,7 @@ export function ServiceForm({
   initialData, 
 }: { 
   onSuccess: () => void;
-  initialData?: { id: string; name: string; price: string; branchId?: string } | null;
+  initialData?: { id: string; name: string; price: string; duration?: string; branchId?: string } | null;
 }) {
   const isEditing = !!initialData
   const { isAdmin } = useUser()
@@ -50,6 +51,7 @@ export function ServiceForm({
     defaultValues: {
       name: initialData?.name || '',
       price: initialData ? Number(initialData.price) : undefined,
+      duration: initialData ? Number(initialData.duration) : 30,
       branchId: !isAdmin ? activeBranch?.id : (initialData?.branchId || undefined),
     },
   })
@@ -61,6 +63,7 @@ export function ServiceForm({
       const payload = {
         name: data.name,
         price: data.price,
+        duration: data.duration,
       }
       
       const config = {
@@ -137,6 +140,23 @@ export function ServiceForm({
         />
         {errors.price && (
           <p className="text-sm text-red-500">{errors.price.message}</p>
+        )}
+      </div>
+      
+      <div>
+        <Label htmlFor="duration">Duração (minutos)</Label>
+        <Input
+          id="duration"
+          placeholder="Duração em minutos"
+          type="number"
+          min="15"
+          max="180"
+          {...register('duration', {
+            setValueAs: (value) => value === '' ? undefined : parseInt(value) || undefined,
+          })}
+        />
+        {errors.duration && (
+          <p className="text-sm text-red-500">{errors.duration.message}</p>
         )}
       </div>
       

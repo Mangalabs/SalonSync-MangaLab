@@ -27,7 +27,7 @@ interface Service {
   name: string
   description?: string
   price: number
-  duration?: string
+  duration?: number
   icon?: string
   color?: string
   branchId?: string
@@ -191,18 +191,16 @@ export function ServiceTable() {
                     }}>
                     R$ {Number(service.price).toFixed(2).replace('.', ',')}
                   </span>
-                  {service.duration && (
-                    <span
-                      style={{
-                        color: 'var(--color-muted-foreground)',
-                        backgroundColor: 'var(--color-muted)',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                      }}>
-                      {service.duration}
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      color: 'var(--color-muted-foreground)',
+                      backgroundColor: 'var(--color-muted)',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                    }}>
+                    {service.duration || 30}min
+                  </span>
                 </div>
 
                 {isAdmin && (
@@ -285,7 +283,11 @@ export function ServiceTable() {
           <ServiceForm
             initialData={
               editingService
-                ? { ...editingService, price: String(editingService.price) }
+                ? { 
+                    ...editingService, 
+                    price: String(editingService.price),
+                    duration: editingService.duration ? String(editingService.duration) : '30'
+                  }
                 : undefined
             }
             onSuccess={() => setEditingService(null)}
