@@ -37,15 +37,15 @@ export default function Help() {
       items: [
         {
           title: 'Como configurar minha primeira filial',
-          content: 'Aprenda a configurar sua filial, adicionar informações básicas e personalizar as configurações iniciais.',
+          content: 'Acesse "Configurações" no menu lateral. Preencha nome da filial, endereço, telefone e horários de funcionamento. Essas informações aparecerão nos links de agendamento público.',
         },
         {
           title: 'Cadastrando profissionais',
-          content: 'Veja como adicionar profissionais, definir funções e configurar comissões.',
+          content: 'Vá em "Profissionais" e clique "Novo Profissional". Defina nome, telefone, função (cabeleireiro, manicure, etc.) e percentual de comissão. A comissão é calculada automaticamente quando atendimentos são confirmados.',
         },
         {
           title: 'Criando serviços',
-          content: 'Configure os serviços oferecidos, preços e vincule aos profissionais.',
+          content: 'Em "Serviços", adicione nome do serviço, preço e duração (15-180 minutos). A duração é usada para calcular horários disponíveis e próxima disponibilidade na fila de atendimento.',
         },
       ],
     },
@@ -58,15 +58,15 @@ export default function Help() {
       items: [
         {
           title: 'Como criar um agendamento',
-          content: 'Passo a passo para criar novos agendamentos, selecionar profissionais e serviços.',
+          content: 'Na "Agenda", clique "Agendar Atendimento". Selecione cliente (ou cadastre novo), escolha profissional e serviço. O sistema mostra apenas horários disponíveis baseados na duração do serviço e agenda do profissional.',
         },
         {
-          title: 'Gerenciando horários disponíveis',
-          content: 'Configure horários de funcionamento e gerencie a disponibilidade dos profissionais.',
+          title: 'Visualização Calendário vs Fila',
+          content: 'Use o toggle no topo da Agenda. Calendário: visão mensal tradicional. Fila: visualização em tempo real por profissional, mostra status (livre, próximo, atrasado, ocupado) e próxima disponibilidade.',
         },
         {
           title: 'Confirmando atendimentos',
-          content: 'Aprenda a confirmar atendimentos realizados e gerar comissões automaticamente.',
+          content: 'Clique no botão verde ✓ no agendamento. Selecione método de pagamento (Dinheiro, Cartão, PIX, Transferência, Outros). Isso gera automaticamente receita no financeiro e comissão para o profissional.',
         },
       ],
     },
@@ -79,11 +79,11 @@ export default function Help() {
       items: [
         {
           title: 'Cadastrando clientes',
-          content: 'Como adicionar novos clientes com informações de contato e histórico.',
+          content: 'Em "Clientes", clique "Novo Cliente". Preencha nome (obrigatório), telefone e email. O telefone usa máscara automática brasileira. Clientes podem ser selecionados rapidamente durante agendamentos.',
         },
         {
-          title: 'Histórico de atendimentos',
-          content: 'Visualize o histórico completo de atendimentos de cada cliente.',
+          title: 'Gerando link de agendamento',
+          content: 'Em "Configurações", use o "Gerador de Link de Agendamento" para criar links públicos. Clientes podem agendar sozinhos via URL: /booking/{filial}/{unidade}. O sistema mostra apenas horários disponíveis.',
         },
       ],
     },
@@ -95,20 +95,20 @@ export default function Help() {
       bgColor: 'bg-yellow-50',
       items: [
         {
-          title: 'Controle de receitas e despesas',
-          content: 'Gerencie todas as movimentações financeiras, categorizando receitas e despesas.',
+          title: 'Dashboard financeiro',
+          content: 'O painel mostra receita do mês, despesas, lucro líquido e gráficos de tendência. Apenas atendimentos CONFIRMADOS contam para receita. Comissões são calculadas automaticamente.',
         },
         {
-          title: 'Despesas fixas',
-          content: 'Configure despesas recorrentes como aluguel, salários e contas mensais.',
-        },
-        {
-          title: 'Relatórios financeiros',
-          content: 'Analise a performance financeira com relatórios detalhados e gráficos.',
+          title: 'Registrando receitas e despesas',
+          content: 'Em "Financeiro", use "Nova Receita" ou "Nova Despesa". Preencha descrição, valor, categoria e método de pagamento. Receitas de atendimentos são geradas automaticamente na confirmação.',
         },
         {
           title: 'Sistema de comissões',
-          content: 'Entenda como funciona o cálculo automático de comissões dos profissionais.',
+          content: 'Comissões são calculadas pelo percentual definido no profissional. Geradas automaticamente quando atendimento é confirmado. Aparecem como despesa no financeiro com referência ao atendimento.',
+        },
+        {
+          title: 'Histórico de transações',
+          content: 'Todas as movimentações ficam registradas com data, descrição, valor e categoria. Atendimentos confirmados geram automaticamente receita + comissão vinculadas.',
         },
       ],
     },
@@ -121,15 +121,15 @@ export default function Help() {
       items: [
         {
           title: 'Cadastrando produtos',
-          content: 'Adicione produtos ao estoque com preços, códigos e informações detalhadas.',
+          content: 'Em "Estoque", clique "Novo Produto". Preencha nome, código (opcional), preço de compra, preço de venda, quantidade inicial e estoque mínimo para alertas.',
         },
         {
-          title: 'Controle de movimentações',
-          content: 'Gerencie entradas, saídas e ajustes de estoque com rastreabilidade completa.',
+          title: 'Movimentações de estoque',
+          content: 'Registre ENTRADA (compras), SAÍDA (vendas/uso) e AJUSTE (correções). Cada movimentação fica registrada com data, quantidade, motivo e usuário responsável.',
         },
         {
-          title: 'Alertas de estoque mínimo',
-          content: 'Configure alertas para produtos com estoque baixo.',
+          title: 'Integração com financeiro',
+          content: 'Movimentações de estoque podem gerar automaticamente transações financeiras. Compras viram despesas, vendas viram receitas, mantendo controle integrado.',
         },
       ],
     },
@@ -141,16 +141,16 @@ export default function Help() {
       bgColor: 'bg-indigo-50',
       items: [
         {
-          title: 'Dashboard e métricas',
-          content: 'Entenda os indicadores principais e como interpretar os dados do dashboard.',
+          title: 'Dashboard principal',
+          content: 'Mostra resumo do mês: receita, despesas, lucro, agendamentos de hoje, próximos agendamentos. Gráficos de tendência mensal e ranking de profissionais por receita.',
         },
         {
-          title: 'Relatórios de performance',
-          content: 'Analise a performance dos profissionais e serviços mais procurados.',
+          title: 'Fila de atendimento',
+          content: 'Visualização em tempo real: status de cada profissional, próxima disponibilidade calculada pela duração dos serviços, agendamentos atrasados destacados em vermelho.',
         },
         {
-          title: 'Exportando dados',
-          content: 'Aprenda a exportar relatórios em PDF e Excel para análises externas.',
+          title: 'Histórico de agendamentos',
+          content: 'Lista todos os atendimentos com filtros por data, profissional e status. Mostra método de pagamento, cliente, serviço e valor. Permite confirmar atendimentos pendentes.',
         },
       ],
     },
