@@ -99,9 +99,27 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     enabled: !!activeBranch,
   })
 
+  const { data: appointments = [] } = useQuery({
+    queryKey: ['appointments', activeBranch?.id],
+    queryFn: async () => {
+      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
+      const res = await axios.get(`/api/appointments${params}`)
+      return res.data
+    },
+    enabled: !!activeBranch,
+  })
+
+  const hasActiveAppointments = (clientId: string) => {
+    return appointments.some((apt: any) => 
+      apt.clientId === clientId && apt.status === 'SCHEDULED'
+    )
+  }
+
   const deleteClient = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/clients/${id}`)
+      await axios.delete(`/api/clients/${id}`, {
+        headers: { 'X-Skip-Toast': 'true' }
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -110,8 +128,11 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       setDeletingClientId(null)
     },
     onError: (error: any) => {
-      // eslint-disable-next-line no-alert
-      alert(error.response?.data?.message || 'Erro ao excluir cliente')
+      const errorMessage = error.response?.data?.message || 
+                          error.userMessage || 
+                          'Erro ao excluir cliente'
+      
+      toast.error(errorMessage)
       setDeletingClientId(null)
     },
   })
@@ -297,14 +318,20 @@ export function ClientTable({ onEdit }: ClientTableProps) {
                   <Star className='w-3 h-3' />
                   Fidelidade
                 </Button>
-                <Button
-                  onClick={() => setDeletingClientId(client.id)}
-                  disabled={deleteClient.isPending}
-                  className='bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1'
-                >
-                  <Trash2 className='w-3 h-3' />
-                  Excluir
-                </Button>
+                <span title={hasActiveAppointments(client.id) ? 'Cliente possui agendamentos ativos e não pode ser excluído' : ''}>
+                  <Button
+                    onClick={() => !hasActiveAppointments(client.id) && setDeletingClientId(client.id)}
+                    disabled={deleteClient.isPending || hasActiveAppointments(client.id)}
+                    className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                      hasActiveAppointments(client.id) 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                    }`}
+                  >
+                    <Trash2 className='w-3 h-3' />
+                    Excluir
+                  </Button>
+                </span>
               </div>
             </div>
           ))

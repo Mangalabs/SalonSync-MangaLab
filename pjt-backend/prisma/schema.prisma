@@ -119,6 +119,7 @@ model Client {
   updatedAt    DateTime      @updatedAt
   branchId     String
   customerId   String?       @unique
+  isActive     Boolean       @default(true)
   appointments Appointment[]
   branch       Branch        @relation(fields: [branchId], references: [id])
 }

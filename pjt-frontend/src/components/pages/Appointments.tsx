@@ -92,7 +92,7 @@ export default function Appointments() {
         return {
           id: a.id,
           clientId: a.client?.id ?? '',
-          client: a.client?.name ?? 'Cliente',
+          client: a.client?.name ?? 'Cliente Excluído',
           serviceId: a.appointmentServices?.[0]?.service?.id ?? '',
           service: a.appointmentServices?.[0]?.service?.name ?? 'Serviço',
           professionalId: a.professional?.id ?? '',

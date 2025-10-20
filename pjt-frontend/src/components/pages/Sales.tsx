@@ -48,7 +48,8 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [clientSearch, setClientSearch] = useState('')
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
+  const [selectedClient, setSelectedClient] = useState<any | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState('CASH')
 
   const [openClientDialog, setOpenClientDialog] = useState(false)
   const [editingClient, setEditingClient] = useState<any | null>(null)
@@ -426,82 +427,111 @@ export default function Sales() {
 
         <div className='bg-card rounded-2xl p-4 sm:p-6 shadow-sm border border-border'>
           <h4 className='font-semibold text-foreground mb-4'>
-            Cliente{' '}
-            <span className='text-muted-foreground text-sm'>(Opcional)</span>
+            Dados do Comprador
           </h4>
-          <div className='space-y-3'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4' />
-              <input
-                type='text'
-                placeholder='Buscar cliente...'
-                value={clientSearch}
-                onChange={(e) => setClientSearch(e.target.value)}
-                className='w-full pl-10 pr-4 py-2 sm:py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'
-              />
-            </div>
+          <div className='space-y-4'>
+            {/* Cliente Selecionado */}
+            {selectedClient ? (
+              <div className='bg-muted rounded-lg p-3 flex items-center justify-between'>
+                <div>
+                  <p className='font-medium text-foreground'>{selectedClient.name}</p>
+                  {selectedClient.phone && (
+                    <p className='text-sm text-muted-foreground'>{selectedClient.phone}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectedClient(null)}
+                  className='text-destructive hover:opacity-80 cursor-pointer'
+                >
+                  <Trash2 className='w-4 h-4' />
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className='relative mb-3'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4' />
+                  <input
+                    type='text'
+                    placeholder='Buscar cliente...'
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className='w-full pl-10 pr-4 py-2 sm:py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'
+                  />
+                </div>
 
-            <Dialog open={openClientDialog} onOpenChange={setOpenClientDialog}>
-              <Button
-                className='w-full text-sm text-secondary hover:opacity-80 font-medium border border-border py-2 px-4 rounded-xl hover:bg-hover transition-colors flex items-center justify-center gap-2 cursor-pointer'
-                onClick={() => {
-                  setEditingClient(null)
-                  setOpenClientDialog(true)
-                }}
-              >
-                <UserPlus className='w-4 h-4' />
-                Novo Cliente
-              </Button>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
-                  </DialogTitle>
-                </DialogHeader>
-                <ClientForm
-                  initialData={editingClient}
-                  onSuccess={() => {
-                    setOpenClientDialog(false)
-                    queryClient.invalidateQueries({
-                      queryKey: ['clients', activeBranch?.id],
-                    })
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-
-            <div className='max-h-40 sm:max-h-64 overflow-y-auto text-sm border border-border rounded-lg'>
-              {clients
-                .filter((c: any) =>
-                  c.name.toLowerCase().includes(clientSearch.toLowerCase())
-                )
-                .map((client: any) => (
-                  <div
-                    key={client.id}
-                    onClick={() => setSelectedClient(client.name)}
-                    className={`p-2 rounded cursor-pointer ${
-                      selectedClient === client.name
-                        ? 'bg-muted text-primary'
-                        : 'hover:bg-gray-400'
-                    }`}
-                  >
-                    {client.name}
+                {clientSearch && (
+                  <div className='max-h-32 overflow-y-auto text-sm border border-border rounded-lg mb-3'>
+                    {clients
+                      .filter((c: any) =>
+                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                      )
+                      .map((client: any) => (
+                        <div
+                          key={client.id}
+                          onClick={() => {
+                            setSelectedClient(client)
+                            setClientSearch('')
+                          }}
+                          className='p-2 hover:bg-muted cursor-pointer border-b border-border last:border-b-0'
+                        >
+                          <p className='font-medium'>{client.name}</p>
+                          {client.phone && (
+                            <p className='text-xs text-muted-foreground'>{client.phone}</p>
+                          )}
+                        </div>
+                      ))}
                   </div>
-                ))}
-            </div>
+                )}
 
-            {!selectedClient && (
-              <div className='text-center text-sm text-muted-foreground py-3 sm:py-4'>
-                <ShoppingCart className='w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50' />
-                <p>Nenhum cliente selecionado</p>
+                <Dialog open={openClientDialog} onOpenChange={setOpenClientDialog}>
+                  <Button
+                    className='w-full text-sm text-secondary hover:opacity-80 font-medium border border-border py-2 px-4 rounded-xl hover:bg-hover transition-colors flex items-center justify-center gap-2 cursor-pointer'
+                    onClick={() => {
+                      setEditingClient(null)
+                      setOpenClientDialog(true)
+                    }}
+                  >
+                    <UserPlus className='w-4 h-4' />
+                    Novo Cliente
+                  </Button>
+
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <ClientForm
+                      initialData={editingClient}
+                      onSuccess={() => {
+                        setOpenClientDialog(false)
+                        queryClient.invalidateQueries({
+                          queryKey: ['clients', activeBranch?.id],
+                        })
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
               </div>
             )}
-            {selectedClient && (
-              <p className='text-sm text-primary font-medium'>
-                Cliente selecionado: {selectedClient}
-              </p>
-            )}
+
+            {/* Forma de Pagamento */}
+            <div>
+              <label className='block text-sm font-medium text-foreground mb-2'>
+                Forma de Pagamento
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
+              >
+                <option value='CASH'>Dinheiro</option>
+                <option value='CARD'>Cartão</option>
+                <option value='PIX'>PIX</option>
+                <option value='TRANSFER'>Transferência</option>
+                <option value='OTHER'>Outros</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
