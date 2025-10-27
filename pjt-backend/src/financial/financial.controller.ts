@@ -86,14 +86,6 @@ export class FinancialController {
     @Req() req: AuthenticatedRequest,
   ) {
     const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
-    console.log('Getting transactions with filters:', {
-      type,
-      categoryId,
-      startDate,
-      endDate,
-      branchIdParam: branchId,
-      finalBranchId,
-    });
 
     const transactions = await this.financialService.getTransactions(
       {
@@ -102,12 +94,6 @@ export class FinancialController {
         branchId: finalBranchId,
       },
       { type, categoryId, startDate, endDate },
-    );
-
-    console.log(`Found ${transactions.length} transactions`);
-    console.log(
-      'Transactions with Estoque reference:',
-      transactions.filter((t) => t.reference?.startsWith('Estoque-')).length,
     );
 
     return transactions;
@@ -123,14 +109,6 @@ export class FinancialController {
   ) {
     // Se branchId for "all" ou vazio, não filtrar por filial específica
     const finalBranchId = branchId && branchId !== 'all' ? branchId : undefined;
-    console.log('Financial Summary Request:', {
-      startDate,
-      endDate,
-      branchIdParam: branchId,
-      userBranchId: req.user.branchId,
-      finalBranchId,
-      userRole: req.user.role,
-    });
 
     return this.financialService.getFinancialSummary(
       {

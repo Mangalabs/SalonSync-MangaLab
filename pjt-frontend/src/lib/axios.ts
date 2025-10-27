@@ -86,16 +86,6 @@ axios.interceptors.response.use(
   (error) => {
     const errorMessage = getErrorMessage(error);
 
-    console.error("API Error:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      config: {
-        method: error.config?.method,
-        url: error.config?.url,
-      },
-    });
-
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       toast.error("Sessão expirada. Redirecionando para o login...");

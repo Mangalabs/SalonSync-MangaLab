@@ -3,8 +3,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function fixHistoricalAppointments() {
-  console.log('🔧 Iniciando correção de atendimentos históricos...');
-
   // Buscar todos os atendimentos COMPLETED que não têm transações financeiras
   const completedAppointments = await prisma.appointment.findMany({
     where: {
@@ -25,8 +23,6 @@ async function fixHistoricalAppointments() {
     },
   });
 
-  console.log(`📊 Encontrados ${completedAppointments.length} atendimentos concluídos`);
-
   let fixed = 0;
 
   for (const appointment of completedAppointments) {
@@ -38,29 +34,21 @@ async function fixHistoricalAppointments() {
     });
 
     if (existingTransaction) {
-      console.log(`✅ Atendimento ${appointment.id.substring(0, 8)} já possui transações`);
       continue;
     }
-
-    console.log(`🔄 Corrigindo atendimento ${appointment.id.substring(0, 8)}...`);
 
     try {
       await prisma.$transaction(async (tx) => {
         // Criar transação de receita
         await createRevenueTransaction(appointment, tx);
-        
+
         // Criar transação de comissão
         await createCommissionTransaction(appointment, tx);
       });
 
       fixed++;
-      console.log(`✅ Atendimento ${appointment.id.substring(0, 8)} corrigido`);
-    } catch (error) {
-      console.error(`❌ Erro ao corrigir atendimento ${appointment.id.substring(0, 8)}:`, error);
-    }
+    } catch () {}
   }
-
-  console.log(`🎉 Correção concluída! ${fixed} atendimentos corrigidos.`);
 }
 
 async function createRevenueTransaction(appointment: any, tx: any) {
@@ -149,8 +137,7 @@ async function createCommissionTransaction(appointment: any, tx: any) {
 
 // Executar o script
 fixHistoricalAppointments()
-  .catch((e) => {
-    console.error('❌ Erro durante a correção:', e);
+  .catch(() => {
     process.exit(1);
   })
   .finally(async () => {

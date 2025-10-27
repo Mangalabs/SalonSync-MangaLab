@@ -33,16 +33,6 @@ export class QueueService {
           name: true,
         },
       })
-
-      console.log('Found professionals:', professionals.length)
-
-      // Buscar agendamentos do dia
-      console.log('Searching appointments between:', {
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString(),
-        startOfDayLocal: startOfDay.toLocaleString('pt-BR'),
-        endOfDayLocal: endOfDay.toLocaleString('pt-BR')
-      })
       
       const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -62,17 +52,6 @@ export class QueueService {
         },
       },
         orderBy: { scheduledAt: 'asc' },
-      })
-
-      console.log('Found appointments:', appointments.length, 'for date:', date)
-      appointments.forEach(apt => {
-        console.log('Appointment:', {
-          id: apt.id,
-          scheduledAt: apt.scheduledAt.toISOString(),
-          scheduledAtLocal: apt.scheduledAt.toLocaleString('pt-BR'),
-          status: apt.status,
-          professional: apt.professional?.name
-        })
       })
 
       // Calcular estatísticas para cada profissional
@@ -112,14 +91,6 @@ export class QueueService {
             if (!isToday) return apt.status === 'SCHEDULED'
             // Para hoje, incluir todos os agendamentos SCHEDULED (futuros e atrasados)
             const isScheduled = apt.status === 'SCHEDULED'
-            console.log(`Appointment ${apt.id} filter:`, {
-              scheduledAt: apt.scheduledAt.toISOString(),
-              scheduledAtLocal: apt.scheduledAt.toLocaleString('pt-BR'),
-              now: now.toISOString(),
-              nowLocal: now.toLocaleString('pt-BR'),
-              status: apt.status,
-              isScheduled
-            })
             return isScheduled
           })
           .map((apt) => ({
@@ -142,16 +113,6 @@ export class QueueService {
         const nextAvailableTime = nextAvailableTimeDate ? 
           new Date(nextAvailableTimeDate.getTime() - (nextAvailableTimeDate.getTimezoneOffset() * 60000)).toISOString() : 
           undefined
-        
-        // Debug log
-        if (isToday && nextAvailableTimeDate) {
-          console.log(`Professional ${professional.name}:`, {
-            now: now.toISOString(),
-            nextAvailableTimeDate: nextAvailableTimeDate.toISOString(),
-            localTime: nextAvailableTimeDate.toLocaleTimeString('pt-BR'),
-            upcomingCount: upcomingAppointments.length
-          })
-        }
 
         // Calcular tempo total de espera
         const totalWaitTime = isToday && nextAvailableTimeDate
@@ -198,7 +159,6 @@ export class QueueService {
 
       return queueStats
     } catch (error) {
-      console.error('Error in getQueueStats:', error)
       return []
     }
   }

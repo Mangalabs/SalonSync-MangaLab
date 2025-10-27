@@ -151,7 +151,6 @@ const defaultCategories = [
 ];
 
 export async function seedCategories(branchId: string) {
-  console.log(`Criando categorias padrão para filial ${branchId}...`);
 
   for (const category of defaultCategories) {
     await prisma.expenseCategory.upsert({
@@ -168,7 +167,6 @@ export async function seedCategories(branchId: string) {
     });
   }
 
-  console.log(`✅ ${defaultCategories.length} categorias criadas com sucesso!`);
 }
 
 // Script para executar manualmente

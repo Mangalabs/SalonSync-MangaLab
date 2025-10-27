@@ -88,7 +88,6 @@ export default function AppointmentHistory() {
 
   const normalizedAppointments: AppointmentHistory[] = branchAppointments.map(
     (apt) => {
-      console.log('Appointment data:', apt)
       const dateObj = apt.scheduledAt ? new Date(apt.scheduledAt) : null
       const scheduledAtStr = typeof apt.scheduledAt === 'string' ? apt.scheduledAt : apt.scheduledAt?.toString() || ''
       const dateStr = dateObj && scheduledAtStr ? scheduledAtStr.split('T')[0] : ''

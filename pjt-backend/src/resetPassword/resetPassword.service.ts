@@ -58,7 +58,6 @@ export class ResetPasswordService {
       await mailerSend.email.send(emailParams);
       return { status: 'ok' };
     } catch (e) {
-      console.log(e);
       throw new Error('Não foi possível enviar o email no momento');
     }
   }
@@ -86,8 +85,7 @@ export class ResetPasswordService {
       });
 
       return updatedUser;
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi possível resetar a senha');
     }
   }
