@@ -94,8 +94,7 @@ export class PaymentService {
       });
 
       return account;
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi possível criar conta de pagamento');
     }
   }
@@ -181,8 +180,7 @@ export class PaymentService {
       });
 
       return { products };
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi recuperar os produtos');
     }
   }
@@ -222,8 +220,7 @@ export class PaymentService {
       return subscriptions.data.some(
         (sub) => sub.status === 'active' || sub.status === 'trialing',
       );
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi possível recuperar assinaturas');
     }
   }
@@ -258,8 +255,7 @@ export class PaymentService {
       });
 
       return subscriptions.data;
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi possível recuperar assinaturas');
     }
   }
@@ -422,8 +418,7 @@ export class PaymentService {
       );
 
       return { newPrice, updatedProduct };
-    } catch (e) {
-      console.log(e);
+    } catch {
       throw new Error('Não foi atualizar preço');
     }
   }
@@ -551,8 +546,7 @@ export class PaymentService {
         { active: false },
         { stripeAccount: user.accountId },
       );
-    } catch (e) {
-      console.log(e);
+    } catch () {
       throw new Error('Não foi reajustar preço');
     }
   }

@@ -92,50 +92,31 @@ export class ProfessionalsService {
     userId?: string,
     targetBranchId?: string,
   ): Promise<Professional> {
-    console.log('🔍 Professional Service Create:', {
-      data,
-      userId,
-      targetBranchId,
-    });
-
     let branchId: string;
 
     if (targetBranchId && userId) {
-      console.log(
-        '🔍 Looking for specific branch:',
-        targetBranchId,
-        'for user:',
-        userId,
-      );
       const branch = await this.prisma.branch.findFirst({
         where: { id: targetBranchId, ownerId: userId },
       });
-      console.log('🔍 Branch found:', branch);
       if (!branch)
         throw new Error('Filial não encontrada ou não pertence ao usuário');
       branchId = targetBranchId;
     } else if (userId) {
-      console.log('🔍 Looking for user branch for userId:', userId);
       const userBranch = await this.prisma.branch.findFirst({
         where: { ownerId: userId },
       });
-      console.log('🔍 User branch found:', userBranch);
       if (!userBranch)
         throw new Error('Nenhuma filial encontrada para este usuário');
       branchId = userBranch.id;
     } else {
-      console.log('🔍 Looking for any branch (fallback)');
       const firstBranch = await this.prisma.branch.findFirst();
-      console.log('🔍 First branch found:', firstBranch);
       if (!firstBranch) throw new Error('Nenhuma filial encontrada');
       branchId = firstBranch.id;
     }
 
-    console.log('🚀 Creating professional with branchId:', branchId);
     const result = await this.prisma.professional.create({
       data: { ...data, branchId },
     });
-    console.log('✅ Professional created:', result);
 
     return result;
   }
@@ -214,12 +195,6 @@ export class ProfessionalsService {
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59); // Último dia do mês
     }
 
-    console.log('Calculando comissões para:', {
-      professional: professional.name,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-
     // Buscar atendimentos concluídos no período
     const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -237,17 +212,6 @@ export class ProfessionalsService {
           },
         },
       },
-    });
-
-    console.log(`Encontrados ${appointments.length} atendimentos no período:`, {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      appointments: appointments.map((apt) => ({
-        id: apt.id,
-        scheduledAt: apt.scheduledAt,
-        status: apt.status,
-        total: apt.total,
-      })),
     });
 
     // Calcular comissão

@@ -18,9 +18,6 @@ export class ProductsService {
     branchId: string,
   ): Promise<Product> {
     try {
-      console.log('Received DTO:', createProductDto);
-      console.log('Branch ID:', branchId);
-
       const productData: Prisma.ProductCreateInput = {
         name: createProductDto.name,
         category: createProductDto.category,
@@ -42,8 +39,6 @@ export class ProductsService {
         branch: { connect: { id: branchId } },
       };
 
-      console.log('Creating product with data:', productData);
-
       return this.prisma.$transaction(async (tx) => {
         const createdProduct = await tx.product.create({
           data: productData,
@@ -63,7 +58,6 @@ export class ProductsService {
           );
         }
 
-        console.log('Created product result:', createdProduct);
         return createdProduct;
       });
     } catch (error) {
@@ -97,8 +91,6 @@ export class ProductsService {
     branchId: string,
   ): Promise<Product> {
     await this.findOne(id, branchId);
-
-    console.log('Update product DTO:', updateProductDto);
 
     // Map DTO fields to match Prisma schema
     const updateData: Prisma.ProductUpdateInput = {};
@@ -152,14 +144,10 @@ export class ProductsService {
     if (updateProductDto.unit !== undefined)
       updateData.unit = updateProductDto.unit;
 
-    console.log('Update data to be sent to Prisma:', updateData);
-
     const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: updateData,
     });
-
-    console.log('Updated product result:', updatedProduct);
 
     return updatedProduct;
   }
@@ -237,14 +225,6 @@ export class ProductsService {
         ? Number(product.costPrice) * quantity
         : undefined;
 
-    console.log('Stock movement calculation:', {
-      unitCost,
-      quantity,
-      productCostPrice: product.costPrice,
-      calculatedTotalCost: totalCost,
-      movementType,
-    });
-
     // Create transaction to update both product and create movement
     return this.prisma.$transaction(async (tx) => {
       // Update product stock
@@ -280,9 +260,6 @@ export class ProductsService {
       } catch (error) {
         // If user connection fails, create without user
         if (error.code === 'P2025' && error.meta?.cause?.includes('User')) {
-          console.log(
-            'User not found, creating movement without user association',
-          );
           const { user, ...dataWithoutUser } = movementData;
           movement = await tx.stockMovement.create({
             data: dataWithoutUser,
@@ -313,23 +290,8 @@ export class ProductsService {
     branchId: string,
     tx: any,
   ) {
-    console.log('Creating financial transaction for movement:', {
-      movementId: movement.id,
-      type: movement.type,
-      totalCost: movement.totalCost,
-      productName: product.name,
-    });
-
     // Only create financial transactions for movements with financial impact
     if (!movement.totalCost || Number(movement.totalCost) <= 0) {
-      console.log(
-        'Skipping financial transaction - no totalCost or totalCost <= 0',
-        {
-          totalCost: movement.totalCost,
-          unitCost: movement.unitCost,
-          quantity: movement.quantity,
-        },
-      );
       return;
     }
 
@@ -354,7 +316,6 @@ export class ProductsService {
         description = `Saída: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
         break;
       default:
-        console.log('No financial transaction for ADJUSTMENT type');
         return;
     }
 
@@ -386,15 +347,6 @@ export class ProductsService {
       });
     }
 
-    // Create the financial transaction
-    console.log('Creating financial transaction:', {
-      description,
-      amount: movement.totalCost,
-      type: transactionType,
-      categoryName: category.name,
-      reference: `Estoque-${movement.id}`,
-    });
-
     const financialTransaction = await tx.financialTransaction.create({
       data: {
         description,
@@ -407,11 +359,6 @@ export class ProductsService {
         branchId,
       },
     });
-
-    console.log(
-      'Financial transaction created successfully:',
-      financialTransaction.id,
-    );
   }
 
   private async createFinancialTransactionForProductCreation(
@@ -422,14 +369,6 @@ export class ProductsService {
     tx: any,
   ) {
     const totalCost = initialStock * costPrice;
-
-    console.log('Creating financial transaction for product creation:', {
-      productId: product.id,
-      productName: product.name,
-      initialStock,
-      costPrice,
-      totalCost,
-    });
 
     // Buscar ou criar categoria de investimento
     let category = await tx.expenseCategory.findFirst({
@@ -464,11 +403,6 @@ export class ProductsService {
         branchId,
       },
     });
-
-    console.log(
-      'Investment transaction created successfully:',
-      financialTransaction.id,
-    );
   }
 
   async getStockMovements(
@@ -476,12 +410,6 @@ export class ProductsService {
     startDate?: string,
     endDate?: string,
   ): Promise<StockMovement[]> {
-    console.log('📈 ProductsService.getStockMovements called with:', {
-      branchId,
-      startDate,
-      endDate,
-    });
-
     const where: any = { branchId };
 
     if (startDate || endDate) {
@@ -493,8 +421,6 @@ export class ProductsService {
         where.createdAt.lte = new Date(endDate + 'T23:59:59.999Z');
       }
     }
-
-    console.log('📈 Query where clause:', where);
 
     const movements = await this.prisma.stockMovement.findMany({
       where,
@@ -515,18 +441,6 @@ export class ProductsService {
       },
       orderBy: { createdAt: 'desc' },
     });
-
-    console.log('📈 Found movements:', movements.length, 'movements');
-    console.log(
-      '📈 Sample movements:',
-      movements.slice(0, 2).map((m) => ({
-        id: m.id.substring(0, 8),
-        type: m.type,
-        product: m.product.name,
-        quantity: m.quantity,
-        createdAt: m.createdAt,
-      })),
-    );
 
     return movements;
   }

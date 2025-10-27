@@ -38,20 +38,8 @@ export class AppointmentsService extends BaseDataService {
     });
     if (existingAppointment) {
       const timeStr = data.scheduledAt.toISOString().substring(11, 16);
-      console.log('⚠️ CONFLICT: Appointment already exists at this time:', {
-        existing: existingAppointment.id,
-        client: existingAppointment.client?.name,
-        scheduledAt: data.scheduledAt.toISOString(),
-        localTime: timeStr,
-      });
       throw new Error(`Já existe um agendamento às ${timeStr} com ${existingAppointment.client?.name || 'outro cliente'}`);
     }
-
-    console.log('✅ No conflict, creating appointment:', {
-      professionalId: data.professionalId,
-      scheduledAt: data.scheduledAt.toISOString(),
-      status: data.status,
-    });
 
     const services = await this.prisma.service.findMany({
       where: { id: { in: data.serviceIds } },
@@ -63,15 +51,6 @@ export class AppointmentsService extends BaseDataService {
     const total = services.reduce((sum, s) => sum + Number(s.price), 0);
 
     const branchId = await this.getTargetBranchId(user, targetBranchId);
-
-    console.log('🔍 Backend creating appointment:', {
-      professionalId: data.professionalId,
-      clientId: data.clientId,
-      branchId,
-      status: data.status,
-      scheduledAt: data.scheduledAt.toISOString(),
-      serviceIds: data.serviceIds,
-    });
 
     const createdAppointment = await this.prisma.appointment.create({
       data: {
@@ -106,14 +85,6 @@ export class AppointmentsService extends BaseDataService {
       });
     }
 
-    console.log('✅ Appointment created successfully:', {
-      id: createdAppointment.id,
-      professionalId: createdAppointment.professionalId,
-      status: createdAppointment.status,
-      branchId: createdAppointment.branchId,
-      generatedTransactions: createdAppointment.status === 'COMPLETED',
-    });
-
     return createdAppointment;
   }
 
@@ -140,13 +111,6 @@ export class AppointmentsService extends BaseDataService {
       };
     }
 
-    console.log('🔍 AppointmentsService.findAll with filters:', {
-      user: user.id,
-      branchIds,
-      filters,
-      where,
-    });
-
     const appointments = await this.prisma.appointment.findMany({
       where,
       orderBy: { scheduledAt: 'desc' },
@@ -155,16 +119,6 @@ export class AppointmentsService extends BaseDataService {
         client: true,
         appointmentServices: { include: { service: true } },
       },
-    });
-
-    console.log('📊 AppointmentsService.findAll result:', {
-      count: appointments.length,
-      appointments: appointments.map((apt) => ({
-        id: apt.id.substring(0, 8),
-        professional: apt.professional?.name || 'Profissional removido',
-        status: apt.status,
-        scheduledAt: apt.scheduledAt.toISOString(),
-      })),
     });
 
     return appointments;
@@ -222,10 +176,6 @@ export class AppointmentsService extends BaseDataService {
     });
 
     if (absence) {
-      console.log(`❌ Professional ${professionalId} is absent on ${date}:`, {
-        reason: absence.reason,
-        type: absence.type,
-      });
       return [];
     }
 
@@ -244,7 +194,6 @@ export class AppointmentsService extends BaseDataService {
 
     // Se o profissional não trabalha neste dia da semana, retornar vazio
     if (!workingDay || !workingDay.isActive) {
-      console.log(`❌ Professional ${professionalId} does not work on day ${dayOfWeek} (${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dayOfWeek]})`);
       return [];
     }
 
@@ -265,15 +214,6 @@ export class AppointmentsService extends BaseDataService {
       },
       select: { scheduledAt: true, id: true },
     });
-
-    console.log(`🕐 Checking available slots for professional ${professionalId} on ${date}:`, {
-      dayOfWeek,
-      workingDay: workingDay ? `${workingDay.startTime}-${workingDay.endTime}` : 'default',
-      existingAppointments: existingAppointments.map(apt => ({
-        id: apt.id.substring(0, 8),
-        time: apt.scheduledAt.toISOString().substring(11, 16)
-      }))
-    });
     
     // Extrair horários ocupados (formato HH:MM) - usar diretamente da string ISO
     const bookedTimes = existingAppointments.map((apt) => {
@@ -283,12 +223,6 @@ export class AppointmentsService extends BaseDataService {
 
     // Filtrar horários disponíveis
     const availableSlots = workingHours.filter((time) => !bookedTimes.includes(time));
-    
-    console.log(`✅ Available slots for ${professionalId} on ${date}:`, {
-      workingHours,
-      bookedTimes,
-      availableSlots
-    });
 
     return availableSlots;
   }
@@ -560,11 +494,9 @@ export class AppointmentsService extends BaseDataService {
       await tx.appointment.delete({ where: { id } });
     });
 
-    console.log('✅ Appointment cancelled and transactions removed:', { id: id.substring(0, 8) });
   }
 
   async fixHistoricalAppointments(): Promise<{ fixed: number; message: string }> {
-    console.log('🔧 Iniciando correção de atendimentos históricos...');
 
     // Buscar todos os atendimentos COMPLETED que não têm transações financeiras
     const completedAppointments = await this.prisma.appointment.findMany({
@@ -585,8 +517,6 @@ export class AppointmentsService extends BaseDataService {
         },
       },
     });
-
-    console.log(`📊 Encontrados ${completedAppointments.length} atendimentos concluídos`);
 
     let fixed = 0;
 
@@ -612,15 +542,11 @@ export class AppointmentsService extends BaseDataService {
         });
 
         fixed++;
-        console.log(`✅ Atendimento ${appointment.id.substring(0, 8)} corrigido`);
-      } catch (error) {
-        console.error(`❌ Erro ao corrigir atendimento ${appointment.id.substring(0, 8)}:`, error);
+      } catch {
       }
     }
 
-    const message = `Correção concluída! ${fixed} atendimentos corrigidos.`;
-    console.log(`🎉 ${message}`);
-    
+    const message = `Correção concluída! ${fixed} atendimentos corrigidos.`;    
     return { fixed, message };
   }
 }

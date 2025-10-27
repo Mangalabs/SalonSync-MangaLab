@@ -27,20 +27,11 @@ export class InventoryController {
     @Query('branchId') queryBranchId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<StockMovement[]> {
-    console.log('📈 Getting inventory movements:', {
-      queryBranchId,
-      userBranchId: req.user?.branchId,
-      userRole: req.user?.role,
-      userId: req.user?.id,
-    });
-
     // Use the branchId from query parameter directly
     const finalBranchId = queryBranchId || req.user?.branchId;
 
-    console.log('📈 Final branch ID for movements:', finalBranchId);
 
     if (!finalBranchId) {
-      console.log('⚠️ No branch ID available, returning empty array');
       return [];
     }
 

@@ -54,10 +54,6 @@ export class ServicesController {
     @Headers('x-branch-id') branchId: string | undefined,
     @Req() req: AuthenticatedRequest,
   ) {
-    console.log(
-      '🔧 ServicesController: Creating service with branchId header:',
-      branchId,
-    );
     return this.service.create(
       body,
       {
@@ -79,10 +75,6 @@ export class ServicesController {
     @Headers('x-branch-id') branchId: string | undefined,
     @Req() req: AuthenticatedRequest,
   ) {
-    console.log(
-      '🔧 ServicesController: Updating service with branchId header:',
-      branchId,
-    );
     return this.service.update(
       id,
       body,

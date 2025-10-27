@@ -75,7 +75,6 @@ export class AppointmentsController {
   ) {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const branchId = req.user.branchId || '';
-    console.log('Queue stats request - branchId:', branchId, 'date:', targetDate);
     return this.queueService.getQueueStats(branchId, targetDate);
   }
 

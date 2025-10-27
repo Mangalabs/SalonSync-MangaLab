@@ -170,12 +170,6 @@ export class FinancialService extends BaseDataService {
     const allBranchIds = await this.getUserBranchIds(user);
     const branchIds = user.branchId ? [user.branchId] : allBranchIds;
 
-    console.log('getTransactions branchIds:', {
-      userBranchId: user.branchId,
-      allBranchIds,
-      finalBranchIds: branchIds,
-    });
-
     const where: any = {
       branchId: { in: branchIds },
     };
@@ -209,12 +203,6 @@ export class FinancialService extends BaseDataService {
     // Senão, usar todas as filiais do usuário
     const branchIds = user.branchId ? [user.branchId] : allBranchIds;
 
-    console.log('Financial Summary Service:', {
-      userBranchId: user.branchId,
-      allBranchIds,
-      finalBranchIds: branchIds,
-    });
-
     const dateFilter: any = {};
     if (startDate) {
       dateFilter.gte = new Date(startDate + 'T00:00:00.000Z');
@@ -231,22 +219,6 @@ export class FinancialService extends BaseDataService {
       include: {
         category: true,
       },
-    });
-
-    console.log('Financial transactions found:', {
-      total: transactions.length,
-      byBranch: transactions.reduce(
-        (acc, t) => {
-          acc[t.branchId] = (acc[t.branchId] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-      stockRelated: transactions.filter(
-        (t) =>
-          t.reference?.startsWith('Estoque-') ||
-          t.reference?.startsWith('Produto-'),
-      ).length,
     });
 
     // Receitas de atendimentos
@@ -273,24 +245,6 @@ export class FinancialService extends BaseDataService {
       include: {
         product: { select: { name: true } },
       },
-    });
-
-    console.log('Stock movements found:', {
-      total: stockMovements.length,
-      byBranch: stockMovements.reduce(
-        (acc, m) => {
-          acc[m.branchId] = (acc[m.branchId] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-      byType: stockMovements.reduce(
-        (acc, m) => {
-          acc[m.type] = (acc[m.type] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
     });
 
     // Despesas fixas pagas no período
@@ -370,23 +324,6 @@ export class FinancialService extends BaseDataService {
       stockLosses: stockExpenseTransactions,
       netProfit: 0,
     };
-
-    console.log('Summary calculation:', {
-      manualIncome: manualIncomeTransactions,
-      manualExpenses: manualExpenseTransactions,
-      manualInvestments: manualInvestmentTransactions,
-      stockIncomeTransactions,
-      stockExpenseTransactions,
-      stockInvestmentTransactions,
-      appointmentRevenue,
-      stockSales,
-      stockPurchases,
-      stockLosses,
-      stockRelatedTransactionsCount: stockRelatedTransactions.length,
-      totalIncome: summary.totalIncome,
-      totalExpenses: summary.totalExpenses,
-      totalInvestments: summary.totalInvestments,
-    });
 
     summary.netProfit =
       summary.totalIncome -

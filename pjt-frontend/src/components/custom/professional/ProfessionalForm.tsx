@@ -235,7 +235,7 @@ export function ProfessionalForm({ onSuccess, editingProfessional, branches, rol
                   if (selected) {
                     setSelectedWorkingDays(selectedWorkingDays.filter(d => d !== day.value))
                   } else {
-                    setSelectedWorkingDays([...selectedWorkingDays, day.value].sort())
+                    setSelectedWorkingDays([...selectedWorkingDays, day.value].sort((a, b) => (a - b)))
                   }
                 }}
                 className={`border rounded-xl p-3 cursor-pointer transition-all text-center ${

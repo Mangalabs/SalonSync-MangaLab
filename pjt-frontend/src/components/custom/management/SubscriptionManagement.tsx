@@ -46,8 +46,7 @@ export function SubscriptionManagement() {
         if (response.data.url) {
           window.open(response.data.url, '_blank')
         }
-      } catch (error) {
-        console.error('Erro ao acessar portal do cliente:', error)
+      } catch {
         window.open('https://billing.stripe.com/p/login/test_bIY5lq6Ry8Ry8Ry', '_blank')
       }
     }

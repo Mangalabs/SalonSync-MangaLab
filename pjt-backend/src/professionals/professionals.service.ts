@@ -75,8 +75,6 @@ export class ProfessionalsService extends BaseDataService {
     user: UserContext,
     targetBranchId?: string,
   ): Promise<Professional> {
-    console.log('🔍 Creating professional with data:', data);
-
     const branchId = await this.getTargetBranchId(user, targetBranchId);
 
     const { roleId, workingDays, ...professionalData } = data;
@@ -86,12 +84,8 @@ export class ProfessionalsService extends BaseDataService {
       commissionRate: data.commissionRate || 0,
     };
 
-    // Tratar roleId
     if (roleId && roleId !== 'custom') {
       createData.roleId = roleId;
-      console.log('✅ Professional will have custom role:', roleId);
-    } else {
-      console.log('❌ Professional will NOT have custom role');
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -103,13 +97,6 @@ export class ProfessionalsService extends BaseDataService {
             select: { name: true },
           },
         },
-      });
-
-      console.log('👤 Professional created:', {
-        id: professional.id,
-        name: professional.name,
-        hasCustomRole: !!professional.customRole,
-        customRoleData: professional.customRole,
       });
 
       // Criar despesa fixa automática se tiver salário configurado
@@ -130,12 +117,8 @@ export class ProfessionalsService extends BaseDataService {
             })
           )
         );
-        console.log(`✅ Working days created for ${professional.name}:`, workingDays);
       }
 
-      console.log(
-        `✅ Professional creation completed for: ${professional.name}`,
-      );
       return professional;
     });
   }
@@ -145,25 +128,13 @@ export class ProfessionalsService extends BaseDataService {
     branchId: string,
     tx: any,
   ) {
-    console.log('🔍 Creating salary recurring expense for:', {
-      professionalId: professional.id,
-      professionalName: professional.name,
-      branchId,
-      customRole: professional.customRole,
-      baseSalary: professional.baseSalary,
-    });
-
     const baseSalary =
       professional.customRole?.baseSalary || professional.baseSalary;
     const payDay =
       professional.customRole?.salaryPayDay || professional.salaryPayDay;
 
-    console.log('💰 Salary data:', { baseSalary, payDay });
 
     if (!baseSalary || !payDay) {
-      console.log(
-        '❌ Missing salary data, skipping automatic expense creation',
-      );
       return;
     }
 
@@ -177,7 +148,6 @@ export class ProfessionalsService extends BaseDataService {
     });
 
     if (!salaryCategory) {
-      console.log('📝 Creating Salários category');
       salaryCategory = await tx.expenseCategory.create({
         data: {
           name: 'Salários',
@@ -187,8 +157,6 @@ export class ProfessionalsService extends BaseDataService {
         },
       });
     }
-
-    console.log('📋 Category found/created:', salaryCategory.id);
 
     // Criar despesa fixa automática
     const recurringExpense = await tx.recurringExpense.create({
@@ -204,8 +172,6 @@ export class ProfessionalsService extends BaseDataService {
         professionalId: professional.id,
       },
     });
-
-    console.log('✅ Recurring expense created:', recurringExpense.id);
   }
 
   async update(
@@ -266,11 +232,9 @@ export class ProfessionalsService extends BaseDataService {
               })
             )
           );
-          console.log(`✅ Working days updated for ${professional.name}:`, workingDays);
         }
       }
 
-      console.log(`✅ Professional update completed for: ${professional.name}`);
       return professional;
     });
   }
@@ -281,12 +245,6 @@ export class ProfessionalsService extends BaseDataService {
     const payDay =
       professional.customRole?.salaryPayDay || professional.salaryPayDay;
 
-    console.log(`🔄 Syncing salary for ${professional.name}:`, {
-      baseSalary,
-      payDay,
-      hasCustomRole: !!professional.customRole,
-    });
-
     // Buscar despesa fixa existente
     const existingExpense = await tx.recurringExpense.findFirst({
       where: {
@@ -295,7 +253,6 @@ export class ProfessionalsService extends BaseDataService {
       },
     });
 
-    console.log(`🔍 Existing expense found:`, !!existingExpense);
 
     if (baseSalary && payDay) {
       if (existingExpense) {
@@ -309,7 +266,6 @@ export class ProfessionalsService extends BaseDataService {
             dueDay: payDay,
           },
         });
-        console.log(`✅ Updated existing recurring expense`);
       } else {
         // Criar nova despesa
         await this.createSalaryRecurringExpense(
@@ -317,7 +273,6 @@ export class ProfessionalsService extends BaseDataService {
           professional.branchId,
           tx,
         );
-        console.log(`✅ Created new recurring expense`);
       }
     } else if (existingExpense) {
       // Desativar despesa se salário foi removido
@@ -325,9 +280,6 @@ export class ProfessionalsService extends BaseDataService {
         where: { id: existingExpense.id },
         data: { isActive: false },
       });
-      console.log(`❌ Deactivated recurring expense (no salary data)`);
-    } else {
-      console.log(`ℹ️ No salary data and no existing expense - nothing to do`);
     }
   }
 
@@ -349,25 +301,9 @@ export class ProfessionalsService extends BaseDataService {
       },
     });
 
-    console.log(`🔍 Professional ${professional.name} (${id}) appointments:`, {
-      total: allAppointments.length,
-      appointments: allAppointments.map((apt) => ({
-        id: apt.id.substring(0, 8),
-        status: apt.status,
-        date: apt.scheduledAt.toISOString().split('T')[0],
-      })),
-    });
-
     // Verificar apenas agendamentos que estão agendados (futuros)
     const scheduledAppointments = allAppointments.filter(
       (apt) => apt.status === 'SCHEDULED',
-    );
-
-    console.log(
-      `📊 Scheduled (future) appointments: ${scheduledAppointments.length}`,
-    );
-    console.log(
-      `ℹ️  Completed/Cancelled appointments are OK to delete: ${allAppointments.length - scheduledAppointments.length}`,
     );
 
     if (scheduledAppointments.length > 0) {
@@ -397,10 +333,6 @@ export class ProfessionalsService extends BaseDataService {
         WHERE "professionalId" = ${id}
       `;
 
-      console.log(
-        `📅 Updated ${appointmentsUpdated} appointments to remove professional reference`,
-      );
-
       // Buscar e excluir usuário correspondente (se existir)
       const user = await tx.user.findFirst({
         where: {
@@ -409,24 +341,12 @@ export class ProfessionalsService extends BaseDataService {
         },
       });
 
-      console.log(
-        `🔍 Looking for user account for ${professional.name}:`,
-        user ? 'Found' : 'Not found',
-      );
-
       if (user) {
         await tx.user.delete({ where: { id: user.id } });
-        console.log(`🗑️ User account deleted: ${user.email}`);
       }
 
       // Excluir profissional
       await tx.professional.delete({ where: { id } });
-
-      console.log(
-        `✅ Professional ${professional.name} (${id}) deleted successfully`,
-      );
-      console.log(`🗑️ User account also deleted: ${user ? 'Yes' : 'No'}`);
-      console.log(`💰 Recurring expenses deactivated`);
     });
   }
 
@@ -473,25 +393,6 @@ export class ProfessionalsService extends BaseDataService {
       orderBy: { scheduledAt: 'desc' },
     });
 
-    console.log(
-      '📊 ALL appointments for professional:',
-      allAppointments.length,
-      allAppointments.map((apt) => ({
-        id: apt.id.substring(0, 8),
-        status: apt.status,
-        scheduledAt: apt.scheduledAt.toISOString(),
-        total: apt.total,
-      })),
-    );
-
-    console.log('🔍 Searching COMPLETED appointments with criteria:', {
-      professionalId: id,
-      branchId: (professional as any).branchId,
-      status: 'COMPLETED',
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-
     const appointments = await this.prisma.appointment.findMany({
       where: {
         professionalId: id,
@@ -510,17 +411,6 @@ export class ProfessionalsService extends BaseDataService {
         },
       },
     });
-
-    console.log(
-      '📊 Found appointments:',
-      appointments.length,
-      appointments.map((apt) => ({
-        id: apt.id,
-        status: apt.status,
-        scheduledAt: apt.scheduledAt.toISOString(),
-        total: apt.total,
-      })),
-    );
 
     const commissionRate =
       Number((professional as any).commissionRate || 0) / 100;
@@ -627,17 +517,6 @@ export class ProfessionalsService extends BaseDataService {
     const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
     const currentMonthCommissions = totalRevenue * commissionRate;
 
-    console.log('🔍 Debug getSalaryCommissionData:', {
-      professionalId: id,
-      professionalName: professional.name,
-      baseSalary: Number(baseSalary),
-      commissionRate: commissionRate * 100,
-      appointmentsCount: appointments.length,
-      totalRevenue,
-      currentMonthCommissions,
-      startOfMonth: startOfMonth.toISOString(),
-      endOfMonth: endOfMonth.toISOString(),
-    });
     const totalEstimated = Number(baseSalary) + currentMonthCommissions;
 
     return {

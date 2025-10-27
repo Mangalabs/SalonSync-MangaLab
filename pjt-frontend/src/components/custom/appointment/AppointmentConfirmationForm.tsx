@@ -38,7 +38,6 @@ export function AppointmentConfirmationForm({
 
   const confirmMutation = useMutation({
     mutationFn: async (data: ConfirmationFormData) => {
-      console.log('Enviando confirmação com paymentMethod:', data.paymentMethod)
       await axios.post(`/api/appointments/${appointment.id}/confirm`, {
         paymentMethod: data.paymentMethod,
       })

@@ -5,9 +5,7 @@ import { useCallback } from 'react'
 export function useErrorHandler() {
   const queryClient = useQueryClient()
 
-  const handleError = useCallback((error: any, context?: string) => {
-    console.error(`Error in ${context || 'operation'}:`, error)
-    
+  const handleError = useCallback((error: any, context?: string) => {    
     const message = error.userMessage || error.response?.data?.message || error.message || 'Erro inesperado'
     
     // Não mostrar toast se já foi mostrado pelo interceptor
