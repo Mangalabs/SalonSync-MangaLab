@@ -17,6 +17,7 @@ interface User {
   accountId?: string
   theme?: ThemeType
   themeMode?: ModeType
+  productId?: string
 }
 
 interface UserContextType {
@@ -46,7 +47,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const fetchUser = async () => {
     try {
       const res = await axios.get('/api/auth/profile')
-      setUser(res.data)
+      const result = await axios.get('/api/payment/get-user-subscriptions')
+
+      setUser({
+        ...res.data,
+        productId: result.data[0]?.plan?.product || '',
+      })
     } catch {
       logout()
     } finally {

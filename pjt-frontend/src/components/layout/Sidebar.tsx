@@ -105,12 +105,13 @@ const menuSections = [
   {
     title: 'Sistema',
     items: [
-      // {
-      //   to: '/dashboard/fidelity',
-      //   icon: Star,
-      //   label: 'Fidelidade',
-      //   roles: ['ADMIN'],
-      // },
+      {
+        to: '/dashboard/fidelity',
+        icon: Star,
+        label: 'Fidelidade',
+        roles: ['ADMIN'],
+        products: ['prod_TAWkmjwAtHWWIK'],
+      },
       {
         to: '/dashboard/settings',
         icon: Settings,
@@ -121,12 +122,18 @@ const menuSections = [
   },
 ]
 
-const getNavItems = (userRole: string) =>
+const getNavItems = (userRole: string, productId: string) =>
   menuSections.map((section) => ({
     ...section,
-    items: section.items.filter((item) =>
-      userRole === 'SUPERADMIN' ? true : item.roles.includes(userRole)
-    ),
+    items: section.items.filter((item) => {
+      if (userRole === 'SUPERADMIN') {
+        return true
+      }
+
+      const hasAccessByProduct = item.products ? item.products?.includes(productId) : true
+
+      return item.roles.includes(userRole) && hasAccessByProduct
+    }),
   }))
 
 const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
@@ -134,11 +141,11 @@ const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
     className='border-b flex items-center justify-between bg-secondary'
     style={{ borderColor: 'var(--color-sidebar-border)' }}
   >
-    <div className="flex items-center mx-auto p-4">
+    <div className='flex items-center mx-auto p-4'>
       <img
-        src="/salonSync-icon.png"
-        alt="SalonSync - Sistema de Gestão"
-        className="w-full h-[60px] object-cover"
+        src='/salonSync-icon.png'
+        alt='SalonSync - Sistema de Gestão'
+        className='w-full h-[60px] object-cover'
       />
     </div>
     {onClose && (
@@ -196,7 +203,7 @@ export function Sidebar() {
   const [showSaleForm, setShowSaleForm] = useState(false)
   const { user } = useUser()
   const { isOpen, close } = useSidebar()
-  const navSections = getNavItems(user?.role || 'ADMIN')
+  const navSections = getNavItems(user?.role || 'ADMIN', user?.productId || '')
 
   const handleNavClick = (item?: any) => {
     if (item?.opensSaleForm) {
