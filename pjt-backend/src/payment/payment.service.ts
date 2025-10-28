@@ -546,7 +546,7 @@ export class PaymentService {
         { active: false },
         { stripeAccount: user.accountId },
       );
-    } catch () {
+    } catch {
       throw new Error('Não foi reajustar preço');
     }
   }
