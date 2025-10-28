@@ -47,7 +47,7 @@ async function fixHistoricalAppointments() {
       });
 
       fixed++;
-    } catch () {}
+    } catch {}
   }
 }
 
