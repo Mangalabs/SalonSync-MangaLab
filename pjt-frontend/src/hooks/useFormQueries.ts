@@ -3,7 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 
-export function useFormQueries(selectedProfessional?: string, selectedDate?: string, isScheduled?: boolean, branchId?: string) {
+export function useFormQueries(
+  selectedProfessional?: string,
+  selectedDate?: string,
+  isScheduled?: boolean,
+  branchId?: string,
+) {
   const { activeBranch } = useBranch()
   const targetBranchId = branchId || activeBranch?.id
 
@@ -42,17 +47,29 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
       })),
     enabled: !!targetBranchId,
   })
-  
+
   const availableSlots = useQuery({
     queryKey: ['available-slots', selectedProfessional, selectedDate],
     queryFn: async () => {
-      if (!selectedProfessional || !selectedDate || selectedProfessional === 'undefined' || selectedDate === 'undefined') {
+      if (
+        !selectedProfessional ||
+        !selectedDate ||
+        selectedProfessional === 'undefined' ||
+        selectedDate === 'undefined'
+      ) {
         return []
       }
-      const res = await axios.get(`/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`)
+      const res = await axios.get(
+        `/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`,
+      )
       return res.data
     },
-    enabled: isScheduled && !!selectedProfessional && !!selectedDate && selectedProfessional !== 'undefined' && selectedDate !== 'undefined',
+    enabled:
+      isScheduled &&
+      !!selectedProfessional &&
+      !!selectedDate &&
+      selectedProfessional !== 'undefined' &&
+      selectedDate !== 'undefined',
     staleTime: 0, // Sempre buscar dados atualizados
     refetchOnWindowFocus: true, // Atualizar quando a janela receber foco
   })
@@ -62,7 +79,8 @@ export function useFormQueries(selectedProfessional?: string, selectedDate?: str
     clients: clients.data || [],
     services: services.data || [],
     availableSlots: availableSlots.data || [],
-    isLoading: professionals.isLoading || clients.isLoading || services.isLoading,
+    isLoading:
+      professionals.isLoading || clients.isLoading || services.isLoading,
     refetchAvailableSlots: availableSlots.refetch,
   }
 }

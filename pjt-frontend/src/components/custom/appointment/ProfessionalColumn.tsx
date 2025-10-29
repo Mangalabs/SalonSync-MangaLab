@@ -10,9 +10,13 @@ interface ProfessionalColumnProps {
   queueCalculations: any
 }
 
-export function ProfessionalColumn({ professionalStats, selectedDate, queueCalculations }: ProfessionalColumnProps) {
+export function ProfessionalColumn({
+  professionalStats,
+  selectedDate,
+  queueCalculations,
+}: ProfessionalColumnProps) {
   const { formatTimeRemaining, isToday } = queueCalculations
-  
+
   const {
     professionalId,
     professionalName,
@@ -20,10 +24,11 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
     upcomingAppointments,
     stats,
     status,
-    nextAvailableTime
+    nextAvailableTime,
   } = professionalStats
 
-  const totalAppointments = (currentAppointment ? 1 : 0) + upcomingAppointments.length
+  const totalAppointments =
+    (currentAppointment ? 1 : 0) + upcomingAppointments.length
 
   return (
     <div className='bg-muted/50 rounded-xl p-4 border border-border'>
@@ -34,21 +39,22 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
             <User className='w-4 h-4 text-secondary-foreground' />
           </div>
           <div>
-            <h4 className='font-semibold text-foreground text-sm'>{professionalName}</h4>
+            <h4 className='font-semibold text-foreground text-sm'>
+              {professionalName}
+            </h4>
             <p className='text-xs text-muted-foreground'>
-              {totalAppointments} agendamento{totalAppointments !== 1 ? 's' : ''}
+              {totalAppointments} agendamento
+              {totalAppointments !== 1 ? 's' : ''}
               {stats.completedToday > 0 && (
-                <span className='ml-2 text-green-600'>• {stats.completedToday} concluídos</span>
+                <span className='ml-2 text-green-600'>
+                  • {stats.completedToday} concluídos
+                </span>
               )}
             </p>
           </div>
         </div>
-        
-        <ProfessionalStatus
-          status={status}
-          stats={stats}
-          isToday={isToday}
-        />
+
+        <ProfessionalStatus status={status} stats={stats} isToday={isToday} />
       </div>
 
       {/* Próxima Disponibilidade */}
@@ -59,10 +65,12 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
               <Clock className='w-3 h-3 text-muted-foreground' />
               <span className='text-muted-foreground'>Próximo livre:</span>
               <span className='font-medium text-foreground'>
-                {typeof nextAvailableTime === 'string' 
+                {typeof nextAvailableTime === 'string'
                   ? nextAvailableTime.split('T')[1]?.slice(0, 5) || '00:00'
-                  : new Date(nextAvailableTime).toISOString().split('T')[1]?.slice(0, 5) || '00:00'
-                }
+                  : new Date(nextAvailableTime)
+                    .toISOString()
+                    .split('T')[1]
+                    ?.slice(0, 5) || '00:00'}
               </span>
             </div>
             {stats.totalWaitTime > 0 && (
@@ -82,10 +90,12 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
       {/* Agendamento Atual */}
       {currentAppointment && (
         <div className='mb-3'>
-          <div className='text-xs font-medium text-muted-foreground mb-2'>ATENDENDO AGORA</div>
+          <div className='text-xs font-medium text-muted-foreground mb-2'>
+            ATENDENDO AGORA
+          </div>
           <AppointmentQueueCard
             appointment={currentAppointment}
-            status="in-progress"
+            status='in-progress'
             queueCalculations={queueCalculations}
           />
         </div>
@@ -102,7 +112,7 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
               <AppointmentQueueCard
                 key={appointment.id}
                 appointment={appointment}
-                status={index === 0 ? "next" : "waiting"}
+                status={index === 0 ? 'next' : 'waiting'}
                 queueCalculations={queueCalculations}
               />
             ))}
@@ -123,7 +133,9 @@ export function ProfessionalColumn({ professionalStats, selectedDate, queueCalcu
           </div>
           <p className='text-sm text-muted-foreground'>Sem agendamentos</p>
           {isToday && (
-            <p className='text-xs text-muted-foreground mt-1'>Disponível agora</p>
+            <p className='text-xs text-muted-foreground mt-1'>
+              Disponível agora
+            </p>
           )}
         </div>
       )}

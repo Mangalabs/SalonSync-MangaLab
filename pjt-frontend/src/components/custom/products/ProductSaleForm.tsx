@@ -9,12 +9,17 @@ import { ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
-
 
 const saleSchema = z.object({
   productId: z.string().min(1, 'Selecione um produto'),
@@ -26,10 +31,10 @@ const saleSchema = z.object({
   branchId: z.string().min(1, 'Selecione uma filial'),
 })
 
-type SaleFormData = z.infer<typeof saleSchema>;
+type SaleFormData = z.infer<typeof saleSchema>
 
 interface ProductSaleFormProps {
-  onSuccess: () => void;
+  onSuccess: () => void
 }
 
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
@@ -60,15 +65,16 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   })
 
   const selectedBranchId = watch('branchId')
-  
+
   // Log para debug da seleção de filial
-  useEffect(() => {
-  }, [selectedBranchId])
+  useEffect(() => {}, [selectedBranchId])
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedBranchId],
     queryFn: async () => {
-      if (!selectedBranchId) {return []}
+      if (!selectedBranchId) {
+        return []
+      }
       const res = await axios.get(`/api/products?branchId=${selectedBranchId}`)
       return res.data
     },
@@ -93,7 +99,9 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       if (!selectedBranchId) {
         return []
       }
-      const res = await axios.get(`/api/professionals?branchId=${selectedBranchId}`)
+      const res = await axios.get(
+        `/api/professionals?branchId=${selectedBranchId}`,
+      )
       return res.data
     },
     enabled: !!selectedBranchId,
@@ -102,12 +110,14 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   // Auto-selecionar profissional se for funcionário (não admin)
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
-      const currentProfessional = professionals.find(p => p.name === user.name)
+      const currentProfessional = professionals.find(
+        (p) => p.name === user.name,
+      )
       return currentProfessional?.id || ''
     }
     return ''
   }, [isProfessional, isAdmin, user?.name, professionals])
-  
+
   useEffect(() => {
     if (currentProfessionalId) {
       setValue('soldById', currentProfessionalId)
@@ -133,20 +143,28 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
   const createSale = useMutation({
     mutationFn: async (data: SaleFormData) => {
-      const selectedClient = data.clientId ? clients.find((c: any) => c.id === data.clientId) : null
+      const selectedClient = data.clientId
+        ? clients.find((c: any) => c.id === data.clientId)
+        : null
       const clientName = selectedClient?.name
-      
+
       const saleData = {
         type: 'OUT',
         quantity: data.quantity,
         unitCost: data.unitPrice,
-        reason: `Venda de produto${clientName ? ` - Cliente: ${clientName}` : ''}${data.notes ? ` - ${data.notes}` : ''}`,
+        reason: `Venda de produto${
+          clientName ? ` - Cliente: ${clientName}` : ''
+        }${data.notes ? ` - ${data.notes}` : ''}`,
         reference: clientName ? `Cliente: ${clientName}` : undefined,
         soldById: data.soldById || undefined, // undefined se não selecionado
       }
-      
+
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
-      const res = await axios.post(`/api/products/${data.productId}/adjust`, saleData, { headers })
+      const res = await axios.post(
+        `/api/products/${data.productId}/adjust`,
+        saleData,
+        { headers },
+      )
       return res.data
     },
     onSuccess: () => {
@@ -166,28 +184,34 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       toast.error('Produto não encontrado')
       return
     }
-    
+
     if (data.quantity > selectedProduct.currentStock) {
-      toast.error(`Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`)
+      toast.error(
+        `Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`,
+      )
       return
     }
-    
+
     createSale.mutate(data)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <ShoppingCart className="h-5 w-5 text-[#D4AF37]" />
-        <h3 className="text-lg font-semibold text-[#1A1A1A]">Venda de Produto</h3>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+      <div className='flex items-center gap-2 mb-4'>
+        <ShoppingCart className='h-5 w-5 text-[#D4AF37]' />
+        <h3 className='text-lg font-semibold text-[#1A1A1A]'>
+          Venda de Produto
+        </h3>
       </div>
 
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
-          <Select onValueChange={(value) => setValue('branchId', value)} defaultValue={!isAdmin ? activeBranch?.id : undefined}>
+          <Label htmlFor='branchId'>Filial</Label>
+          <Select
+            onValueChange={(value) => setValue('branchId', value)}
+            defaultValue={!isAdmin ? activeBranch?.id : undefined}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione uma filial" />
+              <SelectValue placeholder='Selecione uma filial' />
             </SelectTrigger>
             <SelectContent>
               {branches.map((branch: any) => (
@@ -198,70 +222,78 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
             </SelectContent>
           </Select>
           {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+            <p className='text-sm text-red-600 mt-1'>
+              {errors.branchId.message}
+            </p>
           )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="productId">Produto</Label>
+        <Label htmlFor='productId'>Produto</Label>
         <Select onValueChange={handleProductChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Selecione um produto" />
+            <SelectValue placeholder='Selecione um produto' />
           </SelectTrigger>
           <SelectContent>
-            {products.filter((product: any) => product.currentStock > 0).map((product: any) => (
-              <SelectItem key={product.id} value={product.id}>
-                {product.name} (Estoque: {product.currentStock})
-              </SelectItem>
-            ))}
+            {products
+              .filter((product: any) => product.currentStock > 0)
+              .map((product: any) => (
+                <SelectItem key={product.id} value={product.id}>
+                  {product.name} (Estoque: {product.currentStock})
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
         {errors.productId && (
-          <p className="text-sm text-[#DC2626] mt-1">{errors.productId.message}</p>
+          <p className='text-sm text-[#DC2626] mt-1'>
+            {errors.productId.message}
+          </p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className='grid grid-cols-2 gap-4'>
         <div>
-          <Label htmlFor="quantity">Quantidade</Label>
+          <Label htmlFor='quantity'>Quantidade</Label>
           <Input
-            id="quantity"
-            type="number"
-            min="1"
+            id='quantity'
+            type='number'
+            min='1'
             max={selectedProduct?.currentStock || 999}
             {...register('quantity', { valueAsNumber: true })}
-            placeholder="Quantos foram vendidos"
+            placeholder='Quantos foram vendidos'
           />
           {errors.quantity && (
-            <p className="text-sm text-[#DC2626] mt-1">{errors.quantity.message}</p>
+            <p className='text-sm text-[#DC2626] mt-1'>
+              {errors.quantity.message}
+            </p>
           )}
           {selectedProduct && (
-            <p className="text-xs text-[#737373] mt-1">
+            <p className='text-xs text-[#737373] mt-1'>
               Disponível: {selectedProduct.currentStock}
             </p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="unitPrice">Preço Unitário (R$)</Label>
+          <Label htmlFor='unitPrice'>Preço Unitário (R$)</Label>
           <Input
-            id="unitPrice"
-            type="number"
-            step="0.01"
-            min="0.01"
+            id='unitPrice'
+            type='number'
+            step='0.01'
+            min='0.01'
             {...register('unitPrice', { valueAsNumber: true })}
-            placeholder="Selecione um produto"
+            placeholder='Selecione um produto'
             readOnly
-            className="bg-[#F5F5F0] cursor-not-allowed"
+            className='bg-[#F5F5F0] cursor-not-allowed'
           />
           {!selectedProduct && (
-            <p className="text-xs text-[#737373] mt-1">
+            <p className='text-xs text-[#737373] mt-1'>
               Selecione um produto para ver o preço
             </p>
           )}
           {selectedProduct && (
-            <p className="text-xs text-[#737373] mt-1">
+            <p className='text-xs text-[#737373] mt-1'>
               Preço definido no cadastro do produto
             </p>
           )}
@@ -269,10 +301,10 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       </div>
 
       {total > 0 && (
-        <div className="p-3 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20">
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-[#1A1A1A]">Total da Venda:</span>
-            <span className="text-xl font-bold text-[#D4AF37]">
+        <div className='p-3 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20'>
+          <div className='flex justify-between items-center'>
+            <span className='font-medium text-[#1A1A1A]'>Total da Venda:</span>
+            <span className='text-xl font-bold text-[#D4AF37]'>
               R$ {total.toFixed(2)}
             </span>
           </div>
@@ -281,13 +313,17 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
       {isAdmin && (
         <div>
-          <Label htmlFor="soldById">Vendedor (opcional)</Label>
-          <Select onValueChange={(value) => setValue('soldById', value === 'none' ? undefined : value)} defaultValue={currentProfessionalId || 'none'}>
+          <Label htmlFor='soldById'>Vendedor (opcional)</Label>
+          <Select
+            onValueChange={(value) =>
+              setValue('soldById', value === 'none' ? undefined : value)
+            }
+            defaultValue={currentProfessionalId || 'none'}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o vendedor" />
+              <SelectValue placeholder='Selecione o vendedor' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Sem vendedor (Admin)</SelectItem>
+              <SelectItem value='none'>Sem vendedor (Admin)</SelectItem>
               {professionals.map((professional: any) => (
                 <SelectItem key={professional.id} value={professional.id}>
                   {professional.name}
@@ -295,7 +331,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className='text-xs text-gray-500 mt-1'>
             Deixe "Sem vendedor" se você (admin) está fazendo a venda
           </p>
         </div>
@@ -305,23 +341,28 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         <div>
           <Label>Vendedor</Label>
           <Input
-            value={professionals.find(p => p.id === currentProfessionalId)?.name || user?.name || ''}
+            value={
+              professionals.find((p) => p.id === currentProfessionalId)?.name ||
+              user?.name ||
+              ''
+            }
             readOnly
-            className="bg-[#F5F5F0] cursor-not-allowed"
+            className='bg-[#F5F5F0] cursor-not-allowed'
           />
         </div>
       )}
 
       <div>
-        <Label htmlFor="clientId">Cliente (opcional)</Label>
+        <Label htmlFor='clientId'>Cliente (opcional)</Label>
         <Select onValueChange={(value) => setValue('clientId', value)}>
           <SelectTrigger>
-            <SelectValue placeholder="Selecione um cliente" />
+            <SelectValue placeholder='Selecione um cliente' />
           </SelectTrigger>
           <SelectContent>
             {clients.map((client: any) => (
               <SelectItem key={client.id} value={client.id}>
-                {client.name}{client.phone && ` - ${client.phone}`}
+                {client.name}
+                {client.phone && ` - ${client.phone}`}
               </SelectItem>
             ))}
           </SelectContent>
@@ -329,21 +370,24 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="notes">Observações (opcional)</Label>
+        <Label htmlFor='notes'>Observações (opcional)</Label>
         <Textarea
-          id="notes"
+          id='notes'
           {...register('notes')}
-          placeholder="Observações sobre a venda"
+          placeholder='Observações sobre a venda'
           rows={2}
         />
       </div>
 
-      <Button 
-        type="submit" 
-        disabled={isSubmitting || !selectedProduct || quantity <= 0 || unitPrice <= 0} 
-        className="w-full bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
-      >
-        {isSubmitting ? 'Registrando...' : `Registrar Venda - R$ ${total.toFixed(2)}`}
+      <Button
+        type='submit'
+        disabled={
+          isSubmitting || !selectedProduct || quantity <= 0 || unitPrice <= 0
+        }
+        className='w-full bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]'>
+        {isSubmitting
+          ? 'Registrando...'
+          : `Registrar Venda - R$ ${total.toFixed(2)}`}
       </Button>
     </form>
   )

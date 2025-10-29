@@ -1,4 +1,5 @@
 import { Loader2, AlertTriangle, RefreshCw, WifiOff } from 'lucide-react'
+
 import { Button } from './button'
 
 interface LoadingStateProps {
@@ -16,7 +17,7 @@ export function LoadingState({
   onRetry, 
   loadingText = 'Carregando...', 
   emptyText = 'Nenhum dado encontrado',
-  children 
+  children, 
 }: LoadingStateProps) {
   if (isLoading) {
     return (
@@ -73,7 +74,7 @@ export function EmptyState({
   icon: Icon = AlertTriangle,
   title = 'Nenhum item encontrado',
   description = 'Não há dados para exibir no momento.',
-  action
+  action,
 }: {
   icon?: React.ComponentType<{ className?: string }>
   title?: string

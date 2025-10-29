@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Search, UserPlus, Save, Clock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
-// eslint-disable-next-line import/namespace
+ 
 import { useFormQueries } from '@/hooks/useFormQueries'
 import { useAppointmentForm } from '@/hooks/useAppointmentForm'
 import { useUser } from '@/contexts/UserContext'

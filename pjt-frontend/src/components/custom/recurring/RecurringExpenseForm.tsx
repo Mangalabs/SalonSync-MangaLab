@@ -19,20 +19,29 @@ const recurringExpenseSchema = z.object({
   description: z.string().optional(),
   categoryId: z.string().min(1, 'Selecione uma categoria'),
   fixedAmount: z.union([z.number(), z.nan()]).optional(),
-  receiptDay: z.number().min(1, 'Dia deve ser entre 1 e 31').max(31, 'Dia deve ser entre 1 e 31'),
-  dueDay: z.number().min(1, 'Dia deve ser entre 1 e 31').max(31, 'Dia deve ser entre 1 e 31'),
+  receiptDay: z
+    .number()
+    .min(1, 'Dia deve ser entre 1 e 31')
+    .max(31, 'Dia deve ser entre 1 e 31'),
+  dueDay: z
+    .number()
+    .min(1, 'Dia deve ser entre 1 e 31')
+    .max(31, 'Dia deve ser entre 1 e 31'),
   professionalId: z.string().optional(),
   branchId: z.string().min(1, 'Selecione uma filial'),
 })
 
-type RecurringExpenseFormData = z.infer<typeof recurringExpenseSchema>;
+type RecurringExpenseFormData = z.infer<typeof recurringExpenseSchema>
 
 interface RecurringExpenseFormProps {
-  onSuccess: () => void;
-  initialData?: any;
+  onSuccess: () => void
+  initialData?: any
 }
 
-export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpenseFormProps) {
+export function RecurringExpenseForm({
+  onSuccess,
+  initialData,
+}: RecurringExpenseFormProps) {
   const queryClient = useQueryClient()
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
@@ -54,18 +63,23 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
     formState: { errors, isSubmitting },
   } = useForm<RecurringExpenseFormData>({
     resolver: zodResolver(recurringExpenseSchema),
-    defaultValues: initialData ? {
-      name: initialData.name || '',
-      description: initialData.description || '',
-      categoryId: initialData.categoryId || '',
-      fixedAmount: initialData.fixedAmount ? Number(initialData.fixedAmount) : undefined,
-      receiptDay: initialData.receiptDay || 1,
-      dueDay: initialData.dueDay || 1,
-      professionalId: initialData.professionalId || '',
-      branchId: initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
-    } : {
-      branchId: !isAdmin ? activeBranch?.id : undefined,
-    },
+    defaultValues: initialData
+      ? {
+        name: initialData.name || '',
+        description: initialData.description || '',
+        categoryId: initialData.categoryId || '',
+        fixedAmount: initialData.fixedAmount
+          ? Number(initialData.fixedAmount)
+          : undefined,
+        receiptDay: initialData.receiptDay || 1,
+        dueDay: initialData.dueDay || 1,
+        professionalId: initialData.professionalId || '',
+        branchId:
+            initialData.branchId || (!isAdmin ? activeBranch?.id : undefined),
+      }
+      : {
+        branchId: !isAdmin ? activeBranch?.id : undefined,
+      },
   })
 
   const selectedBranchId = watch('branchId')
@@ -87,17 +101,19 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
 
   const categories = recurringExpenseCategories
 
-
-
   const selectedCategoryId = watch('categoryId')
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
+  const selectedCategory = categories.find(
+    (cat) => cat.id === selectedCategoryId,
+  )
   const isSalaryCommissionCategory = selectedCategoryId === 'salarios-comissoes'
   const selectedProfessionalId = watch('professionalId')
 
   const { data: professionals = [] } = useQuery({
     queryKey: ['professionals', selectedBranchId],
     queryFn: async () => {
-      const headers = selectedBranchId ? { 'x-branch-id': selectedBranchId } : {}
+      const headers = selectedBranchId
+        ? { 'x-branch-id': selectedBranchId }
+        : {}
       const res = await axios.get('/api/professionals', { headers })
       return res.data
     },
@@ -106,13 +122,25 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
 
   // Buscar dados do profissional selecionado para cálculo automático
   const { data: professionalData } = useQuery({
-    queryKey: ['professional-salary-data', selectedProfessionalId, selectedBranchId],
+    queryKey: [
+      'professional-salary-data',
+      selectedProfessionalId,
+      selectedBranchId,
+    ],
     queryFn: async () => {
-      const headers = selectedBranchId ? { 'x-branch-id': selectedBranchId } : {}
-      const res = await axios.get(`/api/professionals/${selectedProfessionalId}/salary-commission-data`, { headers })
+      const headers = selectedBranchId
+        ? { 'x-branch-id': selectedBranchId }
+        : {}
+      const res = await axios.get(
+        `/api/professionals/${selectedProfessionalId}/salary-commission-data`,
+        { headers },
+      )
       return res.data
     },
-    enabled: !!selectedProfessionalId && !!selectedBranchId && isSalaryCommissionCategory,
+    enabled:
+      !!selectedProfessionalId &&
+      !!selectedBranchId &&
+      isSalaryCommissionCategory,
   })
 
   // Definir valor automaticamente quando dados do profissional chegarem
@@ -121,8 +149,6 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
       setValue('fixedAmount', professionalData.totalEstimated)
     }
   }, [professionalData, isSalaryCommissionCategory, setValue])
-  
-
 
   const createRecurringExpense = useMutation({
     mutationFn: async (data: RecurringExpenseFormData) => {
@@ -136,22 +162,39 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
         professionalId: data.professionalId,
       }
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
-      
+
       if (initialData) {
-        const res = await axios.put(`/api/financial/recurring-expenses/${initialData.id}`, payload, { headers })
+        const res = await axios.put(
+          `/api/financial/recurring-expenses/${initialData.id}`,
+          payload,
+          { headers },
+        )
         return res.data
       } else {
-        const res = await axios.post('/api/financial/recurring-expenses', payload, { headers })
+        const res = await axios.post(
+          '/api/financial/recurring-expenses',
+          payload,
+          { headers },
+        )
         return res.data
       }
     },
     onSuccess: () => {
-      toast.success(initialData ? 'Despesa fixa atualizada com sucesso!' : 'Despesa fixa criada com sucesso!')
+      toast.success(
+        initialData
+          ? 'Despesa fixa atualizada com sucesso!'
+          : 'Despesa fixa criada com sucesso!',
+      )
       queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
       onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || (initialData ? 'Erro ao atualizar despesa fixa' : 'Erro ao criar despesa fixa'))
+      toast.error(
+        error.response?.data?.message ||
+          (initialData
+            ? 'Erro ao atualizar despesa fixa'
+            : 'Erro ao criar despesa fixa'),
+      )
     },
   })
 
@@ -165,10 +208,10 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
+          <Label htmlFor='branchId'>Filial</Label>
           <Combobox
             options={branches.map((branch: any) => ({
               value: branch.id,
@@ -176,39 +219,41 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
             }))}
             value={watch('branchId')}
             onValueChange={(value) => setValue('branchId', value)}
-            placeholder="Selecione uma filial"
-            searchPlaceholder="Pesquisar filial..."
+            placeholder='Selecione uma filial'
+            searchPlaceholder='Pesquisar filial...'
           />
           {errors.branchId && (
-            <p className="text-sm text-red-600 mt-1">{errors.branchId.message}</p>
+            <p className='text-sm text-red-600 mt-1'>
+              {errors.branchId.message}
+            </p>
           )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="name">Nome da Despesa</Label>
+        <Label htmlFor='name'>Nome da Despesa</Label>
         <Input
-          id="name"
+          id='name'
           {...register('name')}
-          placeholder="Ex: Conta de Luz, Aluguel, Plano de Saúde, etc."
+          placeholder='Ex: Conta de Luz, Aluguel, Plano de Saúde, etc.'
         />
         {errors.name && (
-          <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+          <p className='text-sm text-red-600 mt-1'>{errors.name.message}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="description">Descrição (opcional)</Label>
+        <Label htmlFor='description'>Descrição (opcional)</Label>
         <Textarea
-          id="description"
+          id='description'
           {...register('description')}
-          placeholder="Descrição adicional da despesa"
+          placeholder='Descrição adicional da despesa'
           rows={2}
         />
       </div>
 
       <div>
-        <Label htmlFor="categoryId">Categoria</Label>
+        <Label htmlFor='categoryId'>Categoria</Label>
         <Combobox
           options={categories.map((category) => ({
             value: category.id,
@@ -216,19 +261,20 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
           }))}
           value={selectedCategoryId}
           onValueChange={(value) => setValue('categoryId', value)}
-          placeholder="Selecione uma categoria"
-          searchPlaceholder="Pesquisar categoria..."
+          placeholder='Selecione uma categoria'
+          searchPlaceholder='Pesquisar categoria...'
         />
         {errors.categoryId && (
-          <p className="text-sm text-red-600 mt-1">{errors.categoryId.message}</p>
+          <p className='text-sm text-red-600 mt-1'>
+            {errors.categoryId.message}
+          </p>
         )}
-
       </div>
 
       {isSalaryCommissionCategory && (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           <div>
-            <Label htmlFor="professionalId">Profissional</Label>
+            <Label htmlFor='professionalId'>Profissional</Label>
             <Combobox
               options={professionals.map((professional: any) => ({
                 value: professional.id,
@@ -240,29 +286,39 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
                 // Limpar valor fixo para recalcular
                 setValue('fixedAmount', undefined)
               }}
-              placeholder="Selecione um profissional"
-              searchPlaceholder="Pesquisar profissional..."
+              placeholder='Selecione um profissional'
+              searchPlaceholder='Pesquisar profissional...'
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className='text-xs text-gray-500 mt-1'>
               Salário base + comissões do período
             </p>
           </div>
 
           {professionalData && (
-            <div className="bg-blue-50 p-3 rounded-lg space-y-2">
-              <h4 className="font-medium text-sm text-blue-900">Informações do Profissional</h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className='bg-blue-50 p-3 rounded-lg space-y-2'>
+              <h4 className='font-medium text-sm text-blue-900'>
+                Informações do Profissional
+              </h4>
+              <div className='grid grid-cols-2 gap-2 text-xs'>
                 <div>
-                  <span className="text-gray-600">Salário Base:</span>
-                  <p className="font-medium">R$ {professionalData.baseSalary?.toFixed(2) || '0,00'}</p>
+                  <span className='text-gray-600'>Salário Base:</span>
+                  <p className='font-medium'>
+                    R$ {professionalData.baseSalary?.toFixed(2) || '0,00'}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-gray-600">Comissões (mês atual):</span>
-                  <p className="font-medium">R$ {professionalData.currentMonthCommissions?.toFixed(2) || '0,00'}</p>
+                  <span className='text-gray-600'>Comissões (mês atual):</span>
+                  <p className='font-medium'>
+                    R${' '}
+                    {professionalData.currentMonthCommissions?.toFixed(2) ||
+                      '0,00'}
+                  </p>
                 </div>
-                <div className="col-span-2 pt-1 border-t border-blue-200">
-                  <span className="text-gray-600">Total Estimado:</span>
-                  <p className="font-semibold text-blue-900">R$ {professionalData.totalEstimated?.toFixed(2) || '0,00'}</p>
+                <div className='col-span-2 pt-1 border-t border-blue-200'>
+                  <span className='text-gray-600'>Total Estimado:</span>
+                  <p className='font-semibold text-blue-900'>
+                    R$ {professionalData.totalEstimated?.toFixed(2) || '0,00'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -270,9 +326,9 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className='grid grid-cols-2 gap-3'>
         <div>
-          <Label htmlFor="receiptDay">Dia de Recebimento</Label>
+          <Label htmlFor='receiptDay'>Dia de Recebimento</Label>
           <Combobox
             options={Array.from({ length: 31 }, (_, i) => ({
               value: (i + 1).toString(),
@@ -280,19 +336,21 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
             }))}
             value={watch('receiptDay')?.toString()}
             onValueChange={(value) => setValue('receiptDay', parseInt(value))}
-            placeholder="Dia do mês"
-            searchPlaceholder="Pesquisar dia..."
+            placeholder='Dia do mês'
+            searchPlaceholder='Pesquisar dia...'
           />
           {errors.receiptDay && (
-            <p className="text-sm text-red-600 mt-1">{errors.receiptDay.message}</p>
+            <p className='text-sm text-red-600 mt-1'>
+              {errors.receiptDay.message}
+            </p>
           )}
-          <p className="text-xs text-gray-500 mt-1">
+          <p className='text-xs text-gray-500 mt-1'>
             Dia do mês que a conta chega
           </p>
         </div>
 
         <div>
-          <Label htmlFor="dueDay">Dia de Vencimento</Label>
+          <Label htmlFor='dueDay'>Dia de Vencimento</Label>
           <Combobox
             options={Array.from({ length: 31 }, (_, i) => ({
               value: (i + 1).toString(),
@@ -300,35 +358,39 @@ export function RecurringExpenseForm({ onSuccess, initialData }: RecurringExpens
             }))}
             value={watch('dueDay')?.toString()}
             onValueChange={(value) => setValue('dueDay', parseInt(value))}
-            placeholder="Dia do mês"
-            searchPlaceholder="Pesquisar dia..."
+            placeholder='Dia do mês'
+            searchPlaceholder='Pesquisar dia...'
           />
           {errors.dueDay && (
-            <p className="text-sm text-red-600 mt-1">{errors.dueDay.message}</p>
+            <p className='text-sm text-red-600 mt-1'>{errors.dueDay.message}</p>
           )}
-          <p className="text-xs text-gray-500 mt-1">
-            Dia do mês do vencimento
-          </p>
+          <p className='text-xs text-gray-500 mt-1'>Dia do mês do vencimento</p>
         </div>
       </div>
 
       <div>
-        <Label htmlFor="fixedAmount">Valor Estimado (opcional)</Label>
+        <Label htmlFor='fixedAmount'>Valor Estimado (opcional)</Label>
         <Input
-          id="fixedAmount"
-          type="number"
-          step="0.01"
-          min="0"
+          id='fixedAmount'
+          type='number'
+          step='0.01'
+          min='0'
           {...register('fixedAmount', { valueAsNumber: true })}
-          placeholder="Valor estimado da despesa"
+          placeholder='Valor estimado da despesa'
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className='text-xs text-gray-500 mt-1'>
           Valor estimado para controle. Deixe vazio se o valor varia muito.
         </p>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? (initialData ? 'Atualizando...' : 'Criando...') : (initialData ? 'Atualizar Despesa Fixa' : 'Criar Despesa Fixa')}
+      <Button type='submit' disabled={isSubmitting} className='w-full'>
+        {isSubmitting
+          ? initialData
+            ? 'Atualizando...'
+            : 'Criando...'
+          : initialData
+            ? 'Atualizar Despesa Fixa'
+            : 'Criar Despesa Fixa'}
       </Button>
     </form>
   )

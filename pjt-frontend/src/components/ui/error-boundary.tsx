@@ -1,5 +1,6 @@
 import React from 'react'
-import { AlertTriangle, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react'
+
 import { Button } from './button'
 
 interface ErrorBoundaryState {
@@ -125,7 +126,7 @@ export function useNetworkStatus() {
 export function NetworkIndicator() {
   const isOnline = useNetworkStatus()
 
-  if (isOnline) return null
+  if (isOnline) {return null}
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center py-2 text-sm font-medium z-50">

@@ -10,17 +10,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from '@/lib/axios'
 
 interface Branch {
-  id: string;
-  name: string;
-  address?: string;
-  phone?: string;
+  id: string
+  name: string
+  address?: string
+  phone?: string
 }
 
 interface BranchContextType {
-  activeBranch: Branch | null;
-  branches: Branch[];
-  setActiveBranch: (branch: Branch) => void;
-  isLoading: boolean;
+  activeBranch: Branch | null
+  branches: Branch[]
+  setActiveBranch: (branch: Branch) => void
+  isLoading: boolean
 }
 
 const BranchContext = createContext<BranchContextType | undefined>(undefined)
@@ -38,7 +38,6 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-
     if (branches.length > 0 && !activeBranch) {
       const savedBranchId = localStorage.getItem('activeBranchId')
       const savedBranch = branches.find((b: Branch) => b.id === savedBranchId)
@@ -68,7 +67,6 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
     queryClient.invalidateQueries({ queryKey: ['roles'] })
-
   }
 
   return (
@@ -78,8 +76,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         branches,
         setActiveBranch,
         isLoading,
-      }}
-    >
+      }}>
       {children}
     </BranchContext.Provider>
   )

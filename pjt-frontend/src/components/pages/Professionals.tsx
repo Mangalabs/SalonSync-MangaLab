@@ -3,7 +3,7 @@ import { ProfessionalAbsenceManagement } from '@/components/custom/professional/
 
 export default function Professionals() {
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <ProfessionalTable />
       <ProfessionalAbsenceManagement />
     </div>

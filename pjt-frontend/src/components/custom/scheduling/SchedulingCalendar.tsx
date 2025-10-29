@@ -33,25 +33,24 @@ import { DashboardStats } from '../DashboardStats'
 import { AppointmentCard } from '../appointment/AppointmentCard'
 import { AppointmentStats } from '../appointment/AppointmentStats'
 
-
 interface Appointment {
-  id: string;
-  scheduledAt: string;
-  status?: string;
-  professional: { name: string } | null;
-  client: { name: string };
+  id: string
+  scheduledAt: string
+  status?: string
+  professional: { name: string } | null
+  client: { name: string }
   appointmentServices: {
-    service: { name: string; price: string };
-  }[];
-  total: string;
+    service: { name: string; price: string }
+  }[]
+  total: string
 }
 
 interface SchedulingCalendarProps {
-  mode?: 'scheduled' | 'completed';
-  searchTerm?: string;
-  statusFilter?: string;
-  dateFilter?: string;
-  professionalFilter?: string;
+  mode?: 'scheduled' | 'completed'
+  searchTerm?: string
+  statusFilter?: string
+  dateFilter?: string
+  professionalFilter?: string
 }
 
 export function SchedulingCalendar({
@@ -107,39 +106,40 @@ export function SchedulingCalendar({
     professionalFilter,
   })
 
-  if (isLoading) {return <div>Carregando...</div>}
+  if (isLoading) {
+    return <div>Carregando...</div>
+  }
 
   // Se mode está definido, mostrar apenas a lista
   if (mode) {
     return (
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {mode === 'completed' && (
           <AppointmentStats appointments={appointments} />
         )}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+            <CardTitle className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Calendar className='h-5 w-5' />
                 {mode === 'completed'
                   ? 'Atendimentos Realizados'
                   : 'Agendamentos'}
               </div>
               {mode === 'completed' && (
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant='ghost'
+                  size='sm'
                   onClick={() => setShowHistory(!showHistory)}
-                  className="text-xs"
-                >
+                  className='text-xs'>
                   {showHistory ? (
                     <>
-                      <ChevronUp className="h-4 w-4 mr-1" />
+                      <ChevronUp className='h-4 w-4 mr-1' />
                       Ocultar Histórico
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="h-4 w-4 mr-1" />
+                      <ChevronDown className='h-4 w-4 mr-1' />
                       Mostrar Histórico
                     </>
                   )}
@@ -149,31 +149,33 @@ export function SchedulingCalendar({
           </CardHeader>
           <CardContent>
             {mode === 'completed' && !showHistory ? (
-              <p className="text-[#737373]">
+              <p className='text-[#737373]'>
                 Clique em "Mostrar Histórico" para ver os atendimentos
                 realizados
               </p>
             ) : mode === 'completed' ? (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className='space-y-3 max-h-96 overflow-y-auto'>
                 {Object.entries(
                   sortedAppointments.reduce((groups, apt) => {
-                    const profName = apt.professional?.name || 'Profissional removido'
-                    if (!groups[profName]) {groups[profName] = []}
+                    const profName =
+                      apt.professional?.name || 'Profissional removido'
+                    if (!groups[profName]) {
+                      groups[profName] = []
+                    }
                     groups[profName].push(apt)
                     return groups
                   }, {} as Record<string, typeof sortedAppointments>),
                 ).map(([professionalName, appointments]) => {
-                  const isExpanded =
-                    expandedProfessionals.has(professionalName)
+                  const isExpanded = expandedProfessionals.has(professionalName)
                   const totalRevenue = appointments.reduce(
                     (sum, apt) => sum + Number(apt.total),
                     0,
                   )
 
                   return (
-                    <div key={professionalName} className="border rounded-lg">
+                    <div key={professionalName} className='border rounded-lg'>
                       <div
-                        className="p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors"
+                        className='p-3 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors'
                         onClick={() => {
                           const newExpanded = new Set(expandedProfessionals)
                           if (isExpanded) {
@@ -182,26 +184,25 @@ export function SchedulingCalendar({
                             newExpanded.add(professionalName)
                           }
                           setExpandedProfessionals(newExpanded)
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                        }}>
+                        <div className='flex items-center justify-between'>
+                          <div className='flex items-center gap-2'>
                             {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
+                              <ChevronUp className='h-4 w-4' />
                             ) : (
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown className='h-4 w-4' />
                             )}
-                            <User className="h-4 w-4" />
-                            <span className="font-medium">
+                            <User className='h-4 w-4' />
+                            <span className='font-medium'>
                               {professionalName}
                             </span>
-                            <span className="text-sm text-[#737373]">
+                            <span className='text-sm text-[#737373]'>
                               ({appointments.length} atendimentos)
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4" />
-                            <span className="font-semibold">
+                          <div className='flex items-center gap-1'>
+                            <DollarSign className='h-4 w-4' />
+                            <span className='font-semibold'>
                               R$ {totalRevenue.toFixed(2)}
                             </span>
                           </div>
@@ -209,12 +210,12 @@ export function SchedulingCalendar({
                       </div>
 
                       {isExpanded && (
-                        <div className="p-3 space-y-2">
+                        <div className='p-3 space-y-2'>
                           {appointments.map((apt) => (
                             <AppointmentCard
                               key={apt.id}
                               appointment={apt}
-                              mode="completed"
+                              mode='completed'
                               compact={true}
                             />
                           ))}
@@ -225,9 +226,9 @@ export function SchedulingCalendar({
                 })}
               </div>
             ) : sortedAppointments.length === 0 ? (
-              <p className="text-[#737373]">Nenhum agendamento</p>
+              <p className='text-[#737373]'>Nenhum agendamento</p>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className='space-y-2 max-h-96 overflow-y-auto'>
                 {sortedAppointments.map((apt) => (
                   <AppointmentCard
                     key={apt.id}
@@ -245,9 +246,9 @@ export function SchedulingCalendar({
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className='space-y-4 md:space-y-6'>
       {!mode && (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           {isAdmin ? (
             <DashboardStats
               todayRevenue={appointments
@@ -316,20 +317,20 @@ export function SchedulingCalendar({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+            <CardTitle className='flex items-center gap-2'>
+              <Calendar className='h-5 w-5' />
               Agendamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
             {appointments.filter((apt) => apt.status === 'SCHEDULED').length ===
             0 ? (
-                <p className="text-[#737373]">Nenhum agendamento</p>
+                <p className='text-[#737373]'>Nenhum agendamento</p>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className='space-y-3 max-h-96 overflow-y-auto'>
                   {appointments
                     .filter((apt) => apt.status === 'SCHEDULED')
                     .map((apt) => {
@@ -342,12 +343,11 @@ export function SchedulingCalendar({
                           key={apt.id}
                           className={`border rounded-lg p-3 ${
                             isPast ? 'bg-[#F0F0EB]' : 'bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span className="font-medium">
+                          }`}>
+                          <div className='flex items-center justify-between mb-2'>
+                            <div className='flex items-center gap-2'>
+                              <Calendar className='h-4 w-4' />
+                              <span className='font-medium'>
                                 {aptDate.toLocaleDateString('pt-BR')} às{' '}
                                 {aptDate.toLocaleTimeString('pt-BR', {
                                   hour: '2-digit',
@@ -355,57 +355,54 @@ export function SchedulingCalendar({
                                 })}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="font-semibold">
+                            <div className='flex items-center gap-1'>
+                              <DollarSign className='h-4 w-4' />
+                              <span className='font-semibold'>
                               R$ {Number(apt.total).toFixed(2)}
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <User className="h-4 w-4" />
+                          <div className='flex items-center gap-2 mb-2'>
+                            <User className='h-4 w-4' />
                             <span>{apt.client.name}</span>
                           </div>
-                          <div className="text-sm text-[#737373] mb-2">
+                          <div className='text-sm text-[#737373] mb-2'>
                             {apt.professional?.name || 'Profissional removido'}
                           </div>
-                          <div className="text-sm text-[#737373] mb-3">
+                          <div className='text-sm text-[#737373] mb-3'>
                             {apt.appointmentServices
                               .map((as) => as.service.name)
                               .join(', ')}
                           </div>
 
                           {isPast && (
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className='flex flex-col sm:flex-row gap-2'>
                               <Button
-                                size="sm"
+                                size='sm'
                                 onClick={() => confirmAppointment.mutate(apt.id)}
                                 disabled={confirmAppointment.isPending}
-                                className="bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]"
-                              >
-                                <Check size={14} className="mr-1" />
+                                className='bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A]'>
+                                <Check size={14} className='mr-1' />
                               Confirmar
                               </Button>
                               <Button
-                                size="sm"
-                                variant="destructive"
+                                size='sm'
+                                variant='destructive'
                                 onClick={() => cancelAppointment.mutate(apt.id)}
-                                disabled={cancelAppointment.isPending}
-                              >
-                                <X size={14} className="mr-1" />
+                                disabled={cancelAppointment.isPending}>
+                                <X size={14} className='mr-1' />
                               Não Compareceu
                               </Button>
                             </div>
                           )}
                           {!isPast && (
                             <Button
-                              size="sm"
-                              variant="outline"
+                              size='sm'
+                              variant='outline'
                               onClick={() => setDeletingAppointment(apt.id)}
                               disabled={cancelAppointment.isPending}
-                              className="w-full text-[#DC2626] border-[#FCA5A5] hover:bg-[#FEF2F2]"
-                            >
-                              <X size={14} className="mr-1" />
+                              className='w-full text-[#DC2626] border-[#FCA5A5] hover:bg-[#FEF2F2]'>
+                              <X size={14} className='mr-1' />
                             Cancelar Agendamento
                             </Button>
                           )}
@@ -419,8 +416,8 @@ export function SchedulingCalendar({
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckSquare className="h-5 w-5" />
+            <CardTitle className='flex items-center gap-2'>
+              <CheckSquare className='h-5 w-5' />
               Atendimentos Hoje
             </CardTitle>
           </CardHeader>
@@ -432,9 +429,9 @@ export function SchedulingCalendar({
                 apt.scheduledAt.split('T')[0] === today
               )
             }).length === 0 ? (
-                <p className="text-[#737373]">Nenhum atendimento hoje</p>
+                <p className='text-[#737373]'>Nenhum atendimento hoje</p>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className='space-y-3 max-h-96 overflow-y-auto'>
                   {appointments
                     .filter((apt) => {
                       const today = new Date().toISOString().split('T')[0]
@@ -449,30 +446,29 @@ export function SchedulingCalendar({
                       return (
                         <div
                           key={apt.id}
-                          className="border rounded-lg p-3 bg-[#D4AF37]/10"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <CheckSquare className="h-4 w-4 text-[#D4AF37]" />
-                              <span className="font-medium">
+                          className='border rounded-lg p-3 bg-[#D4AF37]/10'>
+                          <div className='flex items-center justify-between mb-2'>
+                            <div className='flex items-center gap-2'>
+                              <CheckSquare className='h-4 w-4 text-[#D4AF37]' />
+                              <span className='font-medium'>
                                 {aptDate.toLocaleTimeString('pt-BR', {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="font-semibold">
+                            <div className='flex items-center gap-1'>
+                              <DollarSign className='h-4 w-4' />
+                              <span className='font-semibold'>
                               R$ {Number(apt.total).toFixed(2)}
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <User className="h-4 w-4" />
+                          <div className='flex items-center gap-2 mb-2'>
+                            <User className='h-4 w-4' />
                             <span>{apt.client.name}</span>
                           </div>
-                          <div className="text-sm text-[#737373]">
+                          <div className='text-sm text-[#737373]'>
                             {apt.professional?.name || 'Profissional removido'}
                           </div>
                         </div>
@@ -486,23 +482,22 @@ export function SchedulingCalendar({
 
       <AlertDialog
         open={!!deletingAppointment}
-        onOpenChange={() => setDeletingAppointment(null)}
-      >
+        onOpenChange={() => setDeletingAppointment(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja cancelar este agendamento? Esta ação não pode
-              ser desfeita.
+              Tem certeza que deseja cancelar este agendamento? Esta ação não
+              pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
-                deletingAppointment && cancelAppointment.mutate(deletingAppointment)
-              }
-            >
+                deletingAppointment &&
+                cancelAppointment.mutate(deletingAppointment)
+              }>
               Cancelar Agendamento
             </AlertDialogAction>
           </AlertDialogFooter>

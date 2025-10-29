@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   PlusCircle,
   Edit,
@@ -7,21 +7,21 @@ import {
   ChevronUp,
   Settings,
   Search,
-} from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+} from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 
-import axios from "@/lib/axios";
-import { useBranch } from "@/contexts/BranchContext";
-import { Button } from "@/components/ui/button";
+import axios from '@/lib/axios'
+import { useBranch } from '@/contexts/BranchContext'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,21 +31,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/alert-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 
-import { ProfessionalCommissionCard } from "./ProfessionalCommissionCard";
-import { RoleForm } from "../forms/RoleForm";
-import { ProfessionalForm } from "./ProfessionalForm";
+import { ProfessionalCommissionCard } from './ProfessionalCommissionCard'
+import { RoleForm } from '../forms/RoleForm'
+import { ProfessionalForm } from './ProfessionalForm'
 
 type Professional = {
   id: string;
@@ -69,83 +60,83 @@ type Professional = {
 
 
 export function ProfessionalTable() {
-  const queryClient = useQueryClient();
-  const { activeBranch } = useBranch();
+  const queryClient = useQueryClient()
+  const { activeBranch } = useBranch()
   const [expandedProfessional, setExpandedProfessional] = useState<
     string | null
-  >(null);
+  >(null)
   const [editingProfessional, setEditingProfessional] =
-    useState<Professional | null>(null);
+    useState<Professional | null>(null)
   const [deletingProfessional, setDeletingProfessional] =
-    useState<Professional | null>(null);
+    useState<Professional | null>(null)
   const [selectedProfessional, setSelectedProfessional] = useState<
     string | null
-  >(null);
-  const [creatingNew, setCreatingNew] = useState(false);
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleSearchTerm, setRoleSearchTerm] = useState("");
+  >(null)
+  const [creatingNew, setCreatingNew] = useState(false)
+  const [roleOpen, setRoleOpen] = useState(false)
+  const [editingRole, setEditingRole] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleSearchTerm, setRoleSearchTerm] = useState('')
   const [selectedWorkingDays, setSelectedWorkingDays] = useState<number[]>([
     1, 2, 3, 4, 5,
-  ]);
+  ])
 
   const { data: professionals = [], isLoading } = useQuery({
-    queryKey: ["professionals", activeBranch?.id],
+    queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
       try {
-        const res = await axios.get("/api/professionals?include=workingDays");
+        const res = await axios.get('/api/professionals?include=workingDays')
         return res.data.filter(
-          (p: Professional) => p.branchId === activeBranch?.id
-        );
+          (p: Professional) => p.branchId === activeBranch?.id,
+        )
       } catch (error: any) {
         if (error.response?.status === 404) {
-          return [];
+          return []
         }
-        throw error;
+        throw error
       }
     },
     enabled: !!activeBranch,
     retry: false,
-  });
+  })
 
   const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
+    queryKey: ['branches'],
     queryFn: async () => {
-      const res = await axios.get("/api/branches");
-      return res.data;
+      const res = await axios.get('/api/branches')
+      return res.data
     },
-  });
+  })
 
   const { data: roles = [], refetch: refreshRoles } = useQuery({
-    queryKey: ["roles"],
+    queryKey: ['roles'],
     queryFn: async () => {
-      const res = await axios.get("/api/roles");
-      return res.data;
+      const res = await axios.get('/api/roles')
+      return res.data
     },
-  });
+  })
 
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/professionals/${id}`);
+      await axios.delete(`/api/professionals/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast.success("Profissional excluído com sucesso!");
-      setDeletingProfessional(null);
+      queryClient.invalidateQueries({ queryKey: ['professionals'] })
+      toast.success('Profissional excluído com sucesso!')
+      setDeletingProfessional(null)
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Erro ao excluir profissional"
-      );
-      setDeletingProfessional(null);
+        error.response?.data?.message || 'Erro ao excluir profissional',
+      )
+      setDeletingProfessional(null)
     },
-  });
+  })
 
 
 
   const toggleExpanded = (id: string) =>
-    setExpandedProfessional(expandedProfessional === id ? null : id);
+    setExpandedProfessional(expandedProfessional === id ? null : id)
 
   if (isLoading) {
     return (
@@ -158,7 +149,7 @@ export function ProfessionalTable() {
 
           <div
             className="px-6 py-4 border-b border-theme"
-            style={{ backgroundColor: "var(--color-muted)" }}
+            style={{ backgroundColor: 'var(--color-muted)' }}
           >
             <div className="grid grid-cols-4 gap-4">
               <Skeleton className="h-4 w-16" />
@@ -170,7 +161,7 @@ export function ProfessionalTable() {
 
           <div
             className="divide-y"
-            style={{ borderColor: "var(--color-border)" }}
+            style={{ borderColor: 'var(--color-border)' }}
           >
             {Array.from({ length: 5 }).map((_, i) => (
               <div
@@ -194,7 +185,7 @@ export function ProfessionalTable() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   const filteredProfessionals = professionals.filter(
@@ -202,12 +193,12 @@ export function ProfessionalTable() {
       prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (prof.customRole?.title || prof.role)
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+        .includes(searchTerm.toLowerCase()),
+  )
 
   const filteredRoles = roles.filter((role: any) =>
-    role.title.toLowerCase().includes(roleSearchTerm.toLowerCase())
-  );
+    role.title.toLowerCase().includes(roleSearchTerm.toLowerCase()),
+  )
 
   return (
     <div className="space-y-6">
@@ -247,18 +238,18 @@ export function ProfessionalTable() {
                 <div
                   className={`px-4 sm:px-6 py-4 hover:bg-accent/10 transition-colors cursor-pointer 
                     grid grid-cols-1 md:grid-cols-4 gap-3 items-center 
-                    ${selectedProfessional === prof.id ? "bg-accent/20" : ""}`}
+                    ${selectedProfessional === prof.id ? 'bg-accent/20' : ''}`}
                   onClick={() => {
-                    toggleExpanded(prof.id);
+                    toggleExpanded(prof.id)
                     queryClient.invalidateQueries({
-                      queryKey: ["monthly-commission", prof.id],
-                    });
+                      queryKey: ['monthly-commission', prof.id],
+                    })
                     queryClient.invalidateQueries({
-                      queryKey: ["daily-commission", prof.id],
-                    });
+                      queryKey: ['daily-commission', prof.id],
+                    })
                     queryClient.invalidateQueries({
-                      queryKey: ["professional", prof.id],
-                    });
+                      queryKey: ['professional', prof.id],
+                    })
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -293,13 +284,13 @@ export function ProfessionalTable() {
                     <Button
                       className="flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-200 rounded-lg transition-colors cursor-pointer"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingProfessional(prof);
+                        e.stopPropagation()
+                        setEditingProfessional(prof)
                         const workingDays =
                           prof.workingDays
                             ?.filter((wd) => wd.isActive)
-                            .map((wd) => wd.dayOfWeek) || [];
-                        setSelectedWorkingDays(workingDays);
+                            .map((wd) => wd.dayOfWeek) || []
+                        setSelectedWorkingDays(workingDays)
                       }}
                     >
                       <Edit className="w-4 h-4" />
@@ -308,8 +299,8 @@ export function ProfessionalTable() {
                     <Button
                       className="flex-1 md:flex-none p-2 text-red-600 bg-red-50 hover:bg-red-200 rounded-lg transition-colors cursor-pointer"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingProfessional(prof);
+                        e.stopPropagation()
+                        setDeletingProfessional(prof)
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -334,22 +325,22 @@ export function ProfessionalTable() {
       <Dialog
         open={!!editingProfessional || creatingNew}
         onOpenChange={() => {
-          setEditingProfessional(null);
-          setCreatingNew(false);
-          setSelectedWorkingDays([1, 2, 3, 4, 5]);
+          setEditingProfessional(null)
+          setCreatingNew(false)
+          setSelectedWorkingDays([1, 2, 3, 4, 5])
         }}
       >
         <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle>
-              {creatingNew ? "Novo Funcionário" : "Editar Funcionário"}
+              {creatingNew ? 'Novo Funcionário' : 'Editar Funcionário'}
             </DialogTitle>
           </DialogHeader>
           <ProfessionalForm
             onSuccess={() => {
-              setEditingProfessional(null);
-              setCreatingNew(false);
-              setSelectedWorkingDays([1, 2, 3, 4, 5]);
+              setEditingProfessional(null)
+              setCreatingNew(false)
+              setSelectedWorkingDays([1, 2, 3, 4, 5])
             }}
             editingProfessional={editingProfessional}
             branches={branches}
@@ -395,9 +386,9 @@ export function ProfessionalTable() {
         <Dialog
           open={roleOpen}
           onOpenChange={(open) => {
-            setRoleOpen(open);
+            setRoleOpen(open)
             if (!open) {
-              setEditingRole(null);
+              setEditingRole(null)
             }
           }}
         >
@@ -413,15 +404,15 @@ export function ProfessionalTable() {
           <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
             <DialogHeader>
               <DialogTitle>
-                {editingRole ? "Editar Função" : "Nova Função"}
+                {editingRole ? 'Editar Função' : 'Nova Função'}
               </DialogTitle>
             </DialogHeader>
             <RoleForm
               initialData={editingRole}
               onSuccess={() => {
-                setRoleOpen(false);
-                setEditingRole(null);
-                refreshRoles();
+                setRoleOpen(false)
+                setEditingRole(null)
+                refreshRoles()
               }}
             />
           </DialogContent>
@@ -448,7 +439,7 @@ export function ProfessionalTable() {
 
           <div
             className={`divide-y divide-border ${
-              filteredRoles.length > 5 ? "max-h-64 overflow-y-auto" : ""
+              filteredRoles.length > 5 ? 'max-h-64 overflow-y-auto' : ''
             }`}
           >
             {filteredRoles.length > 0 ? (
@@ -464,15 +455,15 @@ export function ProfessionalTable() {
                     <div className="text-muted-foreground text-sm">
                       {role.commissionRate > 0
                         ? `${role.commissionRate}% comissão`
-                        : "Sem comissão"}
+                        : 'Sem comissão'}
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setEditingRole(role);
-                      setRoleOpen(true);
+                      setEditingRole(role)
+                      setRoleOpen(true)
                     }}
                     className="flex-1 md:flex-none p-2 text-green-600 bg-green-50 hover:bg-green-200 rounded-lg transition-colors cursor-pointer"
                   >
@@ -493,5 +484,5 @@ export function ProfessionalTable() {
         </div>
       )}
     </div>
-  );
+  )
 }

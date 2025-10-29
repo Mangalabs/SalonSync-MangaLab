@@ -1,25 +1,37 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react'
 
 import { useBranch } from '@/contexts/BranchContext'
 
 interface FinancialContextType {
-  startDate: string;
-  endDate: string;
-  branchFilter: string;
-  setStartDate: (date: string) => void;
-  setEndDate: (date: string) => void;
-  setBranchFilter: (branch: string) => void;
-  resetToToday: () => void;
+  startDate: string
+  endDate: string
+  branchFilter: string
+  setStartDate: (date: string) => void
+  setEndDate: (date: string) => void
+  setBranchFilter: (branch: string) => void
+  resetToToday: () => void
 }
 
-const FinancialContext = createContext<FinancialContextType | undefined>(undefined)
+const FinancialContext = createContext<FinancialContextType | undefined>(
+  undefined,
+)
 
 export function FinancialProvider({ children }: { children: ReactNode }) {
   const today = new Date().toISOString().split('T')[0]
   const { activeBranch } = useBranch()
 
-  const [startDate, setStartDateState] = useState(() => localStorage.getItem('financial-start-date') || today)
-  const [endDate, setEndDateState] = useState(() => localStorage.getItem('financial-end-date') || today)
+  const [startDate, setStartDateState] = useState(
+    () => localStorage.getItem('financial-start-date') || today,
+  )
+  const [endDate, setEndDateState] = useState(
+    () => localStorage.getItem('financial-end-date') || today,
+  )
   const [branchFilter, setBranchFilterState] = useState(() => {
     const saved = localStorage.getItem('financial-branch-filter')
     return saved || activeBranch?.id || 'all'
@@ -62,8 +74,7 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
         setEndDate,
         setBranchFilter,
         resetToToday,
-      }}
-    >
+      }}>
       {children}
     </FinancialContext.Provider>
   )

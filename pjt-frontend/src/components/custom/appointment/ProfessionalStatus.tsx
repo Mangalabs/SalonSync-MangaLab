@@ -17,32 +17,32 @@ export function ProfessionalStatus({ status, stats, isToday }: ProfessionalStatu
         return {
           label: 'Atrasado',
           color: 'bg-red-500',
-          textColor: 'text-red-700'
+          textColor: 'text-red-700',
         }
       case 'busy':
         return {
           label: 'Ocupado',
           color: 'bg-yellow-500',
-          textColor: 'text-yellow-700'
+          textColor: 'text-yellow-700',
         }
       case 'next':
         return {
           label: 'Próximo',
           color: 'bg-blue-500',
-          textColor: 'text-blue-700'
+          textColor: 'text-blue-700',
         }
       case 'scheduled':
         return {
           label: 'Agendado',
           color: 'bg-blue-500',
-          textColor: 'text-blue-700'
+          textColor: 'text-blue-700',
         }
       case 'free':
       default:
         return {
           label: 'Livre',
           color: 'bg-green-500',
-          textColor: 'text-green-700'
+          textColor: 'text-green-700',
         }
     }
   }

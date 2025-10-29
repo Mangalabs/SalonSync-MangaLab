@@ -96,7 +96,7 @@ export default function Sales() {
         return []
       }
       const res = await axios.get(
-        `/api/professionals?branchId=${activeBranch.id}`
+        `/api/professionals?branchId=${activeBranch.id}`,
       )
       return res.data
     },
@@ -106,7 +106,7 @@ export default function Sales() {
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(
-        (p: any) => p.name === user.name
+        (p: any) => p.name === user.name,
       )
       return currentProfessional?.id || ''
     }
@@ -120,10 +120,10 @@ export default function Sales() {
     const existingItem = cart.find((item) => item.id === product.id)
     const updatedCart = existingItem
       ? cart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      )
       : [...cart, { ...product, quantity: 1 }]
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
   }
@@ -137,7 +137,7 @@ export default function Sales() {
       updatedCart = cart.filter((item) => item.id !== productId)
     } else {
       updatedCart = cart.map((item) =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
+        item.id === productId ? { ...item, quantity: newQuantity } : item,
       )
     }
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
@@ -153,7 +153,7 @@ export default function Sales() {
 
   const subtotal = cart.reduce(
     (acc, item) => acc + Number(item.salePrice) * item.quantity,
-    0
+    0,
   )
   const categories = [
     'all',
@@ -185,8 +185,8 @@ export default function Sales() {
               : undefined,
             soldById: currentProfessionalId || undefined,
           },
-          { headers }
-        )
+          { headers },
+        ),
       )
 
       await Promise.all(promises)
@@ -463,7 +463,7 @@ export default function Sales() {
                   <div className='max-h-32 overflow-y-auto text-sm border border-border rounded-lg mb-3'>
                     {clients
                       .filter((c: any) =>
-                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                        c.name.toLowerCase().includes(clientSearch.toLowerCase()),
                       )
                       .map((client: any) => (
                         <div

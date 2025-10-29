@@ -2,7 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 
 const publicApi = axios.create({
-  baseURL: 'http://localhost:3000/api/public'
+  baseURL: 'http://localhost:3000/api/public',
 })
 
 export function useBranchBySlug(branchSlug: string) {
@@ -12,7 +12,7 @@ export function useBranchBySlug(branchSlug: string) {
       const { data } = await publicApi.get(`/branch/${branchSlug}`)
       return data
     },
-    enabled: !!branchSlug
+    enabled: !!branchSlug,
   })
 }
 
@@ -23,7 +23,7 @@ export function useBranchServices(branchId: string) {
       const { data } = await publicApi.get(`/branch/${branchId}/services`)
       return data
     },
-    enabled: !!branchId
+    enabled: !!branchId,
   })
 }
 
@@ -34,18 +34,23 @@ export function useBranchProfessionals(branchId: string) {
       const { data } = await publicApi.get(`/branch/${branchId}/professionals`)
       return data
     },
-    enabled: !!branchId
+    enabled: !!branchId,
   })
 }
 
-export function useProfessionalAvailability(professionalId: string, date: string) {
+export function useProfessionalAvailability(
+  professionalId: string,
+  date: string,
+) {
   return useQuery({
     queryKey: ['professional-availability', professionalId, date],
     queryFn: async () => {
-      const { data } = await publicApi.get(`/professional/${professionalId}/availability/${date}`)
+      const { data } = await publicApi.get(
+        `/professional/${professionalId}/availability/${date}`,
+      )
       return data
     },
-    enabled: !!professionalId && !!date
+    enabled: !!professionalId && !!date,
   })
 }
 
@@ -62,6 +67,6 @@ export function useCreatePublicAppointment() {
     }) => {
       const { data: appointment } = await publicApi.post('/appointments', data)
       return appointment
-    }
+    },
   })
 }

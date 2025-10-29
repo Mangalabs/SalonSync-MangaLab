@@ -181,21 +181,25 @@ export function ProfessionalAbsenceManagement() {
     setShowForm(true)
   }
 
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('pt-BR')
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('pt-BR')
 
   const isDateRangeValid = () => {
     const startDate = watch('startDate')
     const endDate = watch('endDate')
-    if (!startDate || !endDate) {return true}
+    if (!startDate || !endDate) {
+      return true
+    }
     return new Date(startDate) <= new Date(endDate)
   }
 
-  if (isLoading)
-  {return (
-    <div className='text-[var(--color-foreground)]'>
-      Carregando ausências...
-    </div>
-  )}
+  if (isLoading) {
+    return (
+      <div className='text-[var(--color-foreground)]'>
+        Carregando ausências...
+      </div>
+    )
+  }
 
   return (
     <div className='bg-[var(--color-card)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] text-[var(--color-foreground)]'>

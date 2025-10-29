@@ -14,14 +14,17 @@ const clientSchema = z.object({
   email: z.string().email('Email inválido').optional(),
 })
 
-type ClientFormData = z.infer<typeof clientSchema>;
+type ClientFormData = z.infer<typeof clientSchema>
 
 interface InlineClientFormProps {
-  onSuccess: () => void;
-  branchId?: string;
+  onSuccess: () => void
+  branchId?: string
 }
 
-export function InlineClientForm({ onSuccess, branchId }: InlineClientFormProps) {
+export function InlineClientForm({
+  onSuccess,
+  branchId,
+}: InlineClientFormProps) {
   const queryClient = useQueryClient()
 
   const {
@@ -48,43 +51,42 @@ export function InlineClientForm({ onSuccess, branchId }: InlineClientFormProps)
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="space-y-3"
-    >
+      className='space-y-3'>
       <div>
-        <Label htmlFor="name">Nome</Label>
+        <Label htmlFor='name'>Nome</Label>
         <Input
-          id="name"
+          id='name'
           {...register('name')}
-          placeholder="Nome do cliente"
-          className="h-8"
+          placeholder='Nome do cliente'
+          className='h-8'
         />
         {errors.name && (
-          <p className="text-xs text-red-500">{errors.name.message}</p>
+          <p className='text-xs text-red-500'>{errors.name.message}</p>
         )}
       </div>
       <div>
-        <Label htmlFor="phone">Telefone (opcional)</Label>
+        <Label htmlFor='phone'>Telefone (opcional)</Label>
         <Input
-          id="phone"
+          id='phone'
           {...register('phone')}
-          format="phone"
-          className="h-8"
+          format='phone'
+          className='h-8'
         />
       </div>
       <div>
-        <Label htmlFor="email">Email (opcional)</Label>
+        <Label htmlFor='email'>Email (opcional)</Label>
         <Input
-          id="email"
-          type="email"
+          id='email'
+          type='email'
           {...register('email')}
-          placeholder="cliente@email.com"
-          className="h-8"
+          placeholder='cliente@email.com'
+          className='h-8'
         />
         {errors.email && (
-          <p className="text-xs text-red-500">{errors.email.message}</p>
+          <p className='text-xs text-red-500'>{errors.email.message}</p>
         )}
       </div>
-      <Button type="submit" disabled={isSubmitting} className="w-full h-8">
+      <Button type='submit' disabled={isSubmitting} className='w-full h-8'>
         {isSubmitting ? 'Criando...' : 'Criar Cliente'}
       </Button>
     </form>

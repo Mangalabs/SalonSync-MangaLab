@@ -13,7 +13,7 @@ const requestResetSchema = z.object({
   confirmPassword: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
 })
 
-type RequestResetData = z.infer<typeof requestResetSchema>;
+type RequestResetData = z.infer<typeof requestResetSchema>
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -60,49 +60,49 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4 md:px-6 md:flex h-screen w-screen">
-      <div className="w-full max-w-md space-y-4 md:space-y-6">
+    <div className='flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4 md:px-6 md:flex h-screen w-screen'>
+      <div className='w-full max-w-md space-y-4 md:space-y-6'>
         <Card>
-          <CardHeader className="text-center">
-            <div className="h-24 md:h-28 mx-auto mb-4 flex items-center justify-center">
+          <CardHeader className='text-center'>
+            <div className='h-24 md:h-28 mx-auto mb-4 flex items-center justify-center'>
               <img
-                src="/logosalon-removebg-preview.png"
-                alt="SalonSync Logo"
-                className="max-h-700 md:max-h-700 max-w-48 md:max-w-56 object-contain"
+                src='/logosalon-removebg-preview.png'
+                alt='SalonSync Logo'
+                className='max-h-700 md:max-h-700 max-w-48 md:max-w-56 object-contain'
               />
             </div>
-            <p className="text-[#737373] mt-2 text-sm md:text-base">
+            <p className='text-[#737373] mt-2 text-sm md:text-base'>
               Redefinir Senha
             </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
               <div>
                 <Input
-                  placeholder="Senha"
-                  type="password"
+                  placeholder='Senha'
+                  type='password'
                   {...register('password')}
                 />
                 {errors.password && (
-                  <p className="text-sm text-red-500 mt-1">
+                  <p className='text-sm text-red-500 mt-1'>
                     {errors.password.message}
                   </p>
                 )}
               </div>
               <div>
                 <Input
-                  placeholder="Confirmar Senha"
-                  type="password"
+                  placeholder='Confirmar Senha'
+                  type='password'
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-500 mt-1">
+                  <p className='text-sm text-red-500 mt-1'>
                     {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
-              {erro && <p className="text-sm text-red-600">{erro}</p>}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {erro && <p className='text-sm text-red-600'>{erro}</p>}
+              <Button type='submit' className='w-full' disabled={isSubmitting}>
                 {isSubmitting ? 'Enviando...' : 'Confirmar'}
               </Button>
             </form>

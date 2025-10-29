@@ -2,12 +2,13 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+
 import { Input } from '@/components/ui/input'
 
 const clientSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   phone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
-  email: z.string().email('Email inválido').optional().or(z.literal(''))
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
@@ -22,10 +23,10 @@ export function ClientForm({ onSubmit, onBack }: ClientFormProps) {
     register,
     handleSubmit,
     setValue,
-    formState: { errors, isValid }
+    formState: { errors, isValid },
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
-    mode: 'onChange'
+    mode: 'onChange',
   })
 
   return (

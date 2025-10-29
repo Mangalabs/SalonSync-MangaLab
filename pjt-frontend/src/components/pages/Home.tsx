@@ -42,24 +42,23 @@ function MobileCarousel() {
   const currentItem = carouselItems[currentIndex]
 
   return (
-    <div className="space-y-3">
-      <div className="min-h-[80px] flex flex-col justify-center">
+    <div className='space-y-3'>
+      <div className='min-h-[80px] flex flex-col justify-center'>
         <div
           className={`transition-all duration-300 transform ${
             isAnimating
               ? 'opacity-0 translate-y-1'
               : 'opacity-100 translate-y-0'
-          }`}
-        >
-          <h2 className="text-lg font-bold text-[#D4AF37]">
+          }`}>
+          <h2 className='text-lg font-bold text-[#D4AF37]'>
             {currentItem.subtitle}
           </h2>
-          <p className="text-white/70 text-xs mt-1 max-w-xs mx-auto">
+          <p className='text-white/70 text-xs mt-1 max-w-xs mx-auto'>
             {currentItem.description}
           </p>
         </div>
       </div>
-      <div className="flex justify-center space-x-1">
+      <div className='flex justify-center space-x-1'>
         {carouselItems.map((_, index) => (
           <div
             key={index}
@@ -102,26 +101,25 @@ function CarouselSection() {
   const currentItem = carouselItems[currentIndex]
 
   return (
-    <div className="space-y-4">
-      <div className="min-h-[200px] flex flex-col justify-center">
+    <div className='space-y-4'>
+      <div className='min-h-[200px] flex flex-col justify-center'>
         <div
           className={`transition-all duration-300 transform ${
             isAnimating
               ? 'opacity-0 translate-y-2'
               : 'opacity-100 translate-y-0'
-          }`}
-        >
-          <h1 className="text-3xl font-bold text-white">{currentItem.title}</h1>
-          <h2 className="text-4xl font-bold text-[#D4AF37]">
+          }`}>
+          <h1 className='text-3xl font-bold text-white'>{currentItem.title}</h1>
+          <h2 className='text-4xl font-bold text-[#D4AF37]'>
             {currentItem.subtitle}
           </h2>
-          <p className="text-white/70 text-lg max-w-md mx-auto leading-relaxed mt-4">
+          <p className='text-white/70 text-lg max-w-md mx-auto leading-relaxed mt-4'>
             {currentItem.description}
           </p>
         </div>
       </div>
 
-      <div className="flex justify-center space-x-2 mt-8">
+      <div className='flex justify-center space-x-2 mt-8'>
         {carouselItems.map((_, index) => (
           <button
             key={index}
@@ -141,14 +139,14 @@ function CarouselSection() {
 export default function Home() {
   return (
     <>
-      <div className="hidden md:flex h-screen w-screen">
-        <div className="w-1/2 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col items-center justify-center p-8">
-          <div className="text-center space-y-8">
-            <div className="w-48 h-48 mx-auto rounded-lg flex items-center justify-center">
-              <div className="text-white/50 text-sm text-center">
-                <div className="text-lg mb-2">
-                  <a href="https://www.mangalab.io/" target="#">
-                    <img src="/logo-removebg-preview.png" alt="MangaLab Logo" />
+      <div className='hidden md:flex h-screen w-screen'>
+        <div className='w-1/2 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col items-center justify-center p-8'>
+          <div className='text-center space-y-8'>
+            <div className='w-48 h-48 mx-auto rounded-lg flex items-center justify-center'>
+              <div className='text-white/50 text-sm text-center'>
+                <div className='text-lg mb-2'>
+                  <a href='https://www.mangalab.io/' target='#'>
+                    <img src='/logo-removebg-preview.png' alt='MangaLab Logo' />
                   </a>
                 </div>
               </div>
@@ -156,24 +154,24 @@ export default function Home() {
             <CarouselSection />
           </div>
         </div>
-        <div className="w-1/2 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+        <div className='w-1/2 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100'>
           <AuthPanel />
         </div>
       </div>
 
-      <div className="md:hidden min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex flex-col">
-        <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 px-6 py-8 text-center">
-          <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+      <div className='md:hidden min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex flex-col'>
+        <div className='bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 px-6 py-8 text-center'>
+          <div className='w-24 h-24 mx-auto mb-4 flex items-center justify-center'>
             <img
-              src="/logo-removebg-preview.png"
-              alt="MangaLab Logo"
-              className="max-w-full max-h-full object-contain"
+              src='/logo-removebg-preview.png'
+              alt='MangaLab Logo'
+              className='max-w-full max-h-full object-contain'
             />
           </div>
           <MobileCarousel />
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-6">
+        <div className='flex-1 flex items-center justify-center p-6'>
           <AuthPanel />
         </div>
       </div>

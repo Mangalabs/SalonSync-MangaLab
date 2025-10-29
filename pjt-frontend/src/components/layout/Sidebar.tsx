@@ -5,7 +5,6 @@ import {
   Package,
   TrendingUp,
   FileText,
-  MessageCircle,
   Settings,
   Calendar,
   Scissors,
@@ -237,7 +236,7 @@ export function Sidebar() {
                   ))}
                 </div>
               </div>
-            )
+            ),
         )}
       </nav>
     </>

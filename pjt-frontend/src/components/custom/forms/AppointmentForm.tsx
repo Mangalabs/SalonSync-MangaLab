@@ -106,7 +106,7 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
   const { data: availableSlots = [] } = useQuery({
     queryKey: ['available-slots', watchedProfessional, watchedDate],
     queryFn: async () => {
-      if (!watchedProfessional || !watchedDate) return []
+      if (!watchedProfessional || !watchedDate) {return []}
       const res = await axios.get(`/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`)
       return res.data
     },

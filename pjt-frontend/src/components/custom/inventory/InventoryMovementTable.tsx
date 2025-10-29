@@ -68,7 +68,7 @@ export function InventoryMovementTable({
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Erro ao excluir movimentação'
+        error.response?.data?.message || 'Erro ao excluir movimentação',
       )
     },
   })

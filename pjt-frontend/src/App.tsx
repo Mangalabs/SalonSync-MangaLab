@@ -52,8 +52,7 @@ export default function App() {
                       <DashboardLayout />
                     </BranchProvider>
                   </PrivateRoute>
-                }
-              >
+                }>
                 <Route
                   index
                   element={
@@ -172,7 +171,10 @@ export default function App() {
                 <Route path='help' element={<Help />} />
               </Route>
 
-              <Route path='/booking/:businessSlug/:branchSlug' element={<BookingPage />} />
+              <Route
+                path='/booking/:businessSlug/:branchSlug'
+                element={<BookingPage />}
+              />
               <Route path='*' element={<Home />} />
             </Routes>
           </BrowserRouter>

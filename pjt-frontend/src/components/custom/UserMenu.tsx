@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { ChevronDown, Shield, UserCheck, Settings, LogOut, HelpCircle } from 'lucide-react'
+import {
+  ChevronDown,
+  Shield,
+  UserCheck,
+  Settings,
+  LogOut,
+  HelpCircle,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -44,44 +51,41 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          className="flex items-center gap-2 p-2 rounded-lg transition hover:bg-white/10 bg-white/5 w-full justify-start"
-          disabled={isLoading}
-        >
-          <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20">
+          variant='ghost'
+          className='flex items-center gap-2 p-2 rounded-lg transition hover:bg-white/10 bg-white/5 w-full justify-start'
+          disabled={isLoading}>
+          <div className='flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20'>
             {isAdmin ? (
-              <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+              <Shield className='h-3 w-3 sm:h-4 sm:w-4 text-white' />
             ) : (
-              <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+              <UserCheck className='h-3 w-3 sm:h-4 sm:w-4 text-white' />
             )}
           </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-xs sm:text-sm font-medium text-white truncate">
+          <div className='flex-1 min-w-0 text-left'>
+            <p className='text-xs sm:text-sm font-medium text-white truncate'>
               {user?.name || user?.email || 'Usuário'}
             </p>
-            <p className="text-xs text-white/60 truncate">
+            <p className='text-xs text-white/60 truncate'>
               {isAdmin ? 'Admin' : 'Prof.'} •{' '}
               {activeBranch?.name || 'Sem filial'}
             </p>
           </div>
-          <ChevronDown size={14} className="text-white/60" />
+          <ChevronDown size={14} className='text-white/60' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <div className="px-2 py-1.5 text-sm font-bold ">
+      <DropdownMenuContent align='end' className='w-56'>
+        <div className='px-2 py-1.5 text-sm font-bold '>
           {user?.businessName}
         </div>
         <DropdownMenuItem
           onClick={handleSettings}
-          className="flex items-center gap-2"
-        >
+          className='flex items-center gap-2'>
           <Settings size={16} />
           Configurações
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleHelp}
-          className="flex items-center gap-2"
-        >
+          className='flex items-center gap-2'>
           <HelpCircle size={16} />
           Ajuda
         </DropdownMenuItem>
@@ -89,7 +93,7 @@ export function UserMenu() {
         {isAdmin && branches.length > 1 && (
           <>
             <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className='px-2 py-1.5 text-xs font-medium text-muted-foreground'>
               Trocar Filial
             </div>
             {branches.map((branch) => (
@@ -98,18 +102,17 @@ export function UserMenu() {
                 onClick={() => handleBranchChange(branch.id)}
                 className={`flex items-center gap-2 ${
                   activeBranch?.id === branch.id ? 'bg-primary/10' : ''
-                }`}
-              >
-                <div className="flex-1">
-                  <div className="font-medium">{branch.name}</div>
+                }`}>
+                <div className='flex-1'>
+                  <div className='font-medium'>{branch.name}</div>
                   {branch.address && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className='text-xs text-muted-foreground'>
                       {branch.address}
                     </div>
                   )}
                 </div>
                 {activeBranch?.id === branch.id && (
-                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <div className='w-2 h-2 bg-primary rounded-full' />
                 )}
               </DropdownMenuItem>
             ))}
@@ -119,8 +122,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={logout}
-          className="flex items-center gap-2 text-red-600"
-        >
+          className='flex items-center gap-2 text-red-600'>
           <LogOut size={16} />
           Sair
         </DropdownMenuItem>

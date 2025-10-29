@@ -83,8 +83,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isProfessional,
         logout,
         update,
-      }}
-    >
+      }}>
       {children}
     </UserContext.Provider>
   )

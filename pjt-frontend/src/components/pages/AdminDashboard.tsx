@@ -130,7 +130,11 @@ export default function AdminDashboard() {
 
   const revenueForDate = (date: string) =>
     appointments
-      .filter((a) => formatDate(new Date(a.scheduledAt)) === date && a.status === 'COMPLETED')
+      .filter(
+        (a) =>
+          formatDate(new Date(a.scheduledAt)) === date &&
+          a.status === 'COMPLETED',
+      )
       .reduce((s, a) => s + +a.total, 0) +
     movements
       .filter((m) => formatDate(new Date(m.createdAt)) === date)
@@ -239,8 +243,8 @@ export default function AdminDashboard() {
   const appointmentsPercent = yesterdayCompleted.length
     ? (
       ((todayCompleted.length - yesterdayCompleted.length) /
-        yesterdayCompleted.length) *
-      100
+          yesterdayCompleted.length) *
+        100
     ).toFixed(0)
     : '0'
 

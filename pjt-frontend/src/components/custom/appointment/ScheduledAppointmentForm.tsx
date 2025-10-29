@@ -46,7 +46,7 @@ export function ScheduledAppointmentForm({
     () => {
       onSuccess?.()
     },
-    initialData
+    initialData,
   )
 
   const {
@@ -85,7 +85,7 @@ export function ScheduledAppointmentForm({
   )
   const totalPrice = selectedServices.reduce(
     (acc, s) => acc + (s.price || 0),
-    0
+    0,
   )
 
   const onSubmit = (data: any) => {
@@ -207,7 +207,7 @@ export function ScheduledAppointmentForm({
                     onClick={() => {
                       const newList = selected
                         ? watchedServices.filter(
-                          (id: string) => id !== service.id
+                          (id: string) => id !== service.id,
                         )
                         : [...watchedServices, service.id]
                       setValue('serviceIds', newList)
@@ -225,7 +225,7 @@ export function ScheduledAppointmentForm({
                           onChange={() => {
                             const newList = selected
                               ? watchedServices.filter(
-                                (id: string) => id !== service.id
+                                (id: string) => id !== service.id,
                               )
                               : [...watchedServices, service.id]
                             setValue('serviceIds', newList)

@@ -28,8 +28,8 @@ import { useFinancial } from '@/contexts/FinancialContext'
 import axios from '@/lib/axios'
 
 interface FinancialSummaryProps {
-  onNewTransaction?: (type: 'INCOME' | 'EXPENSE' | 'INVESTMENT') => void;
-  onNewRecurringExpense?: () => void;
+  onNewTransaction?: (type: 'INCOME' | 'EXPENSE' | 'INVESTMENT') => void
+  onNewRecurringExpense?: () => void
 }
 
 function formatCurrencyBRL(value?: number | null) {
@@ -51,9 +51,15 @@ export function FinancialSummary({
     queryKey: ['financial-summary', startDate, endDate, branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (startDate) {params.append('startDate', startDate)}
-      if (endDate) {params.append('endDate', endDate)}
-      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
+      if (startDate) {
+        params.append('startDate', startDate)
+      }
+      if (endDate) {
+        params.append('endDate', endDate)
+      }
+      if (branchFilter !== 'all') {
+        params.append('branchId', branchFilter)
+      }
 
       const res = await axios.get(`/api/financial/summary?${params}`)
       return res.data
@@ -88,27 +94,45 @@ export function FinancialSummary({
       name: 'Margem de Lucro',
       value:
         summary?.totalIncome && summary?.totalIncome > 0
-          ? Number(((summary.netProfit ?? 0) / summary.totalIncome) * 100).toFixed(1)
+          ? Number(
+            ((summary.netProfit ?? 0) / summary.totalIncome) * 100,
+          ).toFixed(1)
           : 0,
     },
     {
       name: 'ROI Investimentos',
       value:
         summary?.totalInvestments && summary?.totalInvestments > 0
-          ? Number(((summary.netProfit ?? 0) / summary.totalInvestments) * 100).toFixed(1)
+          ? Number(
+            ((summary.netProfit ?? 0) / summary.totalInvestments) * 100,
+          ).toFixed(1)
           : 0,
     },
     {
       name: 'Eficiência Operacional',
       value:
         summary?.totalIncome && summary?.totalExpenses
-          ? Number((summary.totalIncome / summary.totalExpenses) * 100).toFixed(0)
+          ? Number((summary.totalIncome / summary.totalExpenses) * 100).toFixed(
+            0,
+          )
           : 0,
     },
   ].map((d) => ({ ...d, value: Number(d.value) }))
 
-  if (isLoading) {return <div className='p-4 text-[var(--color-foreground)]'>Carregando resumo...</div>}
-  if (error) {return <div className='p-4 text-[var(--color-destructive)]'>Erro ao carregar resumo financeiro</div>}
+  if (isLoading) {
+    return (
+      <div className='p-4 text-[var(--color-foreground)]'>
+        Carregando resumo...
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className='p-4 text-[var(--color-destructive)]'>
+        Erro ao carregar resumo financeiro
+      </div>
+    )
+  }
 
   return (
     <div className='space-y-6 mt-4'>
@@ -212,7 +236,9 @@ export function FinancialSummary({
             <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
               <Target className='w-5 h-5 text-purple-600' />
             </div>
-            <h3 className='font-semibold text-[var(--color-foreground)]'>Investimentos</h3>
+            <h3 className='font-semibold text-[var(--color-foreground)]'>
+              Investimentos
+            </h3>
           </div>
           <div className='space-y-3'>
             <div className='text-2xl font-bold text-purple-600'>
@@ -302,7 +328,9 @@ export function FinancialSummary({
 
         <Card>
           <CardHeader>
-            <CardTitle className='text-[var(--color-foreground)]'>Distribuição Financeira</CardTitle>
+            <CardTitle className='text-[var(--color-foreground)]'>
+              Distribuição Financeira
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='flex flex-col lg:flex-row items-center gap-4'>
@@ -316,13 +344,14 @@ export function FinancialSummary({
                       cx='50%'
                       cy='50%'
                       outerRadius={60}
-                      label
-                    >
+                      label>
                       {distributionData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrencyBRL(value)} />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrencyBRL(value)}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -335,8 +364,7 @@ export function FinancialSummary({
                   return (
                     <div
                       key={d.name}
-                      className='flex items-center justify-between text-sm'
-                    >
+                      className='flex items-center justify-between text-sm'>
                       <div className='flex items-center gap-2'>
                         <span
                           className='w-3 h-3 rounded-full'
@@ -358,13 +386,18 @@ export function FinancialSummary({
 
       <Card>
         <CardHeader>
-          <CardTitle className='text-[var(--color-foreground)]'>Análise de Performance</CardTitle>
+          <CardTitle className='text-[var(--color-foreground)]'>
+            Análise de Performance
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width='100%' height='100%'>
               <BarChart data={performanceData}>
-                <XAxis dataKey='name' tick={{ fill: 'var(--color-muted-foreground)' }} />
+                <XAxis
+                  dataKey='name'
+                  tick={{ fill: 'var(--color-muted-foreground)' }}
+                />
                 <YAxis tick={{ fill: 'var(--color-muted-foreground)' }} />
                 <Tooltip formatter={(value: number) => `${value}%`} />
                 <Bar dataKey='value' fill='var(--color-chart-4)' />
@@ -374,7 +407,9 @@ export function FinancialSummary({
 
           <div className='mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[var(--color-foreground)]'>
             <div className='text-sm'>
-              <div className='text-xs text-[var(--color-muted-foreground)]'>Margem de Lucro</div>
+              <div className='text-xs text-[var(--color-muted-foreground)]'>
+                Margem de Lucro
+              </div>
               <div
                 className={`font-medium ${
                   (summary?.netProfit ?? 0) >= 0
@@ -384,19 +419,21 @@ export function FinancialSummary({
                 {summary?.totalIncome
                   ? `${(
                     ((summary.netProfit ?? 0) / summary.totalIncome) *
-                    100
+                      100
                   ).toFixed(1)}%`
                   : '0%'}
               </div>
             </div>
 
             <div className='text-sm'>
-              <div className='text-xs text-[var(--color-muted-foreground)]'>ROI Investimentos</div>
+              <div className='text-xs text-[var(--color-muted-foreground)]'>
+                ROI Investimentos
+              </div>
               <div className='font-medium text-[var(--color-primary)]'>
                 {summary?.totalInvestments && summary?.totalInvestments > 0
                   ? `${(
                     ((summary.netProfit ?? 0) / summary.totalInvestments) *
-                    100
+                      100
                   ).toFixed(1)}%`
                   : '0%'}
               </div>
@@ -410,7 +447,7 @@ export function FinancialSummary({
                 {summary?.totalIncome && summary?.totalExpenses
                   ? `${(
                     (summary.totalIncome / summary.totalExpenses) *
-                    100
+                      100
                   ).toFixed(0)}%`
                   : '0%'}
               </div>

@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Mail, ArrowRight, Scissors, ArrowLeft } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, ArrowRight, Scissors, ArrowLeft } from 'lucide-react'
 
 const requestResetSchema = z.object({
   email: z.string().email('Informe um e-mail válido'),

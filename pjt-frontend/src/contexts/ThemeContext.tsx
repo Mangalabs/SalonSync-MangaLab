@@ -78,7 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const updateTheme = async () => {
       document.documentElement.style.setProperty(
         'transition',
-        'background-color 0.3s ease, color 0.3s ease'
+        'background-color 0.3s ease, color 0.3s ease',
       )
       document.documentElement.setAttribute('data-theme', theme)
       document.documentElement.classList.toggle('dark', mode === 'dark')

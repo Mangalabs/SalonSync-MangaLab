@@ -7,43 +7,48 @@ import { useUser } from '@/contexts/UserContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Professional {
-  id: string;
-  name: string;
-  commissionRate: number;
+  id: string
+  name: string
+  commissionRate: number
 }
 
 interface CommissionSummary {
   professional: {
-    id: string;
-    name: string;
-    commissionRate: number;
-  };
+    id: string
+    name: string
+    commissionRate: number
+  }
   summary: {
-    totalAppointments: number;
-    totalRevenue: number;
-    totalCommission: number;
-  };
+    totalAppointments: number
+    totalRevenue: number
+    totalCommission: number
+  }
 }
 
 export function ProfessionalCommissionSummary() {
   const { activeBranch } = useBranch()
   const { user, isAdmin } = useUser()
   const today = new Date().toISOString().split('T')[0]
-  
-  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery<Professional[]>({
-    queryKey: ['professionals', activeBranch?.id],
-    queryFn: async () => {
-      const res = await axios.get('/api/professionals')
-      return res.data
-    },
-    enabled: !!activeBranch,
-  })
 
-  const { data: commissions = [], isLoading: loadingCommissions } = useQuery<CommissionSummary[]>({
+  const { data: professionals = [], isLoading: loadingProfessionals } =
+    useQuery<Professional[]>({
+      queryKey: ['professionals', activeBranch?.id],
+      queryFn: async () => {
+        const res = await axios.get('/api/professionals')
+        return res.data
+      },
+      enabled: !!activeBranch,
+    })
+
+  const { data: commissions = [], isLoading: loadingCommissions } = useQuery<
+    CommissionSummary[]
+  >({
     queryKey: ['daily-commissions', today, activeBranch?.id, user?.id],
     queryFn: async () => {
-      const profsToQuery = isAdmin ? professionals : professionals.filter(p => p.name === user?.name)
-      
+      const profsToQuery = isAdmin
+        ? professionals
+        : professionals.filter((p) => p.name === user?.name)
+
       const promises = profsToQuery.map(async (prof) => {
         try {
           const res = await axios.get(
@@ -65,7 +70,7 @@ export function ProfessionalCommissionSummary() {
           }
         }
       })
-      
+
       return Promise.all(promises)
     },
     enabled: !!activeBranch && professionals.length > 0,
@@ -79,12 +84,12 @@ export function ProfessionalCommissionSummary() {
   if (loadingProfessionals || loadingCommissions) {
     return (
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Comissões Hoje</CardTitle>
-          <DollarSign className="h-4 w-4 text-[#737373]" />
+        <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+          <CardTitle className='text-sm font-medium'>Comissões Hoje</CardTitle>
+          <DollarSign className='h-4 w-4 text-[#737373]' />
         </CardHeader>
         <CardContent>
-          <div className="text-center py-2">Carregando...</div>
+          <div className='text-center py-2'>Carregando...</div>
         </CardContent>
       </Card>
     )
@@ -98,29 +103,36 @@ export function ProfessionalCommissionSummary() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <CardTitle className='text-sm font-medium'>
           {isAdmin ? 'Comissões Hoje' : 'Minha Comissão'}
         </CardTitle>
-        <DollarSign className="h-4 w-4 text-[#737373]" />
+        <DollarSign className='h-4 w-4 text-[#737373]' />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#1A1A1A]">
+        <div className='text-2xl font-bold text-[#1A1A1A]'>
           R$ {totalCommission.toFixed(2)}
         </div>
-        <div className="flex items-center gap-1 mt-1">
-          <User className="h-3 w-3 text-[#737373]" />
-          <p className="text-xs text-[#737373]">
+        <div className='flex items-center gap-1 mt-1'>
+          <User className='h-3 w-3 text-[#737373]' />
+          <p className='text-xs text-[#737373]'>
             {isAdmin ? (
               topCommission ? (
                 <>
-                  <span className="font-medium">{topCommission.professional.name}</span>: R$ {topCommission.summary.totalCommission.toFixed(2)}
+                  <span className='font-medium'>
+                    {topCommission.professional.name}
+                  </span>
+                  : R$ {topCommission.summary.totalCommission.toFixed(2)}
                 </>
               ) : (
                 'Nenhuma comissão hoje'
               )
             ) : (
-              `${commissions.length > 0 ? commissions[0].summary.totalAppointments : 0} atendimentos hoje`
+              `${
+                commissions.length > 0
+                  ? commissions[0].summary.totalAppointments
+                  : 0
+              } atendimentos hoje`
             )}
           </p>
         </div>

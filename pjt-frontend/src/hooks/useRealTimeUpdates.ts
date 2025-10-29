@@ -9,7 +9,7 @@ interface UseRealTimeUpdatesProps {
 export function useRealTimeUpdates({ 
   refetchFunction, 
   intervalMs = 30000, // 30 segundos por padrão
-  isActive = true 
+  isActive = true, 
 }: UseRealTimeUpdatesProps) {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isUpdating, setIsUpdating] = useState(false)
@@ -17,7 +17,7 @@ export function useRealTimeUpdates({
 
   // Função para atualizar manualmente
   const forceUpdate = useCallback(async () => {
-    if (isUpdating) return
+    if (isUpdating) {return}
     
     setIsUpdating(true)
     try {
@@ -31,7 +31,7 @@ export function useRealTimeUpdates({
 
   // Timer para atualizações automáticas
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) {return}
 
     const interval = setInterval(() => {
       forceUpdate()
@@ -42,7 +42,7 @@ export function useRealTimeUpdates({
 
   // Atualizar quando a aba volta ao foco
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) {return}
 
     const handleFocus = () => {
       // Verificar se passou mais de 1 minuto desde a última atualização
@@ -72,11 +72,11 @@ export function useRealTimeUpdates({
 
   // Status da conexão (simulado)
   const getConnectionStatus = useCallback(() => {
-    if (isUpdating) return 'updating'
+    if (isUpdating) {return 'updating'}
     
     const timeSinceLastUpdate = Date.now() - lastUpdate.getTime()
-    if (timeSinceLastUpdate > intervalMs * 2) return 'stale'
-    if (timeSinceLastUpdate > intervalMs * 1.5) return 'warning'
+    if (timeSinceLastUpdate > intervalMs * 2) {return 'stale'}
+    if (timeSinceLastUpdate > intervalMs * 1.5) {return 'warning'}
     
     return 'connected'
   }, [lastUpdate, intervalMs, isUpdating])
@@ -87,6 +87,6 @@ export function useRealTimeUpdates({
     updateCount,
     forceUpdate,
     getTimeSinceLastUpdate,
-    getConnectionStatus
+    getConnectionStatus,
   }
 }
