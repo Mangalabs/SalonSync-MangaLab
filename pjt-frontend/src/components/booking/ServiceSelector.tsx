@@ -1,4 +1,5 @@
 import React from 'react'
+
 import { useBranchServices } from '@/hooks/usePublicBooking'
 
 interface ServiceSelectorProps {
@@ -9,7 +10,7 @@ interface ServiceSelectorProps {
 export function ServiceSelector({ branchId, onSelect }: ServiceSelectorProps) {
   const { data: services, isLoading } = useBranchServices(branchId)
 
-  if (isLoading) return <div className="text-center py-8">Carregando serviços...</div>
+  if (isLoading) {return <div className="text-center py-8">Carregando serviços...</div>}
 
   return (
     <div className="space-y-6">

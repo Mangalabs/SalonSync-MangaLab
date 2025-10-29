@@ -43,7 +43,7 @@ export function ReadjustmentForm({
     mutationFn: async (data: FormData) => {
       const res = await axios.post(
         '/api/payment/price-readjustment-for-connected-account',
-        { ...data, productId: planData.product.id, priceId: planData.id }
+        { ...data, productId: planData.product.id, priceId: planData.id },
       )
       return res.data
     },

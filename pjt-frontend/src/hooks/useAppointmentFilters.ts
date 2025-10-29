@@ -1,34 +1,46 @@
 import { useMemo } from 'react'
 
 interface Appointment {
-  id: string;
-  scheduledAt: string;
-  status?: string;
-  professional: { name: string };
-  client: { name: string };
+  id: string
+  scheduledAt: string
+  status?: string
+  professional: { name: string }
+  client: { name: string }
   appointmentServices: {
-    service: { name: string; price: string };
-  }[];
-  total: string;
+    service: { name: string; price: string }
+  }[]
+  total: string
 }
 
 interface FilterOptions {
-  mode?: 'scheduled' | 'completed';
-  searchTerm?: string;
-  statusFilter?: string;
-  dateFilter?: string;
-  professionalFilter?: string;
+  mode?: 'scheduled' | 'completed'
+  searchTerm?: string
+  statusFilter?: string
+  dateFilter?: string
+  professionalFilter?: string
 }
 
-export function useAppointmentFilters(appointments: Appointment[], filters: FilterOptions) {
-  const { mode, searchTerm = '', statusFilter = 'all', dateFilter = 'all', professionalFilter = 'all' } = filters
+export function useAppointmentFilters(
+  appointments: Appointment[],
+  filters: FilterOptions,
+) {
+  const {
+    mode,
+    searchTerm = '',
+    statusFilter = 'all',
+    dateFilter = 'all',
+    professionalFilter = 'all',
+  } = filters
 
   return useMemo(() => {
-    let filtered = mode === 'completed'
-      ? appointments.filter((apt) => apt.status === 'COMPLETED')
-      : appointments.filter((apt) => apt.status === 'SCHEDULED')
+    let filtered =
+      mode === 'completed'
+        ? appointments.filter((apt) => apt.status === 'COMPLETED')
+        : appointments.filter((apt) => apt.status === 'SCHEDULED')
 
-    if (!mode) {return filtered}
+    if (!mode) {
+      return filtered
+    }
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -55,7 +67,7 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
         switch (dateFilter) {
           case 'today':
             return aptDate.toDateString() === today.toDateString()
-          case 'week':{
+          case 'week': {
             const weekStart = new Date(today)
             weekStart.setDate(today.getDate() - today.getDay())
             const weekEnd = new Date(weekStart)
@@ -67,9 +79,17 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
               aptDate.getMonth() === today.getMonth() &&
               aptDate.getFullYear() === today.getFullYear()
             )
-          case 'last-month':{
-            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-            const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
+          case 'last-month': {
+            const lastMonth = new Date(
+              today.getFullYear(),
+              today.getMonth() - 1,
+              1,
+            )
+            const lastMonthEnd = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              0,
+            )
             return aptDate >= lastMonth && aptDate <= lastMonthEnd
           }
           default:
@@ -79,11 +99,21 @@ export function useAppointmentFilters(appointments: Appointment[], filters: Filt
     }
 
     if (professionalFilter !== 'all') {
-      filtered = filtered.filter((apt) => apt.professional.name === professionalFilter)
+      filtered = filtered.filter(
+        (apt) => apt.professional.name === professionalFilter,
+      )
     }
 
     return filtered.sort(
-      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      (a, b) =>
+        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
     )
-  }, [appointments, mode, searchTerm, statusFilter, dateFilter, professionalFilter])
+  }, [
+    appointments,
+    mode,
+    searchTerm,
+    statusFilter,
+    dateFilter,
+    professionalFilter,
+  ])
 }

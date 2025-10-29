@@ -54,7 +54,9 @@ export function AppointmentConfirmationForm({
       onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao confirmar agendamento')
+      toast.error(
+        error.response?.data?.message || 'Erro ao confirmar agendamento',
+      )
     },
   })
 
@@ -110,7 +112,9 @@ export function AppointmentConfirmationForm({
                 Data
               </label>
               <input
-                value={new Date(appointment.scheduledAt).toLocaleDateString('pt-BR')}
+                value={new Date(appointment.scheduledAt).toLocaleDateString(
+                  'pt-BR',
+                )}
                 readOnly
                 className='w-full p-3 border border-border rounded-xl bg-muted text-foreground cursor-not-allowed'
               />
@@ -177,7 +181,8 @@ export function AppointmentConfirmationForm({
             <div className='flex justify-between text-sm'>
               <span className='text-muted-foreground'>Data/Hora:</span>
               <span className='font-semibold'>
-                {new Date(appointment.scheduledAt).toLocaleDateString('pt-BR')} às {appointment.time}
+                {new Date(appointment.scheduledAt).toLocaleDateString('pt-BR')}{' '}
+                às {appointment.time}
               </span>
             </div>
           </div>
@@ -188,7 +193,8 @@ export function AppointmentConfirmationForm({
             Confirmação de Agendamento
           </h4>
           <p className='text-sm text-green-700'>
-            Ao confirmar, este agendamento será marcado como concluído e será contabilizado na receita e comissões.
+            Ao confirmar, este agendamento será marcado como concluído e será
+            contabilizado na receita e comissões.
           </p>
         </div>
       </div>

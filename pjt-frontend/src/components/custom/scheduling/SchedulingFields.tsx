@@ -33,64 +33,64 @@ export function SchedulingFields({
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div>
-        <Label htmlFor="scheduledDate" className="text-sm">Data</Label>
-        <Controller
-          name="scheduledDate"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="scheduledDate"
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              className="h-8 text-sm"
-              {...field}
-            />
+        <div>
+          <Label htmlFor="scheduledDate" className="text-sm">Data</Label>
+          <Controller
+            name="scheduledDate"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="scheduledDate"
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                className="h-8 text-sm"
+                {...field}
+              />
+            )}
+          />
+          {errors.scheduledDate && (
+            <p className="text-xs text-red-500">{errors.scheduledDate.message}</p>
           )}
-        />
-        {errors.scheduledDate && (
-          <p className="text-xs text-red-500">{errors.scheduledDate.message}</p>
-        )}
-      </div>
+        </div>
 
-      <div>
-        <Label htmlFor="scheduledTime" className="text-sm">Horário</Label>
-        <Controller
-          name="scheduledTime"
-          control={control}
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Selecione um horário" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSlots.length > 0 ? (
-                  availableSlots.map((time: string) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-1.5 text-xs">
-                    {selectedProfessional && selectedDate ? (
-                      <span className="text-amber-600 font-medium">
+        <div>
+          <Label htmlFor="scheduledTime" className="text-sm">Horário</Label>
+          <Controller
+            name="scheduledTime"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Selecione um horário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSlots.length > 0 ? (
+                    availableSlots.map((time: string) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-xs">
+                      {selectedProfessional && selectedDate ? (
+                        <span className="text-amber-600 font-medium">
                         🚫 Todos os horários estão ocupados
-                      </span>
-                    ) : (
-                      <span className="text-[#737373]">
+                        </span>
+                      ) : (
+                        <span className="text-[#737373]">
                         Selecione profissional e data
-                      </span>
-                    )}
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.scheduledTime && (
+            <p className="text-xs text-red-500">{errors.scheduledTime.message}</p>
           )}
-        />
-        {errors.scheduledTime && (
-          <p className="text-xs text-red-500">{errors.scheduledTime.message}</p>
-        )}
-      </div>
+        </div>
       </div>
     </div>
   )

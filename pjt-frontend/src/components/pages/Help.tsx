@@ -6,7 +6,6 @@ import {
   DollarSign,
   Package,
   BarChart3,
-  Settings,
   ChevronRight,
   Play,
   BookOpen,
@@ -187,8 +186,8 @@ export default function Help() {
     section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     section.items.some(item =>
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+      item.content.toLowerCase().includes(searchTerm.toLowerCase()),
+    ),
   )
 
   return (

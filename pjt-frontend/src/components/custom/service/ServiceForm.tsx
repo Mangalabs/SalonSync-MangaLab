@@ -6,31 +6,49 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
-  price: z.coerce.number().positive('Preço deve ser maior que zero').max(99999999.99, 'Preço não pode exceder R$ 99.999.999,99'),
-  duration: z.coerce.number().min(15, 'Duração mínima de 15 minutos').max(180, 'Duração máxima de 180 minutos'),
+  price: z.coerce
+    .number()
+    .positive('Preço deve ser maior que zero')
+    .max(99999999.99, 'Preço não pode exceder R$ 99.999.999,99'),
+  duration: z.coerce
+    .number()
+    .min(15, 'Duração mínima de 15 minutos')
+    .max(180, 'Duração máxima de 180 minutos'),
   branchId: z.string().optional(),
 })
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<typeof schema>
 
-export function ServiceForm({ 
-  onSuccess, 
-  initialData, 
-}: { 
-  onSuccess: () => void;
-  initialData?: { id: string; name: string; price: string; duration?: string; branchId?: string } | null;
+export function ServiceForm({
+  onSuccess,
+  initialData,
+}: {
+  onSuccess: () => void
+  initialData?: {
+    id: string
+    name: string
+    price: string
+    duration?: string
+    branchId?: string
+  } | null
 }) {
   const isEditing = !!initialData
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
-  
+
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
     queryFn: async () => {
@@ -52,7 +70,9 @@ export function ServiceForm({
       name: initialData?.name || '',
       price: initialData ? Number(initialData.price) : undefined,
       duration: initialData ? Number(initialData.duration) : 30,
-      branchId: !isAdmin ? activeBranch?.id : (initialData?.branchId || undefined),
+      branchId: !isAdmin
+        ? activeBranch?.id
+        : initialData?.branchId || undefined,
     },
   })
 
@@ -65,13 +85,19 @@ export function ServiceForm({
         price: data.price,
         duration: data.duration,
       }
-      
+
       const config = {
-        headers: data.branchId ? { 'x-branch-id': data.branchId } : { 'x-skip-branch-header': 'true' },
+        headers: data.branchId
+          ? { 'x-branch-id': data.branchId }
+          : { 'x-skip-branch-header': 'true' },
       }
-      
+
       if (isEditing) {
-        const res = await axios.patch(`/api/services/${initialData.id}`, payload, config)
+        const res = await axios.patch(
+          `/api/services/${initialData.id}`,
+          payload,
+          config,
+        )
         return res.data
       } else {
         const res = await axios.post('/api/services', payload, config)
@@ -83,27 +109,28 @@ export function ServiceForm({
       reset()
       onSuccess()
     },
-    onError: () => {
-    },
+    onError: () => {},
   })
 
   return (
     <form
       onSubmit={handleSubmit((data) => mutation.mutate(data))}
-      className="space-y-4"
-    >
+      className='space-y-4'>
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Escopo do Serviço</Label>
-          <Select 
-            onValueChange={(value) => setValue('branchId', value === 'global' ? undefined : value)} 
-            defaultValue={initialData?.branchId ? initialData.branchId : 'global'}
-          >
+          <Label htmlFor='branchId'>Escopo do Serviço</Label>
+          <Select
+            onValueChange={(value) =>
+              setValue('branchId', value === 'global' ? undefined : value)
+            }
+            defaultValue={
+              initialData?.branchId ? initialData.branchId : 'global'
+            }>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o escopo" />
+              <SelectValue placeholder='Selecione o escopo' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="global">Global (todas as filiais)</SelectItem>
+              <SelectItem value='global'>Global (todas as filiais)</SelectItem>
               {branches.map((branch: any) => (
                 <SelectItem key={branch.id} value={branch.id}>
                   Apenas {branch.name}
@@ -111,61 +138,62 @@ export function ServiceForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className='text-xs text-gray-500 mt-1'>
             Serviços globais ficam disponíveis em todas as suas filiais
           </p>
         </div>
       )}
 
       <div>
-        <Label htmlFor="name">Nome do Serviço</Label>
-        <Input id="name" placeholder="Nome do serviço" {...register('name')} />
+        <Label htmlFor='name'>Nome do Serviço</Label>
+        <Input id='name' placeholder='Nome do serviço' {...register('name')} />
         {errors.name && (
-          <p className="text-sm text-red-500">{errors.name.message}</p>
+          <p className='text-sm text-red-500'>{errors.name.message}</p>
         )}
       </div>
-      
+
       <div>
-        <Label htmlFor="price">Preço (R$)</Label>
+        <Label htmlFor='price'>Preço (R$)</Label>
         <Input
-          id="price"
-          placeholder="Digite o preço do serviço"
-          type="number"
-          step="0.01"
-          min="0"
-          max="99999999.99"
+          id='price'
+          placeholder='Digite o preço do serviço'
+          type='number'
+          step='0.01'
+          min='0'
+          max='99999999.99'
           {...register('price', {
-            setValueAs: (value) => value === '' ? undefined : parseFloat(value) || undefined,
+            setValueAs: (value) =>
+              value === '' ? undefined : parseFloat(value) || undefined,
           })}
         />
         {errors.price && (
-          <p className="text-sm text-red-500">{errors.price.message}</p>
+          <p className='text-sm text-red-500'>{errors.price.message}</p>
         )}
       </div>
-      
+
       <div>
-        <Label htmlFor="duration">Duração (minutos)</Label>
+        <Label htmlFor='duration'>Duração (minutos)</Label>
         <Input
-          id="duration"
-          placeholder="Duração em minutos"
-          type="number"
-          min="15"
-          max="180"
+          id='duration'
+          placeholder='Duração em minutos'
+          type='number'
+          min='15'
+          max='180'
           {...register('duration', {
-            setValueAs: (value) => value === '' ? undefined : parseInt(value) || undefined,
+            setValueAs: (value) =>
+              value === '' ? undefined : parseInt(value) || undefined,
           })}
         />
         {errors.duration && (
-          <p className="text-sm text-red-500">{errors.duration.message}</p>
+          <p className='text-sm text-red-500'>{errors.duration.message}</p>
         )}
       </div>
-      
+
       <Button
-        type="submit"
+        type='submit'
         disabled={isSubmitting}
-        className="w-full bg-primary text-secondary cursor-pointer"
-      >
-        {isSubmitting ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Salvar')}
+        className='w-full bg-primary text-secondary cursor-pointer'>
+        {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
       </Button>
     </form>
   )

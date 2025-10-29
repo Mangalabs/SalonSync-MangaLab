@@ -19,7 +19,7 @@ export default function Scheduling() {
   const [scheduledOpen, setScheduledOpen] = useState(false)
   const [immediateOpen, setImmediateOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<string>('scheduled')
-  
+
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab === 'scheduled' || tab === 'completed') {
@@ -28,13 +28,13 @@ export default function Scheduling() {
   }, [searchParams])
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Agendamentos</h1>
-        <div className="flex gap-2">
+    <div className='space-y-6'>
+      <div className='flex justify-between items-center'>
+        <h1 className='text-2xl font-bold text-[#1A1A1A]'>Agendamentos</h1>
+        <div className='flex gap-2'>
           <Dialog open={scheduledOpen} onOpenChange={setScheduledOpen}>
             <DialogTrigger asChild>
-              <Button className="">+ Agendar</Button>
+              <Button className=''>+ Agendar</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -43,12 +43,15 @@ export default function Scheduling() {
                   Agende um atendimento para uma data futura.
                 </DialogDescription>
               </DialogHeader>
-              <AppointmentForm mode="scheduled" onSuccess={() => setScheduledOpen(false)} />
+              <AppointmentForm
+                mode='scheduled'
+                onSuccess={() => setScheduledOpen(false)}
+              />
             </DialogContent>
           </Dialog>
           <Dialog open={immediateOpen} onOpenChange={setImmediateOpen}>
             <DialogTrigger asChild>
-              <Button className="">+ Atendimento</Button>
+              <Button className=''>+ Atendimento</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -57,7 +60,10 @@ export default function Scheduling() {
                   Registre um atendimento que foi realizado agora.
                 </DialogDescription>
               </DialogHeader>
-              <AppointmentForm mode="immediate" onSuccess={() => setImmediateOpen(false)} />
+              <AppointmentForm
+                mode='immediate'
+                onSuccess={() => setImmediateOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -65,14 +71,14 @@ export default function Scheduling() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="scheduled">Agendados</TabsTrigger>
-          <TabsTrigger value="completed">Realizados</TabsTrigger>
+          <TabsTrigger value='scheduled'>Agendados</TabsTrigger>
+          <TabsTrigger value='completed'>Realizados</TabsTrigger>
         </TabsList>
-        <TabsContent value="scheduled" className="mt-4">
-          <AppointmentTable filter="SCHEDULED" />
+        <TabsContent value='scheduled' className='mt-4'>
+          <AppointmentTable filter='SCHEDULED' />
         </TabsContent>
-        <TabsContent value="completed" className="mt-4">
-          <AppointmentTable filter="COMPLETED" />
+        <TabsContent value='completed' className='mt-4'>
+          <AppointmentTable filter='COMPLETED' />
         </TabsContent>
       </Tabs>
     </div>

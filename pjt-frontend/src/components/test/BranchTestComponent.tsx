@@ -19,11 +19,14 @@ export function BranchTestComponent() {
     {
       id: 'transaction-form',
       title: 'Teste TransactionForm',
-      description: 'Testa criação de transação com seleção de filial para admin',
-      component: <TransactionForm type="EXPENSE" onSuccess={() => setActiveTest(null)} />,
+      description:
+        'Testa criação de transação com seleção de filial para admin',
+      component: (
+        <TransactionForm type='EXPENSE' onSuccess={() => setActiveTest(null)} />
+      ),
     },
     {
-      id: 'scheduling-form', 
+      id: 'scheduling-form',
       title: 'Teste SchedulingForm',
       description: 'Testa agendamento com seleção de filial para admin',
       component: <SchedulingForm onSuccess={() => setActiveTest(null)} />,
@@ -40,38 +43,45 @@ export function BranchTestComponent() {
       description: 'Testa nova organização da aba de receitas/despesas',
       component: (
         <FinancialProvider>
-          <FinancialTabContent type="INCOME" />
+          <FinancialTabContent type='INCOME' />
         </FinancialProvider>
       ),
     },
   ]
 
   return (
-    <div className="p-6 space-y-6">
+    <div className='p-6 space-y-6'>
       <Card>
         <CardHeader>
           <CardTitle>Status do Sistema</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p><strong>Usuário:</strong> {user?.name} ({user?.role})</p>
-          <p><strong>É Admin:</strong> {isAdmin ? 'Sim' : 'Não'}</p>
-          <p><strong>Filial Ativa:</strong> {activeBranch?.name}</p>
-          <p><strong>Total de Filiais:</strong> {branches.length}</p>
+        <CardContent className='space-y-2'>
+          <p>
+            <strong>Usuário:</strong> {user?.name} ({user?.role})
+          </p>
+          <p>
+            <strong>É Admin:</strong> {isAdmin ? 'Sim' : 'Não'}
+          </p>
+          <p>
+            <strong>Filial Ativa:</strong> {activeBranch?.name}
+          </p>
+          <p>
+            <strong>Total de Filiais:</strong> {branches.length}
+          </p>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         {tests.map((test) => (
           <Card key={test.id}>
             <CardHeader>
-              <CardTitle className="text-lg">{test.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">{test.description}</p>
+              <CardTitle className='text-lg'>{test.title}</CardTitle>
+              <p className='text-sm text-muted-foreground'>
+                {test.description}
+              </p>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={() => setActiveTest(test.id)}
-                className="w-full"
-              >
+              <Button onClick={() => setActiveTest(test.id)} className='w-full'>
                 Testar
               </Button>
             </CardContent>
@@ -83,19 +93,18 @@ export function BranchTestComponent() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {tests.find(t => t.id === activeTest)?.title}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-2"
-                onClick={() => setActiveTest(null)}
-              >
+              {tests.find((t) => t.id === activeTest)?.title}
+              <Button
+                variant='outline'
+                size='sm'
+                className='ml-2'
+                onClick={() => setActiveTest(null)}>
                 Fechar
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {tests.find(t => t.id === activeTest)?.component}
+            {tests.find((t) => t.id === activeTest)?.component}
           </CardContent>
         </Card>
       )}

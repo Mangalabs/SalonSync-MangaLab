@@ -1,4 +1,5 @@
 import React from 'react'
+
 import { useBranchProfessionals } from '@/hooks/usePublicBooking'
 
 interface ProfessionalSelectorProps {
@@ -10,7 +11,7 @@ interface ProfessionalSelectorProps {
 export function ProfessionalSelector({ branchId, onSelect, onBack }: ProfessionalSelectorProps) {
   const { data: professionals, isLoading } = useBranchProfessionals(branchId)
 
-  if (isLoading) return <div>Carregando profissionais...</div>
+  if (isLoading) {return <div>Carregando profissionais...</div>}
 
   return (
     <div className="space-y-4">

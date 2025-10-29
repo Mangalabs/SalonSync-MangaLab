@@ -284,10 +284,10 @@ export function ServiceTable() {
             initialData={
               editingService
                 ? { 
-                    ...editingService, 
-                    price: String(editingService.price),
-                    duration: editingService.duration ? String(editingService.duration) : '30'
-                  }
+                  ...editingService, 
+                  price: String(editingService.price),
+                  duration: editingService.duration ? String(editingService.duration) : '30',
+                }
                 : undefined
             }
             onSuccess={() => setEditingService(null)}

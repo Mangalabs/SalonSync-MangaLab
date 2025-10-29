@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Search,
   Edit,
@@ -72,7 +72,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     queryFn: async () => {
       try {
         const response = await axios.get(
-          '/api/payment/get-prices-for-connected-account'
+          '/api/payment/get-prices-for-connected-account',
         )
         return response.data
       } catch (error) {
@@ -109,16 +109,14 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     enabled: !!activeBranch,
   })
 
-  const hasActiveAppointments = (clientId: string) => {
-    return appointments.some((apt: any) => 
-      apt.clientId === clientId && apt.status === 'SCHEDULED'
-    )
-  }
+  const hasActiveAppointments = (clientId: string) => appointments.some((apt: any) => 
+    apt.clientId === clientId && apt.status === 'SCHEDULED',
+  )
 
   const deleteClient = useMutation({
     mutationFn: async (id: string) => {
       await axios.delete(`/api/clients/${id}`, {
-        headers: { 'X-Skip-Toast': 'true' }
+        headers: { 'X-Skip-Toast': 'true' },
       })
     },
     onSuccess: () => {
@@ -141,7 +139,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.includes(searchTerm) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   if (isLoading) {
@@ -197,7 +195,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           clientId: client.id,
           email: client.email,
           accountId: user.accountId,
-        }
+        },
       )
       setPlanUrlLoading(false)
       navigator.clipboard.writeText(response.data)

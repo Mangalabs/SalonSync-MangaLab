@@ -83,7 +83,9 @@ export function RecurringExpensesTabContent() {
     queryKey: ['salary-expenses-preview', branchFilter],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (branchFilter !== 'all') {params.append('branchId', branchFilter)}
+      if (branchFilter !== 'all') {
+        params.append('branchId', branchFilter)
+      }
       const res = await axios.get(`/api/professionals?${params}`)
       return res.data
         .filter((prof: any) => prof.customRole?.baseSalary || prof.baseSalary)

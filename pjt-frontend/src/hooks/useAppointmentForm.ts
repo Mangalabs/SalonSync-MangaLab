@@ -16,7 +16,7 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
     ...(!isScheduled && { paymentMethod: z.string().optional() }),
     ...(isAdmin && { branchId: z.string().min(1, 'Selecione uma filial') }),
   }
-  
+
   if (isScheduled) {
     return z.object({
       ...baseSchema,
@@ -24,7 +24,7 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
       scheduledTime: z.string().min(1, 'Horário é obrigatório'),
     })
   }
-  
+
   return z.object(baseSchema)
 }
 
@@ -41,32 +41,48 @@ export function useAppointmentForm(
   const getDefaultValues = () => {
     if (initialData) {
       return {
-        professionalId: initialData.professionalId || initialData.professional?.id || '',
+        professionalId:
+          initialData.professionalId || initialData.professional?.id || '',
         clientId: initialData.clientId || initialData.client?.id || '',
-        serviceIds: initialData.appointmentServices?.map((as: any) => as.service.id) || [],
-        ...(!isScheduled && { paymentMethod: initialData.paymentMethod || 'CASH' }),
+        serviceIds:
+          initialData.appointmentServices?.map((as: any) => as.service.id) ||
+          [],
+        ...(!isScheduled && {
+          paymentMethod: initialData.paymentMethod || 'CASH',
+        }),
         ...(isScheduled && {
-          scheduledDate: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[0] : initialData.scheduledAt?.toString()?.split('T')[0] || '',
-          scheduledTime: typeof initialData.scheduledAt === 'string' ? initialData.scheduledAt.split('T')[1]?.slice(0, 5) || '' : initialData.scheduledAt?.toString()?.split('T')[1]?.slice(0, 5) || '',
+          scheduledDate:
+            typeof initialData.scheduledAt === 'string'
+              ? initialData.scheduledAt.split('T')[0]
+              : initialData.scheduledAt?.toString()?.split('T')[0] || '',
+          scheduledTime:
+            typeof initialData.scheduledAt === 'string'
+              ? initialData.scheduledAt.split('T')[1]?.slice(0, 5) || ''
+              : initialData.scheduledAt
+                ?.toString()
+                ?.split('T')[1]
+                ?.slice(0, 5) || '',
         }),
         ...(isAdmin && { branchId: initialData.branchId || '' }),
       }
     }
-    
-    return isScheduled ? {
-      professionalId: '', 
-      clientId: '', 
-      serviceIds: [],
-      scheduledDate: '',
-      scheduledTime: '',
-      ...(isAdmin && { branchId: '' }),
-    } : {
-      professionalId: '', 
-      clientId: '', 
-      serviceIds: [],
-      paymentMethod: 'CASH',
-      ...(isAdmin && { branchId: '' }),
-    }
+
+    return isScheduled
+      ? {
+        professionalId: '',
+        clientId: '',
+        serviceIds: [],
+        scheduledDate: '',
+        scheduledTime: '',
+        ...(isAdmin && { branchId: '' }),
+      }
+      : {
+        professionalId: '',
+        clientId: '',
+        serviceIds: [],
+        paymentMethod: 'CASH',
+        ...(isAdmin && { branchId: '' }),
+      }
   }
 
   const form = useForm({
@@ -76,12 +92,14 @@ export function useAppointmentForm(
 
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
-      const currentProfessional = professionals.find(p => p.name === user.name)
+      const currentProfessional = professionals.find(
+        (p) => p.name === user.name,
+      )
       return currentProfessional?.id || ''
     }
     return ''
   }, [isProfessional, isAdmin, user?.name, professionals])
-  
+
   useEffect(() => {
     if (currentProfessionalId) {
       form.setValue('professionalId', currentProfessionalId)
@@ -92,7 +110,7 @@ export function useAppointmentForm(
     mutationFn: async (data: any) => {
       let scheduledAt: string
       let status: string
-      
+
       if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
         scheduledAt = `${data.scheduledDate}T${data.scheduledTime}:00.000Z`
         status = 'SCHEDULED'
@@ -107,14 +125,15 @@ export function useAppointmentForm(
         scheduledAt = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`
         status = 'COMPLETED'
       }
-      
-      let finalProfessionalId = (isProfessional && !isAdmin) ? currentProfessionalId : data.professionalId
-      
+
+      let finalProfessionalId =
+        isProfessional && !isAdmin ? currentProfessionalId : data.professionalId
+
       if (isProfessional && !isAdmin && !finalProfessionalId && user?.name) {
-        const professional = professionals.find(p => p.name === user.name)
+        const professional = professionals.find((p) => p.name === user.name)
         finalProfessionalId = professional?.id || ''
       }
-      
+
       const payload = {
         clientId: data.clientId,
         professionalId: finalProfessionalId,
@@ -123,11 +142,13 @@ export function useAppointmentForm(
         status,
         ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
       }
-      
+
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
-      
+
       if (initialData) {
-        await axios.patch(`/api/appointments/${initialData.id}`, payload, { headers })
+        await axios.patch(`/api/appointments/${initialData.id}`, payload, {
+          headers,
+        })
       } else {
         await axios.post('/api/appointments', payload, { headers })
       }
@@ -140,16 +161,21 @@ export function useAppointmentForm(
       queryClient.invalidateQueries({ queryKey: ['daily-commission'] })
       queryClient.invalidateQueries({ queryKey: ['professional'] })
       queryClient.invalidateQueries({ queryKey: ['financial'] })
-      
+
       const action = initialData ? 'atualizado' : 'criado'
       const type = isScheduled ? 'Agendamento' : 'Atendimento'
       toast.success(`${type} ${action} com sucesso!`)
       onSuccess()
     },
     onError: (error: any) => {
-      const action = initialData ? 'atualizar' : (isScheduled ? 'criar agendamento' : 'registrar atendimento')
-      const errorMessage = error.response?.data?.message || error.message || `Erro ao ${action}`
-      
+      const action = initialData
+        ? 'atualizar'
+        : isScheduled
+          ? 'criar agendamento'
+          : 'registrar atendimento'
+      const errorMessage =
+        error.response?.data?.message || error.message || `Erro ao ${action}`
+
       // Mostrar mensagem específica para conflitos de horário
       if (errorMessage.includes('Já existe um agendamento')) {
         toast.error(errorMessage, {

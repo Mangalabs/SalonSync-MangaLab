@@ -4,7 +4,13 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Combobox } from '@/components/ui/combobox'
 
 import { RoleForm } from '../forms/RoleForm'
@@ -16,7 +22,12 @@ interface RoleSelectorProps {
   branchId?: string
 }
 
-export function RoleSelector({ roles, selectedRoleId, onRoleChange, branchId }: RoleSelectorProps) {
+export function RoleSelector({
+  roles,
+  selectedRoleId,
+  onRoleChange,
+  branchId,
+}: RoleSelectorProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const queryClient = useQueryClient()
 
@@ -27,22 +38,20 @@ export function RoleSelector({ roles, selectedRoleId, onRoleChange, branchId }: 
 
   return (
     <>
-      <div className="flex justify-between items-center">
-        <Label className="text-sm">Função</Label>
+      <div className='flex justify-between items-center'>
+        <Label className='text-sm'>Função</Label>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
-              <Plus className="h-3 w-3 mr-1" />
+            <Button variant='outline' size='sm' className='h-6 px-2 text-xs'>
+              <Plus className='h-3 w-3 mr-1' />
               Nova
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className='sm:max-w-md'>
             <DialogHeader>
               <DialogTitle>Nova Função</DialogTitle>
             </DialogHeader>
-            <RoleForm 
-              onSuccess={handleRoleCreated}
-            />
+            <RoleForm onSuccess={handleRoleCreated} />
           </DialogContent>
         </Dialog>
       </div>
@@ -56,8 +65,8 @@ export function RoleSelector({ roles, selectedRoleId, onRoleChange, branchId }: 
         ]}
         value={selectedRoleId || 'custom'}
         onValueChange={onRoleChange}
-        placeholder="Selecione uma função"
-        searchPlaceholder="Pesquisar função..."
+        placeholder='Selecione uma função'
+        searchPlaceholder='Pesquisar função...'
         disabled={!branchId && roles.length === 0}
       />
     </>

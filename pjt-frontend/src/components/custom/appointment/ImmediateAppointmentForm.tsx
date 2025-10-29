@@ -45,7 +45,7 @@ export function ImmediateAppointmentForm({
     () => {
       onSuccess?.()
     },
-    initialData
+    initialData,
   )
 
   const {
@@ -87,7 +87,9 @@ export function ImmediateAppointmentForm({
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
       <div className='lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border'>
         <h3 className='text-lg font-semibold text-foreground mb-6'>
-          {initialData ? 'Editar Atendimento' : 'Registrar Atendimento Imediato'}
+          {initialData
+            ? 'Editar Atendimento'
+            : 'Registrar Atendimento Imediato'}
         </h3>
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           {isAdmin && (
@@ -266,7 +268,13 @@ export function ImmediateAppointmentForm({
               disabled={isSubmitting}
               className='flex-1 bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2 cursor-pointer'>
               <Save className='w-4 h-4' />
-              {isSubmitting ? (initialData ? 'Atualizando...' : 'Registrando...') : (initialData ? 'Atualizar Atendimento' : 'Registrar Atendimento')}
+              {isSubmitting
+                ? initialData
+                  ? 'Atualizando...'
+                  : 'Registrando...'
+                : initialData
+                  ? 'Atualizar Atendimento'
+                  : 'Registrar Atendimento'}
             </button>
           </div>
         </form>
@@ -300,8 +308,8 @@ export function ImmediateAppointmentForm({
             {initialData ? 'Edição de Atendimento' : 'Atendimento Imediato'}
           </h4>
           <p className='text-sm text-muted-foreground'>
-            {initialData 
-              ? 'Edite os dados do atendimento conforme necessário.' 
+            {initialData
+              ? 'Edite os dados do atendimento conforme necessário.'
               : 'Este atendimento será registrado como concluído automaticamente, gerando receita e comissão na data atual.'}
           </p>
         </div>

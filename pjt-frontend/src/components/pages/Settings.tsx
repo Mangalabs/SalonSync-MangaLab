@@ -240,8 +240,7 @@ export default function Settings() {
                   <div className='flex items-center space-x-3'>
                     <div className='w-10 h-10 bg-muted rounded-lg flex items-center justify-center'></div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>
-                      </p>
+                      <p className='text-sm text-muted-foreground'></p>
                     </div>
                   </div>
                   <div className='w-3 h-3 bg-secondary rounded-full'></div>
@@ -256,7 +255,7 @@ export default function Settings() {
       </div>
 
       <BookingLinkGenerator />
-      
+
       {isAdmin && (
         <>
           <BranchManagement />
@@ -343,7 +342,10 @@ export default function Settings() {
                           <div
                             key={index}
                             className='w-6 h-6 rounded-full border-2 border-background'
-                            style={{ backgroundColor: color,  borderColor: 'var(--color-text)' }}
+                            style={{
+                              backgroundColor: color,
+                              borderColor: 'var(--color-text)',
+                            }}
                           />
                         ))}
                       </div>

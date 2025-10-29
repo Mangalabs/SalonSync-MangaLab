@@ -12,7 +12,7 @@ const steps = [
   { id: 2, name: 'Profissional', description: 'Selecione o profissional' },
   { id: 3, name: 'Data/Hora', description: 'Escolha data e horário' },
   { id: 4, name: 'Dados', description: 'Informe seus dados' },
-  { id: 5, name: 'Confirmação', description: 'Confirme o agendamento' }
+  { id: 5, name: 'Confirmação', description: 'Confirme o agendamento' },
 ]
 
 export function BookingSteps({ currentStep, onStepClick, completedSteps }: BookingStepsProps) {
@@ -33,8 +33,8 @@ export function BookingSteps({ currentStep, onStepClick, completedSteps }: Booki
                     isCompleted
                       ? 'bg-green-600 border-green-600 text-white hover:bg-green-700'
                       : step.id === currentStep
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'bg-muted border-border text-muted-foreground'
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : 'bg-muted border-border text-muted-foreground'
                   } ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 >
                   {isCompleted ? (

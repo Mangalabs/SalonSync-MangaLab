@@ -29,22 +29,20 @@ export default function Clients() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              className="
+              className='
                 bg-primary
                 text-secondary
                 py-3 px-4 rounded-xl font-medium 
                 hover:opacity-80 transition-opacity cursor-pointer
-              "
+              '
               onClick={() => {
                 setEditingClient(null)
                 setOpen(true)
-              }}
-            >
+              }}>
               + Novo cliente
             </Button>
-
           </DialogTrigger>
-          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
+          <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? 'Editar Cliente' : 'Novo Cliente'}

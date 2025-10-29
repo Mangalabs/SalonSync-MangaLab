@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 interface ExportButtonProps {
-  onExport: (format: 'json' | 'pdf' | 'csv' | 'excel') => void;
-  disabled?: boolean;
+  onExport: (format: 'json' | 'pdf' | 'csv' | 'excel') => void
+  disabled?: boolean
 }
 
 export function ExportButton({ onExport, disabled }: ExportButtonProps) {
@@ -38,20 +38,18 @@ export function ExportButton({ onExport, disabled }: ExportButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button
           disabled={disabled || isExporting}
-          className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm cursor-pointer"
-        >
-          <Download className="h-4 w-4" />
+          className='w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-4 rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm cursor-pointer'>
+          <Download className='h-4 w-4' />
           {isExporting ? 'Exportando...' : 'Exportar'}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-44">
+      <DropdownMenuContent className='w-44'>
         {exportOptions.map(({ format, label, icon: Icon }) => (
           <DropdownMenuItem
             key={format}
             onClick={() => handleExport(format)}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Icon className="h-4 w-4" />
+            className='flex items-center gap-2 cursor-pointer'>
+            <Icon className='h-4 w-4' />
             {label}
           </DropdownMenuItem>
         ))}

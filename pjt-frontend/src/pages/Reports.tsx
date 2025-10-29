@@ -13,7 +13,9 @@ export default function Reports() {
       .toISOString()
       .split('T')[0],
   )
-  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split('T')[0],
+  )
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const { branches } = useBranch()
   const [loadingReport, setLoadingReport] = useState(false)
@@ -22,7 +24,9 @@ export default function Reports() {
   const formatPeriodLabel = () => {
     const start = new Date(startDate + 'T00:00:00')
     const end = new Date(endDate + 'T00:00:00')
-    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`
+    return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString(
+      'pt-BR',
+    )}`
   }
 
   const { data: reportData, refetch } = useQuery({
@@ -31,19 +35,28 @@ export default function Reports() {
       setLoadingReport(true)
       try {
         const params = new URLSearchParams({ startDate, endDate })
-        if (selectedBranch !== 'all') { params.append('branchId', selectedBranch) }
+        if (selectedBranch !== 'all') {
+          params.append('branchId', selectedBranch)
+        }
 
-        const [financialRes, appointmentsRes, professionalsRes, stockRes] = await Promise.all([
-          axios.get(`/api/financial/summary?${params}`),
-          axios.get(`/api/appointments?${params}`),
-          axios.get(`/api/professionals${selectedBranch !== 'all' ? `?branchId=${selectedBranch}` : ''}`),
-          axios.get(`/api/inventory/movements?${params}`),
-        ])
+        const [financialRes, appointmentsRes, professionalsRes, stockRes] =
+          await Promise.all([
+            axios.get(`/api/financial/summary?${params}`),
+            axios.get(`/api/appointments?${params}`),
+            axios.get(
+              `/api/professionals${
+                selectedBranch !== 'all' ? `?branchId=${selectedBranch}` : ''
+              }`,
+            ),
+            axios.get(`/api/inventory/movements?${params}`),
+          ])
 
         const filteredProfessionals = professionalsRes.data
         const commissionsPromises = filteredProfessionals.map((prof: any) =>
           axios
-            .get(`/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`)
+            .get(
+              `/api/professionals/${prof.id}/commission?startDate=${startDate}&endDate=${endDate}`,
+            )
             .then((res) => ({ professional: prof, commission: res.data }))
             .catch(() => ({ professional: prof, commission: null })),
         )
@@ -51,17 +64,31 @@ export default function Reports() {
 
         const stockMovements = stockRes.data || []
         const stockSummary = {
-          totalPurchases: stockMovements.filter((m: any) => m.type === 'IN').reduce((sum: number, m: any) => sum + m.quantity * Number(m.unitCost), 0),
-          totalSales: stockMovements.filter((m: any) => m.type === 'OUT').reduce((sum: number, m: any) => sum + m.quantity * Number(m.unitCost), 0),
+          totalPurchases: stockMovements
+            .filter((m: any) => m.type === 'IN')
+            .reduce(
+              (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
+              0,
+            ),
+          totalSales: stockMovements
+            .filter((m: any) => m.type === 'OUT')
+            .reduce(
+              (sum: number, m: any) => sum + m.quantity * Number(m.unitCost),
+              0,
+            ),
           totalMovements: stockMovements.length,
         }
 
         const branch =
-          selectedBranch === 'all' ? { name: 'Todas as Filiais' } : branches.find((b) => b.id === selectedBranch)
+          selectedBranch === 'all'
+            ? { name: 'Todas as Filiais' }
+            : branches.find((b) => b.id === selectedBranch)
 
         const servicesCount: Record<string, number> = {}
         appointmentsRes.data.forEach((a: any) => {
-          if (selectedBranch !== 'all' && a.branchId !== selectedBranch) { return }
+          if (selectedBranch !== 'all' && a.branchId !== selectedBranch) {
+            return
+          }
           a.appointmentServices?.forEach((s: any) => {
             const name = s.service?.name || 'Desconhecido'
             servicesCount[name] = (servicesCount[name] || 0) + 1
@@ -94,7 +121,9 @@ export default function Reports() {
       setLoadingInsight(true)
       try {
         const params = new URLSearchParams({ startDate, endDate })
-        if (selectedBranch !== 'all') { params.append('branchId', selectedBranch) }
+        if (selectedBranch !== 'all') {
+          params.append('branchId', selectedBranch)
+        }
         const res = await axios.get(`/api/ai/insights?${params}`)
         return res.data.map((item: string) => {
           const [title, description] = item.split(':')
@@ -111,12 +140,22 @@ export default function Reports() {
   const handleGenerateInsight = () => refetchInsights()
 
   const handleExportReport = (format: 'json' | 'pdf' | 'csv' | 'excel') => {
-    if (!reportData) { return }
+    if (!reportData) {
+      return
+    }
     switch (format) {
-      case 'json': ExportService.exportJSON(reportData); break
-      case 'pdf': ExportService.exportPDF(reportData); break
-      case 'csv': ExportService.exportCSV(reportData); break
-      case 'excel': ExportService.exportExcel(reportData); break
+      case 'json':
+        ExportService.exportJSON(reportData)
+        break
+      case 'pdf':
+        ExportService.exportPDF(reportData)
+        break
+      case 'csv':
+        ExportService.exportCSV(reportData)
+        break
+      case 'excel':
+        ExportService.exportExcel(reportData)
+        break
     }
   }
 

@@ -4,9 +4,9 @@ import type { JSX } from 'react'
 import { isAuthenticated } from '@/lib/auth'
 
 interface Props {
-  children: JSX.Element;
+  children: JSX.Element
 }
 
 export function PrivateRoute({ children }: Props) {
-  return isAuthenticated() ? children : <Navigate to="/" replace />
+  return isAuthenticated() ? children : <Navigate to='/' replace />
 }

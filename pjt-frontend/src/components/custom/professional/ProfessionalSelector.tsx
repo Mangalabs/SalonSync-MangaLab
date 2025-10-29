@@ -6,30 +6,35 @@ import { Combobox } from '@/components/ui/combobox'
 import { useUser } from '@/contexts/UserContext'
 
 interface ProfessionalSelectorProps {
-  control: any;
-  professionals: { id: string; name: string }[];
-  errors: any;
-  branchId?: string;
+  control: any
+  professionals: { id: string; name: string }[]
+  errors: any
+  branchId?: string
 }
 
-export function ProfessionalSelector({ control, professionals, errors, branchId }: ProfessionalSelectorProps) {
+export function ProfessionalSelector({
+  control,
+  professionals,
+  errors,
+  branchId,
+}: ProfessionalSelectorProps) {
   const { user, isProfessional, isAdmin } = useUser()
 
   return (
     <div>
-      <Label className="text-sm">Profissional</Label>
+      <Label className='text-sm'>Profissional</Label>
       <Controller
-        name="professionalId"
+        name='professionalId'
         control={control}
-        render={({ field }) => (
-          (isProfessional && !isAdmin) ? (
+        render={({ field }) =>
+          isProfessional && !isAdmin ? (
             <>
-              <Input 
-                value={user?.name || ''} 
-                disabled 
-                className="bg-gray-50 h-8 text-sm" 
+              <Input
+                value={user?.name || ''}
+                disabled
+                className='bg-gray-50 h-8 text-sm'
               />
-              <input type="hidden" {...field} />
+              <input type='hidden' {...field} />
             </>
           ) : (
             <Combobox
@@ -39,17 +44,15 @@ export function ProfessionalSelector({ control, professionals, errors, branchId 
               }))}
               value={field.value}
               onValueChange={field.onChange}
-              placeholder="Selecione um profissional"
-              searchPlaceholder="Pesquisar profissional..."
+              placeholder='Selecione um profissional'
+              searchPlaceholder='Pesquisar profissional...'
               disabled={!branchId && isAdmin}
             />
           )
-        )}
+        }
       />
       {errors.professionalId && (
-        <p className="text-xs text-red-500">
-          {errors.professionalId.message}
-        </p>
+        <p className='text-xs text-red-500'>{errors.professionalId.message}</p>
       )}
     </div>
   )

@@ -183,16 +183,18 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const filteredTransactions = useMemo(
     () =>
       calculations.allTransactions?.filter((t: any) => {
-        const matchesBranch =
-          !branchFilter || t.branchId === branchFilter
+        const matchesBranch = !branchFilter || t.branchId === branchFilter
         const matchesCategory =
           categoryFilter === 'all' || t.category.name === categoryFilter
         const matchesPayment =
-          paymentMethodFilter === 'all' || t.paymentMethod === paymentMethodFilter
+          paymentMethodFilter === 'all' ||
+          t.paymentMethod === paymentMethodFilter
         const matchesSearch =
           searchTerm === '' ||
           t.description.toLowerCase().includes(searchTerm.toLowerCase())
-        return matchesBranch && matchesCategory && matchesPayment && matchesSearch
+        return (
+          matchesBranch && matchesCategory && matchesPayment && matchesSearch
+        )
       }) || [],
     [
       calculations.allTransactions,
@@ -203,13 +205,16 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     ],
   )
 
-  if (isLoading) {return <div className='p-4 text-foreground'>Carregando...</div>}
-  if (error)
-  {return (
-    <div className='p-4 text-destructive'>
-    Erro ao carregar dados financeiros
-    </div>
-  )}
+  if (isLoading) {
+    return <div className='p-4 text-foreground'>Carregando...</div>
+  }
+  if (error) {
+    return (
+      <div className='p-4 text-destructive'>
+        Erro ao carregar dados financeiros
+      </div>
+    )
+  }
 
   const {
     totalFromTransactions,

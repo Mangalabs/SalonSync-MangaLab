@@ -34,22 +34,22 @@ import { ScheduledAppointmentCard } from '../scheduling/ScheduledAppointmentCard
 import { AppointmentForm } from './AppointmentForm'
 
 interface RawAppointment {
-  id: string;
-  professional: { name: string } | null;
-  client: { name: string };
+  id: string
+  professional: { name: string } | null
+  client: { name: string }
   appointmentServices: {
-    service: { id: string; name: string; price: number };
-  }[];
-  total: number;
-  createdAt: string;
-  scheduledAt: string;
-  status?: string;
+    service: { id: string; name: string; price: number }
+  }[]
+  total: number
+  createdAt: string
+  scheduledAt: string
+  status?: string
 }
 
 export function AppointmentTable({
   filter,
 }: {
-  filter?: 'SCHEDULED' | 'COMPLETED';
+  filter?: 'SCHEDULED' | 'COMPLETED'
 }) {
   const queryClient = useQueryClient()
   const [selectedProfessional, setSelectedProfessional] =
@@ -58,7 +58,8 @@ export function AppointmentTable({
   const [selectedService, setSelectedService] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('')
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
-  const [editingAppointment, setEditingAppointment] = useState<RawAppointment | null>(null)
+  const [editingAppointment, setEditingAppointment] =
+    useState<RawAppointment | null>(null)
   const { activeBranch } = useBranch()
 
   const { data: rawData = [], isLoading } = useQuery<RawAppointment[]>({
@@ -113,13 +114,12 @@ export function AppointmentTable({
     },
   })
 
-  const data = useMemo(
-    () => rawData,
-    [rawData],
-  )
+  const data = useMemo(() => rawData, [rawData])
 
   const filteredByStatus = useMemo(() => {
-    if (!filter) {return data}
+    if (!filter) {
+      return data
+    }
     return data.filter((apt) => apt.status === filter)
   }, [data, filter])
 
@@ -159,34 +159,39 @@ export function AppointmentTable({
     dateFilter,
   ])
 
-  const groupedData = useMemo(() => filteredAppointments.reduce((acc, apt) => {
-    const professionalName = apt.professional?.name || 'Profissional removido'
-    const date = new Date(apt.scheduledAt)
-    const monthKey = `${date.getFullYear()}-${String(
-      date.getMonth() + 1,
-    ).padStart(2, '0')}`
-    const monthName = date.toLocaleDateString('pt-BR', {
-      year: 'numeric',
-      month: 'long',
-    })
+  const groupedData = useMemo(
+    () =>
+      filteredAppointments.reduce((acc, apt) => {
+        const professionalName =
+          apt.professional?.name || 'Profissional removido'
+        const date = new Date(apt.scheduledAt)
+        const monthKey = `${date.getFullYear()}-${String(
+          date.getMonth() + 1,
+        ).padStart(2, '0')}`
+        const monthName = date.toLocaleDateString('pt-BR', {
+          year: 'numeric',
+          month: 'long',
+        })
 
-    if (!acc[professionalName]) {
-      acc[professionalName] = { months: {} }
-    }
+        if (!acc[professionalName]) {
+          acc[professionalName] = { months: {} }
+        }
 
-    if (!acc[professionalName].months[monthKey]) {
-      acc[professionalName].months[monthKey] = {
-        name: monthName,
-        appointments: [],
-        total: 0,
-      }
-    }
+        if (!acc[professionalName].months[monthKey]) {
+          acc[professionalName].months[monthKey] = {
+            name: monthName,
+            appointments: [],
+            total: 0,
+          }
+        }
 
-    acc[professionalName].months[monthKey].appointments.push(apt)
-    acc[professionalName].months[monthKey].total += apt.total
+        acc[professionalName].months[monthKey].appointments.push(apt)
+        acc[professionalName].months[monthKey].total += apt.total
 
-    return acc
-  }, {} as Record<string, { months: Record<string, { name: string; appointments: any[]; total: number }> }>), [filteredAppointments])
+        return acc
+      }, {} as Record<string, { months: Record<string, { name: string; appointments: any[]; total: number }> }>),
+    [filteredAppointments],
+  )
 
   const toggleMonth = (monthKey: string) => {
     const newExpanded = new Set(expandedMonths)
@@ -200,26 +205,26 @@ export function AppointmentTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className='space-y-6'>
+        <div className='space-y-4'>
+          <Skeleton className='h-6 w-48' />
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i}>
-                <Skeleton className="h-4 w-20 mb-1" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className='h-4 w-20 mb-1' />
+                <Skeleton className='h-10 w-full' />
               </div>
             ))}
           </div>
         </div>
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border rounded-lg">
-              <div className="p-4 bg-gray-50 border-b">
-                <Skeleton className="h-6 w-32" />
+            <div key={i} className='border rounded-lg'>
+              <div className='p-4 bg-gray-50 border-b'>
+                <Skeleton className='h-6 w-32' />
               </div>
-              <div className="p-4">
-                <Skeleton className="h-12 w-full" />
+              <div className='p-4'>
+                <Skeleton className='h-12 w-full' />
               </div>
             </div>
           ))}
@@ -230,18 +235,18 @@ export function AppointmentTable({
 
   if (filter === 'SCHEDULED') {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Agendamentos Futuros</h3>
+      <div className='space-y-4'>
+        <div className='flex items-center gap-2'>
+          <Calendar className='h-5 w-5' />
+          <h3 className='text-lg font-semibold'>Agendamentos Futuros</h3>
         </div>
 
         {filteredAppointments.length === 0 ? (
-          <div className="border rounded-lg p-6 text-center text-[#737373]">
+          <div className='border rounded-lg p-6 text-center text-[#737373]'>
             Nenhum agendamento futuro encontrado.
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
             {filteredAppointments
               .sort(
                 (a, b) =>
@@ -264,37 +269,36 @@ export function AppointmentTable({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Atendimentos Realizados</h3>
+    <div className='space-y-6'>
+      <div className='space-y-4'>
+        <div className='flex items-center gap-2'>
+          <Filter className='h-5 w-5' />
+          <h3 className='text-lg font-semibold'>Atendimentos Realizados</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           <div>
-            <label className="text-sm font-medium mb-1 block">Data</label>
+            <label className='text-sm font-medium mb-1 block'>Data</label>
             <Input
-              type="date"
+              type='date'
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              placeholder="Filtrar por data"
+              placeholder='Filtrar por data'
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">
+            <label className='text-sm font-medium mb-1 block'>
               Profissional
             </label>
             <Select
               value={selectedProfessional}
-              onValueChange={setSelectedProfessional}
-            >
+              onValueChange={setSelectedProfessional}>
               <SelectTrigger>
-                <SelectValue placeholder="Todos" />
+                <SelectValue placeholder='Todos' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os profissionais</SelectItem>
+                <SelectItem value='all'>Todos os profissionais</SelectItem>
                 {professionals.map((prof: any) => (
                   <SelectItem key={prof.id} value={prof.name}>
                     {prof.name}
@@ -305,13 +309,13 @@ export function AppointmentTable({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Cliente</label>
+            <label className='text-sm font-medium mb-1 block'>Cliente</label>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger>
-                <SelectValue placeholder="Todos" />
+                <SelectValue placeholder='Todos' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os clientes</SelectItem>
+                <SelectItem value='all'>Todos os clientes</SelectItem>
                 {clients.map((client: any) => (
                   <SelectItem key={client.id} value={client.name}>
                     {client.name}
@@ -322,13 +326,13 @@ export function AppointmentTable({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Serviço</label>
+            <label className='text-sm font-medium mb-1 block'>Serviço</label>
             <Select value={selectedService} onValueChange={setSelectedService}>
               <SelectTrigger>
-                <SelectValue placeholder="Todos" />
+                <SelectValue placeholder='Todos' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os serviços</SelectItem>
+                <SelectItem value='all'>Todos os serviços</SelectItem>
                 {services.map((service: any) => (
                   <SelectItem key={service.id} value={service.name}>
                     {service.name}
@@ -344,22 +348,21 @@ export function AppointmentTable({
           selectedService !== 'all' ||
           dateFilter) && (
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => {
               setSelectedProfessional('all')
               setSelectedClient('all')
               setSelectedService('all')
               setDateFilter('')
-            }}
-          >
+            }}>
             Limpar Filtros
           </Button>
         )}
       </div>
 
       {Object.keys(groupedData).length === 0 ? (
-        <div className="border rounded-lg p-6 text-center text-[#737373]">
+        <div className='border rounded-lg p-6 text-center text-[#737373]'>
           {dateFilter ||
           selectedProfessional !== 'all' ||
           selectedClient !== 'all' ||
@@ -370,45 +373,44 @@ export function AppointmentTable({
       ) : (
         Object.entries(groupedData).map(
           ([professionalName, professionalData]) => (
-            <div key={professionalName} className="border rounded-lg">
-              <div className="p-4 bg-gray-50 border-b">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  <h4 className="font-semibold">{professionalName}</h4>
+            <div key={professionalName} className='border rounded-lg'>
+              <div className='p-4 bg-gray-50 border-b'>
+                <div className='flex items-center gap-2'>
+                  <User className='h-5 w-5' />
+                  <h4 className='font-semibold'>{professionalName}</h4>
                 </div>
               </div>
-              <div className="p-4 space-y-3">
+              <div className='p-4 space-y-3'>
                 {Object.entries(professionalData.months)
                   .sort(([a], [b]) => b.localeCompare(a))
                   .map(([monthKey, monthData]) => (
-                    <div key={monthKey} className="border rounded-lg">
+                    <div key={monthKey} className='border rounded-lg'>
                       <Button
-                        variant="ghost"
+                        variant='ghost'
                         onClick={() =>
                           toggleMonth(`${professionalName}-${monthKey}`)
                         }
-                        className="w-full justify-between p-4 h-auto"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-4 w-4" />
-                          <span className="font-medium">{monthData.name}</span>
-                          <span className="text-sm text-[#737373]">
+                        className='w-full justify-between p-4 h-auto'>
+                        <div className='flex items-center gap-3'>
+                          <Calendar className='h-4 w-4' />
+                          <span className='font-medium'>{monthData.name}</span>
+                          <span className='text-sm text-[#737373]'>
                             ({monthData.appointments.length} atendimentos)
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4" />
-                            <span className="font-semibold">
+                        <div className='flex items-center gap-3'>
+                          <div className='flex items-center gap-1'>
+                            <DollarSign className='h-4 w-4' />
+                            <span className='font-semibold'>
                               R$ {monthData.total.toFixed(2)}
                             </span>
                           </div>
                           {expandedMonths.has(
                             `${professionalName}-${monthKey}`,
                           ) ? (
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown className='h-4 w-4' />
                             ) : (
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight className='h-4 w-4' />
                             )}
                         </div>
                       </Button>
@@ -416,14 +418,13 @@ export function AppointmentTable({
                       {expandedMonths.has(
                         `${professionalName}-${monthKey}`,
                       ) && (
-                        <div className="border-t p-4 space-y-3">
+                        <div className='border-t p-4 space-y-3'>
                           {monthData.appointments.map((apt) => (
                             <div
                               key={apt.id}
-                              className="border rounded-lg p-3 bg-gray-50"
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="text-sm font-medium">
+                              className='border rounded-lg p-3 bg-gray-50'>
+                              <div className='flex justify-between items-start mb-2'>
+                                <div className='text-sm font-medium'>
                                   {new Date(apt.scheduledAt).toLocaleDateString(
                                     'pt-BR',
                                   )}{' '}
@@ -436,33 +437,31 @@ export function AppointmentTable({
                                     },
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold">
+                                <div className='flex items-center gap-2'>
+                                  <span className='font-semibold'>
                                     R$ {apt.total.toFixed(2)}
                                   </span>
                                   <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setEditingAppointment(apt)}
-                                  >
+                                    variant='outline'
+                                    size='sm'
+                                    onClick={() => setEditingAppointment(apt)}>
                                     <Edit size={14} />
                                   </Button>
                                   <Button
-                                    variant="destructive"
-                                    size="sm"
+                                    variant='destructive'
+                                    size='sm'
                                     onClick={() =>
                                       deleteAppointment.mutate(apt.id)
                                     }
-                                    disabled={deleteAppointment.isPending}
-                                  >
+                                    disabled={deleteAppointment.isPending}>
                                     <Trash2 size={14} />
                                   </Button>
                                 </div>
                               </div>
-                              <div className="text-sm mb-1">
+                              <div className='text-sm mb-1'>
                                 <strong>Cliente:</strong> {apt.client.name}
                               </div>
-                              <div className="text-sm">
+                              <div className='text-sm'>
                                 <strong>Serviços:</strong>{' '}
                                 {apt.appointmentServices
                                   .map((as) => as.service.name)
@@ -479,18 +478,21 @@ export function AppointmentTable({
           ),
         )
       )}
-      
+
       <Dialog
         open={!!editingAppointment}
-        onOpenChange={() => setEditingAppointment(null)}
-      >
-        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+        onOpenChange={() => setEditingAppointment(null)}>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Editar Agendamento</DialogTitle>
           </DialogHeader>
           {editingAppointment && (
             <AppointmentForm
-              mode={editingAppointment.status === 'SCHEDULED' ? 'scheduled' : 'immediate'}
+              mode={
+                editingAppointment.status === 'SCHEDULED'
+                  ? 'scheduled'
+                  : 'immediate'
+              }
               initialData={editingAppointment}
               onSuccess={() => setEditingAppointment(null)}
             />

@@ -1,4 +1,4 @@
-import { useForm , Controller } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -15,25 +15,28 @@ import { useUser } from '@/contexts/UserContext'
 const transactionSchema = z.object({
   branchId: z.string().optional(),
   description: z.string().min(1, 'Descrição é obrigatória'),
-  amount: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
-    { message: 'Valor deve ser um número positivo' },
-  ),
+  amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: 'Valor deve ser um número positivo',
+  }),
   categoryId: z.string().min(1, 'Categoria é obrigatória'),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
   date: z.string().optional(),
 })
 
-type TransactionFormData = z.infer<typeof transactionSchema>;
+type TransactionFormData = z.infer<typeof transactionSchema>
 
 interface TransactionFormProps {
-  type: 'INCOME' | 'EXPENSE' | 'INVESTMENT';
-  onSuccess: () => void;
-  initialData?: any;
+  type: 'INCOME' | 'EXPENSE' | 'INVESTMENT'
+  onSuccess: () => void
+  initialData?: any
 }
 
-export function TransactionForm({ type, onSuccess, initialData }: TransactionFormProps) {
+export function TransactionForm({
+  type,
+  onSuccess,
+  initialData,
+}: TransactionFormProps) {
   const queryClient = useQueryClient()
   const { activeBranch, branches } = useBranch()
   const { isAdmin } = useUser()
@@ -46,19 +49,23 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: initialData ? {
-      branchId: initialData.branchId || activeBranch?.id || '',
-      description: initialData.description || '',
-      amount: initialData.amount?.toString() || '',
-      categoryId: initialData.categoryId || '',
-      paymentMethod: initialData.paymentMethod || 'CASH',
-      reference: initialData.reference || '',
-      date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    } : {
-      branchId: activeBranch?.id || '',
-      date: new Date().toISOString().split('T')[0],
-      paymentMethod: 'CASH',
-    },
+    defaultValues: initialData
+      ? {
+        branchId: initialData.branchId || activeBranch?.id || '',
+        description: initialData.description || '',
+        amount: initialData.amount?.toString() || '',
+        categoryId: initialData.categoryId || '',
+        paymentMethod: initialData.paymentMethod || 'CASH',
+        reference: initialData.reference || '',
+        date: initialData.date
+          ? new Date(initialData.date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+      }
+      : {
+        branchId: activeBranch?.id || '',
+        date: new Date().toISOString().split('T')[0],
+        paymentMethod: 'CASH',
+      },
   })
 
   const watchedBranch = watch('branchId')
@@ -77,56 +84,77 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
     enabled: !!selectedBranchId,
   })
 
-
-
   const mutation = useMutation({
     mutationFn: async (data: TransactionFormData) => {
-      const config = isAdmin && data.branchId ? {
-        headers: { 'x-branch-id': data.branchId },
-      } : {}
-      
+      const config =
+        isAdmin && data.branchId
+          ? {
+            headers: { 'x-branch-id': data.branchId },
+          }
+          : {}
+
       if (initialData) {
-        return axios.put(`/api/financial/transactions/${initialData.id}`, {
-          ...data,
-          amount: Number(data.amount),
-          type,
-        }, config)
+        return axios.put(
+          `/api/financial/transactions/${initialData.id}`,
+          {
+            ...data,
+            amount: Number(data.amount),
+            type,
+          },
+          config,
+        )
       } else {
-        return axios.post('/api/financial/transactions', {
-          ...data,
-          amount: Number(data.amount),
-          type,
-        }, config)
+        return axios.post(
+          '/api/financial/transactions',
+          {
+            ...data,
+            amount: Number(data.amount),
+            type,
+          },
+          config,
+        )
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
-      toast.success(initialData ? 'Transação atualizada com sucesso!' : 'Transação criada com sucesso!')
+      toast.success(
+        initialData
+          ? 'Transação atualizada com sucesso!'
+          : 'Transação criada com sucesso!',
+      )
       onSuccess()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || (initialData ? 'Erro ao atualizar transação' : 'Erro ao criar transação'))
+      toast.error(
+        error.response?.data?.message ||
+          (initialData
+            ? 'Erro ao atualizar transação'
+            : 'Erro ao criar transação'),
+      )
     },
   })
 
-
-
   const getTypeName = () => {
     switch (type) {
-      case 'INCOME': return 'Receita'
-      case 'EXPENSE': return 'Despesa'
-      case 'INVESTMENT': return 'Investimento'
+      case 'INCOME':
+        return 'Receita'
+      case 'EXPENSE':
+        return 'Despesa'
+      case 'INVESTMENT':
+        return 'Investimento'
     }
   }
 
   return (
-    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+    <form
+      onSubmit={handleSubmit((data) => mutation.mutate(data))}
+      className='space-y-4'>
       {isAdmin && (
         <div>
-          <Label htmlFor="branchId">Filial</Label>
+          <Label htmlFor='branchId'>Filial</Label>
           <Controller
-            name="branchId"
+            name='branchId'
             control={control}
             render={({ field }) => (
               <Combobox
@@ -136,8 +164,8 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
                 }))}
                 value={field.value}
                 onValueChange={field.onChange}
-                placeholder="Selecione a filial..."
-                searchPlaceholder="Pesquisar filial..."
+                placeholder='Selecione a filial...'
+                searchPlaceholder='Pesquisar filial...'
               />
             )}
           />
@@ -145,47 +173,43 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
       )}
 
       <div>
-        <Label htmlFor="description">Descrição</Label>
-        <Input 
-          id="description" 
-          {...register('description')} 
+        <Label htmlFor='description'>Descrição</Label>
+        <Input
+          id='description'
+          {...register('description')}
           placeholder={`Descreva esta ${getTypeName().toLowerCase()}`}
         />
         {errors.description && (
-          <p className="text-sm text-red-500">{errors.description.message}</p>
+          <p className='text-sm text-red-500'>{errors.description.message}</p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className='grid grid-cols-2 gap-4'>
         <div>
-          <Label htmlFor="amount">Valor (R$)</Label>
-          <Input 
-            id="amount" 
-            {...register('amount')} 
-            type="number" 
-            step="0.01" 
-            min="0"
-            placeholder="0,00"
+          <Label htmlFor='amount'>Valor (R$)</Label>
+          <Input
+            id='amount'
+            {...register('amount')}
+            type='number'
+            step='0.01'
+            min='0'
+            placeholder='0,00'
           />
           {errors.amount && (
-            <p className="text-sm text-red-500">{errors.amount.message}</p>
+            <p className='text-sm text-red-500'>{errors.amount.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="date">Data</Label>
-          <Input 
-            id="date" 
-            {...register('date')} 
-            type="date"
-          />
+          <Label htmlFor='date'>Data</Label>
+          <Input id='date' {...register('date')} type='date' />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="categoryId">Categoria</Label>
+        <Label htmlFor='categoryId'>Categoria</Label>
         <Controller
-          name="categoryId"
+          name='categoryId'
           control={control}
           render={({ field }) => (
             <Combobox
@@ -195,20 +219,20 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
               }))}
               value={field.value}
               onValueChange={field.onChange}
-              placeholder="Selecione uma categoria"
-              searchPlaceholder="Pesquisar categoria..."
+              placeholder='Selecione uma categoria'
+              searchPlaceholder='Pesquisar categoria...'
             />
           )}
         />
         {errors.categoryId && (
-          <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+          <p className='text-sm text-red-500'>{errors.categoryId.message}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+        <Label htmlFor='paymentMethod'>Forma de Pagamento</Label>
         <Controller
-          name="paymentMethod"
+          name='paymentMethod'
           control={control}
           render={({ field }) => (
             <Combobox
@@ -221,24 +245,28 @@ export function TransactionForm({ type, onSuccess, initialData }: TransactionFor
               ]}
               value={field.value}
               onValueChange={field.onChange}
-              placeholder="Selecione forma de pagamento"
-              searchPlaceholder="Pesquisar forma..."
+              placeholder='Selecione forma de pagamento'
+              searchPlaceholder='Pesquisar forma...'
             />
           )}
         />
       </div>
 
       <div>
-        <Label htmlFor="reference">Referência (opcional)</Label>
-        <Input 
-          id="reference" 
-          {...register('reference')} 
-          placeholder="Nota fiscal, comprovante, etc."
+        <Label htmlFor='reference'>Referência (opcional)</Label>
+        <Input
+          id='reference'
+          {...register('reference')}
+          placeholder='Nota fiscal, comprovante, etc.'
         />
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Salvando...' : (initialData ? `Atualizar ${getTypeName()}` : `Salvar ${getTypeName()}`)}
+      <Button type='submit' disabled={isSubmitting} className='w-full'>
+        {isSubmitting
+          ? 'Salvando...'
+          : initialData
+            ? `Atualizar ${getTypeName()}`
+            : `Salvar ${getTypeName()}`}
       </Button>
     </form>
   )

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
 
-
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,8 +19,7 @@ export function SchedulingPanel() {
     <div>
       <Button
         onClick={() => setOpen(true)}
-        className="w-full bg-white text-primary border border-white hover:bg-gray-100 flex items-center gap-2"
-      >
+        className='w-full bg-white text-primary border border-white hover:bg-gray-100 flex items-center gap-2'>
         <Calendar size={16} />
         Novo Agendamento
       </Button>

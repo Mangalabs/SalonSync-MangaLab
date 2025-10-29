@@ -7,7 +7,7 @@ export function useQueueCalculations(queueStats: any[], selectedDate: Date) {
 
     // Formatar tempo restante/atraso
     const formatTimeRemaining = (appointment: any, status: string) => {
-      if (!isToday) return null
+      if (!isToday) {return null}
 
       // Extrair horário e criar data local
       let timeStr = '00:00'
@@ -50,7 +50,7 @@ export function useQueueCalculations(queueStats: any[], selectedDate: Date) {
     return {
       queueStats,
       formatTimeRemaining,
-      isToday
+      isToday,
     }
   }, [queueStats, selectedDate])
 }

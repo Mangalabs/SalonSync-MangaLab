@@ -70,7 +70,7 @@ export default function CheckoutForm() {
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-        }
+        },
       )
 
       const result = await res.json()
@@ -82,7 +82,7 @@ export default function CheckoutForm() {
       const result = await api.get('/api/payment/get-user-subscriptions')
 
       const activeSubscription = result.data.find(
-        (sub) => sub.status === 'active' || sub.status === 'trialing'
+        (sub) => sub.status === 'active' || sub.status === 'trialing',
       )
 
       setSelectedPlan({
