@@ -70,4 +70,26 @@ export class UpdateProductDto {
     typeof value === 'string' ? parseInt(value, 10) : value,
   )
   maxStock?: number;
+
+  @IsOptional()
+  @IsString()
+  productType?: 'SALE' | 'PROFESSIONAL_USE';
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(999999.999, { message: 'Peso unitário não pode exceder 999.999,999' })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
+  unitWeight?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(999.99, { message: 'Markup não pode exceder 999,99%' })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
+  markupPercent?: number;
 }

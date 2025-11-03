@@ -15,6 +15,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
+import { ProfessionalMovementDto } from './dto/professional-movement.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Product, StockMovement } from '@prisma/client';
 
@@ -77,6 +78,19 @@ export class ProductsController {
       adjustStockDto,
       branchId,
       req.user.id,
+    );
+  }
+
+  @Post(':id/professional-movement')
+  registerProfessionalMovement(
+    @Param('id') id: string,
+    @Body() movementDto: ProfessionalMovementDto,
+    @Headers('x-branch-id') branchId: string,
+  ): Promise<{ product: Product; movement: StockMovement }> {
+    return this.productsService.registerProfessionalMovement(
+      id,
+      movementDto,
+      branchId,
     );
   }
 }

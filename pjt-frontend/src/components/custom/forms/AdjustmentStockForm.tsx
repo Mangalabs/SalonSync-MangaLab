@@ -62,7 +62,7 @@ export function AdjustmentStockForm({
       unit: product?.unit || 'un',
       costPrice: product?.costPrice || undefined,
       salePrice: product?.salePrice || undefined,
-      minStock: product?.minStock || undefined,
+      minStock: product?.minStock !== undefined ? Number(product.minStock) : 0,
       quantity: product?.currentStock || undefined,
       reason: 'Ajuste de produto e estoque',
     },

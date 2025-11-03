@@ -8,53 +8,44 @@ import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { useUser } from '@/contexts/UserContext'
 
-const productSchema = z.object({
+const professionalProductSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   category: z.string().min(1, 'Categoria é obrigatória'),
   unit: z.string().min(1, 'Unidade é obrigatória'),
   brand: z.string().optional(),
-  costPrice: z.number().min(0, 'Preço de custo deve ser maior ou igual a 0').optional(),
-  salePrice: z.number().min(0, 'Preço de venda deve ser maior ou igual a 0').optional(),
-  initialStock: z.number().min(0, 'Quantidade inicial deve ser maior ou igual a 0').optional(),
-  minStock: z.number().min(0, 'Estoque mínimo deve ser maior ou igual a 0').optional(),
+  costPrice: z.number().min(0.01, 'Preço de custo deve ser maior que 0'),
+  unitWeight: z.number().min(0.001, 'Peso/Volume deve ser maior que 0'),
+  markupPercent: z.number().min(0, 'Markup deve ser maior ou igual a 0'),
   branchId: z.string().min(1, 'Selecione uma filial'),
 })
 
 const unitOptions = [
-  { value: 'un', label: 'Unidade (un)' },
   { value: 'ml', label: 'Mililitros (ml)' },
   { value: 'l', label: 'Litros (l)' },
   { value: 'g', label: 'Gramas (g)' },
   { value: 'kg', label: 'Quilogramas (kg)' },
-  { value: 'm', label: 'Metros (m)' },
-  { value: 'cm', label: 'Centímetros (cm)' },
-  { value: 'pct', label: 'Pacote (pct)' },
-  { value: 'cx', label: 'Caixa (cx)' },
+  { value: 'un', label: 'Unidade (un)' },
 ]
 
-type ProductFormData = z.infer<typeof productSchema>
+type ProfessionalProductFormData = z.infer<typeof professionalProductSchema>
 
-interface Product {
+interface ProfessionalProduct {
   id: string
   name: string
   category?: string
   brand?: string
   unit?: string
   costPrice?: number
-  salePrice?: number
-  currentStock?: number
-  minStock?: number
-  productType?: 'SALE' | 'PROFESSIONAL_USE'
   unitWeight?: number
   markupPercent?: number
 }
 
-export function ProductForm({
+export function ProfessionalProductForm({
   onSuccess,
   initialData,
 }: {
   onSuccess: () => void
-  initialData?: Product | null
+  initialData?: ProfessionalProduct | null
 }) {
   const isEditing = !!initialData
   const queryClient = useQueryClient()
@@ -77,57 +68,48 @@ export function ProductForm({
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+  } = useForm<ProfessionalProductFormData>({
+    resolver: zodResolver(professionalProductSchema),
     defaultValues: initialData
       ? {
           name: initialData.name,
-          category: initialData.category || 'Geral',
+          category: initialData.category || 'Cabelo',
           brand: initialData.brand || '',
-          unit: initialData.unit || 'un',
-          costPrice: initialData.costPrice
-            ? Number(initialData.costPrice)
-            : undefined,
-          salePrice: initialData.salePrice
-            ? Number(initialData.salePrice)
-            : undefined,
-          initialStock: initialData.currentStock
-            ? Number(initialData.currentStock)
-            : undefined,
-          minStock:
-            initialData.minStock !== undefined
-              ? Number(initialData.minStock)
-              : 0,
-
-          branchId:
-            (initialData as any).branchId ||
-            (!isAdmin ? activeBranch?.id : undefined),
+          unit: initialData.unit || 'ml',
+          costPrice: initialData.costPrice ? Number(initialData.costPrice) : undefined,
+          unitWeight: initialData.unitWeight ? Number(initialData.unitWeight) : undefined,
+          markupPercent: initialData.markupPercent ? Number(initialData.markupPercent) : 30,
+          branchId: (initialData as any).branchId || (!isAdmin ? activeBranch?.id : undefined),
         }
       : {
           name: '',
-          category: 'Geral',
+          category: 'Cabelo',
           brand: '',
-          unit: 'un',
+          unit: 'ml',
           costPrice: undefined,
-          salePrice: undefined,
-          initialStock: undefined,
-          minStock: undefined,
-
+          unitWeight: undefined,
+          markupPercent: 30,
           branchId: !isAdmin ? activeBranch?.id : undefined,
         },
   })
 
   const selectedUnit = watch('unit')
+  const unitWeight = watch('unitWeight')
+  const costPrice = watch('costPrice')
+  const markupPercent = watch('markupPercent')
+
+  // Cálculo do custo por unidade
+  const costPerUnit = unitWeight && costPrice ? costPrice / unitWeight : 0
+  const costWithMarkup = costPerUnit && markupPercent ? costPerUnit * (1 + markupPercent / 100) : 0
 
   const mutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
+    mutationFn: async (data: ProfessionalProductFormData) => {
       const payload = {
         ...data,
-        productType: 'SALE',
-        costPrice: data.costPrice || 0,
-        salePrice: data.salePrice || 0,
-        initialStock: data.initialStock || 0,
-        minStock: data.minStock || 0,
+        productType: 'PROFESSIONAL_USE',
+        salePrice: null,
+        initialStock: 0,
+        minStock: 0,
       }
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
@@ -139,11 +121,11 @@ export function ProductForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
-      queryClient.invalidateQueries({ queryKey: ['sale-products', activeBranch?.id] })
+      queryClient.invalidateQueries({ queryKey: ['professional-products', activeBranch?.id] })
       toast.success(
         isEditing
-          ? 'Produto atualizado com sucesso!'
-          : 'Produto criado com sucesso!'
+          ? 'Produto profissional atualizado com sucesso!'
+          : 'Produto profissional criado com sucesso!'
       )
       reset()
       onSuccess()
@@ -151,12 +133,12 @@ export function ProductForm({
     onError: (error: any) => {
       toast.error(
         error.response?.data?.message ||
-          `Erro ao ${isEditing ? 'atualizar' : 'criar'} produto`
+          `Erro ao ${isEditing ? 'atualizar' : 'criar'} produto profissional`
       )
     },
   })
 
-  const handleFormSubmit = (data: ProductFormData) => {
+  const handleFormSubmit = (data: ProfessionalProductFormData) => {
     mutation.mutate(data)
   }
 
@@ -179,14 +161,10 @@ export function ProductForm({
             ))}
           </select>
           {errors.branchId && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.branchId.message}
-            </p>
+            <p className='text-xs text-destructive mt-1'>{errors.branchId.message}</p>
           )}
         </div>
       )}
-
-
 
       <div>
         <label className='block text-sm font-medium text-foreground mb-2'>
@@ -195,7 +173,7 @@ export function ProductForm({
         <input
           {...register('name')}
           className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-          placeholder='Ex: Shampoo Anticaspa'
+          placeholder='Ex: Shampoo Profissional'
         />
         {errors.name && (
           <p className='text-xs text-destructive mt-1'>{errors.name.message}</p>
@@ -213,9 +191,7 @@ export function ProductForm({
             placeholder='Ex: Cabelo, Barba, Pele'
           />
           {errors.category && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.category.message}
-            </p>
+            <p className='text-xs text-destructive mt-1'>{errors.category.message}</p>
           )}
         </div>
 
@@ -226,75 +202,49 @@ export function ProductForm({
           <input
             {...register('brand')}
             className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-            placeholder="Ex: L'Oréal, Pantene"
+            placeholder="Ex: L'Oréal Professional"
           />
         </div>
       </div>
-
-      <div>
-        <label className='block text-sm font-medium text-foreground mb-2'>
-          Unidade de Medida
-        </label>
-        <select
-          value={watch('unit') || ''}
-          onChange={(e) => setValue('unit', e.target.value)}
-          className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
-          <option value=''>Selecione a unidade</option>
-          {unitOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.unit && (
-          <p className='text-xs text-destructive mt-1'>{errors.unit.message}</p>
-        )}
-      </div>
-
-
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <div>
           <label className='block text-sm font-medium text-foreground mb-2'>
-            Quantidade Inicial
+            Unidade de Medida
           </label>
-          <input
-            type='number'
-            min='0'
-            max='999999999'
-            {...register('initialStock', { valueAsNumber: true })}
-            className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-            placeholder='Digite a quantidade inicial'
-          />
-          {errors.initialStock && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.initialStock.message}
-            </p>
+          <select
+            value={watch('unit') || ''}
+            onChange={(e) => setValue('unit', e.target.value)}
+            className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+            <option value=''>Selecione a unidade</option>
+            {unitOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.unit && (
+            <p className='text-xs text-destructive mt-1'>{errors.unit.message}</p>
           )}
-          <p className='text-xs text-muted-foreground mt-1'>
-            Quantidade em {selectedUnit || 'unidades'} (máx: 999.999.999)
-          </p>
         </div>
 
         <div>
           <label className='block text-sm font-medium text-foreground mb-2'>
-            Estoque Mínimo
+            Peso/Volume Total
           </label>
           <input
             type='number'
-            min='0'
-            max='999999999'
-            {...register('minStock', { valueAsNumber: true })}
+            step='0.001'
+            min='0.001'
+            {...register('unitWeight', { valueAsNumber: true })}
             className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-            placeholder='Digite o estoque mínimo'
+            placeholder='Ex: 1000'
           />
-          {errors.minStock && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.minStock.message}
-            </p>
+          {errors.unitWeight && (
+            <p className='text-xs text-destructive mt-1'>{errors.unitWeight.message}</p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
-            Alerta quando estoque atingir este valor
+            Peso/volume total em {selectedUnit || 'unidades'}
           </p>
         </div>
       </div>
@@ -302,66 +252,76 @@ export function ProductForm({
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <div>
           <label className='block text-sm font-medium text-foreground mb-2'>
-            Preço de Custo (R$)
+            Preço de Custo Total (R$)
           </label>
           <input
             type='number'
             step='0.01'
-            min='0'
-            max='99999999.99'
+            min='0.01'
             {...register('costPrice', { valueAsNumber: true })}
             className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-            placeholder='Digite o preço de custo'
+            placeholder='Digite o preço total'
           />
           {errors.costPrice && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.costPrice.message}
-            </p>
+            <p className='text-xs text-destructive mt-1'>{errors.costPrice.message}</p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
-            Quanto você paga pelo produto
+            Custo total do produto
           </p>
         </div>
 
         <div>
           <label className='block text-sm font-medium text-foreground mb-2'>
-            Preço de Venda (R$)
+            Markup (%)
           </label>
           <input
             type='number'
             step='0.01'
             min='0'
-            max='99999999.99'
-            {...register('salePrice', { valueAsNumber: true })}
+            {...register('markupPercent', { valueAsNumber: true })}
             className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-            placeholder='Digite o preço de venda'
+            placeholder='Ex: 30'
           />
-          {errors.salePrice && (
-            <p className='text-xs text-destructive mt-1'>
-              {errors.salePrice.message}
-            </p>
+          {errors.markupPercent && (
+            <p className='text-xs text-destructive mt-1'>{errors.markupPercent.message}</p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
-            Preço usado nas vendas
+            Percentual de markup sobre o custo
           </p>
         </div>
       </div>
 
-      <div className='bg-accent/20 border border-accent/30 rounded-xl p-4'>
-        <p className='text-sm text-foreground'>
-          💡 <strong>Dica:</strong> Produtos para venda com controle tradicional de estoque e preços fixos.
+      {costPerUnit > 0 && (
+        <div className='bg-blue-50 border border-blue-200 rounded-xl p-4'>
+          <h4 className='font-semibold text-blue-800 mb-2'>📊 Cálculo Automático</h4>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
+            <div>
+              <span className='text-blue-600'>Custo por {selectedUnit}:</span>
+              <span className='font-semibold ml-2'>R$ {costPerUnit.toFixed(4)}</span>
+            </div>
+            <div>
+              <span className='text-blue-600'>Com markup ({markupPercent}%):</span>
+              <span className='font-semibold ml-2'>R$ {costWithMarkup.toFixed(4)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className='bg-purple-50 border border-purple-200 rounded-xl p-4'>
+        <p className='text-sm text-purple-800'>
+          💡 <strong>Produto Profissional:</strong> O custo será calculado automaticamente por unidade usada nas movimentações, aplicando o markup configurado.
         </p>
       </div>
 
       <button
         type='submit'
         disabled={mutation.isPending}
-        className='w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer'>
+        className='w-full bg-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-purple-700 transition-colors cursor-pointer'>
         {isSubmitting
           ? 'Salvando...'
           : isEditing
-          ? 'Atualizar Produto'
-          : 'Criar Produto'}
+          ? 'Atualizar Produto Profissional'
+          : 'Criar Produto Profissional'}
       </button>
     </form>
   )

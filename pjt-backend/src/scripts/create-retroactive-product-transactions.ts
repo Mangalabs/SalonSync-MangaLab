@@ -35,7 +35,7 @@ async function createRetroactiveProductTransactions() {
       continue;
     }
 
-    const totalCost = product.currentStock * Number(product.costPrice);
+    const totalCost = Number(product.currentStock) * Number(product.costPrice);
 
     if (totalCost <= 0) {
       console.log(`⏭️  Produto ${product.name} tem custo total zero`);

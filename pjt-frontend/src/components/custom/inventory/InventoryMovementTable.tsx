@@ -28,7 +28,7 @@ import { StockMovementForm } from '../forms/StockMovementForm'
 
 interface InventoryMovement {
   id: string
-  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'TRANSFER'
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'TRANSFER' | 'PROFESSIONAL_USE'
   quantity: number
   unitCost?: number
   totalCost?: number
@@ -41,7 +41,7 @@ interface InventoryMovement {
 
 interface Props {
   searchTerm: string
-  filter: 'all' | 'entrada' | 'saida' | 'ajuste' | 'transferencia' | 'perda'
+  filter: 'all' | 'entrada' | 'saida' | 'ajuste' | 'transferencia' | 'perda' | 'uso-profissional'
   dateRange: { start: string; end: string }
 }
 
@@ -97,7 +97,8 @@ export function InventoryMovementTable({
           (filter === 'saida' && m.type === 'OUT') ||
           (filter === 'ajuste' && m.type === 'ADJUSTMENT') ||
           (filter === 'transferencia' && m.type === 'TRANSFER') ||
-          (filter === 'perda' && m.type === 'LOSS')
+          (filter === 'perda' && m.type === 'LOSS') ||
+          (filter === 'uso-profissional' && m.type === 'PROFESSIONAL_USE')
 
     const movementDate = new Date(m.createdAt)
     const startDate = dateRange.start ? new Date(dateRange.start) : null
@@ -127,6 +128,8 @@ export function InventoryMovementTable({
         return { label: 'Perda', ...base }
       case 'TRANSFER':
         return { label: 'Transferência', ...base }
+      case 'PROFESSIONAL_USE':
+        return { label: 'Uso Profissional', ...base }
       default:
         return { label: type, ...base }
     }

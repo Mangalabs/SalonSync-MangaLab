@@ -23,7 +23,7 @@ import {
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog'
 
-import { AdjustmentStockForm } from '../forms/AdjustmentStockForm'
+import { ProductForm } from './ProductForm'
 
 interface Product {
   id: string
@@ -39,6 +39,10 @@ interface Product {
   maxStock?: number
   unit: string
   isActive: boolean
+  branchId?: string
+  productType?: 'SALE' | 'PROFESSIONAL_USE'
+  unitWeight?: number
+  markupPercent?: number
 }
 
 const statusConfig = {
@@ -82,7 +86,10 @@ export function ProductTable() {
     },
   })
 
-  const handleAdjustment = (product: Product) => setAdjustingProduct(product)
+  const handleAdjustment = (product: Product) => {
+    const productWithBranch = { ...product, branchId: activeBranch?.id }
+    setAdjustingProduct(productWithBranch)
+  }
 
   if (isLoading) {
     return <p className='p-4 text-muted-foreground'>Carregando...</p>
@@ -193,10 +200,10 @@ export function ProductTable() {
                 Categoria
               </th>
               <th className='py-3 px-4 text-left font-semibold text-foreground'>
-                Estoque
+                Info
               </th>
               <th className='py-3 px-4 text-left font-semibold text-foreground'>
-                Preço
+                Valor
               </th>
               <th className='py-3 px-4 text-left font-semibold text-foreground'>
                 Status
@@ -208,8 +215,9 @@ export function ProductTable() {
           </thead>
           <tbody>
             {filteredProducts.map((product) => {
-              const status =
-                product.currentStock <= product.minStock
+              const status = product.productType === 'PROFESSIONAL_USE'
+                ? 'good' // Produtos profissionais sempre mostram como 'good'
+                : product.currentStock <= product.minStock
                   ? 'low'
                   : product.currentStock <= product.minStock * 2
                     ? 'normal'
@@ -237,38 +245,65 @@ export function ProductTable() {
                     <span className='md:hidden font-semibold text-foreground'>
                       Categoria:{' '}
                     </span>
-                    {product.category}
+                    <div className='flex items-center gap-2'>
+                      <span>{product.category}</span>
+                      {product.productType === 'PROFESSIONAL_USE' && (
+                        <span className='px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700'>
+                          Profissional
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   <td className='py-2 px-3 md:table-cell block'>
                     <span className='md:hidden font-semibold text-foreground'>
-                      Estoque:{' '}
+                      {product.productType === 'PROFESSIONAL_USE' ? 'Quantidade:' : 'Estoque:'}{' '}
                     </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
-                      {product.currentStock} {product.unit}
-                    </span>
+                    {product.productType === 'PROFESSIONAL_USE' ? (
+                      <span>
+                        {product.unitWeight} {product.unit}
+                      </span>
+                    ) : (
+                      <span
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
+                        {product.currentStock} {product.unit}
+                      </span>
+                    )}
                   </td>
 
                   <td className='py-2 px-3 font-semibold text-foreground md:table-cell block'>
                     <span className='md:hidden font-semibold text-foreground'>
-                      Preço:{' '}
+                      {product.productType === 'PROFESSIONAL_USE' ? 'Custo/Un:' : 'Preço:'}{' '}
                     </span>
-                    R$ {Number(product.salePrice).toFixed(2).replace('.', ',')}
+                    {product.productType === 'PROFESSIONAL_USE' && product.unitWeight ? (
+                      <span>
+                        R$ {(Number(product.costPrice) / Number(product.unitWeight)).toFixed(3).replace('.', ',')}/{product.unit}
+                      </span>
+                    ) : (
+                      <span>
+                        R$ {Number(product.salePrice || 0).toFixed(2).replace('.', ',')}
+                      </span>
+                    )}
                   </td>
 
                   <td className='py-2 px-3 md:table-cell block'>
                     <span className='md:hidden font-semibold text-foreground'>
                       Status:{' '}
                     </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
-                      {status === 'low'
-                        ? 'Estoque Baixo'
-                        : status === 'normal'
-                          ? 'Atenção'
-                          : 'Em Estoque'}
-                    </span>
+                    {product.productType === 'PROFESSIONAL_USE' ? (
+                      <span className='px-2 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700'>
+                        Ativo
+                      </span>
+                    ) : (
+                      <span
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${statusConfig[status]}`}>
+                        {status === 'low'
+                          ? 'Estoque Baixo'
+                          : status === 'normal'
+                            ? 'Atenção'
+                            : 'Em Estoque'}
+                      </span>
+                    )}
                   </td>
 
                   <td className='py-2 px-3 md:table-cell block flex space-x-2 flex-wrap mt-2 md:mt-0'>
@@ -298,8 +333,8 @@ export function ProductTable() {
           <DialogHeader>
             <DialogTitle>Editar Produto - {adjustingProduct?.name}</DialogTitle>
           </DialogHeader>
-          <AdjustmentStockForm
-            product={adjustingProduct}
+          <ProductForm
+            initialData={adjustingProduct}
             onSuccess={() => setAdjustingProduct(null)}
           />
         </DialogContent>

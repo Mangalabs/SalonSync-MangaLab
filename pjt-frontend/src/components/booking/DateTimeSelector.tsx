@@ -27,7 +27,7 @@ export function DateTimeSelector({
 
   const { data: availability } = useProfessionalAvailability(
     professionalId,
-    selectedDate,
+    selectedDate
   )
 
   const availableTimes = availability?.availableTimes || []

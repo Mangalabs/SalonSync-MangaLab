@@ -14,6 +14,7 @@ export enum StockMovementType {
   OUT = 'OUT',
   ADJUSTMENT = 'ADJUSTMENT',
   LOSS = 'LOSS',
+  PROFESSIONAL_USE = 'PROFESSIONAL_USE',
 }
 
 export class AdjustStockDto {

@@ -13,7 +13,7 @@ import { useBranch } from '@/contexts/BranchContext'
 
 const movementSchema = z.object({
   productId: z.string().min(1, 'Selecione um produto'),
-  type: z.enum(['IN', 'OUT', 'ADJUSTMENT', 'LOSS']),
+  type: z.enum(['IN', 'OUT', 'ADJUSTMENT', 'LOSS', 'PROFESSIONAL_USE']),
   quantity: z.number().min(1, 'Quantidade deve ser maior que 0').max(999999999, 'Quantidade não pode exceder 999.999.999 unidades'),
   unitCost: z.number().min(0, 'Valor deve ser maior ou igual a 0').max(99999999.99, 'Valor não pode exceder R$ 99.999.999,99').optional(),
   reason: z.string().min(1, 'Informe o motivo'),
@@ -31,7 +31,7 @@ interface StockMovementFormProps {
 
 interface InventoryMovement {
   id: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'PROFESSIONAL_USE';
   quantity: number;
   unitCost?: number;
   totalCost?: number;
@@ -235,6 +235,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
             <option value="OUT">Saída</option>
             <option value="ADJUSTMENT">Ajuste</option>
             <option value="LOSS">Perda</option>
+            <option value="PROFESSIONAL_USE">Uso Profissional</option>
           </select>
           {errors.type && (
             <p className="text-xs text-destructive mt-1">{errors.type.message}</p>
