@@ -17,23 +17,26 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { ProductForm } from '@/components/custom/products/ProductForm'
-import { ProductTable } from '@/components/custom/products/ProductTable'
+import { ProfessionalProductForm } from '@/components/custom/products/ProfessionalProductForm'
+import { SaleProductTable } from '@/components/custom/products/SaleProductTable'
+import { ProfessionalProductTable } from '@/components/custom/products/ProfessionalProductTable'
 import { InventoryMovementTable } from '@/components/custom/inventory/InventoryMovementTable'
 import { StockMovementForm } from '@/components/custom/forms/StockMovementForm'
 
 export default function Inventory() {
-  const [activeTab, setActiveTab] = useState<'products' | 'movements'>(
-    'products',
+  const [activeTab, setActiveTab] = useState<'sale-products' | 'professional-products' | 'movements'>(
+    'sale-products',
   )
   const [searchTerm, setSearchTerm] = useState('')
   const [movementFilter, setMovementFilter] = useState<
-    'all' | 'entrada' | 'saida' | 'ajuste' | 'transferencia' | 'perda'
+    'all' | 'entrada' | 'saida' | 'ajuste' | 'transferencia' | 'perda' | 'uso-profissional'
   >('all')
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
   })
   const [productOpen, setProductOpen] = useState(false)
+  const [professionalProductOpen, setProfessionalProductOpen] = useState(false)
   const [movementOpen, setMovementOpen] = useState(false)
 
   return (
@@ -47,16 +50,29 @@ export default function Inventory() {
           <div className='flex flex-wrap gap-1 bg-muted p-1 rounded-xl'>
             <button
               onClick={() => {
-                setActiveTab('products')
+                setActiveTab('sale-products')
                 setSearchTerm('')
               }}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                activeTab === 'products'
+                activeTab === 'sale-products'
                   ? 'bg-card text-primary shadow-sm'
                   : 'text-muted-foreground hover:text-primary cursor-pointer'
               }`}>
               <Package className='w-4 h-4 inline-block mr-2' />
-              Produtos
+              Venda
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('professional-products')
+                setSearchTerm('')
+              }}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                activeTab === 'professional-products'
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-primary cursor-pointer'
+              }`}>
+              <Package className='w-4 h-4 inline-block mr-2 text-purple-600' />
+              Profissional
             </button>
             <button
               onClick={() => {
@@ -74,23 +90,34 @@ export default function Inventory() {
           </div>
 
           <div className='flex flex-wrap gap-2'>
-            {activeTab === 'products' ? (
+            {activeTab === 'sale-products' ? (
               <Dialog open={productOpen} onOpenChange={setProductOpen}>
                 <DialogTrigger asChild>
-                  <Button
-                    className=' bg-primary
-                text-secondary
-                py-3 px-4 rounded-xl font-medium 
-                hover:opacity-80 transition-opacity cursor-pointer'>
+                  <Button className='bg-primary text-secondary py-3 px-4 rounded-xl font-medium hover:opacity-80 transition-opacity cursor-pointer'>
                     <PlusCircle className='w-4 h-4' />
                     Novo Produto
                   </Button>
                 </DialogTrigger>
                 <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
                   <DialogHeader>
-                    <DialogTitle>Novo Produto</DialogTitle>
+                    <DialogTitle>Novo Produto para Venda</DialogTitle>
                   </DialogHeader>
                   <ProductForm onSuccess={() => setProductOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            ) : activeTab === 'professional-products' ? (
+              <Dialog open={professionalProductOpen} onOpenChange={setProfessionalProductOpen}>
+                <DialogTrigger asChild>
+                  <Button className='bg-purple-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-purple-700 transition-colors cursor-pointer'>
+                    <PlusCircle className='w-4 h-4' />
+                    Novo Produto Profissional
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
+                  <DialogHeader>
+                    <DialogTitle>Novo Produto Profissional</DialogTitle>
+                  </DialogHeader>
+                  <ProfessionalProductForm onSuccess={() => setProfessionalProductOpen(false)} />
                 </DialogContent>
               </Dialog>
             ) : (
@@ -141,6 +168,7 @@ export default function Inventory() {
                 <option value='ajuste'>Ajuste</option>
                 <option value='transferencia'>Transferência</option>
                 <option value='perda'>Perda</option>
+                <option value='uso-profissional'>Uso Profissional</option>
               </select>
             </div>
 
@@ -168,8 +196,10 @@ export default function Inventory() {
         )}
 
         <div className='overflow-x-auto'>
-          {activeTab === 'products' ? (
-            <ProductTable />
+          {activeTab === 'sale-products' ? (
+            <SaleProductTable />
+          ) : activeTab === 'professional-products' ? (
+            <ProfessionalProductTable />
           ) : (
             <InventoryMovementTable
               searchTerm={searchTerm}

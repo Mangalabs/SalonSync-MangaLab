@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AdjustStockDto, StockMovementType } from './dto/adjust-stock.dto';
+import { ProfessionalMovementDto } from './dto/professional-movement.dto';
 import { Product, StockMovement, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -32,10 +33,18 @@ export class ProductsService {
             ? createProductDto.salePrice
             : 0,
         currentStock:
-          createProductDto.initialStock !== undefined
+          createProductDto.productType === 'PROFESSIONAL_USE'
+            ? Number(createProductDto.unitWeight) || 0
+            : createProductDto.initialStock !== undefined
             ? createProductDto.initialStock
             : 0,
-        minStock: 0,
+        minStock:
+          createProductDto.minStock !== undefined
+            ? createProductDto.minStock
+            : 0,
+        productType: createProductDto.productType || 'SALE',
+        unitWeight: createProductDto.unitWeight || null,
+        markupPercent: createProductDto.markupPercent || null,
         branch: { connect: { id: branchId } },
       };
 
@@ -44,18 +53,35 @@ export class ProductsService {
           data: productData,
         });
 
-        // Criar transação financeira de investimento se há estoque inicial e custo
+        // Criar movimentação de entrada e transação financeira se há estoque inicial
         const initialStock = createProductDto.initialStock || 0;
         const costPrice = createProductDto.costPrice || 0;
 
-        if (initialStock > 0 && costPrice > 0) {
-          await this.createFinancialTransactionForProductCreation(
-            createdProduct,
-            initialStock,
-            costPrice,
-            branchId,
-            tx,
-          );
+        if (initialStock > 0) {
+          // Criar movimentação de entrada
+          const movement = await tx.stockMovement.create({
+            data: {
+              product: { connect: { id: createdProduct.id } },
+              branch: { connect: { id: branchId } },
+              type: 'IN',
+              quantity: initialStock,
+              unitCost: costPrice > 0 ? costPrice : null,
+              totalCost: costPrice > 0 ? costPrice * initialStock : null,
+              reason: 'Estoque inicial do produto',
+              reference: `Produto-${createdProduct.id}`,
+            },
+          });
+
+          // Criar transação financeira se há custo
+          if (costPrice > 0) {
+            await this.createFinancialTransactionForProductCreation(
+              createdProduct,
+              initialStock,
+              costPrice,
+              branchId,
+              tx,
+            );
+          }
         }
 
         return createdProduct;
@@ -90,7 +116,7 @@ export class ProductsService {
     updateProductDto: UpdateProductDto,
     branchId: string,
   ): Promise<Product> {
-    await this.findOne(id, branchId);
+    const currentProduct = await this.findOne(id, branchId);
 
     // Map DTO fields to match Prisma schema
     const updateData: Prisma.ProductUpdateInput = {};
@@ -120,11 +146,13 @@ export class ProductsService {
           : updateProductDto.salePrice;
     }
 
+    let newStock: number | undefined;
     if (updateProductDto.currentStock !== undefined) {
-      updateData.currentStock =
+      newStock =
         typeof updateProductDto.currentStock === 'string'
           ? parseInt(updateProductDto.currentStock, 10)
           : updateProductDto.currentStock;
+      updateData.currentStock = newStock;
     }
 
     if (updateProductDto.minStock !== undefined) {
@@ -143,6 +171,15 @@ export class ProductsService {
 
     if (updateProductDto.unit !== undefined)
       updateData.unit = updateProductDto.unit;
+
+    if (updateProductDto.productType !== undefined)
+      updateData.productType = updateProductDto.productType;
+
+    if (updateProductDto.unitWeight !== undefined)
+      updateData.unitWeight = updateProductDto.unitWeight;
+
+    if (updateProductDto.markupPercent !== undefined)
+      updateData.markupPercent = updateProductDto.markupPercent;
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
@@ -183,10 +220,10 @@ export class ProductsService {
       adjustStockDto;
 
     // Calculate new stock level
-    let newStock = product.currentStock;
+    let newStock = Number(product.currentStock);
 
     // Convert enum from DTO to Prisma enum
-    let movementType: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS';
+    let movementType: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'PROFESSIONAL_USE';
 
     switch (type) {
       case StockMovementType.IN:
@@ -195,7 +232,7 @@ export class ProductsService {
         break;
       case StockMovementType.OUT:
         movementType = 'OUT';
-        if (product.currentStock < quantity) {
+        if (Number(product.currentStock) < quantity) {
           throw new BadRequestException(
             `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`,
           );
@@ -204,7 +241,16 @@ export class ProductsService {
         break;
       case StockMovementType.LOSS:
         movementType = 'LOSS';
-        if (product.currentStock < quantity) {
+        if (Number(product.currentStock) < quantity) {
+          throw new BadRequestException(
+            `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`,
+          );
+        }
+        newStock -= quantity;
+        break;
+      case StockMovementType.PROFESSIONAL_USE:
+        movementType = 'PROFESSIONAL_USE';
+        if (Number(product.currentStock) < quantity) {
           throw new BadRequestException(
             `Insufficient stock. Current: ${product.currentStock}, Requested: ${quantity}`,
           );
@@ -219,11 +265,18 @@ export class ProductsService {
     }
 
     // Calculate total cost if unit cost is provided
-    const totalCost = unitCost
-      ? unitCost * quantity
-      : movementType === 'LOSS'
-        ? Number(product.costPrice) * quantity
-        : undefined;
+    let totalCost: number | undefined;
+    
+    if (unitCost) {
+      totalCost = unitCost * quantity;
+    } else if (movementType === 'LOSS') {
+      totalCost = Number(product.costPrice) * quantity;
+    } else if (movementType === 'PROFESSIONAL_USE' && product.unitWeight && product.markupPercent) {
+      // Calculate cost per unit weight with markup
+      const costPerUnit = Number(product.costPrice) / Number(product.unitWeight);
+      const costWithMarkup = costPerUnit * (1 + Number(product.markupPercent) / 100);
+      totalCost = costWithMarkup * quantity;
+    }
 
     // Create transaction to update both product and create movement
     return this.prisma.$transaction(async (tx) => {
@@ -315,6 +368,11 @@ export class ProductsService {
         categoryName = 'Venda de Produtos';
         description = `Saída: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
         break;
+      case 'PROFESSIONAL_USE':
+        transactionType = 'EXPENSE';
+        categoryName = 'Uso Profissional';
+        description = `Uso: ${product.name} (${movement.quantity} ${product.unit}) - ${movement.reason}`;
+        break;
       default:
         return;
     }
@@ -335,6 +393,7 @@ export class ProductsService {
         'Perdas de Estoque': '#DC2626',
         'Compra de Produtos': '#F59E0B',
         'Venda de Produtos': '#10B981',
+        'Uso Profissional': '#8B5CF6',
       };
 
       category = await tx.expenseCategory.create({
@@ -470,20 +529,20 @@ export class ProductsService {
     const newType = updateData.type || movement.type;
     const newQuantity = updateData.quantity || movement.quantity;
     const totalCost = updateData.unitCost
-      ? updateData.unitCost * newQuantity
+      ? updateData.unitCost * Number(newQuantity)
       : movement.totalCost;
 
     return this.prisma.$transaction(async (tx) => {
       // Se o produto mudou, reverter estoque do produto antigo
       if (newProductId !== movement.productId) {
-        let oldProductStock = movement.product.currentStock;
+        let oldProductStock = Number(movement.product.currentStock);
         switch (movement.type) {
           case 'IN':
-            oldProductStock -= movement.quantity;
+            oldProductStock -= Number(movement.quantity);
             break;
           case 'OUT':
           case 'LOSS':
-            oldProductStock += movement.quantity;
+            oldProductStock += Number(movement.quantity);
             break;
         }
         await tx.product.update({
@@ -499,22 +558,23 @@ export class ProductsService {
           throw new NotFoundException('Novo produto não encontrado');
         }
 
-        let newProductStock = newProduct.currentStock;
+        let newProductStock = Number(newProduct.currentStock);
+        const newQuantityNum = Number(newQuantity);
         switch (newType) {
           case 'IN':
-            newProductStock += newQuantity;
+            newProductStock += newQuantityNum;
             break;
           case 'OUT':
           case 'LOSS':
-            if (newProductStock < newQuantity) {
+            if (newProductStock < newQuantityNum) {
               throw new BadRequestException(
                 'Estoque insuficiente no novo produto',
               );
             }
-            newProductStock -= newQuantity;
+            newProductStock -= newQuantityNum;
             break;
           case 'ADJUSTMENT':
-            newProductStock = newQuantity;
+            newProductStock = newQuantityNum;
             break;
         }
         await tx.product.update({
@@ -523,33 +583,34 @@ export class ProductsService {
         });
       } else {
         // Mesmo produto, apenas ajustar diferença
-        let currentStock = movement.product.currentStock;
+        let currentStock = Number(movement.product.currentStock);
+        const newQuantityNum = Number(newQuantity);
 
         // Reverter movimentação anterior
         switch (movement.type) {
           case 'IN':
-            currentStock -= movement.quantity;
+            currentStock -= Number(movement.quantity);
             break;
           case 'OUT':
           case 'LOSS':
-            currentStock += movement.quantity;
+            currentStock += Number(movement.quantity);
             break;
         }
 
         // Aplicar nova movimentação
         switch (newType) {
           case 'IN':
-            currentStock += newQuantity;
+            currentStock += newQuantityNum;
             break;
           case 'OUT':
           case 'LOSS':
-            if (currentStock < newQuantity) {
+            if (currentStock < newQuantityNum) {
               throw new BadRequestException('Estoque insuficiente');
             }
-            currentStock -= newQuantity;
+            currentStock -= newQuantityNum;
             break;
           case 'ADJUSTMENT':
-            currentStock = newQuantity;
+            currentStock = newQuantityNum;
             break;
         }
 
@@ -590,14 +651,14 @@ export class ProductsService {
     }
 
     // Reverter o efeito da movimentação no estoque
-    let currentStock = movement.product.currentStock;
+    let currentStock = Number(movement.product.currentStock);
     switch (movement.type) {
       case 'IN':
-        currentStock -= movement.quantity;
+        currentStock -= Number(movement.quantity);
         break;
       case 'OUT':
       case 'LOSS':
-        currentStock += movement.quantity;
+        currentStock += Number(movement.quantity);
         break;
       case 'ADJUSTMENT':
         // Para ajustes, não podemos reverter facilmente
@@ -622,6 +683,84 @@ export class ProductsService {
       await tx.financialTransaction.deleteMany({
         where: { reference: `Estoque-${id}` },
       });
+    });
+  }
+
+  async registerProfessionalMovement(
+    id: string,
+    movementDto: { quantity: number; reason?: string; reference?: string },
+    branchId: string,
+  ): Promise<{ product: Product; movement: StockMovement }> {
+    const product = await this.findOne(id, branchId);
+    
+    console.log('Produto encontrado:', {
+      id: product.id,
+      name: product.name,
+      productType: product.productType,
+      currentStock: product.currentStock,
+      unitWeight: product.unitWeight
+    });
+    console.log('Movimento solicitado:', movementDto);
+
+    if (product.productType !== 'PROFESSIONAL_USE') {
+      throw new BadRequestException('Produto deve ser do tipo profissional');
+    }
+
+    const currentStockNum = Number(product.currentStock);
+    if (currentStockNum < movementDto.quantity) {
+      throw new BadRequestException(
+        `Estoque insuficiente. Atual: ${currentStockNum}, Solicitado: ${movementDto.quantity}`,
+      );
+    }
+
+    const newStock = currentStockNum - movementDto.quantity;
+
+    // Calcular custo com markup
+    let totalCost: number | null = null;
+    let unitCost: number | null = null;
+    
+    if (product.unitWeight && product.markupPercent && product.costPrice) {
+      const costPerUnit = Number(product.costPrice) / Number(product.unitWeight);
+      const costWithMarkup = costPerUnit * (1 + Number(product.markupPercent) / 100);
+      unitCost = costWithMarkup;
+      totalCost = costWithMarkup * movementDto.quantity;
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Atualizar estoque do produto
+      const updatedProduct = await tx.product.update({
+        where: { id },
+        data: { currentStock: newStock },
+      });
+
+      // Criar movimentação
+      const movement = await tx.stockMovement.create({
+        data: {
+          product: { connect: { id } },
+          branch: { connect: { id: branchId } },
+          type: 'PROFESSIONAL_USE',
+          quantity: movementDto.quantity,
+          unitCost,
+          totalCost,
+          reason: movementDto.reason || 'Uso profissional',
+          reference: movementDto.reference || `Uso-${id}-${Date.now()}`,
+        },
+      });
+
+      // Criar transação financeira se há custo
+      if (totalCost && totalCost > 0) {
+        await this.createFinancialTransactionForMovement(
+          movement,
+          updatedProduct,
+          branchId,
+          tx,
+        );
+      }
+
+      return {
+        product: updatedProduct,
+        movement,
+      };
     });
   }
 }
