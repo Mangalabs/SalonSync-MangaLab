@@ -400,22 +400,17 @@ export default function Appointments() {
 
               <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto'>
                 <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setShowRegisterForm(true)}
-                  className='gap-2 w-full sm:w-auto justify-center'>
-                  <Clock className='w-4 h-4' />
-                  Registrar Atendimento
-                </Button>
-                <Button
+                  className='bg-card h-10 border border-purple-300 text-purple-600 py-3 px-4 rounded-xl font-medium hover:border-purple-400 hover:bg-purple-800/5 transition flex items-center justify-center gap-2 cursor-pointer'
                   onClick={() => {
                     setEditingAppointment(null)
                     setShowForm(true)
-                  }}
-                  className='bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white gap-2 w-full sm:w-auto justify-center'
-                  size='sm'>
-                  <PlusCircle className='w-4 h-4' />
-                  Novo Agendamento
+                  }}>
+                  <PlusCircle className='w-4 h-4' /> Agendar Atendimento
+                </Button>
+                <Button
+                  className='bg-card h-10 border border-blue-300 text-blue-600 py-3 px-4 rounded-xl font-medium hover:border-blue-400 hover:bg-blue-800/5 transition flex items-center justify-center gap-2 cursor-pointer'
+                  onClick={() => setShowRegisterForm(true)}>
+                  <PlusCircle className='w-4 h-4' /> Registrar Atendimento
                 </Button>
               </div>
             </div>
