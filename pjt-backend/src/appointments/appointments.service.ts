@@ -29,16 +29,18 @@ export class AppointmentsService extends BaseDataService {
         professionalId: data.professionalId,
         scheduledAt: data.scheduledAt,
         status: {
-          in: ['SCHEDULED', 'COMPLETED'], // Considerar apenas agendamentos ativos
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar agendamentos ativos
         },
-      },
-      include: {
-        client: { select: { name: true } },
       },
     });
     if (existingAppointment) {
       const timeStr = data.scheduledAt.toISOString().substring(11, 16);
-      throw new Error(`Já existe um agendamento às ${timeStr} com ${existingAppointment.client?.name || 'outro cliente'}`);
+      const client = await this.prisma.client.findUnique({
+        where: { id: existingAppointment.clientId },
+      });
+      throw new Error(
+        `Já existe um agendamento às ${timeStr} com ${client?.name || 'outro cliente'}`,
+      );
     }
 
     const services = await this.prisma.service.findMany({
@@ -59,7 +61,7 @@ export class AppointmentsService extends BaseDataService {
         branchId,
         total,
         scheduledAt: data.scheduledAt,
-        status: (data.status as any) || 'SCHEDULED',
+        status: (data.status as any) || 'PENDING',
         appointmentServices: {
           create: data.serviceIds.map((serviceId) => ({ serviceId })),
         },
@@ -77,7 +79,7 @@ export class AppointmentsService extends BaseDataService {
       },
     });
 
-    // Só gerar transações financeiras se for atendimento imediato (COMPLETED)
+    // Criar transações financeiras se for atendimento imediato (COMPLETED)
     if (createdAppointment.status === 'COMPLETED') {
       await this.prisma.$transaction(async (tx) => {
         await this.createRevenueTransaction(createdAppointment, tx);
@@ -181,7 +183,7 @@ export class AppointmentsService extends BaseDataService {
 
     // Verificar dia da semana (0 = Domingo, 1 = Segunda, etc.)
     const dayOfWeek = targetDate.getDay();
-    
+
     // Buscar configuração de dia de trabalho do profissional
     const workingDay = await this.prisma.professionalWorkingDay.findUnique({
       where: {
@@ -198,7 +200,10 @@ export class AppointmentsService extends BaseDataService {
     }
 
     // Gerar horários baseados na configuração do profissional
-    const workingHours = this.generateTimeSlots(workingDay.startTime, workingDay.endTime);
+    const workingHours = this.generateTimeSlots(
+      workingDay.startTime,
+      workingDay.endTime,
+    );
 
     // Buscar agendamentos existentes para o profissional na data
     const existingAppointments = await this.prisma.appointment.findMany({
@@ -209,12 +214,12 @@ export class AppointmentsService extends BaseDataService {
           lte: endDate,
         },
         status: {
-          in: ['SCHEDULED', 'COMPLETED'], // Considerar agendados e concluídos como ocupados
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar agendados e concluídos como ocupados
         },
       },
       select: { scheduledAt: true, id: true },
     });
-    
+
     // Extrair horários ocupados (formato HH:MM) - usar diretamente da string ISO
     const bookedTimes = existingAppointments.map((apt) => {
       const timeStr = apt.scheduledAt.toISOString().substring(11, 16);
@@ -222,7 +227,9 @@ export class AppointmentsService extends BaseDataService {
     });
 
     // Filtrar horários disponíveis
-    const availableSlots = workingHours.filter((time) => !bookedTimes.includes(time));
+    const availableSlots = workingHours.filter(
+      (time) => !bookedTimes.includes(time),
+    );
 
     return availableSlots;
   }
@@ -231,28 +238,31 @@ export class AppointmentsService extends BaseDataService {
     const slots: string[] = [];
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
-    
+
     const startMinutes = startHour * 60 + startMinute;
     const endMinutes = endHour * 60 + endMinute;
-    
+
     // Gerar slots de 60 em 60 minutos
     for (let minutes = startMinutes; minutes < endMinutes; minutes += 60) {
       const hour = Math.floor(minutes / 60);
       const minute = minutes % 60;
-      
+
       // Pular horário de almoço (12:00-14:00)
       if (hour >= 12 && hour < 14) {
         continue;
       }
-      
+
       const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       slots.push(timeSlot);
     }
-    
+
     return slots;
   }
 
-  async confirmAppointment(id: string, newScheduledAt?: Date): Promise<Appointment> {
+  async confirmAppointment(
+    id: string,
+    newScheduledAt?: Date,
+  ): Promise<Appointment> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
       include: {
@@ -269,21 +279,28 @@ export class AppointmentsService extends BaseDataService {
 
     // Verificar se o dia do agendamento já chegou
     const now = new Date();
-    const appointmentDate = new Date(appointment.scheduledAt.toISOString().split('T')[0]);
+    const appointmentDate = new Date(
+      appointment.scheduledAt.toISOString().split('T')[0],
+    );
     const today = new Date(now.toISOString().split('T')[0]);
-    
+
     if (appointmentDate > today) {
       const dateStr = appointment.scheduledAt.toISOString().substring(0, 10);
-      throw new Error(`Não é possível confirmar agendamento de dia futuro. Agendado para ${dateStr}. Aguarde o dia do agendamento.`);
+      throw new Error(
+        `Não é possível confirmar agendamento de dia futuro. Agendado para ${dateStr}. Aguarde o dia do agendamento.`,
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
       // Atualizar status do appointment e horário se fornecido
-      const updateData: any = { status: 'COMPLETED' };
+      // Se está PENDING, vai para CONFIRMED. Se já está CONFIRMED ou IN_PROGRESS, vai para COMPLETED
+      const newStatus =
+        appointment.status === 'PENDING' ? 'CONFIRMED' : 'COMPLETED';
+      const updateData: any = { status: newStatus };
       if (newScheduledAt) {
         updateData.scheduledAt = newScheduledAt;
       }
-      
+
       const updatedAppointment = await tx.appointment.update({
         where: { id },
         data: updateData,
@@ -298,17 +315,29 @@ export class AppointmentsService extends BaseDataService {
         },
       });
 
-      // Criar transação de receita
-      await this.createRevenueTransaction(updatedAppointment, tx);
-      
-      // Criar transação de comissão
-      await this.createCommissionTransaction(updatedAppointment, tx);
+      // Só criar transações se o status for COMPLETED
+      if (newStatus === 'COMPLETED') {
+        await this.createRevenueTransaction(updatedAppointment, tx);
+        await this.createCommissionTransaction(updatedAppointment, tx);
+      }
 
       return updatedAppointment;
     });
   }
 
   private async createRevenueTransaction(appointment: any, tx: any) {
+    // Verificar se já existe transação para este agendamento
+    const existingTransaction = await tx.financialTransaction.findFirst({
+      where: {
+        appointmentId: appointment.id,
+        type: 'INCOME',
+      },
+    });
+
+    if (existingTransaction) {
+      return; // Já existe, não criar duplicata
+    }
+
     // Buscar ou criar categoria de serviços
     let servicesCategory = await tx.expenseCategory.findFirst({
       where: {
@@ -346,6 +375,18 @@ export class AppointmentsService extends BaseDataService {
   }
 
   private async createCommissionTransaction(appointment: any, tx: any) {
+    // Verificar se já existe transação de comissão para este agendamento
+    const existingCommission = await tx.financialTransaction.findFirst({
+      where: {
+        appointmentId: appointment.id,
+        type: 'EXPENSE',
+      },
+    });
+
+    if (existingCommission) {
+      return; // Já existe, não criar duplicata
+    }
+
     // Calcular comissão
     const commissionRate =
       appointment.professional.customRole?.commissionRate ||
@@ -418,16 +459,18 @@ export class AppointmentsService extends BaseDataService {
         scheduledAt: data.scheduledAt,
         id: { not: id },
         status: {
-          in: ['SCHEDULED', 'COMPLETED'], // Considerar apenas agendamentos ativos
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar apenas agendamentos ativos
         },
-      },
-      include: {
-        client: { select: { name: true } },
       },
     });
     if (conflictingAppointment) {
       const timeStr = data.scheduledAt.toISOString().substring(11, 16);
-      throw new Error(`Já existe um agendamento às ${timeStr} com ${conflictingAppointment.client?.name || 'outro cliente'}`);
+      const client = await this.prisma.client.findUnique({
+        where: { id: conflictingAppointment.clientId },
+      });
+      throw new Error(
+        `Já existe um agendamento às ${timeStr} com ${client?.name || 'outro cliente'}`,
+      );
     }
 
     const services = await this.prisma.service.findMany({
@@ -493,11 +536,12 @@ export class AppointmentsService extends BaseDataService {
       // Remover agendamento
       await tx.appointment.delete({ where: { id } });
     });
-
   }
 
-  async fixHistoricalAppointments(): Promise<{ fixed: number; message: string }> {
-
+  async fixHistoricalAppointments(): Promise<{
+    fixed: number;
+    message: string;
+  }> {
     // Buscar todos os atendimentos COMPLETED que não têm transações financeiras
     const completedAppointments = await this.prisma.appointment.findMany({
       where: {
@@ -522,11 +566,12 @@ export class AppointmentsService extends BaseDataService {
 
     for (const appointment of completedAppointments) {
       // Verificar se já existe transação financeira para este atendimento
-      const existingTransaction = await this.prisma.financialTransaction.findFirst({
-        where: {
-          appointmentId: appointment.id,
-        },
-      });
+      const existingTransaction =
+        await this.prisma.financialTransaction.findFirst({
+          where: {
+            appointmentId: appointment.id,
+          },
+        });
 
       if (existingTransaction) {
         continue;
@@ -536,17 +581,68 @@ export class AppointmentsService extends BaseDataService {
         await this.prisma.$transaction(async (tx) => {
           // Criar transação de receita
           await this.createRevenueTransaction(appointment, tx);
-          
+
           // Criar transação de comissão
           await this.createCommissionTransaction(appointment, tx);
         });
 
         fixed++;
-      } catch {
+      } catch {}
+    }
+
+    const message = `Correção concluída! ${fixed} atendimentos corrigidos.`;
+    return { fixed, message };
+  }
+
+  async removeDuplicateTransactions(): Promise<{
+    removed: number;
+    message: string;
+  }> {
+    let removed = 0;
+
+    // Buscar todas as transações de atendimentos agrupadas por appointmentId e tipo
+    const duplicateGroups = await this.prisma.financialTransaction.groupBy({
+      by: ['appointmentId', 'type'],
+      where: {
+        appointmentId: { not: null },
+      },
+      _count: {
+        id: true,
+      },
+      having: {
+        id: {
+          _count: {
+            gt: 1,
+          },
+        },
+      },
+    });
+
+    for (const group of duplicateGroups) {
+      if (group.appointmentId) {
+        // Buscar todas as transações duplicadas deste grupo
+        const transactions = await this.prisma.financialTransaction.findMany({
+          where: {
+            appointmentId: group.appointmentId,
+            type: group.type,
+          },
+          orderBy: { createdAt: 'asc' },
+        });
+
+        // Manter apenas a primeira, remover as outras
+        if (transactions.length > 1) {
+          const toRemove = transactions.slice(1);
+          for (const transaction of toRemove) {
+            await this.prisma.financialTransaction.delete({
+              where: { id: transaction.id },
+            });
+            removed++;
+          }
+        }
       }
     }
 
-    const message = `Correção concluída! ${fixed} atendimentos corrigidos.`;    
-    return { fixed, message };
+    const message = `Remoção de duplicatas concluída! ${removed} transações duplicadas removidas.`;
+    return { removed, message };
   }
 }

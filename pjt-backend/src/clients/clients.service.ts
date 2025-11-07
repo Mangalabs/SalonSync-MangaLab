@@ -93,9 +93,9 @@ export class ClientsService extends BaseDataService {
     }
 
     const clients = await this.prisma.client.findMany({
-      where: { 
+      where: {
         branchId: { in: branchIds },
-        isActive: true
+        isActive: true,
       },
       orderBy: { name: 'asc' },
     });
@@ -155,19 +155,19 @@ export class ClientsService extends BaseDataService {
   }
 
   async delete(id: string): Promise<Client> {
-    const client = await this.prisma.client.findUnique({ 
-      where: { id, isActive: true } 
+    const client = await this.prisma.client.findUnique({
+      where: { id, isActive: true },
     });
-    
+
     if (!client) {
       throw new NotFoundException('Cliente não encontrado');
     }
 
     // Verificar se há agendamentos ativos (não concluídos)
     const activeAppointmentsCount = await this.prisma.appointment.count({
-      where: { 
+      where: {
         clientId: id,
-        status: 'SCHEDULED'
+        status: 'PENDING',
       },
     });
 
@@ -180,7 +180,7 @@ export class ClientsService extends BaseDataService {
     // Soft delete - marcar como inativo ao invés de excluir
     return this.prisma.client.update({
       where: { id },
-      data: { isActive: false }
+      data: { isActive: false },
     });
   }
 }

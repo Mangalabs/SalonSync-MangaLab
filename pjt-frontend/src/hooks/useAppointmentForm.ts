@@ -32,7 +32,7 @@ export function useAppointmentForm(
   mode: 'immediate' | 'scheduled',
   professionals: { id: string; name: string }[],
   onSuccess: () => void,
-  initialData?: any,
+  initialData?: any
 ) {
   const queryClient = useQueryClient()
   const { user, isProfessional, isAdmin } = useUser()
@@ -59,9 +59,9 @@ export function useAppointmentForm(
             typeof initialData.scheduledAt === 'string'
               ? initialData.scheduledAt.split('T')[1]?.slice(0, 5) || ''
               : initialData.scheduledAt
-                ?.toString()
-                ?.split('T')[1]
-                ?.slice(0, 5) || '',
+                  ?.toString()
+                  ?.split('T')[1]
+                  ?.slice(0, 5) || '',
         }),
         ...(isAdmin && { branchId: initialData.branchId || '' }),
       }
@@ -69,20 +69,20 @@ export function useAppointmentForm(
 
     return isScheduled
       ? {
-        professionalId: '',
-        clientId: '',
-        serviceIds: [],
-        scheduledDate: '',
-        scheduledTime: '',
-        ...(isAdmin && { branchId: '' }),
-      }
+          professionalId: '',
+          clientId: '',
+          serviceIds: [],
+          scheduledDate: '',
+          scheduledTime: '',
+          ...(isAdmin && { branchId: '' }),
+        }
       : {
-        professionalId: '',
-        clientId: '',
-        serviceIds: [],
-        paymentMethod: 'CASH',
-        ...(isAdmin && { branchId: '' }),
-      }
+          professionalId: '',
+          clientId: '',
+          serviceIds: [],
+          paymentMethod: 'CASH',
+          ...(isAdmin && { branchId: '' }),
+        }
   }
 
   const form = useForm({
@@ -93,7 +93,7 @@ export function useAppointmentForm(
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(
-        (p) => p.name === user.name,
+        (p) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
@@ -113,7 +113,7 @@ export function useAppointmentForm(
 
       if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
         scheduledAt = `${data.scheduledDate}T${data.scheduledTime}:00.000Z`
-        status = 'SCHEDULED'
+        status = 'PENDING'
       } else {
         const now = new Date()
         const year = now.getFullYear()
@@ -171,8 +171,8 @@ export function useAppointmentForm(
       const action = initialData
         ? 'atualizar'
         : isScheduled
-          ? 'criar agendamento'
-          : 'registrar atendimento'
+        ? 'criar agendamento'
+        : 'registrar atendimento'
       const errorMessage =
         error.response?.data?.message || error.message || `Erro ao ${action}`
 

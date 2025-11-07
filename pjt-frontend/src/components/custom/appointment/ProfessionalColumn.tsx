@@ -65,12 +65,21 @@ export function ProfessionalColumn({
               <Clock className='w-3 h-3 text-muted-foreground' />
               <span className='text-muted-foreground'>Próximo livre:</span>
               <span className='font-medium text-foreground'>
-                {typeof nextAvailableTime === 'string'
-                  ? nextAvailableTime.split('T')[1]?.slice(0, 5) || '00:00'
-                  : new Date(nextAvailableTime)
-                    .toISOString()
-                    .split('T')[1]
-                    ?.slice(0, 5) || '00:00'}
+                {(() => {
+                  if (typeof nextAvailableTime === 'string') {
+                    return nextAvailableTime.includes('T')
+                      ? nextAvailableTime.split('T')[1]?.slice(0, 5) || '00:00'
+                      : nextAvailableTime.slice(0, 5) || '00:00'
+                  }
+                  return new Date(nextAvailableTime).toLocaleTimeString(
+                    'pt-BR',
+                    {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: 'America/Sao_Paulo',
+                    }
+                  )
+                })()}
               </span>
             </div>
             {stats.totalWaitTime > 0 && (

@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('public')
 export class PublicController {
@@ -7,7 +7,7 @@ export class PublicController {
 
   @Get('test')
   test() {
-    return { message: 'OK' }
+    return { message: 'OK' };
   }
 
   @Get('debug/users')
@@ -20,19 +20,19 @@ export class PublicController {
         branches: {
           select: {
             id: true,
-            name: true
-          }
-        }
-      }
-    })
-    return users
+            name: true,
+          },
+        },
+      },
+    });
+    return users;
   }
 
   @Get('branch/:branchSlug')
   async getBranchBySlug(@Param('branchSlug') branchSlug: string) {
     const branch = await this.prisma.branch.findFirst({
       where: {
-        name: { contains: branchSlug, mode: 'insensitive' }
+        name: { contains: branchSlug, mode: 'insensitive' },
       },
       select: {
         id: true,
@@ -44,30 +44,27 @@ export class PublicController {
             id: true,
             name: true,
             email: true,
-            businessName: true
-          }
-        }
-      }
-    })
-    return branch
+            businessName: true,
+          },
+        },
+      },
+    });
+    return branch;
   }
 
   @Get('branch/:branchId/services')
   async getBranchServices(@Param('branchId') branchId: string) {
     const services = await this.prisma.service.findMany({
       where: {
-        OR: [
-          { branchId },
-          { branchId: null }
-        ]
+        OR: [{ branchId }, { branchId: null }],
       },
       select: {
         id: true,
         name: true,
         price: true,
-      }
-    })
-    return services
+      },
+    });
+    return services;
   }
 
   @Get('branch/:branchId/professionals')
@@ -77,15 +74,15 @@ export class PublicController {
       select: {
         id: true,
         name: true,
-      }
-    })
-    return professionals
+      },
+    });
+    return professionals;
   }
 
   @Get('professional/:professionalId/availability/:date')
   async getProfessionalAvailability(
     @Param('professionalId') professionalId: string,
-    @Param('date') date: string
+    @Param('date') date: string,
   ) {
     // Get existing appointments for the date
     const existingAppointments = await this.prisma.appointment.findMany({
@@ -93,54 +90,59 @@ export class PublicController {
         professionalId,
         scheduledAt: {
           gte: new Date(date + 'T00:00:00'),
-          lt: new Date(date + 'T23:59:59')
+          lt: new Date(date + 'T23:59:59'),
         },
-        status: { not: 'CANCELLED' }
+        status: { not: 'CANCELLED' },
       },
       select: {
-        scheduledAt: true
-      }
-    })
+        scheduledAt: true,
+      },
+    });
 
     // Generate available times (9:00 to 17:00, hourly intervals)
-    const allTimes: string[] = []
+    const allTimes: string[] = [];
     for (let hour = 9; hour < 17; hour++) {
-      allTimes.push(`${hour.toString().padStart(2, '0')}:00`)
+      allTimes.push(`${hour.toString().padStart(2, '0')}:00`);
     }
 
     // Filter out booked times
-    const bookedTimes = existingAppointments.map(apt => {
-      const time = new Date(apt.scheduledAt)
-      return `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`
-    })
+    const bookedTimes = existingAppointments.map((apt) => {
+      const time = new Date(apt.scheduledAt);
+      return `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+    });
 
-    const availableTimes = allTimes.filter(time => !bookedTimes.includes(time))
-    
-    return { availableTimes, bookedTimes }
+    const availableTimes = allTimes.filter(
+      (time) => !bookedTimes.includes(time),
+    );
+
+    return { availableTimes, bookedTimes };
   }
 
   @Post('appointments')
-  async createAppointment(@Body() data: {
-    clientName: string
-    clientPhone: string
-    clientEmail?: string
-    serviceId: string
-    professionalId: string
-    scheduledAt: string
-    branchId: string
-  }) {
+  async createAppointment(
+    @Body()
+    data: {
+      clientName: string;
+      clientPhone: string;
+      clientEmail?: string;
+      serviceId: string;
+      professionalId: string;
+      scheduledAt: string;
+      branchId: string;
+    },
+  ) {
     // Buscar preço do serviço
     const service = await this.prisma.service.findUnique({
       where: { id: data.serviceId },
-      select: { price: true }
-    })
+      select: { price: true },
+    });
     // Criar ou encontrar cliente
     let client = await this.prisma.client.findFirst({
-      where: { 
+      where: {
         phone: data.clientPhone,
-        branchId: data.branchId
-      }
-    })
+        branchId: data.branchId,
+      },
+    });
 
     if (!client) {
       client = await this.prisma.client.create({
@@ -148,9 +150,9 @@ export class PublicController {
           name: data.clientName,
           phone: data.clientPhone,
           email: data.clientEmail,
-          branchId: data.branchId
-        }
-      })
+          branchId: data.branchId,
+        },
+      });
     }
 
     // Criar agendamento
@@ -159,16 +161,16 @@ export class PublicController {
         clientId: client.id,
         professionalId: data.professionalId,
         scheduledAt: new Date(data.scheduledAt),
-        status: 'SCHEDULED',
+        status: 'PENDING',
         branchId: data.branchId,
-        total: service?.price || 0
+        total: service?.price || 0,
       },
       include: {
         client: true,
-        professional: true
-      }
-    })
+        professional: true,
+      },
+    });
 
-    return appointment
+    return appointment;
   }
 }

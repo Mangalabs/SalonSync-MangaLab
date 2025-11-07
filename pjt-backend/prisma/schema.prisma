@@ -131,7 +131,7 @@ model Appointment {
   total                  Decimal                @db.Decimal(10, 2)
   createdAt              DateTime               @default(now())
   scheduledAt            DateTime
-  status                 AppointmentStatus      @default(SCHEDULED)
+  status                 AppointmentStatus      @default(PENDING)
   branchId               String
   branch                 Branch                 @relation(fields: [branchId], references: [id])
   client                 Client                 @relation(fields: [clientId], references: [id])
@@ -352,7 +352,9 @@ model ChatMessage {
 }
 
 enum AppointmentStatus {
-  SCHEDULED
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }

@@ -72,18 +72,14 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       }
       params.append('branchId', branchFilter)
 
-      const [summaryRes, transactionsRes, appointmentsRes] = await Promise.all([
+      const [summaryRes, transactionsRes] = await Promise.all([
         axios.get(`/api/financial/summary?${params}`),
         axios.get(`/api/financial/transactions?type=${type}&${params}`),
-        type === 'INCOME'
-          ? axios.get(`/api/appointments?status=COMPLETED&${params}`)
-          : Promise.resolve({ data: [] }),
       ])
 
       return {
         summary: summaryRes.data,
         transactions: transactionsRes.data,
-        appointments: appointmentsRes.data,
       }
     },
   })
@@ -103,52 +99,40 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       }
     }
 
-    const totalFromTransactions =
-      summary.transactions?.reduce(
-        (sum: number, t: any) => sum + Number(t.amount),
-        0,
-      ) || 0
-    const totalFromAppointments =
-      type === 'INCOME'
-        ? summary.appointments?.reduce(
-          (sum: number, apt: any) => sum + Number(apt.total),
-          0,
-        ) || 0
-        : 0
+    // Separar transações por tipo
+    const appointmentTransactions =
+      summary.transactions?.filter((t: any) => t.appointmentId) || []
+    const manualTransactions =
+      summary.transactions?.filter(
+        (t: any) =>
+          !t.appointmentId &&
+          !t.reference?.startsWith('Estoque-') &&
+          !t.reference?.startsWith('Produto-')
+      ) || []
+
+    const totalFromTransactions = manualTransactions.reduce(
+      (sum: number, t: any) => sum + Number(t.amount),
+      0
+    )
+    const totalFromAppointments = appointmentTransactions.reduce(
+      (sum: number, t: any) => sum + Number(t.amount),
+      0
+    )
     const stockRevenue =
       type === 'INCOME' ? summary.summary?.stockRevenue || 0 : 0
     const stockExpenses =
       type === 'EXPENSE'
         ? summary.summary?.stockLosses || 0
         : type === 'INVESTMENT'
-          ? summary.summary?.stockExpenses || 0
-          : 0
+        ? summary.summary?.stockExpenses || 0
+        : 0
     const grandTotal =
       totalFromTransactions +
       totalFromAppointments +
       stockRevenue +
       stockExpenses
 
-    const appointmentTransactions =
-      type === 'INCOME'
-        ? (summary.appointments || []).map((apt: any) => ({
-          id: `appointment-${apt.id}`,
-          description: `Atendimento: ${
-            apt.professional?.name || 'Profissional'
-          } - ${apt.client?.name || 'Cliente'}`,
-          amount: apt.total,
-          date: apt.scheduledAt,
-          category: { name: 'Serviços', color: 'var(--color-accent)' },
-          paymentMethod: 'CASH',
-          reference: `Atendimento-${apt.id}`,
-          isAppointment: true,
-        }))
-        : []
-
-    const allTransactions = [
-      ...(summary.transactions || []),
-      ...appointmentTransactions,
-    ]
+    const allTransactions = summary.transactions || []
 
     const categorySummary = allTransactions.reduce((acc: any, t: any) => {
       const categoryName = t.category.name
@@ -202,7 +186,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       categoryFilter,
       paymentMethodFilter,
       searchTerm,
-    ],
+    ]
   )
 
   if (isLoading) {
@@ -224,7 +208,19 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     categorySummary,
     categories,
     paymentMethods,
+    allTransactions,
   } = calculations
+
+  // Separar transações por tipo para exibição
+  const appointmentTransactions =
+    allTransactions?.filter((t: any) => t.appointmentId) || []
+  const manualTransactions =
+    allTransactions?.filter(
+      (t: any) =>
+        !t.appointmentId &&
+        !t.reference?.startsWith('Estoque-') &&
+        !t.reference?.startsWith('Produto-')
+    ) || []
 
   const getTypeColor = () => {
     switch (type) {
@@ -272,8 +268,8 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
             {type === 'INCOME'
               ? 'Receitas'
               : type === 'EXPENSE'
-                ? 'Despesas'
-                : 'Investimentos'}
+              ? 'Despesas'
+              : 'Investimentos'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -289,7 +285,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                       return 'Período inválido'
                     }
                     return `${start.toLocaleDateString(
-                      'pt-BR',
+                      'pt-BR'
                     )} - ${end.toLocaleDateString('pt-BR')}`
                   } catch {
                     return 'Período inválido'
@@ -305,8 +301,8 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               type === 'INCOME'
                 ? summary?.summary?.totalIncome || 0
                 : type === 'EXPENSE'
-                  ? summary?.summary?.totalExpenses || 0
-                  : summary?.summary?.totalInvestments || 0,
+                ? summary?.summary?.totalExpenses || 0
+                : summary?.summary?.totalInvestments || 0
             )}
           </div>
         </CardContent>
@@ -321,7 +317,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
           </CardHeader>
           <CardContent>
             <div className='text-xl font-semibold text-foreground'>
-              {summary?.transactions?.length || 0}
+              {manualTransactions.length || 0}
             </div>
             <div className='text-muted-foreground'>
               {formatCurrency(totalFromTransactions)}
@@ -339,7 +335,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               </CardHeader>
               <CardContent>
                 <div className='text-xl font-semibold text-foreground'>
-                  {summary?.appointments?.length || 0}
+                  {appointmentTransactions.length || 0}
                 </div>
                 <div className='text-md text-muted-foreground'>
                   {formatCurrency(totalFromAppointments)}
@@ -432,7 +428,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
                       {formatCurrency(data.total)}
                     </div>
                   </div>
-                ),
+                )
               )}
             </div>
           </CardContent>
