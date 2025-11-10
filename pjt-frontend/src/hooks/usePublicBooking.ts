@@ -2,7 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 
 const publicApi = axios.create({
-  baseURL: 'http://localhost:3000/api/public',
+  baseURL: `${import.meta.env.VITE_API_URL}/public`,
 })
 
 export function useBranchBySlug(branchSlug: string) {

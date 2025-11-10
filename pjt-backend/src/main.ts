@@ -7,7 +7,10 @@ import { DiscordLoggerFilter } from './discord-logger.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({ origin: process.env.ALLOWED_ORIGINS?.split(',') });
+  app.enableCors({ 
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://salondash.mangalab.io'],
+    credentials: true 
+  });
 
   app.setGlobalPrefix('api');
 
