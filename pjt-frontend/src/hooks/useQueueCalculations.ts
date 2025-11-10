@@ -10,12 +10,7 @@ export function useQueueCalculations(queueStats: any[], selectedDate: Date) {
         return null
       }
 
-      let scheduledAt: Date
-      if (typeof appointment.scheduledAt === 'string') {
-        scheduledAt = new Date(appointment.scheduledAt)
-      } else {
-        scheduledAt = new Date(appointment.scheduledAt)
-      }
+      const scheduledAt = new Date(appointment.scheduledAt)
 
       const localScheduled = new Date()
       localScheduled.setHours(
