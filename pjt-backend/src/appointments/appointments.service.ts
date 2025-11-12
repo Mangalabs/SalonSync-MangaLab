@@ -29,7 +29,7 @@ export class AppointmentsService extends BaseDataService {
         professionalId: data.professionalId,
         scheduledAt: data.scheduledAt,
         status: {
-          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar agendamentos ativos
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'], // Apenas agendamentos ativos geram conflito
         },
       },
     });
@@ -214,7 +214,7 @@ export class AppointmentsService extends BaseDataService {
           lte: endDate,
         },
         status: {
-          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar agendados e concluídos como ocupados
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'], // Apenas agendamentos ativos ocupam horários
         },
       },
       select: { scheduledAt: true, id: true },
@@ -242,8 +242,8 @@ export class AppointmentsService extends BaseDataService {
     const startMinutes = startHour * 60 + startMinute;
     const endMinutes = endHour * 60 + endMinute;
 
-    // Gerar slots de 60 em 60 minutos
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += 60) {
+    // Gerar slots de 10 em 10 minutos
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
       const hour = Math.floor(minutes / 60);
       const minute = minutes % 60;
 
@@ -292,10 +292,18 @@ export class AppointmentsService extends BaseDataService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Atualizar status do appointment e horário se fornecido
-      // Se está PENDING, vai para CONFIRMED. Se já está CONFIRMED ou IN_PROGRESS, vai para COMPLETED
-      const newStatus =
-        appointment.status === 'PENDING' ? 'CONFIRMED' : 'COMPLETED';
+      // Fluxo de status: PENDING → CONFIRMED → IN_PROGRESS → COMPLETED
+      let newStatus: string;
+      if (appointment.status === 'PENDING') {
+        newStatus = 'CONFIRMED'; // Cliente chegou
+      } else if (appointment.status === 'CONFIRMED') {
+        newStatus = 'IN_PROGRESS'; // Atendimento começou
+      } else if (appointment.status === 'IN_PROGRESS') {
+        newStatus = 'COMPLETED'; // Atendimento finalizado
+      } else {
+        newStatus = appointment.status; // Manter status atual
+      }
+
       const updateData: any = { status: newStatus };
       if (newScheduledAt) {
         updateData.scheduledAt = newScheduledAt;
@@ -315,7 +323,7 @@ export class AppointmentsService extends BaseDataService {
         },
       });
 
-      // Só criar transações se o status for COMPLETED
+      // Só criar transações quando COMPLETAR o atendimento
       if (newStatus === 'COMPLETED') {
         await this.createRevenueTransaction(updatedAppointment, tx);
         await this.createCommissionTransaction(updatedAppointment, tx);
@@ -459,7 +467,7 @@ export class AppointmentsService extends BaseDataService {
         scheduledAt: data.scheduledAt,
         id: { not: id },
         status: {
-          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'], // Considerar apenas agendamentos ativos
+          in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'], // Apenas agendamentos ativos geram conflito
         },
       },
     });

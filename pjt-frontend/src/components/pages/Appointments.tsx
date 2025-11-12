@@ -26,7 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
-import { AppointmentConfirmationForm } from '@/components/custom/appointment/AppointmentConfirmationForm'
+import { AppointmentStatusManager } from '@/components/custom/appointment/AppointmentStatusManager'
 import { QueueView } from '@/components/custom/appointment/QueueView'
 import {
   AlertDialog,
@@ -181,7 +181,7 @@ export default function Appointments() {
             string,
             'confirmed' | 'pending' | 'completed' | 'in-progress'
           > = {
-            SCHEDULED: 'confirmed',
+            CONFIRMED: 'confirmed',
             COMPLETED: 'completed',
             IN_PROGRESS: 'in-progress',
             PENDING: 'pending',
@@ -416,89 +416,7 @@ export default function Appointments() {
             </div>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-muted-foreground'>
-                    Total Agendamentos
-                  </p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-12' />
-                    ) : (
-                      stats.total
-                    )}
-                  </p>
-                </div>
-                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center'>
-                  <CalendarIcon className='w-5 h-5 sm:w-6 sm:h-6 text-blue-600' />
-                </div>
-              </div>
-            </div>
 
-            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-muted-foreground'>Pendentes</p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-12' />
-                    ) : (
-                      stats.pending
-                    )}
-                  </p>
-                </div>
-                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center'>
-                  <Clock className='w-5 h-5 sm:w-6 sm:h-6 text-yellow-600' />
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-muted-foreground'>Concluídos</p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-12' />
-                    ) : (
-                      stats.completed
-                    )}
-                  </p>
-                </div>
-                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center'>
-                  <Check className='w-5 h-5 sm:w-6 sm:h-6 text-green-600' />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className='bg-card rounded-xl p-3 sm:p-4 shadow-sm border border-border'>
-            <div className='flex items-center gap-4 sm:gap-6 flex-wrap'>
-              <span className='text-xs text-muted-foreground'>Legenda:</span>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 rounded-sm bg-green-50 border border-green-200'></div>
-                <span className='text-xs text-muted-foreground'>Concluído</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 rounded-sm bg-blue-50 border border-blue-200'></div>
-                <span className='text-xs text-muted-foreground'>
-                  Confirmado
-                </span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 rounded-sm bg-yellow-50 border border-yellow-200'></div>
-                <span className='text-xs text-muted-foreground'>Pendente</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 rounded-sm bg-purple-50 border border-purple-200'></div>
-                <span className='text-xs text-muted-foreground'>
-                  Em andamento
-                </span>
-              </div>
-            </div>
-          </div>
 
           <div className='bg-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border'>
             <div className='flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between'>
@@ -748,6 +666,90 @@ export default function Appointments() {
               </TooltipProvider>
             </div>
           </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm text-muted-foreground'>
+                    Total Agendamentos
+                  </p>
+                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-12' />
+                    ) : (
+                      stats.total
+                    )}
+                  </p>
+                </div>
+                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center'>
+                  <CalendarIcon className='w-5 h-5 sm:w-6 sm:h-6 text-blue-600' />
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm text-muted-foreground'>Pendentes</p>
+                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-12' />
+                    ) : (
+                      stats.pending
+                    )}
+                  </p>
+                </div>
+                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center'>
+                  <Clock className='w-5 h-5 sm:w-6 sm:h-6 text-yellow-600' />
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-card rounded-xl p-4 sm:p-5 shadow-sm border border-border'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm text-muted-foreground'>Concluídos</p>
+                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-12' />
+                    ) : (
+                      stats.completed
+                    )}
+                  </p>
+                </div>
+                <div className='w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center'>
+                  <Check className='w-5 h-5 sm:w-6 sm:h-6 text-green-600' />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='bg-card rounded-xl p-3 sm:p-4 shadow-sm border border-border'>
+            <div className='flex items-center gap-4 sm:gap-6 flex-wrap'>
+              <span className='text-xs text-muted-foreground'>Legenda:</span>
+              <div className='flex items-center gap-2'>
+                <div className='w-3 h-3 rounded-sm bg-green-50 border border-green-200'></div>
+                <span className='text-xs text-muted-foreground'>Concluído</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <div className='w-3 h-3 rounded-sm bg-blue-50 border border-blue-200'></div>
+                <span className='text-xs text-muted-foreground'>
+                  Confirmado
+                </span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <div className='w-3 h-3 rounded-sm bg-yellow-50 border border-yellow-200'></div>
+                <span className='text-xs text-muted-foreground'>Pendente</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <div className='w-3 h-3 rounded-sm bg-purple-50 border border-purple-200'></div>
+                <span className='text-xs text-muted-foreground'>
+                  Em andamento
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -806,7 +808,7 @@ export default function Appointments() {
             <DialogTitle>Confirmar Agendamento</DialogTitle>
           </DialogHeader>
           {confirmingAppointment && (
-            <AppointmentConfirmationForm
+            <AppointmentStatusManager
               appointment={confirmingAppointment}
               onSuccess={() => {
                 setConfirmingAppointment(null)

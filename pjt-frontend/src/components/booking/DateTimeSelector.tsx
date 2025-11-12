@@ -34,9 +34,15 @@ export function DateTimeSelector({
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      const datetime = `${selectedDate}T${selectedTime}:00`
+      // Usar EXATAMENTE o mesmo formato do sistema interno que funciona
+      const datetime = `${selectedDate}T${selectedTime}:00.000Z`
+      
+      // Formatar data manualmente para evitar problemas de fuso horário
+      const [year, month, day] = selectedDate.split('-')
+      const formattedDate = `${day}/${month}/${year}`
+      
       onSelect({
-        date: new Date(selectedDate).toLocaleDateString('pt-BR'),
+        date: formattedDate,
         time: selectedTime,
         datetime,
       })
@@ -57,7 +63,11 @@ export function DateTimeSelector({
         <h3 className='text-lg font-semibold text-gray-700 mb-4'>Data</h3>
         <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
           {dates.map((date) => {
-            const dateStr = date.toISOString().split('T')[0]
+            // Usar formato local para evitar problemas de fuso horário
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const dateStr = `${year}-${month}-${day}`
             const isSelected = selectedDate === dateStr
             const isToday = date.toDateString() === new Date().toDateString()
 

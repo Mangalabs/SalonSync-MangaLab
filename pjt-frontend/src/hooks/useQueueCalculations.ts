@@ -11,32 +11,26 @@ export function useQueueCalculations(queueStats: any[], selectedDate: Date) {
       }
 
       const scheduledAt = new Date(appointment.scheduledAt)
-
-      const localScheduled = new Date()
-      localScheduled.setHours(
-        scheduledAt.getHours(),
-        scheduledAt.getMinutes(),
-        0,
-        0
-      )
-
-      const diffMs = localScheduled.getTime() - now.getTime()
+      const diffMs = scheduledAt.getTime() - now.getTime()
       const diffMinutes = Math.floor(diffMs / (1000 * 60))
 
       if (status === 'in-progress') {
-        const endTime = new Date(
-          localScheduled.getTime() + appointment.duration * 60000
-        )
-        const remainingMs = endTime.getTime() - now.getTime()
+        // Para atendimentos em andamento, calcular baseado no tempo atual + duração
+        const estimatedEndTime = new Date(now.getTime() + appointment.duration * 60000)
+        const remainingMs = estimatedEndTime.getTime() - now.getTime()
         const remainingMinutes = Math.floor(remainingMs / (1000 * 60))
 
-        return remainingMinutes > 0
-          ? `${remainingMinutes}min restantes`
-          : `${Math.abs(remainingMinutes)}min atrasado`
+        return `${remainingMinutes}min restantes`
       }
 
-      if (diffMinutes < 0) {
+      // Só mostra atraso se já passou do horário agendado
+      if (diffMinutes < -5) { // 5min de tolerância
         return `${Math.abs(diffMinutes)}min atrasado`
+      }
+
+      // Se está dentro da tolerância ou é futuro
+      if (diffMinutes <= 5) {
+        return diffMinutes <= 0 ? 'agora' : `em ${diffMinutes}min`
       }
 
       if (diffMinutes < 60) {

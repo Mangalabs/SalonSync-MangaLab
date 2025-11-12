@@ -77,19 +77,9 @@ export class QueueService {
           // Calcular eficiência
           const efficiency = await this.calculateEfficiency(professional.id);
 
-          // Encontrar agendamento atual
+          // Encontrar agendamento atual (apenas IN_PROGRESS)
           const currentAppointment = isToday
-            ? profAppointments.find((apt) => {
-                if (
-                  !['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(apt.status)
-                )
-                  return false;
-                const aptTime = new Date(apt.scheduledAt);
-                const duration =
-                  apt.appointmentServices[0]?.service?.duration || 30;
-                const endTime = new Date(aptTime.getTime() + duration * 60000);
-                return now >= aptTime && now <= endTime;
-              })
+            ? profAppointments.find((apt) => apt.status === 'IN_PROGRESS')
             : null;
 
           // Agendamentos pendentes - incluir agendamentos atrasados para hoje
@@ -117,25 +107,21 @@ export class QueueService {
             isToday,
             now,
           );
-          // Converter para horário local antes de serializar
-          const nextAvailableTime = nextAvailableTimeDate
-            ? new Date(
-                nextAvailableTimeDate.getTime() -
-                  nextAvailableTimeDate.getTimezoneOffset() * 60000,
-              ).toISOString()
+          // Formatar horário para exibição local
+          const nextAvailableTime = nextAvailableTimeDate 
+            ? nextAvailableTimeDate.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'America/Sao_Paulo'
+              })
             : undefined;
 
           // Calcular tempo total de espera
-          const totalWaitTime =
-            isToday && nextAvailableTimeDate
-              ? Math.max(
-                  0,
-                  Math.round(
-                    (nextAvailableTimeDate.getTime() - now.getTime()) /
-                      (1000 * 60),
-                  ),
-                )
-              : 0;
+          let totalWaitTime = 0;
+          if (isToday && nextAvailableTimeDate) {
+            const diffMs = nextAvailableTimeDate.getTime() - now.getTime();
+            totalWaitTime = Math.max(0, Math.round(diffMs / (1000 * 60)));
+          }
 
           // Determinar status
           const status = this.getProfessionalStatus(
@@ -216,52 +202,14 @@ export class QueueService {
   ): Date | undefined {
     if (!isToday) return undefined;
 
+    // Se está atendendo agora, próximo livre é baseado no tempo atual + duração restante
     if (currentAppointment) {
-      return new Date(
-        currentAppointment.scheduledAt.getTime() +
-          currentAppointment.duration * 60000 +
-          averageDelay * 60000,
-      );
+      const duration = currentAppointment.appointmentServices?.[0]?.service?.duration || 30;
+      return new Date(now.getTime() + duration * 60000);
     }
 
-    if (upcomingAppointments.length === 0) {
-      // Se não há agendamentos, próximo horário livre é agora
-      return now;
-    }
-
-    // Calcular próxima disponibilidade baseada em todos os agendamentos pendentes
-    if (upcomingAppointments.length === 0) {
-      return now;
-    }
-
-    // Ordenar agendamentos por horário
-    const sortedAppointments = upcomingAppointments.sort(
-      (a, b) =>
-        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-    );
-
-    // Começar do horário atual ou do primeiro agendamento, o que for maior
-    let estimatedTime = new Date(
-      Math.max(
-        now.getTime(),
-        new Date(sortedAppointments[0].scheduledAt).getTime(),
-      ),
-    );
-
-    // Calcular fim de cada agendamento sequencialmente
-    sortedAppointments.forEach((apt) => {
-      const aptStart = new Date(apt.scheduledAt);
-      // Se o agendamento começa depois do tempo estimado atual, usar o horário do agendamento
-      if (aptStart > estimatedTime) {
-        estimatedTime = new Date(aptStart.getTime());
-      }
-      // Adicionar duração do serviço + atraso médio
-      estimatedTime = new Date(
-        estimatedTime.getTime() + apt.duration * 60000 + averageDelay * 60000,
-      );
-    });
-
-    return estimatedTime;
+    // Se não há atendimento atual, sempre retornar horário atual
+    return now;
   }
 
   private getProfessionalStatus(
@@ -271,24 +219,30 @@ export class QueueService {
     isToday: boolean,
   ): 'free' | 'busy' | 'next' | 'overdue' | 'scheduled' {
     if (!isToday) {
-      return allAppointments.some((apt) => apt.status === 'SCHEDULED')
+      return allAppointments.some((apt) => ['PENDING', 'CONFIRMED'].includes(apt.status))
         ? 'scheduled'
         : 'free';
     }
 
     const now = new Date();
 
-    // Verificar se há agendamentos atrasados
-    const overdueAppointments = allAppointments.filter(
-      (apt) => apt.status === 'SCHEDULED' && new Date(apt.scheduledAt) < now,
-    );
-
-    // Verificar se há agendamentos futuros
-    const futureAppointments = allAppointments.filter(
-      (apt) => apt.status === 'SCHEDULED' && new Date(apt.scheduledAt) > now,
-    );
-
+    // Se está atendendo (IN_PROGRESS)
     if (currentAppointment) return 'busy';
+
+    // Verificar agendamentos atrasados (mais de 5min de atraso)
+    const overdueAppointments = allAppointments.filter((apt) => {
+      if (!['PENDING', 'CONFIRMED'].includes(apt.status)) return false;
+      const aptTime = new Date(apt.scheduledAt);
+      const diffMinutes = (now.getTime() - aptTime.getTime()) / (1000 * 60);
+      return diffMinutes > 5; // Mais de 5min atrasado
+    });
+
+    // Verificar agendamentos futuros
+    const futureAppointments = allAppointments.filter((apt) => {
+      if (!['PENDING', 'CONFIRMED'].includes(apt.status)) return false;
+      return new Date(apt.scheduledAt) > now;
+    });
+
     if (overdueAppointments.length > 0) return 'overdue';
     if (futureAppointments.length > 0) return 'next';
     return 'free';
