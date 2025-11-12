@@ -1,0 +1,3 @@
+ALTER TYPE "AppointmentStatus" ADD VALUE 'PENDING';
+ALTER TYPE "AppointmentStatus" ADD VALUE 'CONFIRMED';
+ALTER TYPE "AppointmentStatus" ADD VALUE 'IN_PROGRESS';

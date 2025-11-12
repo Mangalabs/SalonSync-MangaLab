@@ -36,7 +36,7 @@ export class AppointmentsController {
       {
         ...body,
         scheduledAt: new Date(body.scheduledAt),
-        status: (body.status as any) || 'SCHEDULED',
+        status: (body.status as any) || 'PENDING',
       },
       {
         id: req.user.id,
@@ -69,10 +69,7 @@ export class AppointmentsController {
   @Get('queue-stats')
   @ApiOperation({ summary: 'Obter estatísticas da fila de atendimento' })
   @ApiResponse({ status: 200, description: 'Estatísticas da fila' })
-  getQueueStats(
-    @Query('date') date: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  getQueueStats(@Query('date') date: string, @Req() req: AuthenticatedRequest) {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const branchId = req.user.branchId || '';
     return this.queueService.getQueueStats(branchId, targetDate);
@@ -93,7 +90,7 @@ export class AppointmentsController {
     ) {
       return [];
     }
-    
+
     return this.apptService.getAvailableSlots(professionalId, date);
   }
 
@@ -121,9 +118,11 @@ export class AppointmentsController {
   })
   confirmAppointment(
     @Param('id') id: string,
-    @Body() body?: { scheduledAt?: string }
+    @Body() body?: { scheduledAt?: string },
   ): Promise<Appointment> {
-    const newScheduledAt = body?.scheduledAt ? new Date(body.scheduledAt) : undefined;
+    const newScheduledAt = body?.scheduledAt
+      ? new Date(body.scheduledAt)
+      : undefined;
     return this.apptService.confirmAppointment(id, newScheduledAt);
   }
 
@@ -143,8 +142,24 @@ export class AppointmentsController {
     status: 200,
     description: 'Atendimentos históricos corrigidos com sucesso',
   })
-  async fixHistoricalAppointments(): Promise<{ fixed: number; message: string }> {
+  async fixHistoricalAppointments(): Promise<{
+    fixed: number;
+    message: string;
+  }> {
     return this.apptService.fixHistoricalAppointments();
+  }
+
+  @Post('remove-duplicates')
+  @ApiOperation({ summary: 'Remover transações duplicadas' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transações duplicadas removidas com sucesso',
+  })
+  async removeDuplicateTransactions(): Promise<{
+    removed: number;
+    message: string;
+  }> {
+    return this.apptService.removeDuplicateTransactions();
   }
 
   @Patch(':id')
@@ -165,7 +180,7 @@ export class AppointmentsController {
       {
         ...body,
         scheduledAt: new Date(body.scheduledAt),
-        status: (body.status as any) || 'SCHEDULED',
+        status: (body.status as any) || 'PENDING',
       },
       {
         id: req.user.id,
@@ -175,5 +190,4 @@ export class AppointmentsController {
       targetBranchId,
     );
   }
-
 }

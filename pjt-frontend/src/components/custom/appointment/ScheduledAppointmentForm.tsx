@@ -304,21 +304,81 @@ export function ScheduledAppointmentForm({
           <h4 className='font-semibold text-foreground mb-4'>
             Horários Disponíveis
           </h4>
-          <div className='grid grid-cols-2 gap-2'>
-            {availableSlots.map((time: string) => (
-              <button
-                key={time}
-                type='button'
-                onClick={() => setValue('scheduledTime', time)}
-                className={`p-2 text-sm rounded-lg transition-colors ${
-                  watch('scheduledTime') === time
-                    ? 'bg-secondary border-secondary text-secondary-foreground border-2'
-                    : 'border border-border hover:border-secondary hover:bg-muted'
-                }`}>
-                {time}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const [selectedHour, setSelectedHour] = useState('')
+            
+            // Extrair horas únicas dos slots disponíveis
+            const availableHours = [...new Set(availableSlots.map(slot => slot.split(':')[0]))]
+            
+            // Filtrar minutos para a hora selecionada
+            const availableMinutes = selectedHour 
+              ? availableSlots.filter(slot => slot.startsWith(selectedHour + ':'))
+              : []
+            
+            return (
+              <>
+                {/* Seleção de Horas */}
+                <div className='mb-4'>
+                  <p className='text-sm font-medium text-foreground mb-2'>1. Selecione a hora:</p>
+                  <div className='grid grid-cols-3 gap-2'>
+                    {availableHours.map((hour: string) => (
+                      <button
+                        key={hour}
+                        type='button'
+                        onClick={() => {
+                          setSelectedHour(hour)
+                          // Se só tem :00 disponível, seleciona automaticamente
+                          const hourSlots = availableSlots.filter(slot => slot.startsWith(hour + ':'))
+                          if (hourSlots.length === 1) {
+                            setValue('scheduledTime', hourSlots[0])
+                          }
+                        }}
+                        className={`p-3 text-sm rounded-lg transition-colors ${
+                          selectedHour === hour
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border border-border hover:border-secondary hover:bg-muted'
+                        }`}>
+                        {hour}:00
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Seleção de Minutos */}
+                {selectedHour && availableMinutes.length > 1 && (
+                  <div className='mb-4'>
+                    <p className='text-sm font-medium text-foreground mb-2'>2. Selecione os minutos:</p>
+                    <div className='grid grid-cols-3 gap-2'>
+                      {availableMinutes.map((time: string) => {
+                        const minutes = time.split(':')[1]
+                        return (
+                          <button
+                            key={time}
+                            type='button'
+                            onClick={() => setValue('scheduledTime', time)}
+                            className={`p-2 text-sm rounded-lg transition-colors ${
+                              watch('scheduledTime') === time
+                                ? 'bg-secondary border-secondary text-secondary-foreground border-2'
+                                : 'border border-border hover:border-secondary hover:bg-muted'
+                            }`}>
+                            :{minutes}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Horário Selecionado */}
+                {watch('scheduledTime') && (
+                  <div className='bg-muted rounded-lg p-3 text-center'>
+                    <p className='text-sm text-muted-foreground'>Horário selecionado:</p>
+                    <p className='text-lg font-semibold text-primary'>{watch('scheduledTime')}</p>
+                  </div>
+                )}
+              </>
+            )
+          })()}
           {availableSlots.length === 0 &&
             selectedProfessional &&
             selectedDate && (
@@ -331,10 +391,6 @@ export function ScheduledAppointmentForm({
               </p>
             </div>
           )}
-          <p className='text-xs text-muted-foreground mt-3 flex items-center gap-1'>
-            <Clock className='w-3 h-3' />
-            Horários em cinza não estão disponíveis
-          </p>
         </div>
 
         <div className='bg-muted rounded-2xl p-6 border border-border'>

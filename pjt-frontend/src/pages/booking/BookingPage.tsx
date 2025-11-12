@@ -9,7 +9,8 @@ const queryClient = new QueryClient()
 
 function BookingContent() {
   const { businessSlug, branchSlug } = useParams()
-  const { data: branch, isLoading, error } = useBranchBySlug(branchSlug || '')
+  const decodedBranchSlug = branchSlug ? decodeURIComponent(branchSlug) : ''
+  const { data: branch, isLoading, error } = useBranchBySlug(decodedBranchSlug)
 
   if (isLoading) {
     return (
@@ -30,7 +31,7 @@ function BookingContent() {
             Filial não encontrada
           </h1>
           <p className='text-gray-600'>
-            A filial "{branchSlug}" não foi encontrada
+            A filial "{decodedBranchSlug}" não foi encontrada
           </p>
         </div>
       </div>

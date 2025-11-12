@@ -105,7 +105,7 @@ export class FinancialService extends BaseDataService {
     };
 
     const categoriesToCreate = defaultCategories[type] || [];
-    
+
     // Para despesas fixas, criar categorias de período
     if (type === 'EXPENSE') {
       const recurringCategories = defaultCategories['RECURRING'] || [];
@@ -221,16 +221,24 @@ export class FinancialService extends BaseDataService {
       },
     });
 
-    // Receitas de atendimentos
-    const appointments = await this.prisma.appointment.findMany({
-      where: {
-        branchId: { in: branchIds },
-        status: 'COMPLETED',
-        ...(Object.keys(dateFilter).length > 0 && { scheduledAt: dateFilter }),
-      },
-    });
+    // Receitas de atendimentos - apenas contar appointments que NÃO têm transações financeiras
+    // Para evitar duplicação com transações já criadas
+    const appointmentsWithoutTransactions =
+      await this.prisma.appointment.findMany({
+        where: {
+          branchId: { in: branchIds },
+          status: 'COMPLETED',
+          ...(Object.keys(dateFilter).length > 0 && {
+            scheduledAt: dateFilter,
+          }),
+          // Apenas appointments que não têm transações financeiras
+          commissionTransactions: {
+            none: {},
+          },
+        },
+      });
 
-    const appointmentRevenue = appointments.reduce(
+    const appointmentRevenue = appointmentsWithoutTransactions.reduce(
       (sum, apt) => sum + Number(apt.total),
       0,
     );
@@ -342,17 +350,23 @@ export class FinancialService extends BaseDataService {
   ) {
     const branchIds = await this.getUserBranchIds(user);
 
-    const existingTransaction = await this.prisma.financialTransaction.findFirst({
-      where: { id, branchId: { in: branchIds } },
-    });
+    const existingTransaction =
+      await this.prisma.financialTransaction.findFirst({
+        where: { id, branchId: { in: branchIds } },
+      });
 
     if (!existingTransaction) {
       throw new Error('Transação não encontrada');
     }
 
     // Não permitir edição de transações automáticas do estoque
-    if (existingTransaction.reference?.startsWith('Estoque-') || existingTransaction.reference?.startsWith('Produto-')) {
-      throw new Error('Não é possível editar transações automáticas do estoque');
+    if (
+      existingTransaction.reference?.startsWith('Estoque-') ||
+      existingTransaction.reference?.startsWith('Produto-')
+    ) {
+      throw new Error(
+        'Não é possível editar transações automáticas do estoque',
+      );
     }
 
     const branchId = targetBranchId || existingTransaction.branchId;
@@ -387,8 +401,13 @@ export class FinancialService extends BaseDataService {
     }
 
     // Não permitir exclusão de transações automáticas do estoque
-    if (transaction.reference?.startsWith('Estoque-') || transaction.reference?.startsWith('Produto-')) {
-      throw new Error('Não é possível excluir transações automáticas do estoque');
+    if (
+      transaction.reference?.startsWith('Estoque-') ||
+      transaction.reference?.startsWith('Produto-')
+    ) {
+      throw new Error(
+        'Não é possível excluir transações automáticas do estoque',
+      );
     }
 
     return this.prisma.financialTransaction.delete({
@@ -498,11 +517,21 @@ export class FinancialService extends BaseDataService {
     // Recalcular valores para despesas de salário/comissão
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     const expensesWithCalculated = await Promise.all(
       expenses.map(async (expense) => {
-        if (expense.category.name === 'Salários/Comissões' && expense.professional) {
+        if (
+          expense.category.name === 'Salários/Comissões' &&
+          expense.professional
+        ) {
           // Buscar atendimentos do mês atual
           const appointments = await this.prisma.appointment.findMany({
             where: {
@@ -515,18 +544,28 @@ export class FinancialService extends BaseDataService {
             },
           });
 
-          const baseSalary = Number(expense.professional.customRole?.baseSalary || 0);
-          const commissionRate = Number(expense.professional.customRole?.commissionRate || expense.professional.commissionRate || 0) / 100;
-          const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+          const baseSalary = Number(
+            expense.professional.customRole?.baseSalary || 0,
+          );
+          const commissionRate =
+            Number(
+              expense.professional.customRole?.commissionRate ||
+                expense.professional.commissionRate ||
+                0,
+            ) / 100;
+          const totalRevenue = appointments.reduce(
+            (sum, apt) => sum + Number(apt.total),
+            0,
+          );
           const currentMonthCommissions = totalRevenue * commissionRate;
-          
+
           return {
             ...expense,
             calculatedAmount: baseSalary + currentMonthCommissions,
           };
         }
         return expense;
-      })
+      }),
     );
 
     return expensesWithCalculated;
@@ -840,6 +879,4 @@ export class FinancialService extends BaseDataService {
       results,
     };
   }
-
-
 }

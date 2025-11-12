@@ -5,37 +5,32 @@ export function useQueueCalculations(queueStats: any[], selectedDate: Date) {
     const now = new Date()
     const isToday = selectedDate.toDateString() === now.toDateString()
 
-    // Formatar tempo restante/atraso
     const formatTimeRemaining = (appointment: any, status: string) => {
-      if (!isToday) {return null}
-
-      // Extrair horário e criar data local
-      let timeStr = '00:00'
-      if (typeof appointment.scheduledAt === 'string') {
-        timeStr = appointment.scheduledAt.split('T')[1]?.slice(0, 5) || '00:00'
-      } else if (appointment.scheduledAt instanceof Date) {
-        timeStr = appointment.scheduledAt.toISOString().split('T')[1]?.slice(0, 5) || '00:00'
+      if (!isToday) {
+        return null
       }
-      
-      const [aptHours, aptMinutes] = timeStr.split(':').map(Number)
-      const scheduledAt = new Date()
-      scheduledAt.setHours(aptHours, aptMinutes, 0, 0)
-      
+
+      const scheduledAt = new Date(appointment.scheduledAt)
       const diffMs = scheduledAt.getTime() - now.getTime()
       const diffMinutes = Math.floor(diffMs / (1000 * 60))
 
       if (status === 'in-progress') {
-        const endTime = new Date(scheduledAt.getTime() + appointment.duration * 60000)
-        const remainingMs = endTime.getTime() - now.getTime()
+        // Para atendimentos em andamento, calcular baseado no tempo atual + duração
+        const estimatedEndTime = new Date(now.getTime() + appointment.duration * 60000)
+        const remainingMs = estimatedEndTime.getTime() - now.getTime()
         const remainingMinutes = Math.floor(remainingMs / (1000 * 60))
-        
-        return remainingMinutes > 0 
-          ? `${remainingMinutes}min restantes`
-          : `${Math.abs(remainingMinutes)}min atrasado`
+
+        return `${remainingMinutes}min restantes`
       }
 
-      if (diffMinutes < 0) {
+      // Só mostra atraso se já passou do horário agendado
+      if (diffMinutes < -5) { // 5min de tolerância
         return `${Math.abs(diffMinutes)}min atrasado`
+      }
+
+      // Se está dentro da tolerância ou é futuro
+      if (diffMinutes <= 5) {
+        return diffMinutes <= 0 ? 'agora' : `em ${diffMinutes}min`
       }
 
       if (diffMinutes < 60) {

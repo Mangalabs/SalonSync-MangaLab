@@ -31,6 +31,7 @@ interface Product {
   currentStock: number
   minStock: number
   unit: string
+  productType?: 'SALE' | 'PROFESSIONAL_USE'
 }
 
 interface CartItem extends Product {
@@ -233,7 +234,8 @@ export default function Sales() {
       .includes(searchTerm.toLowerCase())
     const matchesCategory =
       selectedCategory === 'all' || product.category === selectedCategory
-    return matchesSearch && matchesCategory
+    const isSaleProduct = product.productType === 'SALE' || !product.productType // Compatibilidade com produtos antigos
+    return matchesSearch && matchesCategory && isSaleProduct
   })
 
   return (

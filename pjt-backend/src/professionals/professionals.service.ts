@@ -105,7 +105,7 @@ export class ProfessionalsService extends BaseDataService {
       // Criar dias de trabalho se especificados
       if (workingDays && workingDays.length > 0) {
         await Promise.all(
-          workingDays.map(dayOfWeek =>
+          workingDays.map((dayOfWeek) =>
             tx.professionalWorkingDay.create({
               data: {
                 professionalId: professional.id,
@@ -114,8 +114,8 @@ export class ProfessionalsService extends BaseDataService {
                 endTime: '18:00',
                 isActive: true,
               },
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -132,7 +132,6 @@ export class ProfessionalsService extends BaseDataService {
       professional.customRole?.baseSalary || professional.baseSalary;
     const payDay =
       professional.customRole?.salaryPayDay || professional.salaryPayDay;
-
 
     if (!baseSalary || !payDay) {
       return;
@@ -185,7 +184,13 @@ export class ProfessionalsService extends BaseDataService {
       }
     >,
   ): Promise<Professional> {
-    const { roleId, baseSalary, salaryPayDay, workingDays, ...professionalData } = data;
+    const {
+      roleId,
+      baseSalary,
+      salaryPayDay,
+      workingDays,
+      ...professionalData
+    } = data;
 
     const updateData: any = { ...professionalData };
 
@@ -220,7 +225,7 @@ export class ProfessionalsService extends BaseDataService {
         // Criar novos dias se especificados
         if (workingDays.length > 0) {
           await Promise.all(
-            workingDays.map(dayOfWeek =>
+            workingDays.map((dayOfWeek) =>
               tx.professionalWorkingDay.create({
                 data: {
                   professionalId: id,
@@ -229,8 +234,8 @@ export class ProfessionalsService extends BaseDataService {
                   endTime: '18:00',
                   isActive: true,
                 },
-              })
-            )
+              }),
+            ),
           );
         }
       }
@@ -252,7 +257,6 @@ export class ProfessionalsService extends BaseDataService {
         isActive: true,
       },
     });
-
 
     if (baseSalary && payDay) {
       if (existingExpense) {
@@ -302,8 +306,8 @@ export class ProfessionalsService extends BaseDataService {
     });
 
     // Verificar apenas agendamentos que estão agendados (futuros)
-    const scheduledAppointments = allAppointments.filter(
-      (apt) => apt.status === 'SCHEDULED',
+    const scheduledAppointments = allAppointments.filter((apt) =>
+      ['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(apt.status),
     );
 
     if (scheduledAppointments.length > 0) {
@@ -499,7 +503,14 @@ export class ProfessionalsService extends BaseDataService {
     // Calcular comissões do mês atual
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -513,8 +524,16 @@ export class ProfessionalsService extends BaseDataService {
     });
 
     // Calcular comissões diretamente dos atendimentos confirmados
-    const commissionRate = Number(professional.customRole?.commissionRate || professional.commissionRate || 0) / 100;
-    const totalRevenue = appointments.reduce((sum, apt) => sum + Number(apt.total), 0);
+    const commissionRate =
+      Number(
+        professional.customRole?.commissionRate ||
+          professional.commissionRate ||
+          0,
+      ) / 100;
+    const totalRevenue = appointments.reduce(
+      (sum, apt) => sum + Number(apt.total),
+      0,
+    );
     const currentMonthCommissions = totalRevenue * commissionRate;
 
     const totalEstimated = Number(baseSalary) + currentMonthCommissions;
@@ -523,7 +542,11 @@ export class ProfessionalsService extends BaseDataService {
       professionalId: id,
       professionalName: professional.name,
       baseSalary: Number(baseSalary),
-      commissionRate: Number(professional.customRole?.commissionRate || professional.commissionRate || 0),
+      commissionRate: Number(
+        professional.customRole?.commissionRate ||
+          professional.commissionRate ||
+          0,
+      ),
       currentMonthCommissions,
       totalEstimated,
       appointmentsCount: appointments.length,

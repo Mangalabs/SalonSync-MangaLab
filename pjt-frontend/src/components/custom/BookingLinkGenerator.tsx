@@ -16,7 +16,7 @@ export function BookingLinkGenerator() {
 
   // For professionals, get business name from branch owner, for admins use their business name
   const businessName = user?.businessName || 'business'
-  const bookingUrl = `${window.location.origin}/booking/${businessName}/${activeBranch.name}`
+  const bookingUrl = `${window.location.origin}/booking/${encodeURIComponent(businessName)}/${encodeURIComponent(activeBranch.name)}`
 
   const copyToClipboard = async () => {
     try {
