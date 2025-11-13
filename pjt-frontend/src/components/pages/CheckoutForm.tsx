@@ -50,7 +50,7 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
   }
 
   return (
-    <EmbeddedCheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
+    <EmbeddedCheckoutProvider key={selectedPlan} stripe={stripe} options={{ fetchClientSecret }}>
       <EmbeddedCheckout />
     </EmbeddedCheckoutProvider>
   )
@@ -59,6 +59,7 @@ function CheckoutLazyElement({ selectedPlan, userId }) {
 export default function CheckoutForm() {
   const [searchParams] = useSearchParams()
   const [products, setProducts] = useState([])
+  const [userHasAccess, setUserHasAccess] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(null)
   const { user } = useUser()
   const userId = user ? user.id : searchParams.get('userId')
@@ -70,19 +71,31 @@ export default function CheckoutForm() {
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-        },
+        }
       )
 
       const result = await res.json()
       setProducts(result.products.data)
     }
 
-    //TODO: rework all this logic to make sense with the stripe wording
+    const fetchSubscription = async () => {
+      try {
+        const userHasActiveSubscriptionResponse = await api.get(
+          '/api/payment/user-has-active-subscription'
+        )
+        setUserHasAccess(userHasActiveSubscriptionResponse.data)
+      } catch {
+        // TODO: Redirect to subscription page
+        // localStorage.removeItem("token");
+      }
+    }
+
+    // TODO: rework all this logic to make sense with the stripe wording
     const getUsersSubscriptions = async () => {
       const result = await api.get('/api/payment/get-user-subscriptions')
 
       const activeSubscription = result.data.find(
-        (sub) => sub.status === 'active' || sub.status === 'trialing',
+        (sub) => sub.status === 'active' || sub.status === 'trialing'
       )
 
       setSelectedPlan({
@@ -96,13 +109,14 @@ export default function CheckoutForm() {
 
     if (user?.customerId) {
       getUsersSubscriptions()
+      fetchSubscription()
     }
 
     fetchPrices()
   }, [user])
 
   // Se o usuário tem assinatura ativa, não mostra os planos
-  if (selectedPlan && selectedPlan.id && user?.customerId) {
+  if (userHasAccess && user?.customerId) {
     return null
   }
 
