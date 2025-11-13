@@ -8,7 +8,6 @@ export function PlanCard({ product, selectedPlan, setSelectedPlan }) {
     unitAmount.slice(0, -2) + ',' + unitAmount.slice(-2)
 
   const isCurrent = selectedPlan?.id === product.id
-  const noPlanSelected = !selectedPlan
 
   return (
     <div className='bg-card rounded-2xl p-6 shadow-sm border w-full border-border'>
@@ -41,13 +40,11 @@ export function PlanCard({ product, selectedPlan, setSelectedPlan }) {
         </div>
       </div>
 
-      {noPlanSelected && (
-        <Button
-          className='w-full py-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-secondary transition-colors cursor-pointer'
-          onClick={() => setSelectedPlan(product)}>
-          Escolher plano
-        </Button>
-      )}
+      <Button
+        className='w-full py-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-secondary transition-colors cursor-pointer'
+        onClick={() => setSelectedPlan(product)}>
+        Escolher plano
+      </Button>
 
       {isCurrent && (
         <div className='mt-3 p-3 bg-muted border border-border rounded-xl text-sm text-primary flex items-center gap-2'>
