@@ -4,7 +4,7 @@ import { Check } from 'lucide-react'
 interface BookingSuccessProps {
   appointment: {
     client: { name: string; phone: string }
-    service: { name: string; price: string }
+    services: { name: string; price: string }[]
     professional: { name: string }
     dateTime: { date: string; time: string }
   }
@@ -17,13 +17,18 @@ export function BookingSuccess({
   businessName,
   branchName,
 }: BookingSuccessProps) {
+  const getTotalPrice = () => {
+    return appointment.services.reduce(
+      (total, service) => total + parseFloat(service.price),
+      0
+    )
+  }
   const [countdown, setCountdown] = useState(5)
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          // Try to close window, if it fails, redirect to home
           if (window.opener) {
             window.close()
           } else {
@@ -42,12 +47,10 @@ export function BookingSuccess({
     <div className='min-h-screen bg-background flex items-center justify-center p-4'>
       <div className='max-w-md w-full'>
         <div className='bg-card rounded-3xl p-8 shadow-xl border border-border text-center'>
-          {/* Success Icon */}
           <div className='w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6'>
             <Check className='w-10 h-10 text-green-600' />
           </div>
 
-          {/* Success Message */}
           <h1 className='text-2xl font-bold text-foreground mb-2'>
             Agendamento Confirmado!
           </h1>
@@ -55,16 +58,20 @@ export function BookingSuccess({
             Seu agendamento foi realizado com sucesso
           </p>
 
-          {/* Appointment Details */}
           <div className='bg-muted/50 rounded-2xl p-4 mb-6 text-left'>
             <div className='space-y-2 text-sm'>
               <div className='flex justify-between'>
                 <span className='text-muted-foreground'>Cliente:</span>
                 <span className='font-medium'>{appointment.client.name}</span>
               </div>
-              <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Serviço:</span>
-                <span className='font-medium'>{appointment.service.name}</span>
+              <div className='space-y-1'>
+                <span className='text-muted-foreground'>Serviços:</span>
+                {appointment.services.map((service, index) => (
+                  <div key={index} className='flex justify-between ml-2'>
+                    <span className='font-medium'>• {service.name}</span>
+                    <span className='font-medium'>R$ {service.price}</span>
+                  </div>
+                ))}
               </div>
               <div className='flex justify-between'>
                 <span className='text-muted-foreground'>Profissional:</span>
@@ -84,24 +91,17 @@ export function BookingSuccess({
                   {businessName} - {branchName}
                 </span>
               </div>
-              <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Valor:</span>
-                <span className='font-medium text-green-600'>
-                  R$ {appointment.service.price}
+              <div className='flex justify-between border-t pt-2'>
+                <span className='text-muted-foreground font-semibold'>
+                  Total:
+                </span>
+                <span className='font-bold text-green-600'>
+                  R$ {getTotalPrice().toFixed(2)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Contact Info */}
-          <div className='bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6'>
-            <p className='text-sm text-blue-800 font-medium mb-1'>
-              Confirmação enviada para:
-            </p>
-            <p className='text-sm text-blue-700'>{appointment.client.phone}</p>
-          </div>
-
-          {/* Countdown */}
           <div className='text-center'>
             {countdown > 0 ? (
               <>

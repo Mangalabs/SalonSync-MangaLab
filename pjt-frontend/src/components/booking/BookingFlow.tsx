@@ -16,7 +16,7 @@ interface BookingFlowProps {
 export function BookingFlow({ branchId, businessName, branchName }: BookingFlowProps) {
   const [step, setStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
-  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedServices, setSelectedServices] = useState<any[]>([])
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null)
   const [selectedDateTime, setSelectedDateTime] = useState<any>(null)
   const [clientData, setClientData] = useState<any>(null)
@@ -40,8 +40,9 @@ export function BookingFlow({ branchId, businessName, branchName }: BookingFlowP
         {step === 1 && (
           <ServiceSelector
             branchId={branchId}
-            onSelect={(service) => {
-              setSelectedService(service)
+            selectedServices={selectedServices}
+            onSelect={(services) => {
+              setSelectedServices(services)
               nextStep()
             }}
           />
@@ -81,7 +82,7 @@ export function BookingFlow({ branchId, businessName, branchName }: BookingFlowP
         
         {step === 5 && (
           <BookingConfirmation
-            service={selectedService}
+            services={selectedServices}
             professional={selectedProfessional}
             dateTime={selectedDateTime}
             client={clientData}

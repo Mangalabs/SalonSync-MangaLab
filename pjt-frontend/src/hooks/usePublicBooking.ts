@@ -5,14 +5,14 @@ const publicApi = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/public`,
 })
 
-export function useBranchBySlug(branchSlug: string) {
+export function useBranchBySlug(businessSlug: string, branchSlug: string) {
   return useQuery({
-    queryKey: ['branch', branchSlug],
+    queryKey: ['branch', businessSlug, branchSlug],
     queryFn: async () => {
-      const { data } = await publicApi.get(`/branch/${branchSlug}`)
+      const { data } = await publicApi.get(`/branch/${businessSlug}/${branchSlug}`)
       return data
     },
-    enabled: !!branchSlug,
+    enabled: !!businessSlug && !!branchSlug,
   })
 }
 
@@ -61,6 +61,7 @@ export function useCreatePublicAppointment() {
       clientPhone: string
       clientEmail?: string
       serviceId: string
+      serviceIds?: string[]
       professionalId: string
       scheduledAt: string
       branchId: string

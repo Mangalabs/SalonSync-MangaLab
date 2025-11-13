@@ -9,8 +9,9 @@ const queryClient = new QueryClient()
 
 function BookingContent() {
   const { businessSlug, branchSlug } = useParams()
+  const decodedBusinessSlug = businessSlug ? decodeURIComponent(businessSlug) : ''
   const decodedBranchSlug = branchSlug ? decodeURIComponent(branchSlug) : ''
-  const { data: branch, isLoading, error } = useBranchBySlug(decodedBranchSlug)
+  const { data: branch, isLoading, error } = useBranchBySlug(decodedBusinessSlug, decodedBranchSlug)
 
   if (isLoading) {
     return (

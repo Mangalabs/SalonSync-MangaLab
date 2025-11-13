@@ -53,6 +53,7 @@ interface Appointment {
   clientId: string
   service: string
   serviceId: string
+  services?: { service: { id: string; name: string; price: string } }[]
   professional: string
   professionalId: string
   duration: number
@@ -191,23 +192,30 @@ export default function Appointments() {
           const duration = a.appointmentServices?.[0]?.service?.duration ?? 30
           const endTime = calculateEndTime(time, duration)
 
+          const services = a.appointmentServices || []
+          const totalPrice = services.reduce((sum, as) => sum + parseFloat(as.service?.price || '0'), 0)
+          const totalDuration = services.reduce((sum, as) => sum + (as.service?.duration || 30), 0)
+          const serviceNames = services.map(as => as.service?.name).filter(Boolean).join(', ') || 'Serviço'
+          const calculatedEndTime = calculateEndTime(time, totalDuration)
+          
           return {
             id: a.id,
             clientId: a.client?.id ?? '',
             client: a.client?.name ?? 'Cliente Excluído',
-            serviceId: a.appointmentServices?.[0]?.service?.id ?? '',
-            service: a.appointmentServices?.[0]?.service?.name ?? 'Serviço',
+            serviceId: services[0]?.service?.id ?? '',
+            service: serviceNames,
+            services: services, // Adicionar array completo de serviços
             professionalId: a.professional?.id ?? '',
             professional: a.professional?.name ?? 'Profissional',
             time: time,
-            duration: duration,
-            endTime: endTime,
+            duration: totalDuration,
+            endTime: calculatedEndTime,
             status: statusMap[a.status] || 'pending',
             color: 'neutral',
             date: scheduledDate.toISOString().split('T')[0],
             scheduledAt: scheduledDate,
             branchId: a.branchId,
-            price: parseFloat(a.appointmentServices?.[0]?.service?.price) || 0,
+            price: totalPrice || parseFloat(a.total) || 0,
           } as Appointment
         })
       },
@@ -619,10 +627,21 @@ export default function Appointments() {
                                           <strong>Cliente:</strong>{' '}
                                           {appointmentStarting.client}
                                         </p>
-                                        <p>
-                                          <strong>Serviço:</strong>{' '}
-                                          {appointmentStarting.service}
-                                        </p>
+                                        {appointmentStarting.services && appointmentStarting.services.length > 1 ? (
+                                          <div>
+                                            <strong>Serviços:</strong>
+                                            {appointmentStarting.services.map((as, idx) => (
+                                              <div key={idx} className='ml-2'>
+                                                • {as.service.name} - R$ {parseFloat(as.service.price).toFixed(2)}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p>
+                                            <strong>Serviço:</strong>{' '}
+                                            {appointmentStarting.service}
+                                          </p>
+                                        )}
                                         <p>
                                           <strong>Profissional:</strong>{' '}
                                           {appointmentStarting.professional}
@@ -875,11 +894,26 @@ export default function Appointments() {
 
               <div>
                 <label className='text-xs text-muted-foreground uppercase tracking-wider'>
-                  Serviço
+                  Serviços
                 </label>
-                <p className='text-foreground mt-1'>
-                  {selectedAppointment.service}
-                </p>
+                {selectedAppointment.services && selectedAppointment.services.length > 1 ? (
+                  <div className='mt-1 space-y-1'>
+                    {selectedAppointment.services.map((as, index) => (
+                      <div key={index} className='flex justify-between text-sm'>
+                        <span>• {as.service.name}</span>
+                        <span>R$ {parseFloat(as.service.price).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className='border-t pt-1 mt-2 flex justify-between font-semibold'>
+                      <span>Total:</span>
+                      <span>R$ {selectedAppointment.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className='text-foreground mt-1'>
+                    {selectedAppointment.service}
+                  </p>
+                )}
               </div>
 
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>

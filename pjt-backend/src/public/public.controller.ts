@@ -68,7 +68,7 @@ export class PublicController {
   async debugAppointmentsByDate(@Param('date') date: string) {
     const startDate = new Date(date + 'T00:00:00');
     const endDate = new Date(date + 'T23:59:59');
-    
+
     const appointments = await this.prisma.appointment.findMany({
       where: {
         scheduledAt: {
@@ -94,7 +94,7 @@ export class PublicController {
   async debugDateTest(@Body() data: { scheduledAt: string }) {
     const receivedDate = data.scheduledAt;
     const processedDate = new Date(data.scheduledAt);
-    
+
     return {
       received: receivedDate,
       processed: processedDate.toISOString(),
@@ -103,8 +103,42 @@ export class PublicController {
     };
   }
 
+  @Get('branch/:businessSlug/:branchSlug')
+  async getBranchBySlug(
+    @Param('businessSlug') businessSlug: string,
+    @Param('branchSlug') branchSlug: string,
+  ) {
+    const decodedBusinessSlug = decodeURIComponent(businessSlug);
+    const decodedBranchSlug = decodeURIComponent(branchSlug);
+    
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        name: { equals: decodedBranchSlug, mode: 'insensitive' },
+        owner: {
+          businessName: { equals: decodedBusinessSlug, mode: 'insensitive' },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+
+    if (!branch) {
+      throw new Error(`Filial '${decodedBranchSlug}' do negócio '${decodedBusinessSlug}' não encontrada.`);
+    }
+
+    return branch;
+  }
+
   @Get('branch/:branchSlug')
-  async getBranchBySlug(@Param('branchSlug') branchSlug: string) {
+  async getBranchBySlugOnly(@Param('branchSlug') branchSlug: string) {
     const decodedSlug = decodeURIComponent(branchSlug);
     const branch = await this.prisma.branch.findFirst({
       where: {
@@ -128,15 +162,16 @@ export class PublicController {
         },
       },
     });
-    
+
     if (!branch) {
-      // Para debug, vamos listar as filiais disponíveis
       const availableBranches = await this.prisma.branch.findMany({
         select: { name: true },
       });
-      throw new Error(`Filial '${decodedSlug}' não encontrada. Filiais disponíveis: ${availableBranches.map(b => b.name).join(', ')}`);
+      throw new Error(
+        `Filial '${decodedSlug}' não encontrada. Filiais disponíveis: ${availableBranches.map((b) => b.name).join(', ')}`,
+      );
     }
-    
+
     return branch;
   }
 
@@ -172,7 +207,6 @@ export class PublicController {
     @Param('professionalId') professionalId: string,
     @Param('date') date: string,
   ) {
-    // Get existing appointments for the date
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
         professionalId,
@@ -182,35 +216,66 @@ export class PublicController {
         },
         status: { not: 'CANCELLED' },
       },
-      select: {
-        scheduledAt: true,
+      include: {
+        appointmentServices: {
+          include: {
+            service: {
+              select: { duration: true },
+            },
+          },
+        },
       },
     });
 
-    // Generate available times (9:00 to 17:00, 10-minute intervals)
     const allTimes: string[] = [];
+    const now = new Date();
+    const selectedDate = new Date(date);
+    const isToday = selectedDate.toDateString() === now.toDateString();
+
     for (let hour = 9; hour < 17; hour++) {
       for (let minute = 0; minute < 60; minute += 10) {
-        // Skip lunch time (12:00-14:00)
         if (hour >= 12 && hour < 14) {
           continue;
         }
+
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+        if (isToday) {
+          const timeDate = new Date(date + 'T' + time + ':00-03:00');
+          if (timeDate <= now) {
+            continue;
+          }
+        }
+
         allTimes.push(time);
       }
     }
 
-    // Filter out booked times
-    const bookedTimes = existingAppointments.map((apt) => {
-      const time = new Date(apt.scheduledAt);
-      return `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+    const blockedTimes = new Set<string>();
+
+    existingAppointments.forEach((apt) => {
+      const appointmentTime = new Date(apt.scheduledAt);
+      const startTime = `${appointmentTime.getHours().toString().padStart(2, '0')}:${appointmentTime.getMinutes().toString().padStart(2, '0')}`;
+
+      const totalDuration = apt.appointmentServices.reduce((sum, as) => {
+        return sum + (as.service.duration || 30);
+      }, 0);
+
+      const startMinutes =
+        appointmentTime.getHours() * 60 + appointmentTime.getMinutes();
+      const endMinutes = startMinutes + totalDuration;
+
+      for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
+        const hour = Math.floor(minutes / 60);
+        const minute = minutes % 60;
+        const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        blockedTimes.add(timeSlot);
+      }
     });
 
-    const availableTimes = allTimes.filter(
-      (time) => !bookedTimes.includes(time),
-    );
+    const availableTimes = allTimes.filter((time) => !blockedTimes.has(time));
 
-    return { availableTimes, bookedTimes };
+    return { availableTimes, bookedTimes: Array.from(blockedTimes) };
   }
 
   @Post('appointments')
@@ -221,18 +286,23 @@ export class PublicController {
       clientPhone: string;
       clientEmail?: string;
       serviceId: string;
+      serviceIds?: string[];
       professionalId: string;
       scheduledAt: string;
       branchId: string;
     },
   ) {
-    // Buscar preço do serviço
-    const service = await this.prisma.service.findUnique({
-      where: { id: data.serviceId },
-      select: { price: true },
+    const serviceIds = data.serviceIds || [data.serviceId];
+    const services = await this.prisma.service.findMany({
+      where: { id: { in: serviceIds } },
+      select: { id: true, price: true },
     });
-    
-    // Criar ou encontrar cliente
+
+    const totalPrice = services.reduce(
+      (sum, service) => sum + Number(service.price),
+      0,
+    );
+
     let client = await this.prisma.client.findFirst({
       where: {
         phone: data.clientPhone,
@@ -251,7 +321,6 @@ export class PublicController {
       });
     }
 
-    // Criar agendamento com appointmentServices
     const appointment = await this.prisma.appointment.create({
       data: {
         clientId: client.id,
@@ -259,11 +328,9 @@ export class PublicController {
         scheduledAt: new Date(data.scheduledAt),
         status: 'PENDING',
         branchId: data.branchId,
-        total: service?.price || 0,
+        total: totalPrice,
         appointmentServices: {
-          create: {
-            serviceId: data.serviceId,
-          },
+          create: serviceIds.map((serviceId) => ({ serviceId })),
         },
       },
       include: {
