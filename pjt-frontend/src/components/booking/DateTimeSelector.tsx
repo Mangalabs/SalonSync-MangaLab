@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { useProfessionalAvailability } from '@/hooks/usePublicBooking'
 
@@ -15,6 +15,15 @@ export function DateTimeSelector({
 }: DateTimeSelectorProps) {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
+  const [debouncedDate, setDebouncedDate] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDate(selectedDate)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [selectedDate])
 
   const dates = Array.from({ length: 14 }, (_, i) => {
     const date = new Date()
@@ -26,7 +35,7 @@ export function DateTimeSelector({
 
   const { data: availability } = useProfessionalAvailability(
     professionalId,
-    selectedDate
+    debouncedDate
   )
 
   const availableTimes = availability?.availableTimes || []

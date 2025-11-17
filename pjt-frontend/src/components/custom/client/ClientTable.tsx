@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search,
   Edit,
@@ -65,7 +65,16 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [selectedPrice, setSelectedPrice] = useState(null)
   const [planUrlLoading, setPlanUrlLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [showPlanSelection, setShowPlanSelection] = useState(false)
@@ -76,7 +85,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     queryFn: async () => {
       try {
         const response = await axios.get(
-          '/api/payment/get-prices-for-connected-account',
+          '/api/payment/get-prices-for-connected-account'
         )
         return response.data
       } catch (error) {
@@ -93,7 +102,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     data: clientsData,
     isLoading,
     error,
-  } = useClients(page, 12, searchTerm)
+  } = useClients(page, 12, debouncedSearchTerm)
 
   const clients = clientsData?.clients || []
   const pagination = clientsData?.pagination
@@ -108,9 +117,10 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     enabled: !!activeBranch,
   })
 
-  const hasActiveAppointments = (clientId: string) => appointments.some((apt: any) => 
-    apt.clientId === clientId && apt.status === 'SCHEDULED',
-  )
+  const hasActiveAppointments = (clientId: string) =>
+    appointments.some(
+      (apt: any) => apt.clientId === clientId && apt.status === 'SCHEDULED'
+    )
 
   const deleteClient = useMutation({
     mutationFn: async (id: string) => {
@@ -125,19 +135,21 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       setDeletingClientId(null)
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || 
-                          error.userMessage || 
-                          'Erro ao excluir cliente'
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.userMessage ||
+        'Erro ao excluir cliente'
+
       toast.error(errorMessage)
       setDeletingClientId(null)
     },
   })
 
-  // Reset page when search changes
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
-    setPage(1)
+    if (value !== searchTerm) {
+      setPage(1)
+    }
   }
 
   if (isLoading) {
@@ -193,7 +205,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           clientId: client.id,
           email: client.email,
           accountId: user.accountId,
-        },
+        }
       )
       setPlanUrlLoading(false)
       navigator.clipboard.writeText(response.data)
@@ -228,8 +240,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       style={{
         backgroundColor: 'var(--color-bg-secondary)',
         borderColor: 'var(--color-border)',
-      }}
-    >
+      }}>
       <div className='mb-4 sm:mb-6 relative'>
         <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5' />
         <input
@@ -247,14 +258,12 @@ export function ClientTable({ onEdit }: ClientTableProps) {
             <div
               key={client.id}
               className='border border-border rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card'
-              style={{ backgroundColor: 'var(--color-card)' }}
-            >
+              style={{ backgroundColor: 'var(--color-card)' }}>
               <div className='flex items-center justify-between mb-4 gap-4'>
                 <div className='flex items-center space-x-3 flex-1 min-w-0'>
                   <div
                     className='w-12 h-12 rounded-full flex items-center justify-center'
-                    style={{ background: 'var(--color-accent)' }}
-                  >
+                    style={{ background: 'var(--color-accent)' }}>
                     <span className='text-accent-foreground font-semibold text-lg'>
                       {client.name.charAt(0).toUpperCase()}
                     </span>
@@ -292,15 +301,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <div className='grid grid-cols-2 gap-2 mb-2'>
                 <Button
                   onClick={() => onEdit(client)}
-                  className='bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'
-                >
+                  className='bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
                   <Edit className='w-3 h-3' />
                   Editar
                 </Button>
                 <Button
                   onClick={() => handleSchedule(client)}
-                  className='bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1'
-                >
+                  className='bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1'>
                   <Calendar className='w-3 h-3' />
                   Agendar
                 </Button>
@@ -309,21 +316,29 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <div className='grid grid-cols-2 gap-2'>
                 <Button
                   onClick={() => handleFidelityButtonClicked(client)}
-                  className='bg-yellow-100 text-yellow-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-1'
-                >
+                  className='bg-yellow-100 text-yellow-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-1'>
                   <Star className='w-3 h-3' />
                   Fidelidade
                 </Button>
-                <span title={hasActiveAppointments(client.id) ? 'Cliente possui agendamentos ativos e não pode ser excluído' : ''}>
+                <span
+                  title={
+                    hasActiveAppointments(client.id)
+                      ? 'Cliente possui agendamentos ativos e não pode ser excluído'
+                      : ''
+                  }>
                   <Button
-                    onClick={() => !hasActiveAppointments(client.id) && setDeletingClientId(client.id)}
-                    disabled={deleteClient.isPending || hasActiveAppointments(client.id)}
+                    onClick={() =>
+                      !hasActiveAppointments(client.id) &&
+                      setDeletingClientId(client.id)
+                    }
+                    disabled={
+                      deleteClient.isPending || hasActiveAppointments(client.id)
+                    }
                     className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                      hasActiveAppointments(client.id) 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      hasActiveAppointments(client.id)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-red-100 text-red-600 hover:bg-red-200'
-                    }`}
-                  >
+                    }`}>
                     <Trash2 className='w-3 h-3' />
                     Excluir
                   </Button>
@@ -350,14 +365,15 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       {pagination && pagination.totalPages > 1 && (
         <div className='flex items-center justify-between mt-6 px-4'>
           <div className='text-sm text-muted-foreground'>
-            Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} clientes
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} a{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+            {pagination.total} clientes
           </div>
           <div className='flex items-center space-x-2'>
             <button
               onClick={() => setPage(page - 1)}
               disabled={!pagination.hasPrev}
-              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
-            >
+              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'>
               <ChevronLeft className='w-4 h-4 mr-1' />
               Anterior
             </button>
@@ -367,8 +383,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
             <button
               onClick={() => setPage(page + 1)}
               disabled={!pagination.hasNext}
-              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
-            >
+              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'>
               Próxima
               <ChevronRight className='w-4 h-4 ml-1' />
             </button>
@@ -378,15 +393,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
       <AlertDialog
         open={!!deletingClientId}
-        onOpenChange={() => setDeletingClientId(null)}
-      >
+        onOpenChange={() => setDeletingClientId(null)}>
         <AlertDialogContent
           className='max-w-[95vw] sm:max-w-md'
           style={{
             backgroundColor: 'var(--color-card)',
             borderColor: 'var(--color-border)',
-          }}
-        >
+          }}>
           <AlertDialogHeader>
             <AlertDialogTitle className='text-base sm:text-lg text-foreground'>
               Confirmar exclusão
@@ -406,8 +419,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               }
               disabled={deleteClient.isPending}
               className='text-xs sm:text-sm text-destructive-foreground'
-              style={{ backgroundColor: 'var(--color-destructive)' }}
-            >
+              style={{ backgroundColor: 'var(--color-destructive)' }}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -415,15 +427,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       </AlertDialog>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
           <DialogHeader>
             <DialogTitle className='text-base sm:text-lg text-foreground'>
               Novo Agendamento
             </DialogTitle>
           </DialogHeader>
-          <AppointmentForm
-            onSuccess={() => setShowForm(false)}
-          />
+          <AppointmentForm onSuccess={() => setShowForm(false)} />
         </DialogContent>
       </Dialog>
 
@@ -438,8 +448,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               <Button
                 variant='outline'
                 className='flex items-center gap-2'
-                disabled={isLoading}
-              >
+                disabled={isLoading}>
                 <span className='hidden sm:inline'>
                   {selectedPrice?.product?.name || 'Selecionar Plano'}
                 </span>
@@ -451,8 +460,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
                 <DropdownMenuItem
                   key={price.id}
                   onClick={() => setSelectedPrice(price)}
-                  className={'flex items-center gap-2'}
-                >
+                  className={'flex items-center gap-2'}>
                   <Building2 size={16} />
                   <div className='flex-1'>
                     <div className='font-medium'>{price.product.name}</div>
@@ -464,8 +472,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           <Button
             disabled={!selectedPrice || planUrlLoading}
             onClick={() => handleGenerateUrl()}
-            className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'
-          >
+            className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
             {planUrlLoading ? 'Gerando Url...' : 'Gerar URL do Cliente'}
           </Button>
         </DialogContent>
