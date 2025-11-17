@@ -205,9 +205,10 @@ export default function AdminDashboard() {
     return acc
   }, [appointments])
 
-  const totalClients = dashboardData?.clients?.length || 0
+  const clientsArray = dashboardData?.clients?.clients || dashboardData?.clients || []
+  const totalClients = dashboardData?.clients?.pagination?.total || clientsArray.length || 0
   const thisWeekClients =
-    dashboardData?.clients?.filter(
+    clientsArray.filter(
       (c: any) => new Date(c.createdAt) >= new Date(startDate),
     ) || []
   const lastWeekStart = new Date(startDate)
@@ -215,7 +216,7 @@ export default function AdminDashboard() {
   const lastWeekEnd = new Date(startDate)
   lastWeekEnd.setDate(lastWeekEnd.getDate() - 1)
   const lastWeekClients =
-    dashboardData?.clients?.filter(
+    clientsArray.filter(
       (c: any) =>
         new Date(c.createdAt) >= lastWeekStart &&
         new Date(c.createdAt) <= lastWeekEnd,

@@ -13,6 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
+import { PaginationDto } from './dto/pagination.dto';
 import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 
 @ApiTags('clients')
@@ -21,21 +22,24 @@ export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos os clientes' })
-  @ApiResponse({ status: 200, description: 'Lista de clientes' })
+  @ApiOperation({ summary: 'Listar todos os clientes com paginação' })
+  @ApiResponse({ status: 200, description: 'Lista paginada de clientes' })
   findAll(
     @Query('branchId') branchId: string,
+    @Query() paginationDto: PaginationDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    // Para admin, usar branchId do query se fornecido, senão usar do contexto
     const targetBranchId =
       req.user.role === 'ADMIN' && branchId ? branchId : req.user.branchId;
 
-    return this.clientsService.findAll({
-      id: req.user.id,
-      role: req.user.role,
-      branchId: targetBranchId,
-    });
+    return this.clientsService.findAll(
+      {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: targetBranchId,
+      },
+      paginationDto,
+    );
   }
 
   @Post()

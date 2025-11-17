@@ -7,6 +7,8 @@ import {
   Star,
   ChevronDown,
   Building2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -14,6 +16,7 @@ import { toast } from 'sonner'
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
+import { useClients } from '@/hooks/useClients'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +65,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [selectedPrice, setSelectedPrice] = useState(null)
   const [planUrlLoading, setPlanUrlLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [showPlanSelection, setShowPlanSelection] = useState(false)
@@ -86,18 +90,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   })
 
   const {
-    data: clients,
+    data: clientsData,
     isLoading,
     error,
-  } = useQuery<Client[]>({
-    queryKey: ['clients', activeBranch?.id],
-    queryFn: async () => {
-      const params = activeBranch?.id ? `?branchId=${activeBranch.id}` : ''
-      const res = await axios.get(`/api/clients${params}`)
-      return res.data
-    },
-    enabled: !!activeBranch,
-  })
+  } = useClients(page, 12, searchTerm)
+
+  const clients = clientsData?.clients || []
+  const pagination = clientsData?.pagination
 
   const { data: appointments = [] } = useQuery({
     queryKey: ['appointments', activeBranch?.id],
@@ -121,7 +120,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['clients', activeBranch?.id],
+        queryKey: ['clients'],
       })
       setDeletingClientId(null)
     },
@@ -135,12 +134,11 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     },
   })
 
-  const filteredClients = clients?.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone?.includes(searchTerm) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  // Reset page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }
 
   if (isLoading) {
     return (
@@ -238,14 +236,14 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           type='text'
           placeholder='Buscar clientes...'
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className='w-full pl-9 pr-4 py-2 sm:py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-accent bg-popover text-popover-foreground text-sm sm:text-base'
         />
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {filteredClients && filteredClients.length > 0 ? (
-          filteredClients.map((client) => (
+        {clients && clients.length > 0 ? (
+          clients.map((client) => (
             <div
               key={client.id}
               className='border border-border rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card'
@@ -347,6 +345,36 @@ export function ClientTable({ onEdit }: ClientTableProps) {
           </div>
         )}
       </div>
+
+      {/* Paginação */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className='flex items-center justify-between mt-6 px-4'>
+          <div className='text-sm text-muted-foreground'>
+            Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} clientes
+          </div>
+          <div className='flex items-center space-x-2'>
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={!pagination.hasPrev}
+              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
+            >
+              <ChevronLeft className='w-4 h-4 mr-1' />
+              Anterior
+            </button>
+            <span className='text-sm text-muted-foreground'>
+              Página {pagination.page} de {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={!pagination.hasNext}
+              className='flex items-center px-3 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
+            >
+              Próxima
+              <ChevronRight className='w-4 h-4 ml-1' />
+            </button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog
         open={!!deletingClientId}
