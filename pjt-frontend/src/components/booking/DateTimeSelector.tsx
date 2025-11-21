@@ -33,7 +33,7 @@ export function DateTimeSelector({
     .filter((date) => date.getDay() !== 0)
     .slice(0, 7)
 
-  const { data: availability } = useProfessionalAvailability(
+  const { data: availability, error: availabilityError, isLoading: loadingAvailability } = useProfessionalAvailability(
     professionalId,
     debouncedDate
   )
@@ -102,7 +102,18 @@ export function DateTimeSelector({
         <div>
           <h3 className='text-lg font-semibold text-gray-700 mb-4'>Horário</h3>
           <div className='grid grid-cols-3 md:grid-cols-6 gap-3'>
-            {availableTimes.length === 0 ? (
+            {loadingAvailability ? (
+              <div className='col-span-full text-center py-8 text-muted-foreground'>
+                Carregando horários...
+              </div>
+            ) : availabilityError ? (
+              <div className='col-span-full text-center py-8'>
+                <div className='text-red-600 mb-2'>Erro ao carregar horários</div>
+                <div className='text-sm text-gray-500'>
+                  {availabilityError.message || 'Tente novamente em alguns instantes'}
+                </div>
+              </div>
+            ) : availableTimes.length === 0 ? (
               <div className='col-span-full text-center py-8 text-muted-foreground'>
                 {selectedDate
                   ? 'Nenhum horário disponível para esta data'

@@ -102,78 +102,8 @@ export class PublicController {
       offset: processedDate.getTimezoneOffset(),
     };
   }
+  
 
-  @Get('branch/:businessSlug/:branchSlug')
-  async getBranchBySlug(
-    @Param('businessSlug') businessSlug: string,
-    @Param('branchSlug') branchSlug: string,
-  ) {
-    const decodedBusinessSlug = decodeURIComponent(businessSlug);
-    const decodedBranchSlug = decodeURIComponent(branchSlug);
-    
-    const branch = await this.prisma.branch.findFirst({
-      where: {
-        name: { equals: decodedBranchSlug, mode: 'insensitive' },
-        owner: {
-          businessName: { equals: decodedBusinessSlug, mode: 'insensitive' },
-        },
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            businessName: true,
-          },
-        },
-      },
-    });
-
-    if (!branch) {
-      throw new Error(`Filial '${decodedBranchSlug}' do negócio '${decodedBusinessSlug}' não encontrada.`);
-    }
-
-    return branch;
-  }
-
-  @Get('branch/:branchSlug')
-  async getBranchBySlugOnly(@Param('branchSlug') branchSlug: string) {
-    const decodedSlug = decodeURIComponent(branchSlug);
-    const branch = await this.prisma.branch.findFirst({
-      where: {
-        OR: [
-          { name: { equals: decodedSlug, mode: 'insensitive' } },
-          { name: { contains: decodedSlug, mode: 'insensitive' } },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        phone: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            businessName: true,
-          },
-        },
-      },
-    });
-
-    if (!branch) {
-      const availableBranches = await this.prisma.branch.findMany({
-        select: { name: true },
-      });
-      throw new Error(
-        `Filial '${decodedSlug}' não encontrada. Filiais disponíveis: ${availableBranches.map((b) => b.name).join(', ')}`,
-      );
-    }
-
-    return branch;
-  }
 
   @Get('branch/:branchId/services')
   async getBranchServices(@Param('branchId') branchId: string) {
@@ -207,6 +137,22 @@ export class PublicController {
     @Param('professionalId') professionalId: string,
     @Param('date') date: string,
   ) {
+    if (!professionalId || !date) {
+      throw new Error('professionalId e date são obrigatórios');
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      throw new Error('Formato de data inválido. Use YYYY-MM-DD');
+    }
+    
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+    });
+    
+    if (!professional) {
+      throw new Error('Profissional não encontrado');
+    }
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
         professionalId,
@@ -229,8 +175,12 @@ export class PublicController {
 
     const allTimes: string[] = [];
     const now = new Date();
-    const selectedDate = new Date(date);
+    const selectedDate = new Date(date + 'T00:00:00-03:00');
     const isToday = selectedDate.toDateString() === now.toDateString();
+    
+    if (selectedDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+      return { availableTimes: [], bookedTimes: [] };
+    }
 
     for (let hour = 9; hour < 17; hour++) {
       for (let minute = 0; minute < 60; minute += 10) {
@@ -345,5 +295,77 @@ export class PublicController {
     });
 
     return appointment;
+  }
+
+  @Get('branch/:businessSlug/:branchSlug')
+  async getBranchBySlug(
+    @Param('businessSlug') businessSlug: string,
+    @Param('branchSlug') branchSlug: string,
+  ) {
+    const decodedBusinessSlug = decodeURIComponent(businessSlug);
+    const decodedBranchSlug = decodeURIComponent(branchSlug);
+    
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        name: { equals: decodedBranchSlug, mode: 'insensitive' },
+        owner: {
+          businessName: { equals: decodedBusinessSlug, mode: 'insensitive' },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+
+    if (!branch) {
+      throw new Error(`Filial '${decodedBranchSlug}' do negócio '${decodedBusinessSlug}' não encontrada.`);
+    }
+
+    return branch;
+  }
+
+  @Get('branch/:branchSlug')
+  async getBranchBySlugOnly(@Param('branchSlug') branchSlug: string) {
+    const decodedSlug = decodeURIComponent(branchSlug);
+    const branch = await this.prisma.branch.findFirst({
+      where: {
+        OR: [
+          { name: { equals: decodedSlug, mode: 'insensitive' } },
+          { name: { contains: decodedSlug, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        phone: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+
+    if (!branch) {
+      const availableBranches = await this.prisma.branch.findMany({
+        select: { name: true },
+      });
+      throw new Error(
+        `Filial '${decodedSlug}' não encontrada. Filiais disponíveis: ${availableBranches.map((b) => b.name).join(', ')}`,
+      );
+    }
+
+    return branch;
   }
 }
