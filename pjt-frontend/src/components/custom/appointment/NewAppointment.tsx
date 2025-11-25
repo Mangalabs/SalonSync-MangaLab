@@ -16,6 +16,8 @@ export default function NewAppointment() {
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
+  const [clientSearch, setClientSearch] = useState('')
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
 
   useQuery({
     queryKey: ['branches'],
@@ -70,63 +72,68 @@ export default function NewAppointment() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
-              {(() => {
-                const [search, setSearch] = useState('')
-                const [open, setOpen] = useState(false)
-                const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
-                const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
-                  c.name.toLowerCase().includes(search.toLowerCase())
-                )
-                
-                return (
-                  <div className='relative'>
-                    <div className='relative'>
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type='text'
-                        placeholder='Buscar cliente...'
-                        value={selectedClient ? selectedClient.name : search}
-                        onChange={(e) => {
-                          setSearch(e.target.value)
-                          setOpen(true)
-                          if (!e.target.value) setValue('clientId', '')
-                        }}
-                        onFocus={() => setOpen(true)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
-                      />
-                    </div>
-                    {open && (
-                      <div className='absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto'>
-                        {filteredClients.length === 0 ? (
-                          <div className='p-3 text-sm text-gray-500 text-center'>
-                            Nenhum cliente encontrado
-                          </div>
-                        ) : (
-                          filteredClients.map((c: any) => (
-                            <div
-                              key={c.id}
-                              onClick={() => {
+              <div className='relative'>
+                <div className='relative'>
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type='text'
+                    placeholder='Buscar cliente...'
+                    value={(() => {
+                      const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
+                      return selectedClient ? selectedClient.name : clientSearch
+                    })()}
+                    onChange={(e) => {
+                      setClientSearch(e.target.value)
+                      setClientDropdownOpen(true)
+                      if (!e.target.value) setValue('clientId', '')
+                    }}
+                    onFocus={() => setClientDropdownOpen(true)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
+                  />
+                </div>
+                {clientDropdownOpen && (
+                  <div className='absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto'>
+                    {(() => {
+                      const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
+                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                      )
+                      return filteredClients.length === 0 ? (
+                        <div className='p-3 text-sm text-gray-500 text-center'>
+                          Nenhum cliente encontrado
+                        </div>
+                      ) : (
+                        filteredClients.map((c: any) => (
+                          <button
+                            key={c.id}
+                            type='button'
+                            onClick={() => {
+                              setValue('clientId', c.id)
+                              setClientSearch('')
+                              setClientDropdownOpen(false)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
                                 setValue('clientId', c.id)
-                                setSearch('')
-                                setOpen(false)
-                              }}
-                              className='p-3 hover:bg-gray-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0'
-                            >
-                              {c.name}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                    {open && (
-                      <div 
-                        className='fixed inset-0 z-40'
-                        onClick={() => setOpen(false)}
-                      />
-                    )}
+                                setClientSearch('')
+                                setClientDropdownOpen(false)
+                              }
+                            }}
+                            className='w-full text-left p-3 hover:bg-gray-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0'
+                          >
+                            {c.name}
+                          </button>
+                        ))
+                      )
+                    })()}
                   </div>
-                )
-              })()}
+                )}
+                {clientDropdownOpen && (
+                  <div 
+                    className='fixed inset-0 z-40'
+                    onClick={() => setClientDropdownOpen(false)}
+                  />
+                )}
+              </div>
 
               <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
                 <DialogTrigger asChild>
