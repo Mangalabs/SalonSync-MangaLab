@@ -19,9 +19,7 @@ export class ProfessionalsService extends BaseDataService {
   async findAll(user: UserContext): Promise<Professional[]> {
     let branchIds: string[];
 
-    // Se branchId específico foi fornecido, usar apenas ele
     if (user.branchId && user.role === 'ADMIN') {
-      // Verificar se admin tem acesso a esta filial
       const allowedBranchIds = await this.getUserBranchIds({
         ...user,
         branchId: undefined,
@@ -99,10 +97,8 @@ export class ProfessionalsService extends BaseDataService {
         },
       });
 
-      // Criar despesa fixa automática se tiver salário configurado
       await this.createSalaryRecurringExpense(professional, branchId, tx);
 
-      // Criar dias de trabalho se especificados
       if (workingDays && workingDays.length > 0) {
         await Promise.all(
           workingDays.map((dayOfWeek) =>
@@ -137,7 +133,6 @@ export class ProfessionalsService extends BaseDataService {
       return;
     }
 
-    // Buscar ou criar categoria de salários
     let salaryCategory = await tx.expenseCategory.findFirst({
       where: {
         branchId,
@@ -157,7 +152,6 @@ export class ProfessionalsService extends BaseDataService {
       });
     }
 
-    // Criar despesa fixa automática
     const recurringExpense = await tx.recurringExpense.create({
       data: {
         name: `Salário: ${professional.name}`,
@@ -194,7 +188,6 @@ export class ProfessionalsService extends BaseDataService {
 
     const updateData: any = { ...professionalData };
 
-    // Tratar roleId
     if (roleId !== undefined) {
       if (roleId === 'custom' || roleId === '') {
         updateData.roleId = null;
@@ -212,17 +205,13 @@ export class ProfessionalsService extends BaseDataService {
         },
       });
 
-      // Sincronizar despesa fixa se salário foi alterado
       await this.syncSalaryRecurringExpense(professional, tx);
 
-      // Atualizar dias de trabalho se especificados
       if (workingDays !== undefined) {
-        // Remover dias existentes
         await tx.professionalWorkingDay.deleteMany({
           where: { professionalId: id },
         });
 
-        // Criar novos dias se especificados
         if (workingDays.length > 0) {
           await Promise.all(
             workingDays.map((dayOfWeek) =>
@@ -250,7 +239,6 @@ export class ProfessionalsService extends BaseDataService {
     const payDay =
       professional.customRole?.salaryPayDay || professional.salaryPayDay;
 
-    // Buscar despesa fixa existente
     const existingExpense = await tx.recurringExpense.findFirst({
       where: {
         professionalId: professional.id,
@@ -260,7 +248,6 @@ export class ProfessionalsService extends BaseDataService {
 
     if (baseSalary && payDay) {
       if (existingExpense) {
-        // Atualizar despesa existente
         await tx.recurringExpense.update({
           where: { id: existingExpense.id },
           data: {
@@ -271,7 +258,6 @@ export class ProfessionalsService extends BaseDataService {
           },
         });
       } else {
-        // Criar nova despesa
         await this.createSalaryRecurringExpense(
           professional,
           professional.branchId,
@@ -279,7 +265,6 @@ export class ProfessionalsService extends BaseDataService {
         );
       }
     } else if (existingExpense) {
-      // Desativar despesa se salário foi removido
       await tx.recurringExpense.update({
         where: { id: existingExpense.id },
         data: { isActive: false },
@@ -295,7 +280,6 @@ export class ProfessionalsService extends BaseDataService {
       throw new NotFoundException('Profissional não encontrado');
     }
 
-    // Verificar agendamentos do profissional
     const allAppointments = await this.prisma.appointment.findMany({
       where: { professionalId: id },
       select: {
@@ -305,7 +289,6 @@ export class ProfessionalsService extends BaseDataService {
       },
     });
 
-    // Verificar apenas agendamentos que estão agendados (futuros)
     const scheduledAppointments = allAppointments.filter((apt) =>
       ['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(apt.status),
     );
@@ -324,20 +307,17 @@ export class ProfessionalsService extends BaseDataService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // Desativar despesas fixas relacionadas
       await tx.recurringExpense.updateMany({
         where: { professionalId: id },
         data: { isActive: false },
       });
 
-      // Remover referência do profissional nos agendamentos (manter histórico)
       const appointmentsUpdated = await tx.$executeRaw`
         UPDATE "Appointment" 
         SET "professionalId" = NULL 
         WHERE "professionalId" = ${id}
       `;
 
-      // Buscar e excluir usuário correspondente (se existir)
       const user = await tx.user.findFirst({
         where: {
           name: professional.name,
@@ -349,7 +329,6 @@ export class ProfessionalsService extends BaseDataService {
         await tx.user.delete({ where: { id: user.id } });
       }
 
-      // Excluir profissional
       await tx.professional.delete({ where: { id } });
     });
   }
@@ -361,9 +340,7 @@ export class ProfessionalsService extends BaseDataService {
   ) {
     const professional = await this.findOne(id);
 
-    // Se for funcionário, verificar se está vendo comissão da sua filial
     if (user && user.role === 'PROFESSIONAL') {
-      // Verificar se o profissional pertence à mesma filial do usuário
       if (user.branchId && (professional as any).branchId !== user.branchId) {
         throw new Error(
           'Acesso negado: você só pode ver comissões da sua filial',
@@ -382,7 +359,6 @@ export class ProfessionalsService extends BaseDataService {
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
     }
 
-    // First, let's see ALL appointments for this professional
     const allAppointments = await this.prisma.appointment.findMany({
       where: {
         professionalId: id,
@@ -451,12 +427,45 @@ export class ProfessionalsService extends BaseDataService {
       >,
     );
 
+    const productCommissions = await this.prisma.financialTransaction.findMany({
+      where: {
+        branchId: (professional as any).branchId,
+        type: 'EXPENSE',
+        description: {
+          contains: `Comissão venda: ${professional.name}`,
+        },
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const totalProductCommissions = productCommissions.reduce(
+      (sum, commission) => sum + Number(commission.amount),
+      0,
+    );
+
     const totalAppointments = appointments.length;
     const totalRevenue = appointments.reduce(
       (sum, apt) => sum + Number(apt.total),
       0,
     );
-    const totalCommission = totalRevenue * commissionRate;
+    const appointmentCommissions = totalRevenue * commissionRate;
+    const totalCommission = appointmentCommissions + totalProductCommissions;
+
+    productCommissions.forEach((commission) => {
+      const date = commission.date.toISOString().split('T')[0];
+      if (!dailyCommissions[date]) {
+        dailyCommissions[date] = {
+          date,
+          appointments: 0,
+          revenue: 0,
+          commission: 0,
+        };
+      }
+      dailyCommissions[date].commission += Number(commission.amount);
+    });
 
     return {
       professional: {
@@ -472,6 +481,9 @@ export class ProfessionalsService extends BaseDataService {
         totalAppointments,
         totalRevenue,
         totalCommission,
+        appointmentCommissions,
+        productCommissions: totalProductCommissions,
+        productSalesCount: productCommissions.length,
       },
       dailyCommissions: Object.values(dailyCommissions).sort((a, b) =>
         a.date.localeCompare(b.date),
@@ -491,16 +503,13 @@ export class ProfessionalsService extends BaseDataService {
       throw new NotFoundException('Profissional não encontrado');
     }
 
-    // Verificar acesso
     const branchIds = await this.getUserBranchIds(user);
     if (!branchIds.includes(professional.branchId)) {
       throw new Error('Acesso negado');
     }
 
-    // Buscar salário base (apenas no customRole)
     const baseSalary = professional.customRole?.baseSalary || 0;
 
-    // Calcular comissões do mês atual
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(
@@ -523,7 +532,6 @@ export class ProfessionalsService extends BaseDataService {
       },
     });
 
-    // Calcular comissões diretamente dos atendimentos confirmados
     const commissionRate =
       Number(
         professional.customRole?.commissionRate ||
@@ -534,8 +542,29 @@ export class ProfessionalsService extends BaseDataService {
       (sum, apt) => sum + Number(apt.total),
       0,
     );
-    const currentMonthCommissions = totalRevenue * commissionRate;
+    const appointmentCommissions = totalRevenue * commissionRate;
 
+    const productCommissions = await this.prisma.financialTransaction.findMany({
+      where: {
+        branchId: professional.branchId,
+        type: 'EXPENSE',
+        description: {
+          contains: `Comissão venda: ${professional.name}`,
+        },
+        date: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      },
+    });
+
+    const productCommissionTotal = productCommissions.reduce(
+      (sum, commission) => sum + Number(commission.amount),
+      0,
+    );
+
+    const currentMonthCommissions =
+      appointmentCommissions + productCommissionTotal;
     const totalEstimated = Number(baseSalary) + currentMonthCommissions;
 
     return {
@@ -548,8 +577,11 @@ export class ProfessionalsService extends BaseDataService {
           0,
       ),
       currentMonthCommissions,
+      appointmentCommissions,
+      productCommissions: productCommissionTotal,
       totalEstimated,
       appointmentsCount: appointments.length,
+      productSalesCount: productCommissions.length,
     };
   }
 }

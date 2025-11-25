@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+
 import { ClientForm } from '@/components/custom/client/ClientForm'
 
 interface ImmediateAppointmentFormProps {
@@ -38,7 +39,7 @@ export function ImmediateAppointmentForm({
     enabled: isAdmin,
   })
 
-  const { professionals } = useFormQueries()
+  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
   const { form, mutation } = useAppointmentForm(
     'immediate',
     professionals,
@@ -126,20 +127,63 @@ export function ImmediateAppointmentForm({
               <label className='block text-sm font-medium text-foreground mb-2'>
                 Cliente
               </label>
-              <div className='relative'>
-                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
-                <select
-                  value={watch('clientId') || ''}
-                  onChange={(e) => setValue('clientId', e.target.value)}
-                  className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
-                  <option value=''>Buscar cliente...</option>
-                  {clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {(() => {
+                const [search, setSearch] = useState('')
+                const [open, setOpen] = useState(false)
+                const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
+                const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
+                  c.name.toLowerCase().includes(search.toLowerCase())
+                )
+                
+                return (
+                  <div className='relative'>
+                    <div className='relative'>
+                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
+                      <input
+                        type='text'
+                        placeholder='Buscar cliente...'
+                        value={selectedClient ? selectedClient.name : search}
+                        onChange={(e) => {
+                          setSearch(e.target.value)
+                          setOpen(true)
+                          if (!e.target.value) setValue('clientId', '')
+                        }}
+                        onFocus={() => setOpen(true)}
+                        className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
+                      />
+                    </div>
+                    {open && (
+                      <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
+                        {filteredClients.length === 0 ? (
+                          <div className='p-3 text-sm text-muted-foreground text-center'>
+                            Nenhum cliente encontrado
+                          </div>
+                        ) : (
+                          filteredClients.map((c: any) => (
+                            <div
+                              key={c.id}
+                              onClick={() => {
+                                setValue('clientId', c.id)
+                                setSearch('')
+                                setOpen(false)
+                              }}
+                              className='p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'
+                            >
+                              {c.name}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                    {open && (
+                      <div 
+                        className='fixed inset-0 z-40'
+                        onClick={() => setOpen(false)}
+                      />
+                    )}
+                  </div>
+                )
+              })()}
               {errors.clientId && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.clientId.message}
@@ -173,7 +217,7 @@ export function ImmediateAppointmentForm({
                 onChange={(e) => setValue('professionalId', e.target.value)}
                 className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
                 <option value=''>Selecione o profissional</option>
-                {profs.map((p: any) => (
+                {(Array.isArray(profs) ? profs : []).map((p: any) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
                   </option>
@@ -208,7 +252,7 @@ export function ImmediateAppointmentForm({
               Serviços Realizados
             </label>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              {services.map((service: any) => {
+              {(Array.isArray(services) ? services : []).map((service: any) => {
                 const selected = watchedServices.includes(service.id)
                 return (
                   <div

@@ -37,7 +37,7 @@ export function AppointmentForm({
     enabled: isAdmin,
   })
 
-  const { professionals } = useFormQueries()
+  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
   const { form, mutation } = useAppointmentForm(
     mode,
     professionals,

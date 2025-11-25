@@ -7,7 +7,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AdjustStockDto, StockMovementType } from './dto/adjust-stock.dto';
-import { ProfessionalMovementDto } from './dto/professional-movement.dto';
 import { Product, StockMovement, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -36,8 +35,8 @@ export class ProductsService {
           createProductDto.productType === 'PROFESSIONAL_USE'
             ? Number(createProductDto.unitWeight) || 0
             : createProductDto.initialStock !== undefined
-            ? createProductDto.initialStock
-            : 0,
+              ? createProductDto.initialStock
+              : 0,
         minStock:
           createProductDto.minStock !== undefined
             ? createProductDto.minStock
@@ -53,12 +52,10 @@ export class ProductsService {
           data: productData,
         });
 
-        // Criar movimentação de entrada e transação financeira se há estoque inicial
         const initialStock = createProductDto.initialStock || 0;
         const costPrice = createProductDto.costPrice || 0;
 
         if (initialStock > 0) {
-          // Criar movimentação de entrada
           const movement = await tx.stockMovement.create({
             data: {
               product: { connect: { id: createdProduct.id } },
@@ -72,7 +69,6 @@ export class ProductsService {
             },
           });
 
-          // Criar transação financeira se há custo
           if (costPrice > 0) {
             await this.createFinancialTransactionForProductCreation(
               createdProduct,
@@ -118,7 +114,6 @@ export class ProductsService {
   ): Promise<Product> {
     const currentProduct = await this.findOne(id, branchId);
 
-    // Map DTO fields to match Prisma schema
     const updateData: Prisma.ProductUpdateInput = {};
 
     if (updateProductDto.name !== undefined)
@@ -192,7 +187,6 @@ export class ProductsService {
   async remove(id: string, branchId: string): Promise<Product> {
     await this.findOne(id, branchId);
 
-    // Check if there are stock movements for this product
     const movementsCount = await this.prisma.stockMovement.count({
       where: { productId: id },
     });
@@ -219,10 +213,8 @@ export class ProductsService {
     const { quantity, type, reason, reference, unitCost, soldById } =
       adjustStockDto;
 
-    // Calculate new stock level
     let newStock = Number(product.currentStock);
 
-    // Convert enum from DTO to Prisma enum
     let movementType: 'IN' | 'OUT' | 'ADJUSTMENT' | 'LOSS' | 'PROFESSIONAL_USE';
 
     switch (type) {
@@ -259,34 +251,34 @@ export class ProductsService {
         break;
       case StockMovementType.ADJUSTMENT:
         movementType = 'ADJUSTMENT';
-        // For adjustments, the quantity is the absolute new value
         newStock = quantity;
         break;
     }
 
-    // Calculate total cost if unit cost is provided
     let totalCost: number | undefined;
-    
+
     if (unitCost) {
       totalCost = unitCost * quantity;
     } else if (movementType === 'LOSS') {
       totalCost = Number(product.costPrice) * quantity;
-    } else if (movementType === 'PROFESSIONAL_USE' && product.unitWeight && product.markupPercent) {
-      // Calculate cost per unit weight with markup
-      const costPerUnit = Number(product.costPrice) / Number(product.unitWeight);
-      const costWithMarkup = costPerUnit * (1 + Number(product.markupPercent) / 100);
+    } else if (
+      movementType === 'PROFESSIONAL_USE' &&
+      product.unitWeight &&
+      product.markupPercent
+    ) {
+      const costPerUnit =
+        Number(product.costPrice) / Number(product.unitWeight);
+      const costWithMarkup =
+        costPerUnit * (1 + Number(product.markupPercent) / 100);
       totalCost = costWithMarkup * quantity;
     }
 
-    // Create transaction to update both product and create movement
     return this.prisma.$transaction(async (tx) => {
-      // Update product stock
       const updatedProduct = await tx.product.update({
         where: { id },
         data: { currentStock: newStock },
       });
 
-      // Create stock movement record
       const movementData: any = {
         product: { connect: { id } },
         branch: { connect: { id: branchId } },
@@ -298,37 +290,30 @@ export class ProductsService {
         totalCost,
       };
 
-      // Only add user connection if we have a valid user ID
-      const userIdToConnect = soldById || userId;
-      if (userIdToConnect) {
-        movementData.user = { connect: { id: userIdToConnect } };
-      }
-      // If no user ID, the movement will be created without user association
-
-      let movement;
-      try {
-        movement = await tx.stockMovement.create({
-          data: movementData,
-        });
-      } catch (error) {
-        // If user connection fails, create without user
-        if (error.code === 'P2025' && error.meta?.cause?.includes('User')) {
-          const { user, ...dataWithoutUser } = movementData;
-          movement = await tx.stockMovement.create({
-            data: dataWithoutUser,
-          });
-        } else {
-          throw error;
-        }
+      if (userId) {
+        movementData.user = { connect: { id: userId } };
       }
 
-      // Create financial transaction for specific movement types
+      const movement = await tx.stockMovement.create({
+        data: movementData,
+      });
+
       await this.createFinancialTransactionForMovement(
         movement,
         updatedProduct,
         branchId,
         tx,
       );
+
+      if (movement.type === 'OUT' && soldById && soldById.trim() !== '') {
+        await this.createCommissionTransactionForSale(
+          movement,
+          updatedProduct,
+          soldById,
+          branchId,
+          tx,
+        );
+      }
 
       return {
         product: updatedProduct,
@@ -343,7 +328,6 @@ export class ProductsService {
     branchId: string,
     tx: any,
   ) {
-    // Only create financial transactions for movements with financial impact
     if (!movement.totalCost || Number(movement.totalCost) <= 0) {
       return;
     }
@@ -379,7 +363,6 @@ export class ProductsService {
 
     if (!transactionType) return;
 
-    // Find or create the appropriate category
     let category = await tx.expenseCategory.findFirst({
       where: {
         branchId,
@@ -429,7 +412,6 @@ export class ProductsService {
   ) {
     const totalCost = initialStock * costPrice;
 
-    // Buscar ou criar categoria de investimento
     let category = await tx.expenseCategory.findFirst({
       where: {
         branchId,
@@ -449,7 +431,6 @@ export class ProductsService {
       });
     }
 
-    // Criar transação financeira de investimento
     const financialTransaction = await tx.financialTransaction.create({
       data: {
         description: `Investimento inicial: ${product.name} (${initialStock} ${product.unit})`,
@@ -533,7 +514,6 @@ export class ProductsService {
       : movement.totalCost;
 
     return this.prisma.$transaction(async (tx) => {
-      // Se o produto mudou, reverter estoque do produto antigo
       if (newProductId !== movement.productId) {
         let oldProductStock = Number(movement.product.currentStock);
         switch (movement.type) {
@@ -550,7 +530,6 @@ export class ProductsService {
           data: { currentStock: oldProductStock },
         });
 
-        // Aplicar movimentação no novo produto
         const newProduct = await tx.product.findUnique({
           where: { id: newProductId },
         });
@@ -582,11 +561,9 @@ export class ProductsService {
           data: { currentStock: newProductStock },
         });
       } else {
-        // Mesmo produto, apenas ajustar diferença
         let currentStock = Number(movement.product.currentStock);
         const newQuantityNum = Number(newQuantity);
 
-        // Reverter movimentação anterior
         switch (movement.type) {
           case 'IN':
             currentStock -= Number(movement.quantity);
@@ -597,7 +574,6 @@ export class ProductsService {
             break;
         }
 
-        // Aplicar nova movimentação
         switch (newType) {
           case 'IN':
             currentStock += newQuantityNum;
@@ -620,7 +596,6 @@ export class ProductsService {
         });
       }
 
-      // Atualizar a movimentação
       return tx.stockMovement.update({
         where: { id },
         data: {
@@ -650,7 +625,6 @@ export class ProductsService {
       throw new NotFoundException('Movimentação não encontrada');
     }
 
-    // Reverter o efeito da movimentação no estoque
     let currentStock = Number(movement.product.currentStock);
     switch (movement.type) {
       case 'IN':
@@ -661,25 +635,21 @@ export class ProductsService {
         currentStock += Number(movement.quantity);
         break;
       case 'ADJUSTMENT':
-        // Para ajustes, não podemos reverter facilmente
         throw new BadRequestException(
           'Não é possível excluir movimentações de ajuste',
         );
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Atualizar o produto
       await tx.product.update({
         where: { id: movement.productId },
         data: { currentStock },
       });
 
-      // Excluir a movimentação
       await tx.stockMovement.delete({
         where: { id },
       });
 
-      // Excluir transação financeira relacionada se existir
       await tx.financialTransaction.deleteMany({
         where: { reference: `Estoque-${id}` },
       });
@@ -692,13 +662,13 @@ export class ProductsService {
     branchId: string,
   ): Promise<{ product: Product; movement: StockMovement }> {
     const product = await this.findOne(id, branchId);
-    
+
     console.log('Produto encontrado:', {
       id: product.id,
       name: product.name,
       productType: product.productType,
       currentStock: product.currentStock,
-      unitWeight: product.unitWeight
+      unitWeight: product.unitWeight,
     });
     console.log('Movimento solicitado:', movementDto);
 
@@ -715,25 +685,24 @@ export class ProductsService {
 
     const newStock = currentStockNum - movementDto.quantity;
 
-    // Calcular custo com markup
     let totalCost: number | null = null;
     let unitCost: number | null = null;
-    
+
     if (product.unitWeight && product.markupPercent && product.costPrice) {
-      const costPerUnit = Number(product.costPrice) / Number(product.unitWeight);
-      const costWithMarkup = costPerUnit * (1 + Number(product.markupPercent) / 100);
+      const costPerUnit =
+        Number(product.costPrice) / Number(product.unitWeight);
+      const costWithMarkup =
+        costPerUnit * (1 + Number(product.markupPercent) / 100);
       unitCost = costWithMarkup;
       totalCost = costWithMarkup * movementDto.quantity;
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Atualizar estoque do produto
       const updatedProduct = await tx.product.update({
         where: { id },
         data: { currentStock: newStock },
       });
 
-      // Criar movimentação
       const movement = await tx.stockMovement.create({
         data: {
           product: { connect: { id } },
@@ -747,7 +716,6 @@ export class ProductsService {
         },
       });
 
-      // Criar transação financeira se há custo
       if (totalCost && totalCost > 0) {
         await this.createFinancialTransactionForMovement(
           movement,
@@ -761,6 +729,70 @@ export class ProductsService {
         product: updatedProduct,
         movement,
       };
+    });
+  }
+
+  private async createCommissionTransactionForSale(
+    movement: StockMovement,
+    product: Product,
+    professionalId: string,
+    branchId: string,
+    tx: any,
+  ) {
+    if (!movement.totalCost || Number(movement.totalCost) <= 0) {
+      return;
+    }
+
+    const professional = await tx.professional.findUnique({
+      where: { id: professionalId },
+      include: {
+        customRole: true,
+      },
+    });
+
+    if (!professional) {
+      return;
+    }
+
+    const commissionRate =
+      professional.customRole?.commissionRate ||
+      professional.commissionRate ||
+      0;
+    const commissionAmount =
+      (Number(movement.totalCost) * Number(commissionRate)) / 100;
+
+    if (commissionAmount <= 0) return;
+
+    let commissionCategory = await tx.expenseCategory.findFirst({
+      where: {
+        branchId,
+        name: 'Comissões',
+        type: 'EXPENSE',
+      },
+    });
+
+    if (!commissionCategory) {
+      commissionCategory = await tx.expenseCategory.create({
+        data: {
+          name: 'Comissões',
+          type: 'EXPENSE',
+          color: '#8B5CF6',
+          branchId,
+        },
+      });
+    }
+
+    await tx.financialTransaction.create({
+      data: {
+        description: `Comissão venda: ${professional.name} - ${product.name} (${movement.quantity} ${product.unit})`,
+        amount: commissionAmount,
+        type: 'EXPENSE',
+        categoryId: commissionCategory.id,
+        paymentMethod: 'OTHER',
+        reference: `Venda-${movement.id}`,
+        date: movement.createdAt,
+        branchId,
+      },
     });
   }
 }
