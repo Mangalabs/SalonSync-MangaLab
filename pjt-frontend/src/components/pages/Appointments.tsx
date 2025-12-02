@@ -17,6 +17,7 @@ import {
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+import { DateTime } from '@/utils/dateTime'
 import {
   Dialog,
   DialogContent,
@@ -107,44 +108,35 @@ const calculateEndTime = (startTime: string, duration: number): string => {
     return startTime
   }
   try {
-    const [startHour, startMinute] = startTime.split(':').map(Number)
-    const startDate = new Date(2000, 0, 1, startHour, startMinute, 0)
-    const endDate = new Date(startDate.getTime() + duration * 60000)
-    const endHour = endDate.getHours().toString().padStart(2, '0')
-    const endMinute = endDate.getMinutes().toString().padStart(2, '0')
-    return `${endHour}:${endMinute}`
+    const startMoment = DateTime.fromDateTime('2000-01-01', startTime)
+    const endMoment = DateTime.add(startMoment, duration, 'minutes')
+    return DateTime.formatTime(endMoment)
   } catch (error) {
-    const [startHour, startMinute] = (startTime || '00:00')
-      .split(':')
-      .map(Number)
-    const fallbackDate = new Date(2000, 0, 1, startHour, startMinute + 30, 0)
-    return `${fallbackDate
-      .getHours()
-      .toString()
-      .padStart(2, '0')}:${fallbackDate
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`
+    const fallbackMoment = DateTime.fromDateTime('2000-01-01', startTime || '00:00')
+    const endMoment = DateTime.add(fallbackMoment, 30, 'minutes')
+    return DateTime.formatTime(endMoment)
   }
 }
 
-const generateTimeSlots = () => {
-  const slots = []
-  for (let hour = 8; hour <= 20; hour++) {
-    for (let minute = 0; minute < 60; minute += 10) {
-      const time = `${hour.toString().padStart(2, '0')}:${minute
-        .toString()
-        .padStart(2, '0')}`
-      slots.push(time)
-    }
-  }
-  return slots
+const timeSlots = [
+  '08:00', '08:10', '08:20', '08:30', '08:40', '08:50',
+  '09:00', '09:10', '09:20', '09:30', '09:40', '09:50',
+  '10:00', '10:10', '10:20', '10:30', '10:40', '10:50',
+  '11:00', '11:10', '11:20', '11:30', '11:40', '11:50',
+  '12:00', '12:10', '12:20', '12:30', '12:40', '12:50',
+  '13:00', '13:10', '13:20', '13:30', '13:40', '13:50',
+  '14:00', '14:10', '14:20', '14:30', '14:40', '14:50',
+  '15:00', '15:10', '15:20', '15:30', '15:40', '15:50',
+  '16:00', '16:10', '16:20', '16:30', '16:40', '16:50',
+  '17:00', '17:10', '17:20', '17:30', '17:40', '17:50',
+  '18:00', '18:10', '18:20', '18:30', '18:40', '18:50',
+  '19:00', '19:10', '19:20', '19:30', '19:40', '19:50'
+]
+
+const normalizeDate = (date: Date) => {
+  const normalized = DateTime.fromJSDate(date)
+  return DateTime.startOf(normalized, 'day').toDate()
 }
-
-const timeSlots = generateTimeSlots()
-
-const normalizeDate = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
 export default function Appointments() {
   const { activeBranch } = useBranch()
@@ -161,7 +153,7 @@ export default function Appointments() {
     useState<Appointment | null>(null)
 
   const [selectedDate, setSelectedDate] = useState(() =>
-    normalizeDate(new Date()),
+    normalizeDate(DateTime.now().toDate()),
   )
 
   const [filterProfessional, setFilterProfessional] = useState<string>('all')
@@ -177,6 +169,7 @@ export default function Appointments() {
       queryFn: async () => {
         const res = await axios.get('/api/appointments')
         return res.data.map((a: any) => {
+          // Processar data normalmente
           const scheduledDate = new Date(a.scheduledAt)
           const statusMap: Record<
             string,
@@ -188,7 +181,11 @@ export default function Appointments() {
             PENDING: 'pending',
           }
 
-          const time = a.scheduledAt.split('T')[1]?.slice(0, 5) || '00:00'
+          // Usar Day.js para processar horário já no Brasil
+          const brasilTime = DateTime.fromISO(a.scheduledAt)
+          const time = brasilTime.format('HH:mm')
+          
+
           const duration = a.appointmentServices?.[0]?.service?.duration ?? 30
           const endTime = calculateEndTime(time, duration)
 
@@ -266,63 +263,79 @@ export default function Appointments() {
   )
 
   const filteredProfessionals = useMemo(
-    () =>
-      filterProfessional === 'all'
+    () => {
+      if (!Array.isArray(allProfessionals)) {
+        return []
+      }
+      return filterProfessional === 'all'
         ? allProfessionals
-        : allProfessionals.filter((p) => p.id === filterProfessional),
+        : allProfessionals.filter((p) => p && p.id === filterProfessional)
+    },
     [allProfessionals, filterProfessional],
   )
 
   const appointmentsForDay = useMemo(() => {
-    const selectedDateKey = selectedDate.toISOString().split('T')[0]
-    return branchAppointments.filter((a) => {
-      const dateMatch = a.date === selectedDateKey
-      const statusMatch = filterStatus === 'all' || a.status === filterStatus
-      return dateMatch && statusMatch
-    })
+    if (!selectedDate || !Array.isArray(branchAppointments)) {
+      return []
+    }
+    try {
+      const selectedDateKey = selectedDate.toISOString().split('T')[0]
+      return branchAppointments.filter((a) => {
+        if (!a || !a.date) return false
+        const dateMatch = a.date === selectedDateKey
+        const statusMatch = filterStatus === 'all' || a.status === filterStatus
+        return dateMatch && statusMatch
+      })
+    } catch (error) {
+      console.error('Erro ao filtrar agendamentos:', error)
+      return []
+    }
   }, [branchAppointments, selectedDate, filterStatus])
 
   const stats = useMemo(() => {
-    const allAppointmentsForDay = branchAppointments.filter(
-      (a) => a.date === selectedDate.toISOString().split('T')[0],
-    )
-    const total = allAppointmentsForDay.length
-    const pending = allAppointmentsForDay.filter(
-      (a) => a.status === 'pending' || a.status === 'confirmed',
-    ).length
-    const completed = allAppointmentsForDay.filter(
-      (a) => a.status === 'completed',
-    ).length
-    return { total, pending, completed }
+    if (!selectedDate || !Array.isArray(branchAppointments)) {
+      return { total: 0, pending: 0, completed: 0 }
+    }
+    try {
+      const allAppointmentsForDay = branchAppointments.filter(
+        (a) => a && a.date === selectedDate.toISOString().split('T')[0],
+      )
+      const total = allAppointmentsForDay.length
+      const pending = allAppointmentsForDay.filter(
+        (a) => a && (a.status === 'pending' || a.status === 'confirmed'),
+      ).length
+      const completed = allAppointmentsForDay.filter(
+        (a) => a && a.status === 'completed',
+      ).length
+      return { total, pending, completed }
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas:', error)
+      return { total: 0, pending: 0, completed: 0 }
+    }
   }, [branchAppointments, selectedDate])
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString('pt-BR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
+  const formatDate = (date: Date) => {
+    const moment = DateTime.fromJSDate(date)
+    return moment.format('DD [de] MMMM [de] YYYY')
+  }
 
-  const formatMonthYear = (date: Date) =>
-    date.toLocaleDateString('pt-BR', {
-      month: 'long',
-      year: 'numeric',
-    })
+  const formatMonthYear = (date: Date) => {
+    const moment = DateTime.fromJSDate(date)
+    return moment.format('MMMM [de] YYYY')
+  }
 
   const goToToday = () => {
-    setSelectedDate(normalizeDate(new Date()))
+    setSelectedDate(normalizeDate(DateTime.now().toDate()))
   }
 
   const goToPreviousDay = () => {
-    const newDate = new Date(selectedDate)
-    newDate.setDate(newDate.getDate() - 1)
-    setSelectedDate(normalizeDate(newDate))
+    const previousDay = DateTime.subtract(DateTime.fromJSDate(selectedDate), 1, 'day')
+    setSelectedDate(normalizeDate(previousDay.toDate()))
   }
 
   const goToNextDay = () => {
-    const newDate = new Date(selectedDate)
-    newDate.setDate(newDate.getDate() + 1)
-    setSelectedDate(normalizeDate(newDate))
+    const nextDay = DateTime.add(DateTime.fromJSDate(selectedDate), 1, 'day')
+    setSelectedDate(normalizeDate(nextDay.toDate()))
   }
 
   return (
@@ -497,6 +510,7 @@ export default function Appointments() {
           </div>
 
           <div className='bg-card rounded-2xl shadow-sm border border-border overflow-hidden'>
+
             <div className='overflow-x-auto max-h-[600px] sm:max-h-[700px] overflow-y-auto'>
               <TooltipProvider>
                 <div>
@@ -557,14 +571,14 @@ export default function Appointments() {
                             const appointmentStarting =
                               appointmentsForDay.find(
                                 (apt) =>
-                                  apt.time === time &&
+                                  apt && apt.time === time &&
                                   apt.professionalId === prof.id,
                               )
 
                             const appointmentCovering =
                               appointmentsForDay.find(
                                 (apt) =>
-                                  apt.professionalId === prof.id &&
+                                  apt && apt.professionalId === prof.id &&
                                   apt.time < time &&
                                   apt.endTime > time,
                               )
@@ -693,13 +707,13 @@ export default function Appointments() {
                   <p className='text-sm text-muted-foreground'>
                     Total Agendamentos
                   </p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                  <div className='text-xl sm:text-2xl text-foreground mt-1'>
                     {isLoading ? (
                       <Skeleton className='h-8 w-12' />
                     ) : (
                       stats.total
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className='w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center'>
                   <CalendarIcon className='w-5 h-5 sm:w-6 sm:h-6 text-blue-600' />
@@ -711,13 +725,13 @@ export default function Appointments() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm text-muted-foreground'>Pendentes</p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                  <div className='text-xl sm:text-2xl text-foreground mt-1'>
                     {isLoading ? (
                       <Skeleton className='h-8 w-12' />
                     ) : (
                       stats.pending
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className='w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center'>
                   <Clock className='w-5 h-5 sm:w-6 sm:h-6 text-yellow-600' />
@@ -729,13 +743,13 @@ export default function Appointments() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm text-muted-foreground'>Concluídos</p>
-                  <p className='text-xl sm:text-2xl text-foreground mt-1'>
+                  <div className='text-xl sm:text-2xl text-foreground mt-1'>
                     {isLoading ? (
                       <Skeleton className='h-8 w-12' />
                     ) : (
                       stats.completed
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className='w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center'>
                   <Check className='w-5 h-5 sm:w-6 sm:h-6 text-green-600' />
@@ -981,12 +995,10 @@ export default function Appointments() {
               </Button>
 
               {(() => {
-                const appointmentDate = new Date(
-                  selectedAppointment.scheduledAt.toISOString().split('T')[0],
-                )
-                const today = new Date(new Date().toISOString().split('T')[0])
+                const appointmentDate = DateTime.startOf(DateTime.fromJSDate(selectedAppointment.scheduledAt), 'day')
+                const today = DateTime.startOf(DateTime.now(), 'day')
                 const canConfirm =
-                  appointmentDate <= today &&
+                  (appointmentDate.isSame(today) || appointmentDate.isBefore(today)) &&
                   selectedAppointment.status !== 'completed'
 
                 if (canConfirm) {

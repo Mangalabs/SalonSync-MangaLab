@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+import { DateTime } from '@/utils/dateTime'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -90,17 +91,27 @@ export default function AppointmentHistory() {
 
   const normalizedAppointments: AppointmentHistory[] = branchAppointments.map(
     (apt) => {
-      const dateObj = apt.scheduledAt ? new Date(apt.scheduledAt) : null
-      const scheduledAtStr =
-        typeof apt.scheduledAt === 'string'
-          ? apt.scheduledAt
-          : apt.scheduledAt?.toString() || ''
-      const dateStr =
-        dateObj && scheduledAtStr ? scheduledAtStr.split('T')[0] : ''
-      const timeStr =
-        dateObj && scheduledAtStr
-          ? scheduledAtStr.split('T')[1]?.slice(0, 5) || ''
-          : ''
+      // Usar DateTime utility para processar corretamente
+      const scheduledAtStr = typeof apt.scheduledAt === 'string' 
+        ? apt.scheduledAt 
+        : apt.scheduledAt?.toString() || ''
+      
+      let dateStr = ''
+      let timeStr = ''
+      
+      if (scheduledAtStr) {
+        if (scheduledAtStr.includes('T')) {
+          // Formato ISO - usar DateTime.fromISO
+          const brasilTime = DateTime.fromISO(scheduledAtStr)
+          dateStr = brasilTime.format('YYYY-MM-DD')
+          timeStr = brasilTime.format('HH:mm')
+        } else {
+          // Formato já do Brasil - processar diretamente
+          const parts = scheduledAtStr.split(' ')
+          dateStr = parts[0] || ''
+          timeStr = parts[1]?.slice(0, 5) || ''
+        }
+      }
 
       const serviceNames = Array.isArray(apt.appointmentServices)
         ? apt.appointmentServices.map((s) => s.service.name)
@@ -383,7 +394,7 @@ export default function AppointmentHistory() {
                 clientId: editingAppointment.client,
                 professionalId: editingAppointment.professional,
                 serviceIds: editingAppointment.services,
-                scheduledAt: `${editingAppointment.date}T${editingAppointment.time}:00.000Z`,
+                scheduledAt: `${editingAppointment.date} ${editingAppointment.time}:00`,
                 total: editingAppointment.price.toString(),
                 status: 'COMPLETED',
               }}
