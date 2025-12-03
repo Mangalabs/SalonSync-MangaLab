@@ -42,7 +42,7 @@ export function DateTimeSelector({
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      const datetime = `${selectedDate}T${selectedTime}:00.000Z`
+      const datetime = `${selectedDate} ${selectedTime}:00`
 
       const [year, month, day] = selectedDate.split('-')
       const formattedDate = `${day}/${month}/${year}`

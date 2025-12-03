@@ -109,7 +109,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
         return []
       }
       const res = await axios.get(
-        `/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`,
+        `/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`
       )
       return res.data
     },
@@ -122,7 +122,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
 
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
-      const scheduledAt = `${data.date}T${data.time}:00.000Z`
+      const scheduledAt = `${data.date} ${data.time}:00`
       const appointmentDate = new Date(data.date)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -133,8 +133,8 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
       const config =
         isAdmin && data.branchId
           ? {
-            headers: { 'x-branch-id': data.branchId },
-          }
+              headers: { 'x-branch-id': data.branchId },
+            }
           : {}
 
       await axios.post(
@@ -146,7 +146,7 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
           scheduledAt,
           status,
         },
-        config,
+        config
       )
     },
     onSuccess: () => {
@@ -304,7 +304,6 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
                     checked={field.value.includes(s.id)}
                     onCheckedChange={(checked) => {
                       const set = new Set(field.value)
-                      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                       checked ? set.add(s.id) : set.delete(s.id)
                       field.onChange(Array.from(set))
                     }}

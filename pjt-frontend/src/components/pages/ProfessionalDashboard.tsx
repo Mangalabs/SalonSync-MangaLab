@@ -42,7 +42,9 @@ export default function ProfessionalDashboard() {
   const [showRegisterForm, setShowRegisterForm] = useState(false)
 
   const today = DateTime.now().format('YYYY-MM-DD')
-  const startOfMonth = DateTime.startOf(DateTime.now(), 'month').format('YYYY-MM-DD')
+  const startOfMonth = DateTime.startOf(DateTime.now(), 'month').format(
+    'YYYY-MM-DD'
+  )
 
   const getDateRange = () => {
     switch (selectedPeriod) {
@@ -64,7 +66,6 @@ export default function ProfessionalDashboard() {
 
   const { startDate, endDate } = getDateRange()
 
-  // Usar a mesma abordagem da página de appointments
   const { data: allAppointments = [] } = useQuery({
     queryKey: ['appointments', activeBranch?.id],
     queryFn: async () => {
@@ -74,29 +75,24 @@ export default function ProfessionalDashboard() {
     enabled: !!activeBranch,
   })
 
-  // Filtrar appointments baseado no tipo de usuário
   const userAppointments = useMemo(() => {
     if (!user?.name) return []
-    
-    // Se for admin, pode ver todos os appointments da filial
-    // Se for profissional, só vê os próprios
+
     return allAppointments.filter((apt: any) => {
-      // Admin vê todos da filial
       if (user.role === 'ADMIN' || user.role === 'OWNER') {
         return true
       }
-      // Profissional vê apenas os próprios
       return apt.professional?.name?.toLowerCase() === user.name?.toLowerCase()
     })
   }, [allAppointments, user?.name, user?.role])
-  
+
   const todayAppointments = userAppointments.filter((apt: any) => {
-    const aptDate = DateTime.fromISO(apt.scheduledAt).format('YYYY-MM-DD')
+    const aptDate = apt.scheduledAt?.toString().split('T')[0]
     return aptDate === today
   })
 
   const periodAppointments = userAppointments.filter((apt: any) => {
-    const aptDate = DateTime.fromISO(apt.scheduledAt).format('YYYY-MM-DD')
+    const aptDate = apt.scheduledAt?.toString().split('T')[0]
     return aptDate >= startDate && aptDate <= endDate
   })
 
@@ -279,19 +275,19 @@ export default function ProfessionalDashboard() {
 
   const completedAppointments =
     professionalData?.appointments?.filter(
-      (apt: any) => apt.status === 'COMPLETED',
+      (apt: any) => apt.status === 'COMPLETED'
     ) || []
   const todayCompletedAppointments =
     professionalData?.todayAppointments?.filter(
-      (apt: any) => apt.status === 'COMPLETED',
+      (apt: any) => apt.status === 'COMPLETED'
     ) || []
   const scheduledAppointments =
     professionalData?.appointments?.filter(
-      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED',
+      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED'
     ) || []
   const todayScheduled =
     professionalData?.todayAppointments?.filter(
-      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED',
+      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED'
     ) || []
 
   const quickActions = [
@@ -344,7 +340,8 @@ export default function ProfessionalDashboard() {
           </h1>
           <p className='text-sm md:text-base text-muted-foreground'>
             {activeBranch?.name} • {getPeriodLabel()}
-            {(user?.role === 'ADMIN' || user?.role === 'OWNER') && ' • Visão Geral'}
+            {(user?.role === 'ADMIN' || user?.role === 'OWNER') &&
+              ' • Visão Geral'}
           </p>
         </div>
 
@@ -395,7 +392,7 @@ export default function ProfessionalDashboard() {
         <StatsCard
           title='Minha Comissão'
           value={formatCurrency(
-            professionalData?.commission?.summary?.totalCommission || 0,
+            professionalData?.commission?.summary?.totalCommission || 0
           )}
           change={`${
             professionalData?.commission?.summary?.totalAppointments || 0
@@ -407,7 +404,7 @@ export default function ProfessionalDashboard() {
         <StatsCard
           title='Receita Gerada'
           value={formatCurrency(
-            professionalData?.commission?.summary?.totalRevenue || 0,
+            professionalData?.commission?.summary?.totalRevenue || 0
           )}
           change={`${
             professionalData?.commission?.professional?.commissionRate || 0
@@ -427,8 +424,14 @@ export default function ProfessionalDashboard() {
         <StatsCard
           title='Atendimentos Hoje'
           value={todayCompletedAppointments.length.toString()}
-          change={todayCompletedAppointments.length > 0 ? 'Produtivo!' : 'Sem atendimentos'}
-          changeType={todayCompletedAppointments.length > 0 ? 'positive' : 'neutral'}
+          change={
+            todayCompletedAppointments.length > 0
+              ? 'Produtivo!'
+              : 'Sem atendimentos'
+          }
+          changeType={
+            todayCompletedAppointments.length > 0 ? 'positive' : 'neutral'
+          }
           icon={CheckCircle}
           iconColor='orange'
         />
@@ -451,7 +454,10 @@ export default function ProfessionalDashboard() {
                       {appointment.client.name}
                     </h4>
                     <Badge variant='outline' className='text-xs'>
-                      {DateTime.fromISO(appointment.scheduledAt).format('HH:mm')}
+                      {appointment.scheduledAt
+                        ?.toString()
+                        .split('T')[1]
+                        ?.slice(0, 5) || '00:00'}
                     </Badge>
                   </div>
                   <div className='text-xs text-gray-600'>
@@ -486,7 +492,10 @@ export default function ProfessionalDashboard() {
                       {appointment.client.name}
                     </h4>
                     <Badge variant='outline' className='text-xs'>
-                      {DateTime.fromISO(appointment.scheduledAt).format('HH:mm')}
+                      {appointment.scheduledAt
+                        ?.toString()
+                        .split('T')[1]
+                        ?.slice(0, 5) || '00:00'}
                     </Badge>
                   </div>
                   <div className='text-xs text-gray-600'>
@@ -522,7 +531,12 @@ export default function ProfessionalDashboard() {
                         {appointment.client.name}
                       </div>
                       <div className='text-xs text-gray-500'>
-                        {DateTime.fromISO(appointment.scheduledAt).format('DD/MM/YYYY')}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[0]
+                          ?.split('-')
+                          .reverse()
+                          .join('/') || ''}
                       </div>
                     </div>
                     <div className='text-sm font-semibold text-green-600'>
@@ -562,9 +576,17 @@ export default function ProfessionalDashboard() {
                         {appointment.client.name}
                       </div>
                       <div className='text-xs text-gray-500'>
-                        {DateTime.fromISO(appointment.scheduledAt).format('DD/MM/YYYY')}{' '}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[0]
+                          ?.split('-')
+                          .reverse()
+                          .join('/') || ''}{' '}
                         às{' '}
-                        {DateTime.fromISO(appointment.scheduledAt).format('HH:mm')}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[1]
+                          ?.slice(0, 5) || '00:00'}
                       </div>
                     </div>
                     <div className='text-sm font-semibold text-blue-600'>
@@ -608,9 +630,9 @@ export default function ProfessionalDashboard() {
               <div className='text-2xl font-bold text-blue-600'>
                 {professionalData?.commission?.summary?.totalAppointments > 0
                   ? (
-                    professionalData.commission.summary.totalRevenue /
+                      professionalData.commission.summary.totalRevenue /
                       professionalData.commission.summary.totalAppointments
-                  ).toFixed(0)
+                    ).toFixed(0)
                   : 0}
               </div>
               <div className='text-sm text-muted-foreground'>

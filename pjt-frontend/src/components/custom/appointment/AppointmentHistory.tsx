@@ -86,32 +86,14 @@ export default function AppointmentHistory() {
       apt &&
       apt.status &&
       apt.status.toUpperCase() !== 'SCHEDULED' &&
-      apt.branchId === activeBranch?.id,
+      apt.branchId === activeBranch?.id
   )
 
   const normalizedAppointments: AppointmentHistory[] = branchAppointments.map(
     (apt) => {
-      // Usar DateTime utility para processar corretamente
-      const scheduledAtStr = typeof apt.scheduledAt === 'string' 
-        ? apt.scheduledAt 
-        : apt.scheduledAt?.toString() || ''
-      
-      let dateStr = ''
-      let timeStr = ''
-      
-      if (scheduledAtStr) {
-        if (scheduledAtStr.includes('T')) {
-          // Formato ISO - usar DateTime.fromISO
-          const brasilTime = DateTime.fromISO(scheduledAtStr)
-          dateStr = brasilTime.format('YYYY-MM-DD')
-          timeStr = brasilTime.format('HH:mm')
-        } else {
-          // Formato já do Brasil - processar diretamente
-          const parts = scheduledAtStr.split(' ')
-          dateStr = parts[0] || ''
-          timeStr = parts[1]?.slice(0, 5) || ''
-        }
-      }
+      const scheduledAtStr = apt.scheduledAt?.toString() || ''
+      const dateStr = scheduledAtStr.split('T')[0] || ''
+      const timeStr = scheduledAtStr.split('T')[1]?.slice(0, 5) || ''
 
       const serviceNames = Array.isArray(apt.appointmentServices)
         ? apt.appointmentServices.map((s) => s.service.name)
@@ -131,18 +113,18 @@ export default function AppointmentHistory() {
           apt.status === 'COMPLETED'
             ? 'completed'
             : apt.status === 'CANCELLED'
-              ? 'cancelled'
-              : 'no-show',
+            ? 'cancelled'
+            : 'no-show',
         rating: apt.rating || undefined,
       }
-    },
+    }
   )
 
   const professionals = Array.from(
-    new Set(normalizedAppointments.map((a) => a.professional)),
+    new Set(normalizedAppointments.map((a) => a.professional))
   )
   const services = Array.from(
-    new Set(normalizedAppointments.flatMap((a) => a.services)),
+    new Set(normalizedAppointments.flatMap((a) => a.services))
   )
 
   const filteredHistory = normalizedAppointments.filter((appointment) => {
@@ -186,17 +168,15 @@ export default function AppointmentHistory() {
       }
       return acc
     },
-    {} as Record<string, any>,
+    {} as Record<string, any>
   )
   const topProfessional = Object.values(professionalStats).sort(
-    (a, b) => b.appointments - a.appointments,
+    (a, b) => b.appointments - a.appointments
   )[0]
 
   const [editingAppointment, setEditingAppointment] =
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useState<AppointmentHistory | null>(null)
   const [deletingAppointment, setDeletingAppointment] =
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useState<AppointmentHistory | null>(null)
 
   return (
@@ -319,14 +299,14 @@ export default function AppointmentHistory() {
                       {appointment.paymentMethod === 'CASH'
                         ? 'Dinheiro'
                         : appointment.paymentMethod === 'CARD'
-                          ? 'Cartão'
-                          : appointment.paymentMethod === 'PIX'
-                            ? 'PIX'
-                            : appointment.paymentMethod === 'TRANSFER'
-                              ? 'Transferência'
-                              : appointment.paymentMethod === 'OTHER'
-                                ? 'Outros'
-                                : 'N/A'}
+                        ? 'Cartão'
+                        : appointment.paymentMethod === 'PIX'
+                        ? 'PIX'
+                        : appointment.paymentMethod === 'TRANSFER'
+                        ? 'Transferência'
+                        : appointment.paymentMethod === 'OTHER'
+                        ? 'Outros'
+                        : 'N/A'}
                     </td>
                     <td className='py-3 px-2 text-sm flex gap-2'>
                       <Button

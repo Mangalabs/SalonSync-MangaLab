@@ -112,25 +112,88 @@ const calculateEndTime = (startTime: string, duration: number): string => {
     const endMoment = DateTime.add(startMoment, duration, 'minutes')
     return DateTime.formatTime(endMoment)
   } catch (error) {
-    const fallbackMoment = DateTime.fromDateTime('2000-01-01', startTime || '00:00')
+    const fallbackMoment = DateTime.fromDateTime(
+      '2000-01-01',
+      startTime || '00:00'
+    )
     const endMoment = DateTime.add(fallbackMoment, 30, 'minutes')
     return DateTime.formatTime(endMoment)
   }
 }
 
 const timeSlots = [
-  '08:00', '08:10', '08:20', '08:30', '08:40', '08:50',
-  '09:00', '09:10', '09:20', '09:30', '09:40', '09:50',
-  '10:00', '10:10', '10:20', '10:30', '10:40', '10:50',
-  '11:00', '11:10', '11:20', '11:30', '11:40', '11:50',
-  '12:00', '12:10', '12:20', '12:30', '12:40', '12:50',
-  '13:00', '13:10', '13:20', '13:30', '13:40', '13:50',
-  '14:00', '14:10', '14:20', '14:30', '14:40', '14:50',
-  '15:00', '15:10', '15:20', '15:30', '15:40', '15:50',
-  '16:00', '16:10', '16:20', '16:30', '16:40', '16:50',
-  '17:00', '17:10', '17:20', '17:30', '17:40', '17:50',
-  '18:00', '18:10', '18:20', '18:30', '18:40', '18:50',
-  '19:00', '19:10', '19:20', '19:30', '19:40', '19:50'
+  '08:00',
+  '08:10',
+  '08:20',
+  '08:30',
+  '08:40',
+  '08:50',
+  '09:00',
+  '09:10',
+  '09:20',
+  '09:30',
+  '09:40',
+  '09:50',
+  '10:00',
+  '10:10',
+  '10:20',
+  '10:30',
+  '10:40',
+  '10:50',
+  '11:00',
+  '11:10',
+  '11:20',
+  '11:30',
+  '11:40',
+  '11:50',
+  '12:00',
+  '12:10',
+  '12:20',
+  '12:30',
+  '12:40',
+  '12:50',
+  '13:00',
+  '13:10',
+  '13:20',
+  '13:30',
+  '13:40',
+  '13:50',
+  '14:00',
+  '14:10',
+  '14:20',
+  '14:30',
+  '14:40',
+  '14:50',
+  '15:00',
+  '15:10',
+  '15:20',
+  '15:30',
+  '15:40',
+  '15:50',
+  '16:00',
+  '16:10',
+  '16:20',
+  '16:30',
+  '16:40',
+  '16:50',
+  '17:00',
+  '17:10',
+  '17:20',
+  '17:30',
+  '17:40',
+  '17:50',
+  '18:00',
+  '18:10',
+  '18:20',
+  '18:30',
+  '18:40',
+  '18:50',
+  '19:00',
+  '19:10',
+  '19:20',
+  '19:30',
+  '19:40',
+  '19:50',
 ]
 
 const normalizeDate = (date: Date) => {
@@ -153,7 +216,7 @@ export default function Appointments() {
     useState<Appointment | null>(null)
 
   const [selectedDate, setSelectedDate] = useState(() =>
-    normalizeDate(DateTime.now().toDate()),
+    normalizeDate(DateTime.now().toDate())
   )
 
   const [filterProfessional, setFilterProfessional] = useState<string>('all')
@@ -169,7 +232,6 @@ export default function Appointments() {
       queryFn: async () => {
         const res = await axios.get('/api/appointments')
         return res.data.map((a: any) => {
-          // Processar data normalmente
           const scheduledDate = new Date(a.scheduledAt)
           const statusMap: Record<
             string,
@@ -181,27 +243,35 @@ export default function Appointments() {
             PENDING: 'pending',
           }
 
-          // Usar Day.js para processar horário já no Brasil
-          const brasilTime = DateTime.fromISO(a.scheduledAt)
-          const time = brasilTime.format('HH:mm')
-          
+          const scheduledAtStr = a.scheduledAt?.toString() || ''
+          const time = scheduledAtStr.split('T')[1]?.slice(0, 5) || '00:00'
 
           const duration = a.appointmentServices?.[0]?.service?.duration ?? 30
           const endTime = calculateEndTime(time, duration)
 
           const services = a.appointmentServices || []
-          const totalPrice = services.reduce((sum, as) => sum + parseFloat(as.service?.price || '0'), 0)
-          const totalDuration = services.reduce((sum, as) => sum + (as.service?.duration || 30), 0)
-          const serviceNames = services.map(as => as.service?.name).filter(Boolean).join(', ') || 'Serviço'
+          const totalPrice = services.reduce(
+            (sum, as) => sum + parseFloat(as.service?.price || '0'),
+            0
+          )
+          const totalDuration = services.reduce(
+            (sum, as) => sum + (as.service?.duration || 30),
+            0
+          )
+          const serviceNames =
+            services
+              .map((as) => as.service?.name)
+              .filter(Boolean)
+              .join(', ') || 'Serviço'
           const calculatedEndTime = calculateEndTime(time, totalDuration)
-          
+
           return {
             id: a.id,
             clientId: a.client?.id ?? '',
             client: a.client?.name ?? 'Cliente Excluído',
             serviceId: services[0]?.service?.id ?? '',
             service: serviceNames,
-            services: services, // Adicionar array completo de serviços
+            services: services,
             professionalId: a.professional?.id ?? '',
             professional: a.professional?.name ?? 'Profissional',
             time: time,
@@ -228,7 +298,7 @@ export default function Appointments() {
         }
 
         const res = await axios.get(
-          `/api/professionals?branchId=${activeBranch.id}`,
+          `/api/professionals?branchId=${activeBranch.id}`
         )
         return res.data
           .map((p: any) => {
@@ -259,20 +329,17 @@ export default function Appointments() {
 
   const branchAppointments = useMemo(
     () => appointments.filter((a) => a.branchId === activeBranch?.id),
-    [appointments, activeBranch],
+    [appointments, activeBranch]
   )
 
-  const filteredProfessionals = useMemo(
-    () => {
-      if (!Array.isArray(allProfessionals)) {
-        return []
-      }
-      return filterProfessional === 'all'
-        ? allProfessionals
-        : allProfessionals.filter((p) => p && p.id === filterProfessional)
-    },
-    [allProfessionals, filterProfessional],
-  )
+  const filteredProfessionals = useMemo(() => {
+    if (!Array.isArray(allProfessionals)) {
+      return []
+    }
+    return filterProfessional === 'all'
+      ? allProfessionals
+      : allProfessionals.filter((p) => p && p.id === filterProfessional)
+  }, [allProfessionals, filterProfessional])
 
   const appointmentsForDay = useMemo(() => {
     if (!selectedDate || !Array.isArray(branchAppointments)) {
@@ -298,14 +365,14 @@ export default function Appointments() {
     }
     try {
       const allAppointmentsForDay = branchAppointments.filter(
-        (a) => a && a.date === selectedDate.toISOString().split('T')[0],
+        (a) => a && a.date === selectedDate.toISOString().split('T')[0]
       )
       const total = allAppointmentsForDay.length
       const pending = allAppointmentsForDay.filter(
-        (a) => a && (a.status === 'pending' || a.status === 'confirmed'),
+        (a) => a && (a.status === 'pending' || a.status === 'confirmed')
       ).length
       const completed = allAppointmentsForDay.filter(
-        (a) => a && a.status === 'completed',
+        (a) => a && a.status === 'completed'
       ).length
       return { total, pending, completed }
     } catch (error) {
@@ -329,7 +396,11 @@ export default function Appointments() {
   }
 
   const goToPreviousDay = () => {
-    const previousDay = DateTime.subtract(DateTime.fromJSDate(selectedDate), 1, 'day')
+    const previousDay = DateTime.subtract(
+      DateTime.fromJSDate(selectedDate),
+      1,
+      'day'
+    )
     setSelectedDate(normalizeDate(previousDay.toDate()))
   }
 
@@ -437,8 +508,6 @@ export default function Appointments() {
             </div>
           </div>
 
-
-
           <div className='bg-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border'>
             <div className='flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between'>
               <div className='flex items-center gap-2'>
@@ -510,7 +579,6 @@ export default function Appointments() {
           </div>
 
           <div className='bg-card rounded-2xl shadow-sm border border-border overflow-hidden'>
-
             <div className='overflow-x-auto max-h-[600px] sm:max-h-[700px] overflow-y-auto'>
               <TooltipProvider>
                 <div>
@@ -544,156 +612,167 @@ export default function Appointments() {
                   <div className='divide-y divide-border/50'>
                     {isLoading
                       ? Array.from({ length: 10 }).map((_, i) => (
-                        <div key={i} className='flex'>
-                          <div className='w-16 flex-shrink-0 py-2 px-2 border-r border-border flex items-center justify-center sticky left-0 bg-card z-10'>
-                            <Skeleton className='h-4 w-12' />
-                          </div>
-                          {filteredProfessionals.map((prof) => (
-                            <div
-                              key={`${i}-${prof.id}`}
-                              className='flex-1 min-w-[160px] sm:min-w-[180px] px-2 py-1 border-r border-border last:border-r-0 min-h-[42px] flex items-center'>
-                              <Skeleton className='h-6 w-full' />
+                          <div key={i} className='flex'>
+                            <div className='w-16 flex-shrink-0 py-2 px-2 border-r border-border flex items-center justify-center sticky left-0 bg-card z-10'>
+                              <Skeleton className='h-4 w-12' />
                             </div>
-                          ))}
-                        </div>
-                      ))
-                      : timeSlots.map((time) => (
-                        <div
-                          key={time}
-                          className='flex hover:bg-muted/50 transition-colors'>
-                          <div className='w-16 flex-shrink-0 py-2 px-2 border-r border-border flex items-center justify-center sticky left-0 bg-card z-10'>
-                            <span className='text-[11px] text-muted-foreground'>
-                              {time.endsWith(':00') ? time : ''}
-                            </span>
-                          </div>
-
-                          {filteredProfessionals.map((prof) => {
-                            const appointmentStarting =
-                              appointmentsForDay.find(
-                                (apt) =>
-                                  apt && apt.time === time &&
-                                  apt.professionalId === prof.id,
-                              )
-
-                            const appointmentCovering =
-                              appointmentsForDay.find(
-                                (apt) =>
-                                  apt && apt.professionalId === prof.id &&
-                                  apt.time < time &&
-                                  apt.endTime > time,
-                              )
-
-                            const rowSpan = appointmentStarting
-                              ? Math.ceil(appointmentStarting.duration / 10)
-                              : 1
-
-                            const cardHeight = `calc(${
-                              rowSpan * 42
-                            }px - 0.5rem)`
-
-                            return (
+                            {filteredProfessionals.map((prof) => (
                               <div
-                                key={`${time}-${prof.id}`}
-                                className='flex-1 min-w-[160px] sm:min-w-[180px] px-2 py-1 border-r border-border last:border-r-0 min-h-[42px] relative'>
-                                {appointmentStarting ? (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className={`rounded-md border px-2 py-1.5 cursor-pointer transition-all hover:shadow-sm ${getStatusColor(
-                                          appointmentStarting.status,
-                                        )}`}
-                                        style={{
-                                          position: 'absolute',
-                                          height: cardHeight,
-                                          top: '0.25rem',
-                                          left: '0.5rem',
-                                          width: 'calc(100% - 1rem)',
-                                          zIndex: 10,
-                                          display: 'flex',
-                                          flexDirection: 'column',
-                                          justifyContent: 'space-between',
-                                        }}
-                                        onClick={() =>
-                                          setSelectedAppointment(
-                                            appointmentStarting,
-                                          )
-                                        }>
-                                        <div className='flex-1 min-w-0'>
-                                          <p className='text-xs truncate'>
+                                key={`${i}-${prof.id}`}
+                                className='flex-1 min-w-[160px] sm:min-w-[180px] px-2 py-1 border-r border-border last:border-r-0 min-h-[42px] flex items-center'>
+                                <Skeleton className='h-6 w-full' />
+                              </div>
+                            ))}
+                          </div>
+                        ))
+                      : timeSlots.map((time) => (
+                          <div
+                            key={time}
+                            className='flex hover:bg-muted/50 transition-colors'>
+                            <div className='w-16 flex-shrink-0 py-2 px-2 border-r border-border flex items-center justify-center sticky left-0 bg-card z-10'>
+                              <span className='text-[11px] text-muted-foreground'>
+                                {time.endsWith(':00') ? time : ''}
+                              </span>
+                            </div>
+
+                            {filteredProfessionals.map((prof) => {
+                              const appointmentStarting =
+                                appointmentsForDay.find(
+                                  (apt) =>
+                                    apt &&
+                                    apt.time === time &&
+                                    apt.professionalId === prof.id
+                                )
+
+                              const appointmentCovering =
+                                appointmentsForDay.find(
+                                  (apt) =>
+                                    apt &&
+                                    apt.professionalId === prof.id &&
+                                    apt.time < time &&
+                                    apt.endTime > time
+                                )
+
+                              const rowSpan = appointmentStarting
+                                ? Math.ceil(appointmentStarting.duration / 10)
+                                : 1
+
+                              const cardHeight = `calc(${
+                                rowSpan * 42
+                              }px - 0.5rem)`
+
+                              return (
+                                <div
+                                  key={`${time}-${prof.id}`}
+                                  className='flex-1 min-w-[160px] sm:min-w-[180px] px-2 py-1 border-r border-border last:border-r-0 min-h-[42px] relative'>
+                                  {appointmentStarting ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          className={`rounded-md border px-2 py-1.5 cursor-pointer transition-all hover:shadow-sm ${getStatusColor(
+                                            appointmentStarting.status
+                                          )}`}
+                                          style={{
+                                            position: 'absolute',
+                                            height: cardHeight,
+                                            top: '0.25rem',
+                                            left: '0.5rem',
+                                            width: 'calc(100% - 1rem)',
+                                            zIndex: 10,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'space-between',
+                                          }}
+                                          onClick={() =>
+                                            setSelectedAppointment(
+                                              appointmentStarting
+                                            )
+                                          }>
+                                          <div className='flex-1 min-w-0'>
+                                            <p className='text-xs truncate'>
+                                              {appointmentStarting.client}
+                                            </p>
+                                            <p className='text-[10px] opacity-75 truncate'>
+                                              {appointmentStarting.service}
+                                            </p>
+                                          </div>
+                                          <span className='text-[10px] opacity-60 flex-shrink-0 text-right'>
+                                            {getStatusLabel(
+                                              appointmentStarting.status
+                                            )}
+                                          </span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent
+                                        side='top'
+                                        className='max-w-xs'>
+                                        <div className='space-y-1 text-xs'>
+                                          <p>
+                                            <strong>Cliente:</strong>{' '}
                                             {appointmentStarting.client}
                                           </p>
-                                          <p className='text-[10px] opacity-75 truncate'>
-                                            {appointmentStarting.service}
+                                          {appointmentStarting.services &&
+                                          appointmentStarting.services.length >
+                                            1 ? (
+                                            <div>
+                                              <strong>Serviços:</strong>
+                                              {appointmentStarting.services.map(
+                                                (as, idx) => (
+                                                  <div
+                                                    key={idx}
+                                                    className='ml-2'>
+                                                    • {as.service.name} - R${' '}
+                                                    {parseFloat(
+                                                      as.service.price
+                                                    ).toFixed(2)}
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <p>
+                                              <strong>Serviço:</strong>{' '}
+                                              {appointmentStarting.service}
+                                            </p>
+                                          )}
+                                          <p>
+                                            <strong>Profissional:</strong>{' '}
+                                            {appointmentStarting.professional}
+                                          </p>
+                                          <p>
+                                            <strong>Duração:</strong>{' '}
+                                            {appointmentStarting.duration}{' '}
+                                            minutos
+                                          </p>
+                                          <p>
+                                            <strong>Valor:</strong> R${' '}
+                                            {appointmentStarting.price.toFixed(
+                                              2
+                                            )}
+                                          </p>
+                                          <p>
+                                            <strong>Status:</strong>{' '}
+                                            {getStatusLabel(
+                                              appointmentStarting.status
+                                            )}
                                           </p>
                                         </div>
-                                        <span className='text-[10px] opacity-60 flex-shrink-0 text-right'>
-                                          {getStatusLabel(
-                                            appointmentStarting.status,
-                                          )}
-                                        </span>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent
-                                      side='top'
-                                      className='max-w-xs'>
-                                      <div className='space-y-1 text-xs'>
-                                        <p>
-                                          <strong>Cliente:</strong>{' '}
-                                          {appointmentStarting.client}
-                                        </p>
-                                        {appointmentStarting.services && appointmentStarting.services.length > 1 ? (
-                                          <div>
-                                            <strong>Serviços:</strong>
-                                            {appointmentStarting.services.map((as, idx) => (
-                                              <div key={idx} className='ml-2'>
-                                                • {as.service.name} - R$ {parseFloat(as.service.price).toFixed(2)}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <p>
-                                            <strong>Serviço:</strong>{' '}
-                                            {appointmentStarting.service}
-                                          </p>
-                                        )}
-                                        <p>
-                                          <strong>Profissional:</strong>{' '}
-                                          {appointmentStarting.professional}
-                                        </p>
-                                        <p>
-                                          <strong>Duração:</strong>{' '}
-                                          {appointmentStarting.duration}{' '}
-                                          minutos
-                                        </p>
-                                        <p>
-                                          <strong>Valor:</strong> R${' '}
-                                          {appointmentStarting.price.toFixed(
-                                            2,
-                                          )}
-                                        </p>
-                                        <p>
-                                          <strong>Status:</strong>{' '}
-                                          {getStatusLabel(
-                                            appointmentStarting.status,
-                                          )}
-                                        </p>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                ) : appointmentCovering ? (
-                                  <></>
-                                ) : (
-                                  <div className='w-full h-full flex items-center justify-center'>
-                                    <span className='text-[10px] text-muted-foreground/30'>
-                                      —
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ))}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : appointmentCovering ? (
+                                    <></>
+                                  ) : (
+                                    <div className='w-full h-full flex items-center justify-center'>
+                                      <span className='text-[10px] text-muted-foreground/30'>
+                                        —
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ))}
                   </div>
                 </div>
               </TooltipProvider>
@@ -910,12 +989,15 @@ export default function Appointments() {
                 <label className='text-xs text-muted-foreground uppercase tracking-wider'>
                   Serviços
                 </label>
-                {selectedAppointment.services && selectedAppointment.services.length > 1 ? (
+                {selectedAppointment.services &&
+                selectedAppointment.services.length > 1 ? (
                   <div className='mt-1 space-y-1'>
                     {selectedAppointment.services.map((as, index) => (
                       <div key={index} className='flex justify-between text-sm'>
                         <span>• {as.service.name}</span>
-                        <span>R$ {parseFloat(as.service.price).toFixed(2)}</span>
+                        <span>
+                          R$ {parseFloat(as.service.price).toFixed(2)}
+                        </span>
                       </div>
                     ))}
                     <div className='border-t pt-1 mt-2 flex justify-between font-semibold'>
@@ -973,7 +1055,7 @@ export default function Appointments() {
                   </label>
                   <span
                     className={`inline-block px-3 py-1 rounded-full text-xs mt-1 ${getStatusColor(
-                      selectedAppointment.status,
+                      selectedAppointment.status
                     )}`}>
                     {getStatusLabel(selectedAppointment.status)}
                   </span>
@@ -995,10 +1077,14 @@ export default function Appointments() {
               </Button>
 
               {(() => {
-                const appointmentDate = DateTime.startOf(DateTime.fromJSDate(selectedAppointment.scheduledAt), 'day')
+                const appointmentDate = DateTime.startOf(
+                  DateTime.fromJSDate(selectedAppointment.scheduledAt),
+                  'day'
+                )
                 const today = DateTime.startOf(DateTime.now(), 'day')
                 const canConfirm =
-                  (appointmentDate.isSame(today) || appointmentDate.isBefore(today)) &&
+                  (appointmentDate.isSame(today) ||
+                    appointmentDate.isBefore(today)) &&
                   selectedAppointment.status !== 'completed'
 
                 if (canConfirm) {
