@@ -103,34 +103,49 @@ export default function ProfessionalDashboard() {
   }
 
   const {
+    data: allProfessionals,
+    isLoading: professionalLoading,
+  } = useQuery({
+    queryKey: ['professionals', activeBranch?.id],
+    queryFn: async () => {
+      const res = await axios.get('/api/professionals')
+      return res.data.filter((p: any) => p.branchId === activeBranch?.id)
+    },
+    enabled: !!activeBranch && user?.role !== 'ADMIN' && user?.role !== 'OWNER',
+  })
+
+  const professionalInfo = allProfessionals?.find(
+    (p: any) => p.name?.toLowerCase() === user?.name?.toLowerCase()
+  )
+
+
+
+  const isProfessional = !!professionalInfo && professionalInfo !== null
+
+  const {
     data: commissionData,
     isLoading: commissionLoading,
     error: commissionError,
   } = useQuery({
     queryKey: [
       'professional-commission',
-      user?.name,
+      professionalInfo?.id,
       startDate,
       endDate,
       activeBranch?.id,
     ],
     queryFn: async () => {
-      return {
-        professional: { id: user?.id, name: user?.name, commissionRate: 0 },
-        summary: {
-          totalAppointments: 0,
-          totalRevenue: 0,
-          totalCommission: 0,
-        },
-        dailyCommissions: [],
-      }
+      const res = await axios.get(
+        `/api/professionals/${professionalInfo?.id}/commission?startDate=${startDate}&endDate=${endDate}`
+      )
+      return res.data
     },
-    enabled: !!user?.name && !!activeBranch,
+    enabled: isProfessional && !!professionalInfo?.id && !!activeBranch,
     staleTime: 30000,
     retry: 2,
   })
 
-  const isLoading = commissionLoading
+  const isLoading = commissionLoading || professionalLoading
   const error = commissionError
 
   const professionalData = {
@@ -340,7 +355,7 @@ export default function ProfessionalDashboard() {
           </h1>
           <p className='text-sm md:text-base text-muted-foreground'>
             {activeBranch?.name} • {getPeriodLabel()}
-            {(user?.role === 'ADMIN' || user?.role === 'OWNER') &&
+            {(user?.role === 'ADMIN' || user?.role === 'OWNER' || !isProfessional) &&
               ' • Visão Geral'}
           </p>
         </div>
@@ -389,30 +404,59 @@ export default function ProfessionalDashboard() {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
-        <StatsCard
-          title='Minha Comissão'
-          value={formatCurrency(
-            professionalData?.commission?.summary?.totalCommission || 0
-          )}
-          change={`${
-            professionalData?.commission?.summary?.totalAppointments || 0
-          } atendimentos`}
-          changeType='neutral'
-          icon={DollarSign}
-          iconColor='green'
-        />
-        <StatsCard
-          title='Receita Gerada'
-          value={formatCurrency(
-            professionalData?.commission?.summary?.totalRevenue || 0
-          )}
-          change={`${
-            professionalData?.commission?.professional?.commissionRate || 0
-          }% taxa`}
-          changeType='neutral'
-          icon={TrendingUp}
-          iconColor='blue'
-        />
+        {isProfessional ? (
+          <>
+            <StatsCard
+              title='Minha Comissão'
+              value={formatCurrency(
+                commissionData?.summary?.totalCommission || 0
+              )}
+              change={`${
+                commissionData?.summary?.totalAppointments || 0
+              } atendimentos`}
+              changeType='neutral'
+              icon={DollarSign}
+              iconColor='green'
+            />
+            <StatsCard
+              title='Receita Gerada'
+              value={formatCurrency(
+                commissionData?.summary?.totalRevenue || 0
+              )}
+              change={`${
+                professionalInfo?.commissionRate || 0
+              }% taxa`}
+              changeType='neutral'
+              icon={TrendingUp}
+              iconColor='blue'
+            />
+          </>
+        ) : (
+          <>
+            <StatsCard
+              title='Receita Total'
+              value={formatCurrency(
+                completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0)
+              )}
+              change={`${completedAppointments.length} atendimentos`}
+              changeType='neutral'
+              icon={DollarSign}
+              iconColor='green'
+            />
+            <StatsCard
+              title='Ticket Médio'
+              value={formatCurrency(
+                completedAppointments.length > 0
+                  ? completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) / completedAppointments.length
+                  : 0
+              )}
+              change='Visão geral'
+              changeType='neutral'
+              icon={TrendingUp}
+              iconColor='blue'
+            />
+          </>
+        )}
         <StatsCard
           title='Agendamentos Hoje'
           value={todayScheduled.length.toString()}
@@ -613,44 +657,78 @@ export default function ProfessionalDashboard() {
       <div className='bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100'>
         <h3 className='text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
           <Target className='h-4 w-4 md:h-5 md:w-5' />
-          Minha Performance
+          {isProfessional ? 'Minha Performance' : 'Performance Geral'}
         </h3>
         <div>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            <div className='text-center'>
-              <div className='text-2xl font-bold text-green-600'>
-                {professionalData?.commission?.summary?.totalAppointments || 0}
+          {isProfessional ? (
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-green-600'>
+                  {commissionData?.summary?.totalAppointments || 0}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Atendimentos no período
+                </div>
               </div>
-              <div className='text-sm text-muted-foreground'>
-                Atendimentos no período
-              </div>
-            </div>
 
-            <div className='text-center'>
-              <div className='text-2xl font-bold text-blue-600'>
-                {professionalData?.commission?.summary?.totalAppointments > 0
-                  ? (
-                      professionalData.commission.summary.totalRevenue /
-                      professionalData.commission.summary.totalAppointments
-                    ).toFixed(0)
-                  : 0}
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-blue-600'>
+                  {commissionData?.summary?.totalAppointments > 0
+                    ? (
+                        commissionData.summary.totalRevenue /
+                        commissionData.summary.totalAppointments
+                      ).toFixed(0)
+                    : 0}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Ticket médio (R$)
+                </div>
               </div>
-              <div className='text-sm text-muted-foreground'>
-                Ticket médio (R$)
-              </div>
-            </div>
 
-            <div className='text-center'>
-              <div className='text-2xl font-bold text-purple-600'>
-                {professionalData?.commission?.professional?.commissionRate ||
-                  0}
-                %
-              </div>
-              <div className='text-sm text-muted-foreground'>
-                Taxa de comissão
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-purple-600'>
+                  {professionalInfo?.commissionRate || 0}%
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Taxa de comissão
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-green-600'>
+                  {completedAppointments.length}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Atendimentos no período
+                </div>
+              </div>
+
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-blue-600'>
+                  {completedAppointments.length > 0
+                    ? (
+                        completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) /
+                        completedAppointments.length
+                      ).toFixed(0)
+                    : 0}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Ticket médio (R$)
+                </div>
+              </div>
+
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-purple-600'>
+                  {scheduledAppointments.length}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  Agendamentos futuros
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
