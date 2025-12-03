@@ -230,26 +230,6 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-
-            <div>
-              <h4 className='font-semibold text-card-foreground mb-4'>
-                Integrações
-              </h4>
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between p-4 border border-border rounded-xl'>
-                  <div className='flex items-center space-x-3'>
-                    <div className='w-10 h-10 bg-muted rounded-lg flex items-center justify-center'></div>
-                    <div>
-                      <p className='text-sm text-muted-foreground'></p>
-                    </div>
-                  </div>
-                  <div className='w-3 h-3 bg-secondary rounded-full'></div>
-                  <button className='text-sm font-medium text-primary hover:text-primary/80 cursor-pointer'>
-                    Configurar
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -372,7 +352,7 @@ export default function Settings() {
             <div className='flex justify-between'>
               <span className='text-muted-foreground'>Última Atualização:</span>
               <span className='font-semibold text-card-foreground'>
-                15/12/2023
+                03/12/2025
               </span>
             </div>
 
@@ -390,11 +370,17 @@ export default function Settings() {
 
             <div className='border-t border-border pt-4 mt-6'>
               <div className='flex space-x-3'>
-                <button className='flex-1 bg-muted text-card-foreground py-2 px-4 rounded-xl font-medium hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
+                <button
+                  onClick={() => (window.location.href = '/dashboard/help')}
+                  className='flex-1 bg-muted text-card-foreground py-2 px-4 rounded-xl font-medium hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
                   <Info className='w-4 h-4' />
                   Ajuda
                 </button>
-                <button className='flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
+                <button
+                  onClick={() =>
+                    window.open('https://w.app/suportesalonsync', '_blank')
+                  }
+                  className='flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-xl font-medium hover:bg-primary/80 transition-colors flex items-center justify-center gap-2 cursor-pointer'>
                   <Shield className='w-4 h-4' />
                   Suporte
                 </button>

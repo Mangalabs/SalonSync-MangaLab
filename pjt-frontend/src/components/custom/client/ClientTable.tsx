@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Search,
   Edit,
@@ -67,6 +67,8 @@ export function ClientTable({ onEdit }: ClientTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [page, setPage] = useState(1)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -75,6 +77,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
     return () => clearTimeout(timer)
   }, [searchTerm])
+
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [showPlanSelection, setShowPlanSelection] = useState(false)
@@ -106,6 +109,17 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
   const clients = clientsData?.clients || []
   const pagination = clientsData?.pagination
+
+  useEffect(() => {
+    if (shouldMaintainFocus && searchInputRef.current) {
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus()
+        }
+      }, 0)
+      setShouldMaintainFocus(false)
+    }
+  }, [clientsData, shouldMaintainFocus])
 
   const { data: appointments = [] } = useQuery({
     queryKey: ['appointments', activeBranch?.id],
@@ -147,40 +161,13 @@ export function ClientTable({ onEdit }: ClientTableProps) {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
+    setShouldMaintainFocus(true)
     if (value !== searchTerm) {
       setPage(1)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className='bg-card rounded-2xl p-6 shadow-sm border-theme'>
-        <div className='mb-6'>
-          <Skeleton className='h-12 w-full rounded-xl' />
-        </div>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className='border-theme rounded-xl p-6'>
-              <div className='flex items-center space-x-3 mb-4'>
-                <Skeleton className='w-12 h-12 rounded-full' />
-                <div className='flex-1 space-y-2'>
-                  <Skeleton className='h-4 w-24' />
-                  <Skeleton className='h-3 w-32' />
-                  <Skeleton className='h-3 w-28' />
-                </div>
-              </div>
-              <Skeleton className='h-4 w-full mb-4' />
-              <div className='flex space-x-2'>
-                <Skeleton className='h-8 flex-1' />
-                <Skeleton className='h-8 flex-1' />
-                <Skeleton className='h-8 flex-1' />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+
   if (error) {
     return (
       <p className='p-4 text-center text-destructive'>
@@ -226,10 +213,6 @@ export function ClientTable({ onEdit }: ClientTableProps) {
     toast.success('Url copiada para área de transferência (CRTL + V)')
   }
 
-  if (isLoading) {
-    return <p className='p-4'>Carregando...</p>
-  }
-
   if (error) {
     return <p className='p-4 text-red-500'>Erro ao carregar clientes</p>
   }
@@ -244,6 +227,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       <div className='mb-4 sm:mb-6 relative'>
         <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5' />
         <input
+          ref={searchInputRef}
           type='text'
           placeholder='Buscar clientes...'
           value={searchTerm}
@@ -253,7 +237,26 @@ export function ClientTable({ onEdit }: ClientTableProps) {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {clients && clients.length > 0 ? (
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className='border border-border rounded-xl p-6 bg-card'>
+              <div className='flex items-center space-x-3 mb-4'>
+                <Skeleton className='w-12 h-12 rounded-full' />
+                <div className='flex-1 space-y-2'>
+                  <Skeleton className='h-4 w-24' />
+                  <Skeleton className='h-3 w-32' />
+                  <Skeleton className='h-3 w-28' />
+                </div>
+              </div>
+              <Skeleton className='h-4 w-full mb-4' />
+              <div className='flex space-x-2'>
+                <Skeleton className='h-8 flex-1' />
+                <Skeleton className='h-8 flex-1' />
+                <Skeleton className='h-8 flex-1' />
+              </div>
+            </div>
+          ))
+        ) : clients && clients.length > 0 ? (
           clients.map((client) => (
             <div
               key={client.id}
@@ -346,7 +349,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               </div>
             </div>
           ))
-        ) : (
+        ) : !isLoading ? (
           <div className='col-span-full text-center py-12'>
             <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
               <Search className='w-8 h-8 text-gray-400' />
@@ -358,7 +361,7 @@ export function ClientTable({ onEdit }: ClientTableProps) {
               Tente buscar com um termo diferente ou adicione um novo cliente.
             </p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Paginação */}
