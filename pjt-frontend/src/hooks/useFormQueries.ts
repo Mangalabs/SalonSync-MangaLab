@@ -23,9 +23,9 @@ export function useFormQueries(
   })
 
   const clients = useQuery<{ id: string; name: string }[]>({
-    queryKey: ['clients', targetBranchId],
+    queryKey: ['clients-all', targetBranchId],
     queryFn: async () => {
-      const params = targetBranchId ? `?branchId=${targetBranchId}&limit=1000` : '?limit=1000'
+      const params = targetBranchId ? `?branchId=${targetBranchId}&limit=9999` : '?limit=9999'
       const res = await axios.get(`/api/clients${params}`)
       return res.data.clients || res.data
     },

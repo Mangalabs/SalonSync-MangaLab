@@ -209,12 +209,6 @@ export function ProfessionalCommissionCard({
                   <div className='text-sm font-semibold text-foreground'>
                     R$ {day.commission.toFixed(2)}
                   </div>
-                  <div className='text-sm text-gray-600'>
-                    {day.dayName} {day.day}
-                  </div>
-                  <div className='text-sm font-semibold text-foreground'>
-                    R$ {day.commission.toFixed(2)}
-                  </div>
                 </div>
               )
             })
