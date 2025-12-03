@@ -176,7 +176,7 @@ export default function AdminDashboard() {
     })
 
     return days.map((d) => ({
-      name: DateTime.fromString(d, 'YYYY-MM-DD').format('ddd'),
+      name: new Date(d).toLocaleDateString('pt-BR', { weekday: 'short' }),
       value: totals[d],
       isToday: d === todayStr,
     }))
@@ -209,12 +209,12 @@ export default function AdminDashboard() {
       (c: any) => c.createdAt?.toString().split('T')[0] >= startDate
     ) || []
   const lastWeekStart = DateTime.subtract(
-    DateTime.fromString(startDate, 'YYYY-MM-DD'),
+    DateTime.fromJSDate(new Date(startDate)),
     7,
     'day'
   )
   const lastWeekEnd = DateTime.subtract(
-    DateTime.fromString(startDate, 'YYYY-MM-DD'),
+    DateTime.fromJSDate(new Date(startDate)),
     1,
     'day'
   )
