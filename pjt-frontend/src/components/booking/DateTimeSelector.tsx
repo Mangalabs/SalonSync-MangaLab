@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { useProfessionalAvailability } from '@/hooks/usePublicBooking'
 
@@ -15,32 +15,38 @@ export function DateTimeSelector({
 }: DateTimeSelectorProps) {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
+  const [debouncedDate, setDebouncedDate] = useState('')
 
-  // Generate next 7 days (excluding Sundays)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDate(selectedDate)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [selectedDate])
+
   const dates = Array.from({ length: 14 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() + i)
     return date
   })
     .filter((date) => date.getDay() !== 0)
-    .slice(0, 7) // Remove Sundays, take first 7
+    .slice(0, 7)
 
-  const { data: availability } = useProfessionalAvailability(
+  const { data: availability, error: availabilityError, isLoading: loadingAvailability } = useProfessionalAvailability(
     professionalId,
-    selectedDate
+    debouncedDate
   )
 
   const availableTimes = availability?.availableTimes || []
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      // Usar EXATAMENTE o mesmo formato do sistema interno que funciona
-      const datetime = `${selectedDate}T${selectedTime}:00.000Z`
-      
-      // Formatar data manualmente para evitar problemas de fuso horário
+      const datetime = `${selectedDate} ${selectedTime}:00`
+
       const [year, month, day] = selectedDate.split('-')
       const formattedDate = `${day}/${month}/${year}`
-      
+
       onSelect({
         date: formattedDate,
         time: selectedTime,
@@ -58,12 +64,10 @@ export function DateTimeSelector({
         <p className='text-gray-600'>Selecione o melhor horário para você</p>
       </div>
 
-      {/* Date Selection */}
       <div>
         <h3 className='text-lg font-semibold text-gray-700 mb-4'>Data</h3>
         <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
           {dates.map((date) => {
-            // Usar formato local para evitar problemas de fuso horário
             const year = date.getFullYear()
             const month = String(date.getMonth() + 1).padStart(2, '0')
             const day = String(date.getDate()).padStart(2, '0')
@@ -94,12 +98,22 @@ export function DateTimeSelector({
         </div>
       </div>
 
-      {/* Time Selection */}
       {selectedDate && (
         <div>
           <h3 className='text-lg font-semibold text-gray-700 mb-4'>Horário</h3>
           <div className='grid grid-cols-3 md:grid-cols-6 gap-3'>
-            {availableTimes.length === 0 ? (
+            {loadingAvailability ? (
+              <div className='col-span-full text-center py-8 text-muted-foreground'>
+                Carregando horários...
+              </div>
+            ) : availabilityError ? (
+              <div className='col-span-full text-center py-8'>
+                <div className='text-red-600 mb-2'>Erro ao carregar horários</div>
+                <div className='text-sm text-gray-500'>
+                  {availabilityError.message || 'Tente novamente em alguns instantes'}
+                </div>
+              </div>
+            ) : availableTimes.length === 0 ? (
               <div className='col-span-full text-center py-8 text-muted-foreground'>
                 {selectedDate
                   ? 'Nenhum horário disponível para esta data'
@@ -127,7 +141,6 @@ export function DateTimeSelector({
         </div>
       )}
 
-      {/* Actions */}
       <div className='flex gap-4 pt-4'>
         <button
           onClick={onBack}

@@ -23,6 +23,7 @@ export class AppointmentsService extends BaseDataService {
     user: UserContext,
     targetBranchId?: string,
   ): Promise<Appointment> {
+
     // Verificar conflito de horário
     const existingAppointment = await this.prisma.appointment.findFirst({
       where: {
@@ -53,6 +54,7 @@ export class AppointmentsService extends BaseDataService {
     const total = services.reduce((sum, s) => sum + Number(s.price), 0);
 
     const branchId = await this.getTargetBranchId(user, targetBranchId);
+
 
     const createdAppointment = await this.prisma.appointment.create({
       data: {
@@ -122,6 +124,7 @@ export class AppointmentsService extends BaseDataService {
         appointmentServices: { include: { service: true } },
       },
     });
+
 
     return appointments;
   }

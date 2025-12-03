@@ -126,9 +126,18 @@ export function AppointmentCard({
             {appointment.professional?.name || 'Profissional removido'}
           </div>
           <div className='text-xs text-[#737373] mb-2'>
-            {appointment.appointmentServices
-              .map((as) => as.service.name)
-              .join(', ')}
+            {appointment.appointmentServices.length > 1 ? (
+              <div className='space-y-0.5'>
+                {appointment.appointmentServices.map((as, index) => (
+                  <div key={index} className='flex justify-between text-[10px]'>
+                    <span>• {as.service.name}</span>
+                    <span>R$ {parseFloat(as.service.price).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              appointment.appointmentServices.map((as) => as.service.name).join(', ')
+            )}
           </div>
 
           {mode === 'completed' && (
@@ -231,10 +240,19 @@ export function AppointmentCard({
       </div>
 
       <div className='text-xs sm:text-sm text-[#737373] mb-3'>
-        <strong>Serviços:</strong>{' '}
-        {appointment.appointmentServices
-          .map((as) => as.service.name)
-          .join(', ')}
+        <strong>Serviços:</strong>
+        {appointment.appointmentServices.length > 1 ? (
+          <div className='mt-1 space-y-1'>
+            {appointment.appointmentServices.map((as, index) => (
+              <div key={index} className='flex justify-between'>
+                <span>• {as.service.name}</span>
+                <span>R$ {parseFloat(as.service.price).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span> {appointment.appointmentServices.map((as) => as.service.name).join(', ')}</span>
+        )}
       </div>
 
       {mode === 'scheduled' && !isCompleted && (

@@ -54,6 +54,7 @@ export default function Sales() {
 
   const [openClientDialog, setOpenClientDialog] = useState(false)
   const [editingClient, setEditingClient] = useState<any | null>(null)
+  const [selectedSeller, setSelectedSeller] = useState<string>('')
 
   useEffect(() => {
     if (!activeBranch) {
@@ -97,7 +98,7 @@ export default function Sales() {
         return []
       }
       const res = await axios.get(
-        `/api/professionals?branchId=${activeBranch.id}`,
+        `/api/professionals?branchId=${activeBranch.id}`
       )
       return res.data
     },
@@ -107,12 +108,19 @@ export default function Sales() {
   const currentProfessionalId = useMemo(() => {
     if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
       const currentProfessional = professionals.find(
-        (p: any) => p.name === user.name,
+        (p: any) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
     return ''
   }, [isProfessional, isAdmin, user?.name, professionals])
+
+  const getSellerId = () => {
+    if (isAdmin) {
+      return selectedSeller || undefined
+    }
+    return currentProfessionalId || undefined
+  }
 
   const addToCart = (product: Product) => {
     if (!activeBranch) {
@@ -121,10 +129,10 @@ export default function Sales() {
     const existingItem = cart.find((item) => item.id === product.id)
     const updatedCart = existingItem
       ? cart.map((item) =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      )
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
       : [...cart, { ...product, quantity: 1 }]
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
   }
@@ -138,7 +146,7 @@ export default function Sales() {
       updatedCart = cart.filter((item) => item.id !== productId)
     } else {
       updatedCart = cart.map((item) =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item,
+        item.id === productId ? { ...item, quantity: newQuantity } : item
       )
     }
     setCarts({ ...carts, [activeBranch.id]: updatedCart })
@@ -154,7 +162,7 @@ export default function Sales() {
 
   const subtotal = cart.reduce(
     (acc, item) => acc + Number(item.salePrice) * item.quantity,
-    0,
+    0
   )
   const categories = [
     'all',
@@ -179,15 +187,15 @@ export default function Sales() {
             quantity: item.quantity,
             unitCost: item.salePrice,
             reason: `Venda de produto${
-              selectedClient ? ` - Cliente: ${selectedClient}` : ''
+              selectedClient ? ` - Cliente: ${selectedClient.name}` : ''
             }`,
             reference: selectedClient
-              ? `Cliente: ${selectedClient}`
+              ? `Cliente: ${selectedClient.name}`
               : undefined,
-            soldById: currentProfessionalId || undefined,
+            soldById: getSellerId(),
           },
-          { headers },
-        ),
+          { headers }
+        )
       )
 
       await Promise.all(promises)
@@ -221,8 +229,7 @@ export default function Sales() {
     }
     return (
       <span
-        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}
-      >
+        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}>
         {product.currentStock} {product.unit}
       </span>
     )
@@ -234,7 +241,7 @@ export default function Sales() {
       .includes(searchTerm.toLowerCase())
     const matchesCategory =
       selectedCategory === 'all' || product.category === selectedCategory
-    const isSaleProduct = product.productType === 'SALE' || !product.productType // Compatibilidade com produtos antigos
+    const isSaleProduct = product.productType === 'SALE' || !product.productType
     return matchesSearch && matchesCategory && isSaleProduct
   })
 
@@ -259,8 +266,7 @@ export default function Sales() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'
-            >
+              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'>
               {categories.map((category) => (
                 <option key={category} value={category}>
                   {category === 'all' ? 'Todas as categorias' : category}
@@ -301,13 +307,11 @@ export default function Sales() {
               filteredProducts.length > 9
                 ? 'max-h-[600px] overflow-y-auto pr-2'
                 : ''
-            }`}
-          >
+            }`}>
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'
-              >
+                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'>
                 <div className='flex items-center justify-between mb-3'>
                   <div className='w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg flex items-center justify-center'>
                     <ShoppingCart className='text-primary w-5 h-5 sm:w-6 sm:h-6' />
@@ -327,8 +331,7 @@ export default function Sales() {
                 </div>
                 <button
                   onClick={() => addToCart(product)}
-                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'
-                >
+                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'>
                   <ShoppingCart className='w-4 h-4' />
                   Adicionar
                 </button>
@@ -346,8 +349,7 @@ export default function Sales() {
           <div
             className={`space-y-3 mb-4 ${
               cart.length > 5 ? 'max-h-64 overflow-y-auto pr-2' : ''
-            }`}
-          >
+            }`}>
             {cart.length === 0 ? (
               <div className='text-center py-6 sm:py-8 text-muted-foreground'>
                 <ShoppingCart className='w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50' />
@@ -360,8 +362,7 @@ export default function Sales() {
               cart.map((item) => (
                 <div
                   key={item.id}
-                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'
-                >
+                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'>
                   <div className='flex-1 min-w-0'>
                     <p className='font-medium text-foreground truncate'>
                       {item.name}
@@ -373,8 +374,7 @@ export default function Sales() {
                   <div className='flex items-center gap-1 sm:gap-2'>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
-                    >
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
                       <Minus className='w-3 h-3' />
                     </button>
                     <span className='w-6 sm:w-8 text-center font-semibold text-sm'>
@@ -382,14 +382,12 @@ export default function Sales() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
-                    >
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
                       <Plus className='w-3 h-3' />
                     </button>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'
-                    >
+                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'>
                       <Trash2 className='w-4 h-4' />
                     </button>
                   </div>
@@ -419,8 +417,7 @@ export default function Sales() {
             <button
               disabled={cart.length === 0}
               onClick={() => createSale.mutate()}
-              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'
-            >
+              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'>
               <CreditCard className='w-4 h-4' />
               Finalizar Venda
             </button>
@@ -436,15 +433,18 @@ export default function Sales() {
             {selectedClient ? (
               <div className='bg-muted rounded-lg p-3 flex items-center justify-between'>
                 <div>
-                  <p className='font-medium text-foreground'>{selectedClient.name}</p>
+                  <p className='font-medium text-foreground'>
+                    {selectedClient.name}
+                  </p>
                   {selectedClient.phone && (
-                    <p className='text-sm text-muted-foreground'>{selectedClient.phone}</p>
+                    <p className='text-sm text-muted-foreground'>
+                      {selectedClient.phone}
+                    </p>
                   )}
                 </div>
                 <button
                   onClick={() => setSelectedClient(null)}
-                  className='text-destructive hover:opacity-80 cursor-pointer'
-                >
+                  className='text-destructive hover:opacity-80 cursor-pointer'>
                   <Trash2 className='w-4 h-4' />
                 </button>
               </div>
@@ -465,7 +465,9 @@ export default function Sales() {
                   <div className='max-h-32 overflow-y-auto text-sm border border-border rounded-lg mb-3'>
                     {clients
                       .filter((c: any) =>
-                        c.name.toLowerCase().includes(clientSearch.toLowerCase()),
+                        c.name
+                          .toLowerCase()
+                          .includes(clientSearch.toLowerCase())
                       )
                       .map((client: any) => (
                         <div
@@ -474,25 +476,27 @@ export default function Sales() {
                             setSelectedClient(client)
                             setClientSearch('')
                           }}
-                          className='p-2 hover:bg-muted cursor-pointer border-b border-border last:border-b-0'
-                        >
+                          className='p-2 hover:bg-muted cursor-pointer border-b border-border last:border-b-0'>
                           <p className='font-medium'>{client.name}</p>
                           {client.phone && (
-                            <p className='text-xs text-muted-foreground'>{client.phone}</p>
+                            <p className='text-xs text-muted-foreground'>
+                              {client.phone}
+                            </p>
                           )}
                         </div>
                       ))}
                   </div>
                 )}
 
-                <Dialog open={openClientDialog} onOpenChange={setOpenClientDialog}>
+                <Dialog
+                  open={openClientDialog}
+                  onOpenChange={setOpenClientDialog}>
                   <Button
                     className='w-full text-sm text-secondary hover:opacity-80 font-medium border border-border py-2 px-4 rounded-xl hover:bg-hover transition-colors flex items-center justify-center gap-2 cursor-pointer'
                     onClick={() => {
                       setEditingClient(null)
                       setOpenClientDialog(true)
-                    }}
-                  >
+                    }}>
                     <UserPlus className='w-4 h-4' />
                     Novo Cliente
                   </Button>
@@ -517,6 +521,47 @@ export default function Sales() {
               </div>
             )}
 
+            {/* Seleção de Vendedor (apenas para Admin) */}
+            {isAdmin && (
+              <div>
+                <label className='block text-sm font-medium text-foreground mb-2'>
+                  Vendedor
+                </label>
+                <select
+                  value={selectedSeller}
+                  onChange={(e) => setSelectedSeller(e.target.value)}
+                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+                  <option value=''>Sem vendedor (sem comissão)</option>
+                  {professionals.map((prof: any) => (
+                    <option key={prof.id} value={prof.id}>
+                      {prof.name} -{' '}
+                      {prof.commissionRate ||
+                        prof.customRole?.commissionRate ||
+                        0}
+                      % comissão
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Vendedor Automático (para Funcionários) */}
+            {!isAdmin && currentProfessionalId && (
+              <div className='bg-blue-50 border border-blue-200 rounded-xl p-3'>
+                <p className='text-sm font-medium text-blue-800 mb-1'>
+                  Vendedor:
+                </p>
+                <p className='text-sm text-blue-700'>
+                  {professionals.find((p) => p.id === currentProfessionalId)
+                    ?.name || 'Você'}{' '}
+                  (
+                  {professionals.find((p) => p.id === currentProfessionalId)
+                    ?.commissionRate || 0}
+                  % comissão)
+                </p>
+              </div>
+            )}
+
             {/* Forma de Pagamento */}
             <div>
               <label className='block text-sm font-medium text-foreground mb-2'>
@@ -525,8 +570,7 @@ export default function Sales() {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-              >
+                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
                 <option value='CASH'>Dinheiro</option>
                 <option value='CARD'>Cartão</option>
                 <option value='PIX'>PIX</option>

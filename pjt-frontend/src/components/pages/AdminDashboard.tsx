@@ -27,6 +27,7 @@ import {
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+import { DateTime } from '@/utils/dateTime'
 import {
   Dialog,
   DialogContent,
@@ -40,7 +41,6 @@ import { ImmediateAppointmentForm } from '@/components/custom/appointment/Immedi
 
 import { StatsCard } from '../ui/stats-card'
 
-const formatDate = (d: Date) => d.toLocaleDateString('sv')
 const formatCurrency = (v: number) => `R$ ${v.toFixed(2)}`
 
 export default function AdminDashboard() {
@@ -65,21 +65,18 @@ export default function AdminDashboard() {
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Erro ao corrigir dados históricos',
+        error.response?.data?.message || 'Erro ao corrigir dados históricos'
       )
     },
   })
 
-  const today = new Date()
-  const todayStr = formatDate(today)
-  const yesterdayStr = formatDate(
-    new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1),
-  )
+  const today = DateTime.now()
+  const todayStr = today.format('YYYY-MM-DD')
+  const yesterdayStr = DateTime.subtract(today, 1, 'day').format('YYYY-MM-DD')
 
   const { startDate, endDate } = useMemo(() => {
-    const firstDayOfWeek = new Date(today)
-    firstDayOfWeek.setDate(today.getDate() - today.getDay())
-    return { startDate: formatDate(firstDayOfWeek), endDate: todayStr }
+    const firstDayOfWeek = DateTime.startOf(today, 'week')
+    return { startDate: firstDayOfWeek.format('YYYY-MM-DD'), endDate: todayStr }
   }, [todayStr, today])
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -116,71 +113,70 @@ export default function AdminDashboard() {
   const appointments = useMemo(
     () =>
       dashboardData?.appointments?.filter(
-        (a) => String(a.branchId) === branchId,
+        (a) => String(a.branchId) === branchId
       ) || [],
-    [dashboardData, branchId],
+    [dashboardData, branchId]
   )
   const movements = useMemo(
     () =>
       dashboardData?.movements?.filter(
-        (m) => String(m.branchId) === branchId,
+        (m) => String(m.branchId) === branchId
       ) || [],
-    [dashboardData, branchId],
+    [dashboardData, branchId]
   )
 
   const revenueForDate = (date: string) =>
     appointments
       .filter(
         (a) =>
-          formatDate(new Date(a.scheduledAt)) === date &&
-          a.status === 'COMPLETED',
+          a.scheduledAt?.toString().split('T')[0] === date &&
+          a.status === 'COMPLETED'
       )
       .reduce((s, a) => s + +a.total, 0) +
     movements
-      .filter((m) => formatDate(new Date(m.createdAt)) === date)
+      .filter((m) => m.createdAt?.toString().split('T')[0] === date)
       .reduce((s, m) => s + +m.totalCost, 0)
 
   const todayRevenue = revenueForDate(todayStr)
   const yesterdayRevenue = revenueForDate(yesterdayStr)
 
   const filterByDate = (arr: any[], field: string, date: string) =>
-    arr.filter((i) => formatDate(new Date(i[field])) === date)
+    arr.filter((i) => i[field]?.toString().split('T')[0] === date)
   const todayAppointments = filterByDate(appointments, 'scheduledAt', todayStr)
   const yesterdayAppointments = filterByDate(
     appointments,
     'scheduledAt',
-    yesterdayStr,
+    yesterdayStr
   )
   const todayCompleted = todayAppointments.filter(
-    (a) => a.status === 'COMPLETED',
+    (a) => a.status === 'COMPLETED'
   )
   const yesterdayCompleted = yesterdayAppointments.filter(
-    (a) => a.status === 'COMPLETED',
+    (a) => a.status === 'COMPLETED'
   )
 
   const weeklyRevenueData = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today)
-      d.setDate(d.getDate() - d.getDay() + i)
-      return formatDate(d)
+      const d = DateTime.add(DateTime.startOf(today, 'week'), i, 'day')
+      return d.format('YYYY-MM-DD')
     })
     const totals = Object.fromEntries(days.map((d) => [d, 0]))
 
     appointments.forEach((a) => {
-      const d = formatDate(new Date(a.scheduledAt))
+      const d = a.scheduledAt?.toString().split('T')[0]
       if (totals[d] !== undefined && a.status === 'COMPLETED') {
         totals[d] += +a.total
       }
     })
     movements.forEach((m) => {
-      const d = formatDate(new Date(m.createdAt))
+      const d = m.createdAt?.toString().split('T')[0]
       if (totals[d] !== undefined) {
         totals[d] += +m.totalCost
       }
     })
 
     return days.map((d) => ({
-      name: new Date(d).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      name: DateTime.fromString(d, 'YYYY-MM-DD').format('ddd'),
       value: totals[d],
       isToday: d === todayStr,
     }))
@@ -192,49 +188,59 @@ export default function AdminDashboard() {
       a.appointmentServices?.forEach((s: any) => {
         const name = s.service?.name || 'Desconhecido'
         const item = acc.find((i) => i.name === name)
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         item
           ? item.value++
           : acc.push({
-            name,
-            value: 1,
-            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-          })
-      }),
+              name,
+              value: 1,
+              color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+            })
+      })
     )
     return acc
   }, [appointments])
 
-  const totalClients = dashboardData?.clients?.length || 0
+  const clientsArray =
+    dashboardData?.clients?.clients || dashboardData?.clients || []
+  const totalClients =
+    dashboardData?.clients?.pagination?.total || clientsArray.length || 0
   const thisWeekClients =
-    dashboardData?.clients?.filter(
-      (c: any) => new Date(c.createdAt) >= new Date(startDate),
+    clientsArray.filter(
+      (c: any) => c.createdAt?.toString().split('T')[0] >= startDate
     ) || []
-  const lastWeekStart = new Date(startDate)
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7)
-  const lastWeekEnd = new Date(startDate)
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 1)
+  const lastWeekStart = DateTime.subtract(
+    DateTime.fromString(startDate, 'YYYY-MM-DD'),
+    7,
+    'day'
+  )
+  const lastWeekEnd = DateTime.subtract(
+    DateTime.fromString(startDate, 'YYYY-MM-DD'),
+    1,
+    'day'
+  )
   const lastWeekClients =
-    dashboardData?.clients?.filter(
-      (c: any) =>
-        new Date(c.createdAt) >= lastWeekStart &&
-        new Date(c.createdAt) <= lastWeekEnd,
-    ) || []
+    clientsArray.filter((c: any) => {
+      const clientDate = c.createdAt?.toString().split('T')[0]
+      return (
+        clientDate >= lastWeekStart.format('YYYY-MM-DD') &&
+        clientDate <= lastWeekEnd.format('YYYY-MM-DD')
+      )
+    }) || []
   const diffClients = thisWeekClients.length - lastWeekClients.length
   const clientsChangeText =
     diffClients > 0
       ? `+${diffClients} novos esta semana`
       : diffClients < 0
-        ? `${diffClients} novos esta semana`
-        : 'sem variação'
+      ? `${diffClients} novos esta semana`
+      : 'sem variação'
 
-  const now = new Date(),
-    twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+  const now = DateTime.now()
+  const twoHoursLater = DateTime.add(now, 2, 'hour')
   const nextAppointments = todayAppointments.filter(
-    (a) => new Date(a.scheduledAt) > now && a.status !== 'COMPLETED',
+    (a) => new Date(a.scheduledAt) > now.toDate() && a.status !== 'COMPLETED'
   )
   const nextTwoHours = nextAppointments.filter(
-    (a) => new Date(a.scheduledAt) <= twoHoursLater,
+    (a) => new Date(a.scheduledAt) <= twoHoursLater.toDate()
   )
 
   const revenuePercent = yesterdayRevenue
@@ -242,10 +248,10 @@ export default function AdminDashboard() {
     : '0'
   const appointmentsPercent = yesterdayCompleted.length
     ? (
-      ((todayCompleted.length - yesterdayCompleted.length) /
+        ((todayCompleted.length - yesterdayCompleted.length) /
           yesterdayCompleted.length) *
         100
-    ).toFixed(0)
+      ).toFixed(0)
     : '0'
 
   const quickActions = [
@@ -383,9 +389,7 @@ export default function AdminDashboard() {
                   setShowAppointmentForm(true)
                 } else if (a.openRegisterForm) {
                   setShowRegisterForm(true)
-                }
-                // eslint-disable-next-line no-dupe-else-if
-                else if (a.openForm) {
+                } else if (a.openForm) {
                   setShowSaleForm(true)
                 } else if (a.route) {
                   navigate(a.route)

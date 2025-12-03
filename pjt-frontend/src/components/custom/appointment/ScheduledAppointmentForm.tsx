@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+
 import { ClientForm } from '@/components/custom/client/ClientForm'
 import { SchedulingFields } from '@/components/custom/scheduling/SchedulingFields'
 
@@ -29,6 +30,8 @@ export function ScheduledAppointmentForm({
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
+  const [clientSearch, setClientSearch] = useState('')
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
@@ -39,14 +42,14 @@ export function ScheduledAppointmentForm({
     enabled: isAdmin,
   })
 
-  const { professionals } = useFormQueries()
+  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
   const { form, mutation } = useAppointmentForm(
     'scheduled',
     professionals,
     () => {
       onSuccess?.()
     },
-    initialData,
+    initialData
   )
 
   const {
@@ -70,7 +73,7 @@ export function ScheduledAppointmentForm({
     selectedProfessional,
     selectedDate,
     true,
-    selectedBranchId,
+    selectedBranchId
   )
   const {
     services = [],
@@ -81,11 +84,11 @@ export function ScheduledAppointmentForm({
 
   const watchedServices = watch('serviceIds') || []
   const selectedServices = (Array.isArray(services) ? services : []).filter(
-    (s) => watchedServices.includes(s.id),
+    (s) => watchedServices.includes(s.id)
   )
   const totalPrice = selectedServices.reduce(
     (acc, s) => acc + (s.price || 0),
-    0,
+    0
   )
 
   const onSubmit = (data: any) => {
@@ -134,18 +137,66 @@ export function ScheduledAppointmentForm({
                 Cliente
               </label>
               <div className='relative'>
-                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
-                <select
-                  value={watch('clientId') || ''}
-                  onChange={(e) => setValue('clientId', e.target.value)}
-                  className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                  <option value=''>Buscar cliente...</option>
-                  {clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div className='relative'>
+                  <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
+                  <input
+                    type='text'
+                    placeholder='Buscar cliente...'
+                    value={(() => {
+                      const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
+                      return selectedClient ? selectedClient.name : clientSearch
+                    })()}
+                    onChange={(e) => {
+                      setClientSearch(e.target.value)
+                      setClientDropdownOpen(true)
+                      if (!e.target.value) setValue('clientId', '')
+                    }}
+                    onFocus={() => setClientDropdownOpen(true)}
+                    className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'
+                  />
+                </div>
+                {clientDropdownOpen && (
+                  <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
+                    {(() => {
+                      const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
+                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                      )
+                      return filteredClients.length === 0 ? (
+                        <div className='p-3 text-sm text-muted-foreground text-center'>
+                          Nenhum cliente encontrado
+                        </div>
+                      ) : (
+                        filteredClients.map((c: any) => (
+                          <button
+                            key={c.id}
+                            type='button'
+                            onClick={() => {
+                              setValue('clientId', c.id)
+                              setClientSearch('')
+                              setClientDropdownOpen(false)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                setValue('clientId', c.id)
+                                setClientSearch('')
+                                setClientDropdownOpen(false)
+                              }
+                            }}
+                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'
+                          >
+                            {c.name}
+                          </button>
+                        ))
+                      )
+                    })()}
+                  </div>
+                )}
+                {clientDropdownOpen && (
+                  <div 
+                    className='fixed inset-0 z-40'
+                    onClick={() => setClientDropdownOpen(false)}
+                  />
+                )}
               </div>
               {errors.clientId && (
                 <p className='text-xs text-destructive mt-1'>
@@ -180,7 +231,7 @@ export function ScheduledAppointmentForm({
                 onChange={(e) => setValue('professionalId', e.target.value)}
                 className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
                 <option value=''>Selecione o profissional</option>
-                {profs.map((p: any) => (
+                {(Array.isArray(profs) ? profs : []).map((p: any) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
                   </option>
@@ -199,7 +250,7 @@ export function ScheduledAppointmentForm({
               Serviços
             </label>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              {services.map((service: any) => {
+              {(Array.isArray(services) ? services : []).map((service: any) => {
                 const selected = watchedServices.includes(service.id)
                 return (
                   <div
@@ -207,8 +258,8 @@ export function ScheduledAppointmentForm({
                     onClick={() => {
                       const newList = selected
                         ? watchedServices.filter(
-                          (id: string) => id !== service.id,
-                        )
+                            (id: string) => id !== service.id
+                          )
                         : [...watchedServices, service.id]
                       setValue('serviceIds', newList)
                     }}
@@ -225,8 +276,8 @@ export function ScheduledAppointmentForm({
                           onChange={() => {
                             const newList = selected
                               ? watchedServices.filter(
-                                (id: string) => id !== service.id,
-                              )
+                                  (id: string) => id !== service.id
+                                )
                               : [...watchedServices, service.id]
                             setValue('serviceIds', newList)
                           }}
@@ -270,8 +321,8 @@ export function ScheduledAppointmentForm({
               {isSubmitting
                 ? 'Salvando...'
                 : initialData
-                  ? 'Atualizar Agendamento'
-                  : 'Agendar'}
+                ? 'Atualizar Agendamento'
+                : 'Agendar'}
             </button>
           </div>
         </form>
@@ -306,20 +357,27 @@ export function ScheduledAppointmentForm({
           </h4>
           {(() => {
             const [selectedHour, setSelectedHour] = useState('')
-            
-            // Extrair horas únicas dos slots disponíveis
-            const availableHours = [...new Set(availableSlots.map(slot => slot.split(':')[0]))]
-            
-            // Filtrar minutos para a hora selecionada
-            const availableMinutes = selectedHour 
-              ? availableSlots.filter(slot => slot.startsWith(selectedHour + ':'))
+
+            const availableHours = [
+              ...new Set(
+                (Array.isArray(availableSlots) ? availableSlots : []).map(
+                  (slot) => slot.split(':')[0]
+                )
+              ),
+            ]
+
+            const availableMinutes = selectedHour
+              ? (Array.isArray(availableSlots) ? availableSlots : []).filter(
+                  (slot) => slot.startsWith(selectedHour + ':')
+                )
               : []
-            
+
             return (
               <>
-                {/* Seleção de Horas */}
                 <div className='mb-4'>
-                  <p className='text-sm font-medium text-foreground mb-2'>1. Selecione a hora:</p>
+                  <p className='text-sm font-medium text-foreground mb-2'>
+                    1. Selecione a hora:
+                  </p>
                   <div className='grid grid-cols-3 gap-2'>
                     {availableHours.map((hour: string) => (
                       <button
@@ -328,7 +386,9 @@ export function ScheduledAppointmentForm({
                         onClick={() => {
                           setSelectedHour(hour)
                           // Se só tem :00 disponível, seleciona automaticamente
-                          const hourSlots = availableSlots.filter(slot => slot.startsWith(hour + ':'))
+                          const hourSlots = (
+                            Array.isArray(availableSlots) ? availableSlots : []
+                          ).filter((slot) => slot.startsWith(hour + ':'))
                           if (hourSlots.length === 1) {
                             setValue('scheduledTime', hourSlots[0])
                           }
@@ -343,11 +403,13 @@ export function ScheduledAppointmentForm({
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Seleção de Minutos */}
                 {selectedHour && availableMinutes.length > 1 && (
                   <div className='mb-4'>
-                    <p className='text-sm font-medium text-foreground mb-2'>2. Selecione os minutos:</p>
+                    <p className='text-sm font-medium text-foreground mb-2'>
+                      2. Selecione os minutos:
+                    </p>
                     <div className='grid grid-cols-3 gap-2'>
                       {availableMinutes.map((time: string) => {
                         const minutes = time.split(':')[1]
@@ -368,12 +430,16 @@ export function ScheduledAppointmentForm({
                     </div>
                   </div>
                 )}
-                
+
                 {/* Horário Selecionado */}
                 {watch('scheduledTime') && (
                   <div className='bg-muted rounded-lg p-3 text-center'>
-                    <p className='text-sm text-muted-foreground'>Horário selecionado:</p>
-                    <p className='text-lg font-semibold text-primary'>{watch('scheduledTime')}</p>
+                    <p className='text-sm text-muted-foreground'>
+                      Horário selecionado:
+                    </p>
+                    <p className='text-lg font-semibold text-primary'>
+                      {watch('scheduledTime')}
+                    </p>
                   </div>
                 )}
               </>
@@ -382,15 +448,15 @@ export function ScheduledAppointmentForm({
           {availableSlots.length === 0 &&
             selectedProfessional &&
             selectedDate && (
-            <div className='text-center py-4'>
-              <p className='text-sm text-destructive font-medium'>
-                🚫 Todos os horários estão ocupados
-              </p>
-              <p className='text-xs text-muted-foreground mt-1'>
-                Escolha outra data ou profissional
-              </p>
-            </div>
-          )}
+              <div className='text-center py-4'>
+                <p className='text-sm text-destructive font-medium'>
+                  🚫 Todos os horários estão ocupados
+                </p>
+                <p className='text-xs text-muted-foreground mt-1'>
+                  Escolha outra data ou profissional
+                </p>
+              </div>
+            )}
         </div>
 
         <div className='bg-muted rounded-2xl p-6 border border-border'>

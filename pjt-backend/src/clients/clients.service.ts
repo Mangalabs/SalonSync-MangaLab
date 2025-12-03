@@ -20,7 +20,24 @@ export class ClientsService extends BaseDataService {
     super(prisma);
   }
 
-  async findAll(user: UserContext): Promise<Client[]> {
+  async findAll(
+    user: UserContext,
+    pagination?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+    },
+  ): Promise<{
+    clients: Client[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
     const stripeClient = new Stripe(process.env.STRIPE_API_KEY || '');
     let branchIds: string[];
 
@@ -58,7 +75,7 @@ export class ClientsService extends BaseDataService {
       subscriptions = await stripeClient.subscriptions.list(
         {
           status: 'active',
-          expand: ['data.items.data.price'], // só até price
+          expand: ['data.items.data.price'],
           limit: 100,
         },
         { stripeAccount: completeUser.accountId },
@@ -92,15 +109,34 @@ export class ClientsService extends BaseDataService {
       });
     }
 
+    const whereClause: any = {
+      branchId: { in: branchIds },
+      isActive: true,
+    };
+
+    if (pagination?.search) {
+      whereClause.OR = [
+        { name: { contains: pagination.search, mode: 'insensitive' } },
+        { phone: { contains: pagination.search, mode: 'insensitive' } },
+        { email: { contains: pagination.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const total = await this.prisma.client.count({ where: whereClause });
+
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 12;
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(total / limit);
+
     const clients = await this.prisma.client.findMany({
-      where: {
-        branchId: { in: branchIds },
-        isActive: true,
-      },
+      where: whereClause,
       orderBy: { name: 'asc' },
+      skip,
+      take: limit,
     });
 
-    return clients.map((client) => {
+    const clientsWithSubscriptions = clients.map((client) => {
       if (!client.customerId) {
         return { ...client, subscription: null };
       }
@@ -110,6 +146,18 @@ export class ClientsService extends BaseDataService {
         subscription: subMap.get(client.customerId) ?? null,
       };
     });
+
+    return {
+      clients: clientsWithSubscriptions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   async create(
@@ -163,7 +211,6 @@ export class ClientsService extends BaseDataService {
       throw new NotFoundException('Cliente não encontrado');
     }
 
-    // Verificar se há agendamentos ativos (não concluídos)
     const activeAppointmentsCount = await this.prisma.appointment.count({
       where: {
         clientId: id,
@@ -177,7 +224,6 @@ export class ClientsService extends BaseDataService {
       );
     }
 
-    // Soft delete - marcar como inativo ao invés de excluir
     return this.prisma.client.update({
       where: { id },
       data: { isActive: false },

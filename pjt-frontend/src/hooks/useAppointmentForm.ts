@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import axios from '@/lib/axios'
 import { useUser } from '@/contexts/UserContext'
+import { DateTime } from '@/utils/dateTime'
 
 const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
   const baseSchema = {
@@ -112,17 +113,12 @@ export function useAppointmentForm(
       let status: string
 
       if (isScheduled && 'scheduledDate' in data && 'scheduledTime' in data) {
-        scheduledAt = `${data.scheduledDate}T${data.scheduledTime}:00.000Z`
+        // Criar data/hora no timezone do Brasil sem conversão
+        scheduledAt = `${data.scheduledDate} ${data.scheduledTime}:00`
         status = 'PENDING'
       } else {
-        const now = new Date()
-        const year = now.getFullYear()
-        const month = String(now.getMonth() + 1).padStart(2, '0')
-        const day = String(now.getDate()).padStart(2, '0')
-        const hours = String(now.getHours()).padStart(2, '0')
-        const minutes = String(now.getMinutes()).padStart(2, '0')
-        const seconds = String(now.getSeconds()).padStart(2, '0')
-        scheduledAt = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`
+        // Para atendimentos imediatos, usar horário atual do Brasil sem conversão
+        scheduledAt = DateTime.now().format('YYYY-MM-DD HH:mm:ss')
         status = 'COMPLETED'
       }
 

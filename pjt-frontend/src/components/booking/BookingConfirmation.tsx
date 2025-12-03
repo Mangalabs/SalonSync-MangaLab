@@ -6,7 +6,7 @@ import { useCreatePublicAppointment } from '@/hooks/usePublicBooking'
 import { BookingSuccess } from './BookingSuccess'
 
 interface BookingConfirmationProps {
-  service: any
+  services: any[]
   professional: any
   dateTime: any
   client: any
@@ -17,7 +17,7 @@ interface BookingConfirmationProps {
 }
 
 export function BookingConfirmation({
-  service,
+  services,
   professional,
   dateTime,
   client,
@@ -29,17 +29,27 @@ export function BookingConfirmation({
   const [showSuccess, setShowSuccess] = useState(false)
   const createAppointment = useCreatePublicAppointment()
 
+  const getTotalPrice = () => {
+    return services.reduce(
+      (total, service) => total + parseFloat(service.price),
+      0
+    )
+  }
+
   const handleConfirm = async () => {
     try {
-      await createAppointment.mutateAsync({
+      const appointmentData = {
         clientName: client.name,
         clientPhone: client.phone,
         clientEmail: client.email,
-        serviceId: service.id,
+        serviceId: services[0].id,
+        serviceIds: services.map((s) => s.id),
         professionalId: professional.id,
         scheduledAt: dateTime.datetime,
         branchId,
-      })
+      }
+
+      await createAppointment.mutateAsync(appointmentData)
       setShowSuccess(true)
     } catch (error) {
       toast.error('Erro ao criar agendamento')
@@ -51,7 +61,7 @@ export function BookingConfirmation({
       <BookingSuccess
         appointment={{
           client,
-          service,
+          services,
           professional,
           dateTime,
         }}
@@ -65,10 +75,18 @@ export function BookingConfirmation({
     <div className='space-y-6'>
       <h2 className='text-2xl font-bold'>Confirmar agendamento</h2>
 
-      <div className='bg-gray-50 p-4 rounded-lg space-y-2'>
-        <p>
-          <strong>Serviço:</strong> {service.name}
-        </p>
+      <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+        <div>
+          <strong>Serviços:</strong>
+          <ul className='mt-1 ml-4'>
+            {services.map((service, index) => (
+              <li key={service.id} className='flex justify-between'>
+                <span>• {service.name}</span>
+                <span>R$ {service.price}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <p>
           <strong>Profissional:</strong> {professional.name}
         </p>
@@ -81,8 +99,8 @@ export function BookingConfirmation({
         <p>
           <strong>Telefone:</strong> {client.phone}
         </p>
-        <p>
-          <strong>Valor:</strong> R$ {service.price}
+        <p className='text-lg font-semibold text-green-600 border-t pt-2'>
+          <strong>Total:</strong> R$ {getTotalPrice().toFixed(2)}
         </p>
       </div>
 

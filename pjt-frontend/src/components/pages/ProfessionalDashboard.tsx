@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   TrendingUp,
@@ -29,6 +29,7 @@ import { useUser } from '@/contexts/UserContext'
 import { ScheduledAppointmentForm } from '@/components/custom/appointment/ScheduledAppointmentForm'
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import axios from '@/lib/axios'
+import { DateTime } from '@/utils/dateTime'
 
 import { StatsCard } from '../ui/stats-card'
 
@@ -40,24 +41,19 @@ export default function ProfessionalDashboard() {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
   const [showRegisterForm, setShowRegisterForm] = useState(false)
 
-  const today = new Date().toISOString().split('T')[0]
-  const startOfMonth = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    1,
+  const today = DateTime.now().format('YYYY-MM-DD')
+  const startOfMonth = DateTime.startOf(DateTime.now(), 'month').format(
+    'YYYY-MM-DD'
   )
-    .toISOString()
-    .split('T')[0]
 
   const getDateRange = () => {
     switch (selectedPeriod) {
       case 'today':
         return { startDate: today, endDate: today }
       case 'week': {
-        const weekAgo = new Date()
-        weekAgo.setDate(weekAgo.getDate() - 7)
+        const weekAgo = DateTime.subtract(DateTime.now(), 7, 'day')
         return {
-          startDate: weekAgo.toISOString().split('T')[0],
+          startDate: weekAgo.format('YYYY-MM-DD'),
           endDate: today,
         }
       }
@@ -70,36 +66,41 @@ export default function ProfessionalDashboard() {
 
   const { startDate, endDate } = getDateRange()
 
-  const { data: professionalInfo, isLoading: professionalLoading } = useQuery({
-    queryKey: ['user-professional', user?.id, activeBranch?.id],
+  const { data: allAppointments = [] } = useQuery({
+    queryKey: ['appointments', activeBranch?.id],
     queryFn: async () => {
-      if (!user?.id || !activeBranch?.id) {
-        return null
-      }
-
-      try {
-        const res = await axios.get(
-          `/api/professionals?branchId=${activeBranch.id}`,
-        )
-
-        const professional = res.data.find(
-          (prof: any) =>
-            prof.name.toLowerCase() === user.name?.toLowerCase() ||
-            prof.id === user.id,
-        )
-
-        if (professional) {
-          return professional
-        } else {
-          return null
-        }
-      } catch {
-        return null
-      }
+      const res = await axios.get('/api/appointments')
+      return res.data
     },
-    enabled: !!user?.id && !!activeBranch?.id,
-    staleTime: 60000,
+    enabled: !!activeBranch,
   })
+
+  const userAppointments = useMemo(() => {
+    if (!user?.name) return []
+
+    return allAppointments.filter((apt: any) => {
+      if (user.role === 'ADMIN' || user.role === 'OWNER') {
+        return true
+      }
+      return apt.professional?.name?.toLowerCase() === user.name?.toLowerCase()
+    })
+  }, [allAppointments, user?.name, user?.role])
+
+  const todayAppointments = userAppointments.filter((apt: any) => {
+    const aptDate = apt.scheduledAt?.toString().split('T')[0]
+    return aptDate === today
+  })
+
+  const periodAppointments = userAppointments.filter((apt: any) => {
+    const aptDate = apt.scheduledAt?.toString().split('T')[0]
+    return aptDate >= startDate && aptDate <= endDate
+  })
+
+  const appointmentsData = {
+    all: userAppointments,
+    today: todayAppointments,
+    period: periodAppointments,
+  }
 
   const {
     data: commissionData,
@@ -108,116 +109,34 @@ export default function ProfessionalDashboard() {
   } = useQuery({
     queryKey: [
       'professional-commission',
-      professionalInfo?.id,
+      user?.name,
       startDate,
       endDate,
       activeBranch?.id,
     ],
     queryFn: async () => {
-      if (!professionalInfo?.id) {
-        return {
-          professional: { id: user?.id, name: user?.name, commissionRate: 0 },
-          summary: {
-            totalAppointments: 0,
-            totalRevenue: 0,
-            totalCommission: 0,
-          },
-          dailyCommissions: [],
-        }
-      }
-
-      try {
-        const res = await axios.get(
-          `/api/professionals/${professionalInfo.id}/commission?startDate=${startDate}&endDate=${endDate}`,
-        )
-        return res.data
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          return {
-            professional: {
-              id: professionalInfo.id,
-              name: professionalInfo.name,
-              commissionRate: professionalInfo.commissionRate || 0,
-            },
-            summary: {
-              totalAppointments: 0,
-              totalRevenue: 0,
-              totalCommission: 0,
-            },
-            dailyCommissions: [],
-          }
-        }
-        throw error
+      return {
+        professional: { id: user?.id, name: user?.name, commissionRate: 0 },
+        summary: {
+          totalAppointments: 0,
+          totalRevenue: 0,
+          totalCommission: 0,
+        },
+        dailyCommissions: [],
       }
     },
-    enabled: !!professionalInfo?.id && !!activeBranch,
+    enabled: !!user?.name && !!activeBranch,
     staleTime: 30000,
     retry: 2,
   })
 
-  const {
-    data: appointmentsData,
-    isLoading: appointmentsLoading,
-    error: appointmentsError,
-  } = useQuery({
-    queryKey: [
-      'professional-appointments',
-      professionalInfo?.id,
-      startDate,
-      today,
-      activeBranch?.id,
-    ],
-    queryFn: async () => {
-      if (!professionalInfo?.id) {
-        return {
-          all: [],
-          today: [],
-          period: [],
-        }
-      }
-
-      try {
-        const res = await axios.get(
-          `/api/appointments?professionalId=${professionalInfo.id}&startDate=${startDate}&endDate=${today}`,
-        )
-
-        const allAppointments = res.data
-        const todayAppointments = allAppointments.filter((apt: any) => {
-          const aptDate = new Date(apt.scheduledAt).toISOString().split('T')[0]
-          return aptDate === today
-        })
-
-        const periodAppointments = allAppointments.filter((apt: any) => {
-          const aptDate = new Date(apt.scheduledAt).toISOString().split('T')[0]
-          return aptDate >= startDate && aptDate <= endDate
-        })
-
-        return {
-          all: allAppointments,
-          today: todayAppointments,
-          period: periodAppointments,
-        }
-      } catch {
-        return {
-          all: [],
-          today: [],
-          period: [],
-        }
-      }
-    },
-    enabled: !!professionalInfo?.id && !!activeBranch,
-    staleTime: 30000,
-    retry: 2,
-  })
-
-  const isLoading =
-    professionalLoading || commissionLoading || appointmentsLoading
-  const error = commissionError || appointmentsError
+  const isLoading = commissionLoading
+  const error = commissionError
 
   const professionalData = {
     commission: commissionData,
-    appointments: appointmentsData?.period || [],
-    todayAppointments: appointmentsData?.today || [],
+    appointments: appointmentsData.period,
+    todayAppointments: appointmentsData.today,
   }
 
   if (isLoading) {
@@ -356,15 +275,19 @@ export default function ProfessionalDashboard() {
 
   const completedAppointments =
     professionalData?.appointments?.filter(
-      (apt: any) => apt.status === 'COMPLETED',
+      (apt: any) => apt.status === 'COMPLETED'
+    ) || []
+  const todayCompletedAppointments =
+    professionalData?.todayAppointments?.filter(
+      (apt: any) => apt.status === 'COMPLETED'
     ) || []
   const scheduledAppointments =
     professionalData?.appointments?.filter(
-      (apt: any) => apt.status === 'SCHEDULED',
+      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED'
     ) || []
   const todayScheduled =
     professionalData?.todayAppointments?.filter(
-      (apt: any) => apt.status === 'SCHEDULED',
+      (apt: any) => apt.status === 'PENDING' || apt.status === 'CONFIRMED'
     ) || []
 
   const quickActions = [
@@ -417,6 +340,8 @@ export default function ProfessionalDashboard() {
           </h1>
           <p className='text-sm md:text-base text-muted-foreground'>
             {activeBranch?.name} • {getPeriodLabel()}
+            {(user?.role === 'ADMIN' || user?.role === 'OWNER') &&
+              ' • Visão Geral'}
           </p>
         </div>
 
@@ -467,7 +392,7 @@ export default function ProfessionalDashboard() {
         <StatsCard
           title='Minha Comissão'
           value={formatCurrency(
-            professionalData?.commission?.summary?.totalCommission || 0,
+            professionalData?.commission?.summary?.totalCommission || 0
           )}
           change={`${
             professionalData?.commission?.summary?.totalAppointments || 0
@@ -479,7 +404,7 @@ export default function ProfessionalDashboard() {
         <StatsCard
           title='Receita Gerada'
           value={formatCurrency(
-            professionalData?.commission?.summary?.totalRevenue || 0,
+            professionalData?.commission?.summary?.totalRevenue || 0
           )}
           change={`${
             professionalData?.commission?.professional?.commissionRate || 0
@@ -497,10 +422,16 @@ export default function ProfessionalDashboard() {
           iconColor='purple'
         />
         <StatsCard
-          title='Atendimentos Concluídos'
-          value={completedAppointments.length.toString()}
-          change={getPeriodLabel()}
-          changeType='positive'
+          title='Atendimentos Hoje'
+          value={todayCompletedAppointments.length.toString()}
+          change={
+            todayCompletedAppointments.length > 0
+              ? 'Produtivo!'
+              : 'Sem atendimentos'
+          }
+          changeType={
+            todayCompletedAppointments.length > 0 ? 'positive' : 'neutral'
+          }
           icon={CheckCircle}
           iconColor='orange'
         />
@@ -523,13 +454,10 @@ export default function ProfessionalDashboard() {
                       {appointment.client.name}
                     </h4>
                     <Badge variant='outline' className='text-xs'>
-                      {new Date(appointment.scheduledAt).toLocaleTimeString(
-                        'pt-BR',
-                        {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        },
-                      )}
+                      {appointment.scheduledAt
+                        ?.toString()
+                        .split('T')[1]
+                        ?.slice(0, 5) || '00:00'}
                     </Badge>
                   </div>
                   <div className='text-xs text-gray-600'>
@@ -539,6 +467,44 @@ export default function ProfessionalDashboard() {
                   </div>
                 </div>
                 <div className='text-sm font-semibold text-blue-600'>
+                  {formatCurrency(Number(appointment.total))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {todayCompletedAppointments.length > 0 && (
+        <div className='bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100'>
+          <h3 className='text-sm md:text-base font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+            <CheckCircle className='h-4 w-4 md:h-5 md:w-5 text-green-600' />
+            Atendimentos de Hoje
+          </h3>
+          <div className='space-y-3'>
+            {todayCompletedAppointments.map((appointment: any) => (
+              <div
+                key={appointment.id}
+                className='flex items-center justify-between p-3 border rounded-lg bg-green-50'>
+                <div className='flex-1'>
+                  <div className='flex items-center gap-2 mb-1'>
+                    <h4 className='font-medium text-sm'>
+                      {appointment.client.name}
+                    </h4>
+                    <Badge variant='outline' className='text-xs'>
+                      {appointment.scheduledAt
+                        ?.toString()
+                        .split('T')[1]
+                        ?.slice(0, 5) || '00:00'}
+                    </Badge>
+                  </div>
+                  <div className='text-xs text-gray-600'>
+                    {appointment.appointmentServices
+                      ?.map((as: any) => as.service.name)
+                      .join(', ')}
+                  </div>
+                </div>
+                <div className='text-sm font-semibold text-green-600'>
                   {formatCurrency(Number(appointment.total))}
                 </div>
               </div>
@@ -565,9 +531,12 @@ export default function ProfessionalDashboard() {
                         {appointment.client.name}
                       </div>
                       <div className='text-xs text-gray-500'>
-                        {new Date(appointment.scheduledAt).toLocaleDateString(
-                          'pt-BR',
-                        )}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[0]
+                          ?.split('-')
+                          .reverse()
+                          .join('/') || ''}
                       </div>
                     </div>
                     <div className='text-sm font-semibold text-green-600'>
@@ -607,17 +576,17 @@ export default function ProfessionalDashboard() {
                         {appointment.client.name}
                       </div>
                       <div className='text-xs text-gray-500'>
-                        {new Date(appointment.scheduledAt).toLocaleDateString(
-                          'pt-BR',
-                        )}{' '}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[0]
+                          ?.split('-')
+                          .reverse()
+                          .join('/') || ''}{' '}
                         às{' '}
-                        {new Date(appointment.scheduledAt).toLocaleTimeString(
-                          'pt-BR',
-                          {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          },
-                        )}
+                        {appointment.scheduledAt
+                          ?.toString()
+                          .split('T')[1]
+                          ?.slice(0, 5) || '00:00'}
                       </div>
                     </div>
                     <div className='text-sm font-semibold text-blue-600'>
@@ -661,9 +630,9 @@ export default function ProfessionalDashboard() {
               <div className='text-2xl font-bold text-blue-600'>
                 {professionalData?.commission?.summary?.totalAppointments > 0
                   ? (
-                    professionalData.commission.summary.totalRevenue /
+                      professionalData.commission.summary.totalRevenue /
                       professionalData.commission.summary.totalAppointments
-                  ).toFixed(0)
+                    ).toFixed(0)
                   : 0}
               </div>
               <div className='text-sm text-muted-foreground'>
