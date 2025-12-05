@@ -48,6 +48,7 @@ export function ProfessionalProductForm({
   initialData?: ProfessionalProduct | null
 }) {
   const isEditing = !!initialData
+
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
   const { isAdmin } = useUser()
@@ -76,10 +77,18 @@ export function ProfessionalProductForm({
           category: initialData.category || 'Cabelo',
           brand: initialData.brand || '',
           unit: initialData.unit || 'ml',
-          costPrice: initialData.costPrice ? Number(initialData.costPrice) : undefined,
-          unitWeight: initialData.unitWeight ? Number(initialData.unitWeight) : undefined,
-          markupPercent: initialData.markupPercent ? Number(initialData.markupPercent) : 30,
-          branchId: (initialData as any).branchId || (!isAdmin ? activeBranch?.id : undefined),
+          costPrice: initialData.costPrice
+            ? Number(initialData.costPrice)
+            : undefined,
+          unitWeight: initialData.unitWeight
+            ? Number(initialData.unitWeight)
+            : undefined,
+          markupPercent: initialData.markupPercent
+            ? Number(initialData.markupPercent)
+            : 30,
+          branchId:
+            (initialData as any).branchId ||
+            (!isAdmin ? activeBranch?.id : undefined),
         }
       : {
           name: '',
@@ -98,9 +107,9 @@ export function ProfessionalProductForm({
   const costPrice = watch('costPrice')
   const markupPercent = watch('markupPercent')
 
-  // Cálculo do custo por unidade
   const costPerUnit = unitWeight && costPrice ? costPrice / unitWeight : 0
-  const costWithMarkup = costPerUnit && markupPercent ? costPerUnit * (1 + markupPercent / 100) : 0
+  const costWithMarkup =
+    costPerUnit && markupPercent ? costPerUnit * (1 + markupPercent / 100) : 0
 
   const mutation = useMutation({
     mutationFn: async (data: ProfessionalProductFormData) => {
@@ -113,15 +122,24 @@ export function ProfessionalProductForm({
       }
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
-        return axios.patch(`/api/products/${initialData.id}`, payload, { headers })
+        return axios.patch(`/api/products/${initialData.id}`, payload, {
+          headers,
+        })
       } else {
         return axios.post('/api/products', payload, { headers })
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
-      queryClient.invalidateQueries({ queryKey: ['professional-products', activeBranch?.id] })
+      queryClient.invalidateQueries({
+        queryKey: ['products', activeBranch?.id],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['professional-products', activeBranch?.id],
+      })
+      queryClient.refetchQueries({
+        queryKey: ['professional-products', activeBranch?.id],
+      })
       toast.success(
         isEditing
           ? 'Produto profissional atualizado com sucesso!'
@@ -161,7 +179,9 @@ export function ProfessionalProductForm({
             ))}
           </select>
           {errors.branchId && (
-            <p className='text-xs text-destructive mt-1'>{errors.branchId.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.branchId.message}
+            </p>
           )}
         </div>
       )}
@@ -191,7 +211,9 @@ export function ProfessionalProductForm({
             placeholder='Ex: Cabelo, Barba, Pele'
           />
           {errors.category && (
-            <p className='text-xs text-destructive mt-1'>{errors.category.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.category.message}
+            </p>
           )}
         </div>
 
@@ -224,7 +246,9 @@ export function ProfessionalProductForm({
             ))}
           </select>
           {errors.unit && (
-            <p className='text-xs text-destructive mt-1'>{errors.unit.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.unit.message}
+            </p>
           )}
         </div>
 
@@ -241,7 +265,9 @@ export function ProfessionalProductForm({
             placeholder='Ex: 1000'
           />
           {errors.unitWeight && (
-            <p className='text-xs text-destructive mt-1'>{errors.unitWeight.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.unitWeight.message}
+            </p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
             Peso/volume total em {selectedUnit || 'unidades'}
@@ -263,7 +289,9 @@ export function ProfessionalProductForm({
             placeholder='Digite o preço total'
           />
           {errors.costPrice && (
-            <p className='text-xs text-destructive mt-1'>{errors.costPrice.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.costPrice.message}
+            </p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
             Custo total do produto
@@ -283,7 +311,9 @@ export function ProfessionalProductForm({
             placeholder='Ex: 30'
           />
           {errors.markupPercent && (
-            <p className='text-xs text-destructive mt-1'>{errors.markupPercent.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.markupPercent.message}
+            </p>
           )}
           <p className='text-xs text-muted-foreground mt-1'>
             Percentual de markup sobre o custo
@@ -293,15 +323,23 @@ export function ProfessionalProductForm({
 
       {costPerUnit > 0 && (
         <div className='bg-blue-50 border border-blue-200 rounded-xl p-4'>
-          <h4 className='font-semibold text-blue-800 mb-2'>📊 Cálculo Automático</h4>
+          <h4 className='font-semibold text-blue-800 mb-2'>
+            📊 Cálculo Automático
+          </h4>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
             <div>
               <span className='text-blue-600'>Custo por {selectedUnit}:</span>
-              <span className='font-semibold ml-2'>R$ {costPerUnit.toFixed(4)}</span>
+              <span className='font-semibold ml-2'>
+                R$ {costPerUnit.toFixed(4)}
+              </span>
             </div>
             <div>
-              <span className='text-blue-600'>Com markup ({markupPercent}%):</span>
-              <span className='font-semibold ml-2'>R$ {costWithMarkup.toFixed(4)}</span>
+              <span className='text-blue-600'>
+                Com markup ({markupPercent}%):
+              </span>
+              <span className='font-semibold ml-2'>
+                R$ {costWithMarkup.toFixed(4)}
+              </span>
             </div>
           </div>
         </div>
@@ -309,7 +347,9 @@ export function ProfessionalProductForm({
 
       <div className='bg-purple-50 border border-purple-200 rounded-xl p-4'>
         <p className='text-sm text-purple-800'>
-          💡 <strong>Produto Profissional:</strong> O custo será calculado automaticamente por unidade usada nas movimentações, aplicando o markup configurado.
+          💡 <strong>Produto Profissional:</strong> O custo será calculado
+          automaticamente por unidade usada nas movimentações, aplicando o
+          markup configurado.
         </p>
       </div>
 
