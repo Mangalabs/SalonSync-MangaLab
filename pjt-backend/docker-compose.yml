@@ -19,12 +19,12 @@ services:
     command: npx prisma migrate dev
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/salonSync?schema=public
-      
+
   app:
     build: .
     container_name: salonSyncAPI
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - postgres
     command: npm start
