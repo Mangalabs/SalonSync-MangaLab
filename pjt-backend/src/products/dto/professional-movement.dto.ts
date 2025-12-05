@@ -14,4 +14,14 @@ export class ProfessionalMovementDto {
   @IsString()
   @IsOptional()
   reference?: string;
+
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @IsOptional()
+  @Type(() => Number)
+  unitCost?: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsOptional()
+  @Type(() => Number)
+  totalCost?: number;
 }

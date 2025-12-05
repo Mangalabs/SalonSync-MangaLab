@@ -676,14 +676,14 @@ export class ProductsService {
       throw new BadRequestException('Produto deve ser do tipo profissional');
     }
 
-    const currentStockNum = Number(product.currentStock);
-    if (currentStockNum < movementDto.quantity) {
+    const currentStock = Number(product.unitWeight || 0);
+    if (currentStock < movementDto.quantity) {
       throw new BadRequestException(
-        `Estoque insuficiente. Atual: ${currentStockNum}, Solicitado: ${movementDto.quantity}`,
+        `Estoque insuficiente. Atual: ${currentStock}, Solicitado: ${movementDto.quantity}`,
       );
     }
 
-    const newStock = currentStockNum - movementDto.quantity;
+    const newStock = currentStock - movementDto.quantity;
 
     let totalCost: number | null = null;
     let unitCost: number | null = null;
@@ -700,7 +700,7 @@ export class ProductsService {
     return this.prisma.$transaction(async (tx) => {
       const updatedProduct = await tx.product.update({
         where: { id },
-        data: { currentStock: newStock },
+        data: { unitWeight: newStock },
       });
 
       const movement = await tx.stockMovement.create({

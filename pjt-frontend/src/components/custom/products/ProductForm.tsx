@@ -57,6 +57,8 @@ export function ProductForm({
   initialData?: Product | null
 }) {
   const isEditing = !!initialData
+  
+
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
   const { isAdmin } = useUser()
@@ -91,7 +93,7 @@ export function ProductForm({
           salePrice: initialData.salePrice
             ? Number(initialData.salePrice)
             : undefined,
-          initialStock: initialData.currentStock
+          initialStock: initialData.currentStock !== undefined
             ? Number(initialData.currentStock)
             : undefined,
           minStock:
@@ -121,14 +123,19 @@ export function ProductForm({
 
   const mutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
+
       const payload = {
         ...data,
         productType: 'SALE',
         costPrice: data.costPrice || 0,
         salePrice: data.salePrice || 0,
-        initialStock: data.initialStock || 0,
+        ...(isEditing 
+          ? { currentStock: data.initialStock || 0 } 
+          : { initialStock: data.initialStock || 0 }
+        ),
         minStock: data.minStock || 0,
       }
+
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       if (isEditing) {
         return axios.patch(`/api/products/${initialData.id}`, payload, { headers })
@@ -140,6 +147,7 @@ export function ProductForm({
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['products', activeBranch?.id] })
       queryClient.invalidateQueries({ queryKey: ['sale-products', activeBranch?.id] })
+      queryClient.refetchQueries({ queryKey: ['sale-products', activeBranch?.id] })
       toast.success(
         isEditing
           ? 'Produto atualizado com sucesso!'
