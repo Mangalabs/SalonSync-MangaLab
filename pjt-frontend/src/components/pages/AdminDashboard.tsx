@@ -134,7 +134,10 @@ export default function AdminDashboard() {
       )
       .reduce((s, a) => s + +a.total, 0) +
     movements
-      .filter((m) => m.createdAt?.toString().split('T')[0] === date)
+      .filter((m) => 
+        m.createdAt?.toString().split('T')[0] === date &&
+        m.type === 'OUT'
+      )
       .reduce((s, m) => s + +m.totalCost, 0)
 
   const todayRevenue = revenueForDate(todayStr)
@@ -170,13 +173,13 @@ export default function AdminDashboard() {
     })
     movements.forEach((m) => {
       const d = m.createdAt?.toString().split('T')[0]
-      if (totals[d] !== undefined) {
+      if (totals[d] !== undefined && m.type === 'OUT') {
         totals[d] += +m.totalCost
       }
     })
 
     return days.map((d) => ({
-      name: new Date(d).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      name: DateTime.fromDate(d).format('ddd'),
       value: totals[d],
       isToday: d === todayStr,
     }))

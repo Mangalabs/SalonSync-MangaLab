@@ -99,9 +99,14 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       }
     }
 
-    // Separar transações por tipo
     const appointmentTransactions =
       summary.transactions?.filter((t: any) => t.appointmentId) || []
+    const stockTransactions =
+      summary.transactions?.filter(
+        (t: any) =>
+          t.reference?.startsWith('Estoque-') ||
+          t.reference?.startsWith('Produto-')
+      ) || []
     const manualTransactions =
       summary.transactions?.filter(
         (t: any) =>
@@ -118,6 +123,9 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       (sum: number, t: any) => sum + Number(t.amount),
       0
     )
+    const totalFromStock = stockTransactions
+      .filter((t: any) => t.type === type)
+      .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
     const stockRevenue =
       type === 'INCOME' ? summary.summary?.stockRevenue || 0 : 0
     const stockExpenses =
@@ -129,10 +137,27 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     const grandTotal =
       totalFromTransactions +
       totalFromAppointments +
+      totalFromStock +
       stockRevenue +
       stockExpenses
 
     const allTransactions = summary.transactions || []
+    const displayTransactions =
+      type === 'INCOME'
+        ? [
+            ...manualTransactions,
+            ...appointmentTransactions,
+            ...stockTransactions.filter((t: any) => t.type === 'INCOME'),
+          ]
+        : type === 'EXPENSE'
+        ? [
+            ...manualTransactions,
+            ...stockTransactions.filter((t: any) => t.type === 'EXPENSE'),
+          ]
+        : [
+            ...manualTransactions,
+            ...stockTransactions.filter((t: any) => t.type === 'INVESTMENT'),
+          ]
 
     const categorySummary = allTransactions.reduce((acc: any, t: any) => {
       const categoryName = t.category.name
@@ -154,6 +179,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
     return {
       totalFromTransactions,
       totalFromAppointments,
+      totalFromStock,
       stockRevenue,
       stockExpenses,
       grandTotal,
@@ -161,12 +187,13 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
       categories,
       paymentMethods,
       allTransactions,
+      displayTransactions,
     }
   }, [summary, type])
 
   const filteredTransactions = useMemo(
     () =>
-      calculations.allTransactions?.filter((t: any) => {
+      calculations.displayTransactions?.filter((t: any) => {
         const matchesBranch = !branchFilter || t.branchId === branchFilter
         const matchesCategory =
           categoryFilter === 'all' || t.category.name === categoryFilter
@@ -181,7 +208,7 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
         )
       }) || [],
     [
-      calculations.allTransactions,
+      calculations.displayTransactions,
       branchFilter,
       categoryFilter,
       paymentMethodFilter,
@@ -203,12 +230,14 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
   const {
     totalFromTransactions,
     totalFromAppointments,
+    totalFromStock,
     stockRevenue,
     stockExpenses,
     categorySummary,
     categories,
     paymentMethods,
     allTransactions,
+    displayTransactions,
   } = calculations
 
   // Separar transações por tipo para exibição
@@ -351,10 +380,10 @@ export function FinancialTabContent({ type }: FinancialTabContentProps) {
               </CardHeader>
               <CardContent>
                 <div className='text-xl font-bold text-foreground'>
-                  {formatCurrency(stockRevenue)}
+                  {formatCurrency(totalFromStock)}
                 </div>
                 <p className='text-xs text-muted-foreground mt-1'>
-                  Automático do estoque
+                  Transações automáticas
                 </p>
               </CardContent>
             </Card>

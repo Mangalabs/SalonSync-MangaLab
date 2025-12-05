@@ -321,15 +321,15 @@ export class FinancialService extends BaseDataService {
 
     const summary = {
       totalIncome:
-        manualIncomeTransactions + appointmentRevenue + stockIncomeTransactions,
-      totalExpenses: manualExpenseTransactions + stockExpenseTransactions,
+        manualIncomeTransactions + appointmentRevenue + stockSales,
+      totalExpenses: manualExpenseTransactions + stockExpenseTransactions + stockLosses,
       totalInvestments:
-        manualInvestmentTransactions + stockInvestmentTransactions,
+        manualInvestmentTransactions + stockInvestmentTransactions + stockPurchases,
       recurringExpenses: recurringExpensesTotal,
       appointmentRevenue,
-      stockRevenue: stockIncomeTransactions,
-      stockExpenses: stockInvestmentTransactions,
-      stockLosses: stockExpenseTransactions,
+      stockRevenue: stockSales,
+      stockExpenses: stockPurchases,
+      stockLosses: stockLosses,
       netProfit: 0,
     };
 
