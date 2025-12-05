@@ -74,6 +74,7 @@ export function ProfessionalCommissionSummary() {
       return Promise.all(promises)
     },
     enabled: !!activeBranch && professionals.length > 0,
+    staleTime: 0,
   })
 
   const totalCommission = commissions.reduce(

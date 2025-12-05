@@ -41,6 +41,7 @@ export function ProfessionalCommissionCard({
       return res.data
     },
     enabled: !!professionalId,
+    staleTime: 0,
   })
 
   const { data: dailyCommission, isFetching: fetchingDaily } = useQuery({
@@ -53,6 +54,7 @@ export function ProfessionalCommissionCard({
       return res.data
     },
     enabled: !!professionalId,
+    staleTime: 0,
   })
 
   const handleRefresh = () => {

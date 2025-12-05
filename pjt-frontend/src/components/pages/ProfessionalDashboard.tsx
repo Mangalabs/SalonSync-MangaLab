@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useState, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   TrendingUp,
   DollarSign,
@@ -11,6 +11,7 @@ import {
   PlusCircle,
   UserPlus,
   Users,
+  RefreshCw,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -32,9 +33,11 @@ import axios from '@/lib/axios'
 import { DateTime } from '@/utils/dateTime'
 
 import { StatsCard } from '../ui/stats-card'
+import { useProfessionalCommission } from '@/hooks/useProfessionalCommission'
 
 export default function ProfessionalDashboard() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
   const { user } = useUser()
   const [selectedPeriod, setSelectedPeriod] = useState('today')
@@ -126,24 +129,15 @@ export default function ProfessionalDashboard() {
     data: commissionData,
     isLoading: commissionLoading,
     error: commissionError,
-  } = useQuery({
-    queryKey: [
-      'professional-commission',
-      professionalInfo?.id,
-      startDate,
-      endDate,
-      activeBranch?.id,
-    ],
-    queryFn: async () => {
-      const res = await axios.get(
-        `/api/professionals/${professionalInfo?.id}/commission?startDate=${startDate}&endDate=${endDate}`
-      )
-      return res.data
-    },
-    enabled: isProfessional && !!professionalInfo?.id && !!activeBranch,
-    staleTime: 30000,
-    retry: 2,
-  })
+    refetchCommission,
+  } = useProfessionalCommission(
+    professionalInfo?.id,
+    startDate,
+    endDate,
+    isProfessional && !!professionalInfo?.id && !!activeBranch
+  )
+
+
 
   const isLoading = commissionLoading || professionalLoading
   const error = commissionError
@@ -360,16 +354,31 @@ export default function ProfessionalDashboard() {
           </p>
         </div>
 
-        <Tabs
-          value={selectedPeriod}
-          onValueChange={setSelectedPeriod}
-          className='w-auto'>
-          <TabsList className='grid w-full grid-cols-3'>
-            <TabsTrigger value='today'>Hoje</TabsTrigger>
-            <TabsTrigger value='week'>7 dias</TabsTrigger>
-            <TabsTrigger value='month'>Mês</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className='flex items-center gap-3'>
+          {isProfessional && (
+            <button
+              onClick={() => {
+                refetchCommission()
+                queryClient.invalidateQueries({ queryKey: ['appointments'] })
+              }}
+              disabled={commissionLoading}
+              className='flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50'
+              title='Atualizar dados de comissão'>
+              <RefreshCw className={`w-4 h-4 ${commissionLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </button>
+          )}
+          <Tabs
+            value={selectedPeriod}
+            onValueChange={setSelectedPeriod}
+            className='w-auto'>
+            <TabsList className='grid w-full grid-cols-3'>
+              <TabsTrigger value='today'>Hoje</TabsTrigger>
+              <TabsTrigger value='week'>7 dias</TabsTrigger>
+              <TabsTrigger value='month'>Mês</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       <div className='bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100'>
@@ -740,7 +749,12 @@ export default function ProfessionalDashboard() {
             <DialogTitle>Agendar Atendimento</DialogTitle>
           </DialogHeader>
           <ScheduledAppointmentForm
-            onSuccess={() => setShowAppointmentForm(false)}
+            onSuccess={() => {
+              setShowAppointmentForm(false)
+              // Forçar atualização dos dados de comissão
+              refetchCommission()
+              queryClient.invalidateQueries({ queryKey: ['appointments'] })
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -753,7 +767,12 @@ export default function ProfessionalDashboard() {
             <DialogTitle>Registrar Atendimento</DialogTitle>
           </DialogHeader>
           <ImmediateAppointmentForm
-            onSuccess={() => setShowRegisterForm(false)}
+            onSuccess={() => {
+              setShowRegisterForm(false)
+              // Forçar atualização dos dados de comissão
+              refetchCommission()
+              queryClient.invalidateQueries({ queryKey: ['appointments'] })
+            }}
           />
         </DialogContent>
       </Dialog>
