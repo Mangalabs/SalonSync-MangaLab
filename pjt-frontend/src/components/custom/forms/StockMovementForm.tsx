@@ -79,6 +79,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
       unitCost: initialData?.unitCost || undefined,
       reason: initialData?.reason || '',
       reference: initialData?.reference || '',
+      soldById: initialData?.user?.id || undefined,
     },
   })
 
@@ -128,6 +129,13 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
       }
     }
   }, [initialData, isEditing, products, setValue, watch])
+
+  // Garantir que soldById seja undefined por padrão em novas movimentações
+  useEffect(() => {
+    if (!isEditing && !initialData) {
+      setValue('soldById', undefined)
+    }
+  }, [isEditing, initialData, setValue])
 
   const createMovement = useMutation({
     mutationFn: async (data: MovementFormData) => {
@@ -318,7 +326,7 @@ export function StockMovementForm({ onSuccess, initialData }: StockMovementFormP
             Usuário Responsável (opcional)
           </label>
           <select
-            value={initialData?.user?.id || 'none'}
+            value={watch('soldById') || 'none'}
             onChange={(e) => setValue('soldById', e.target.value === 'none' ? undefined : e.target.value)}
             className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
           >
