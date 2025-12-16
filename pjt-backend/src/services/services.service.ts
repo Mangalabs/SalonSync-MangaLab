@@ -18,12 +18,10 @@ export class ServicesService extends BaseDataService {
   async findAll(user: UserContext) {
     let branchIds: string[];
 
-    // Se branchId específico foi fornecido, usar apenas ele
     if (
       user.branchId &&
       (user.role === 'ADMIN' || user.role === 'SUPERADMIN')
     ) {
-      // Verificar se admin tem acesso a esta filial
       const allowedBranchIds = await this.getUserBranchIds({
         ...user,
         branchId: undefined,
@@ -43,10 +41,7 @@ export class ServicesService extends BaseDataService {
           AND: [
             { ownerId: user.id },
             {
-              OR: [
-                { branchId: null }, // Serviços globais
-                { branchId: { in: branchIds } }, // Serviços das filiais
-              ],
+              OR: [{ branchId: null }, { branchId: { in: branchIds } }],
             },
           ],
         },
@@ -57,10 +52,7 @@ export class ServicesService extends BaseDataService {
         where: {
           AND: [
             {
-              OR: [
-                { branchId: null }, // Serviços globais
-                { branchId: { in: branchIds } }, // Serviços das filiais
-              ],
+              OR: [{ branchId: null }, { branchId: { in: branchIds } }],
             },
           ],
         },
@@ -81,10 +73,7 @@ export class ServicesService extends BaseDataService {
           AND: [
             { ownerId: branch.ownerId },
             {
-              OR: [
-                { branchId: null }, // Serviços globais do dono
-                { branchId: { in: branchIds } }, // Apenas serviços da filial do funcionário
-              ],
+              OR: [{ branchId: null }, { branchId: { in: branchIds } }],
             },
           ],
         },
@@ -108,7 +97,6 @@ export class ServicesService extends BaseDataService {
     targetBranchId?: string,
   ) {
     if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
-      // Admin pode criar serviços globais ou específicos de filial
       const branchId = targetBranchId
         ? await this.getTargetBranchId(user, targetBranchId)
         : null;
@@ -118,15 +106,13 @@ export class ServicesService extends BaseDataService {
           name: data.name,
           price: data.price,
           duration: data.duration || 30,
-          branchId, // null = global, string = específico da filial
+          branchId,
           ownerId: user.id,
         },
       });
     } else {
-      // Funcionário cria serviços específicos da filial
       const branchId = await this.getTargetBranchId(user, targetBranchId);
 
-      // Buscar o dono da filial
       const branch = await this.prisma.branch.findUnique({
         where: { id: branchId },
         select: { ownerId: true },
@@ -142,7 +128,7 @@ export class ServicesService extends BaseDataService {
           price: data.price,
           duration: data.duration || 30,
           branchId,
-          ownerId: branch.ownerId, // Serviço pertence ao dono da filial
+          ownerId: branch.ownerId,
         },
       });
     }
@@ -154,8 +140,6 @@ export class ServicesService extends BaseDataService {
     user?: UserContext,
     targetBranchId?: string,
   ) {
-
-    // Se user e targetBranchId foram fornecidos, atualizar o branchId também
     if (user && user.role === 'ADMIN') {
       const branchId = targetBranchId
         ? await this.getTargetBranchId(user, targetBranchId)
@@ -165,7 +149,7 @@ export class ServicesService extends BaseDataService {
         where: { id },
         data: {
           ...data,
-          branchId, // null = global, string = específico da filial
+          branchId,
         },
       });
     }
@@ -174,23 +158,39 @@ export class ServicesService extends BaseDataService {
   }
 
   async remove(id: string) {
-    const service = await this.prisma.service.findUnique({ where: { id } });
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      include: {
+        appointmentServices: {
+          include: {
+            appointment: true,
+          },
+        },
+      },
+    });
+
     if (!service) {
       throw new NotFoundException('Serviço não encontrado');
     }
 
-    const appointmentServicesCount = await this.prisma.appointmentService.count(
-      {
-        where: { serviceId: id },
-      },
-    );
-
-    if (appointmentServicesCount > 0) {
+    if (service.appointmentServices && service.appointmentServices.length > 0) {
+      const appointmentsCount = service.appointmentServices.length;
       throw new BadRequestException(
-        'Não é possível excluir serviço com agendamentos',
+        `Não é possível excluir este serviço pois ele possui ${appointmentsCount} agendamento(s) vinculado(s). Para excluí-lo, primeiro remova ou altere os agendamentos.`,
       );
     }
 
+    await this.prisma.service.update({
+      where: { id },
+      data: {
+        professionals: {
+          set: [],
+        },
+      },
+    });
+
     await this.prisma.service.delete({ where: { id } });
+
+    return { message: 'Serviço excluído com sucesso' };
   }
 }

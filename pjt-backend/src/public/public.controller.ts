@@ -173,6 +173,14 @@ export class PublicController {
       },
     });
 
+    const scheduleBlocks = await this.prisma.scheduleBlock.findMany({
+      where: {
+        professionalId,
+        startDateTime: { lte: new Date(date + 'T23:59:59-03:00') },
+        endDateTime: { gte: new Date(date + 'T00:00:00-03:00') },
+      },
+    });
+
     const allTimes: string[] = [];
     const now = new Date();
     const selectedDate = new Date(date + 'T00:00:00-03:00');
@@ -214,6 +222,18 @@ export class PublicController {
       const startMinutes =
         appointmentTime.getHours() * 60 + appointmentTime.getMinutes();
       const endMinutes = startMinutes + totalDuration;
+
+      for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
+        const hour = Math.floor(minutes / 60);
+        const minute = minutes % 60;
+        const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        blockedTimes.add(timeSlot);
+      }
+    });
+
+    scheduleBlocks.forEach((block) => {
+      const startMinutes = block.startDateTime.getHours() * 60 + block.startDateTime.getMinutes();
+      const endMinutes = block.endDateTime.getHours() * 60 + block.endDateTime.getMinutes();
 
       for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
         const hour = Math.floor(minutes / 60);
