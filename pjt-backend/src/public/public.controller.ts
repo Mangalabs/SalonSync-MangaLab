@@ -102,8 +102,6 @@ export class PublicController {
       offset: processedDate.getTimezoneOffset(),
     };
   }
-  
-
 
   @Get('branch/:branchId/services')
   async getBranchServices(@Param('branchId') branchId: string) {
@@ -140,16 +138,16 @@ export class PublicController {
     if (!professionalId || !date) {
       throw new Error('professionalId e date são obrigatórios');
     }
-    
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
       throw new Error('Formato de data inválido. Use YYYY-MM-DD');
     }
-    
+
     const professional = await this.prisma.professional.findUnique({
       where: { id: professionalId },
     });
-    
+
     if (!professional) {
       throw new Error('Profissional não encontrado');
     }
@@ -173,20 +171,24 @@ export class PublicController {
       },
     });
 
-    const scheduleBlocks = await this.prisma.scheduleBlock.findMany({
-      where: {
-        professionalId,
-        startDateTime: { lte: new Date(date + 'T23:59:59-03:00') },
-        endDateTime: { gte: new Date(date + 'T00:00:00-03:00') },
+    const professionalAbsences = await this.prisma.professionalAbsence.findMany(
+      {
+        where: {
+          professionalId,
+          startDate: { lte: new Date(date + 'T23:59:59-03:00') },
+          endDate: { gte: new Date(date + 'T00:00:00-03:00') },
+        },
       },
-    });
+    );
 
     const allTimes: string[] = [];
     const now = new Date();
     const selectedDate = new Date(date + 'T00:00:00-03:00');
     const isToday = selectedDate.toDateString() === now.toDateString();
-    
-    if (selectedDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+
+    if (
+      selectedDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    ) {
       return { availableTimes: [], bookedTimes: [] };
     }
 
@@ -231,9 +233,11 @@ export class PublicController {
       }
     });
 
-    scheduleBlocks.forEach((block) => {
-      const startMinutes = block.startDateTime.getHours() * 60 + block.startDateTime.getMinutes();
-      const endMinutes = block.endDateTime.getHours() * 60 + block.endDateTime.getMinutes();
+    professionalAbsences.forEach((absence) => {
+      const startMinutes =
+        absence.startDate.getHours() * 60 + absence.startDate.getMinutes();
+      const endMinutes =
+        absence.endDate.getHours() * 60 + absence.endDate.getMinutes();
 
       for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
         const hour = Math.floor(minutes / 60);
@@ -324,7 +328,7 @@ export class PublicController {
   ) {
     const decodedBusinessSlug = decodeURIComponent(businessSlug);
     const decodedBranchSlug = decodeURIComponent(branchSlug);
-    
+
     const branch = await this.prisma.branch.findFirst({
       where: {
         name: { equals: decodedBranchSlug, mode: 'insensitive' },
@@ -345,7 +349,9 @@ export class PublicController {
     });
 
     if (!branch) {
-      throw new Error(`Filial '${decodedBranchSlug}' do negócio '${decodedBusinessSlug}' não encontrada.`);
+      throw new Error(
+        `Filial '${decodedBranchSlug}' do negócio '${decodedBusinessSlug}' não encontrada.`,
+      );
     }
 
     return branch;
