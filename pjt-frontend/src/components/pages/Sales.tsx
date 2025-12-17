@@ -441,7 +441,7 @@ export default function Sales() {
           </h4>
           <div className='space-y-4'>
             {/* Cliente Selecionado */}
-            {selectedClient ? (
+            {/* {selectedClient ? (
               <div className='bg-muted rounded-lg p-3 flex items-center justify-between'>
                 <div>
                   <p className='font-medium text-foreground'>
@@ -534,7 +534,7 @@ export default function Sales() {
                   </DialogContent>
                 </Dialog>
               </div>
-            )}
+            )} */}
 
             {/* Seleção de Vendedor (apenas para Admin) */}
             {isAdmin && (
