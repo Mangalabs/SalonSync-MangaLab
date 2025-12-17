@@ -653,6 +653,10 @@ export class ProductsService {
       await tx.financialTransaction.deleteMany({
         where: { reference: `Estoque-${id}` },
       });
+
+      await tx.financialTransaction.deleteMany({
+        where: { reference: `Venda-${id}` },
+      });
     });
   }
 

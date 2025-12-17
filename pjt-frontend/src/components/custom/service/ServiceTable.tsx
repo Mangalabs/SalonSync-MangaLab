@@ -8,6 +8,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 import {
   Dialog,
@@ -15,6 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
@@ -52,6 +63,7 @@ export function ServiceTable() {
   const { activeBranch } = useBranch()
   const { isAdmin } = useUser()
   const [editingService, setEditingService] = useState<Service | null>(null)
+  const [deletingService, setDeletingService] = useState<Service | null>(null)
 
   const {
     data: services,
@@ -69,16 +81,28 @@ export function ServiceTable() {
 
   const deleteService = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/services/${id}`)
+      await axios.delete(`/api/services/${id}`, {
+        headers: {
+          'X-Skip-Toast': 'true',
+        },
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['services', activeBranch?.id],
       })
+      toast.success('Serviço excluído com sucesso!')
+      setDeletingService(null)
     },
     onError: (error: any) => {
-      // eslint-disable-next-line no-alert
-      alert(error.response?.data?.message || 'Erro ao excluir serviço')
+      const errorMessage =
+        error.userMessage ||
+        error.response?.data?.message ||
+        error.message ||
+        'Erro ao excluir serviço. Tente novamente.'
+
+      toast.error(errorMessage)
+      setDeletingService(null)
     },
   })
 
@@ -148,97 +172,97 @@ export function ServiceTable() {
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {services && services.length > 0
           ? services.map((service) => (
-            <div
-              key={service.id}
-              className='rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border'
-              style={{
-                backgroundColor: 'var(--color-popover)',
-                borderColor: 'var(--color-border)',
-              }}>
               <div
-                className='h-32 flex items-center justify-center'
+                key={service.id}
+                className='rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border'
                 style={{
-                  background: service.color || 'var(--color-accent)',
+                  backgroundColor: 'var(--color-popover)',
+                  borderColor: 'var(--color-border)',
                 }}>
-                {getServiceIcon(service.icon)}
-              </div>
-              <div className='p-6'>
-                <h4
+                <div
+                  className='h-32 flex items-center justify-center'
                   style={{
-                    color: 'var(--color-card-foreground)',
-                    fontWeight: 600,
-                    marginBottom: '0.5rem',
+                    background: service.color || 'var(--color-accent)',
                   }}>
-                  {service.name}
-                </h4>
-                {service.description && (
-                  <p
-                    style={{
-                      color: 'var(--color-muted-foreground)',
-                      fontSize: '0.875rem',
-                      marginBottom: '1rem',
-                    }}>
-                    {service.description}
-                  </p>
-                )}
-
-                <div className='flex justify-between items-center mb-2'>
-                  <span
-                    style={{
-                      color: 'var(--color-secondary-foreground)',
-                      fontWeight: 700,
-                      fontSize: '1rem',
-                    }}>
-                    R$ {Number(service.price).toFixed(2).replace('.', ',')}
-                  </span>
-                  <span
-                    style={{
-                      color: 'var(--color-muted-foreground)',
-                      backgroundColor: 'var(--color-muted)',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                    }}>
-                    {service.duration || 30}min
-                  </span>
+                  {getServiceIcon(service.icon)}
                 </div>
+                <div className='p-6'>
+                  <h4
+                    style={{
+                      color: 'var(--color-card-foreground)',
+                      fontWeight: 600,
+                      marginBottom: '0.5rem',
+                    }}>
+                    {service.name}
+                  </h4>
+                  {service.description && (
+                    <p
+                      style={{
+                        color: 'var(--color-muted-foreground)',
+                        fontSize: '0.875rem',
+                        marginBottom: '1rem',
+                      }}>
+                      {service.description}
+                    </p>
+                  )}
 
-                {isAdmin && (
-                  <p style={{ fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div className='flex justify-between items-center mb-2'>
                     <span
                       style={{
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '9999px',
-                        backgroundColor: service.branchId
-                          ? 'var(--color-accent)'
-                          : 'var(--color-secondary)',
-                        color: service.branchId
-                          ? 'var(--color-accent-foreground)'
-                          : 'var(--color-secondary-foreground)',
+                        color: 'var(--color-secondary-foreground)',
+                        fontWeight: 700,
+                        fontSize: '1rem',
                       }}>
-                      {service.branchId ? 'Filial' : 'Global'}
+                      R$ {Number(service.price).toFixed(2).replace('.', ',')}
                     </span>
-                  </p>
-                )}
+                    <span
+                      style={{
+                        color: 'var(--color-muted-foreground)',
+                        backgroundColor: 'var(--color-muted)',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                      }}>
+                      {service.duration || 30}min
+                    </span>
+                  </div>
 
-                <div className='mt-4 flex space-x-2'>
-                  <button
-                    onClick={() => setEditingService(service)}
-                    className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
-                    <Edit className='w-3 h-3' />
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteService.mutate(service.id)}
-                    disabled={deleteService.isPending}
-                    className='flex-1 bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1'>
-                    <Trash2 className='w-3 h-3' />
-                    Excluir
-                  </button>
+                  {isAdmin && (
+                    <p style={{ fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+                      <span
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '9999px',
+                          backgroundColor: service.branchId
+                            ? 'var(--color-accent)'
+                            : 'var(--color-secondary)',
+                          color: service.branchId
+                            ? 'var(--color-accent-foreground)'
+                            : 'var(--color-secondary-foreground)',
+                        }}>
+                        {service.branchId ? 'Filial' : 'Global'}
+                      </span>
+                    </p>
+                  )}
+
+                  <div className='mt-4 flex space-x-2'>
+                    <button
+                      onClick={() => setEditingService(service)}
+                      className='flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1'>
+                      <Edit className='w-3 h-3' />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => setDeletingService(service)}
+                      disabled={deleteService.isPending}
+                      className='flex-1 bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1'>
+                      <Trash2 className='w-3 h-3' />
+                      Excluir
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))
           : null}
 
         <div
@@ -283,17 +307,54 @@ export function ServiceTable() {
           <ServiceForm
             initialData={
               editingService
-                ? { 
-                  ...editingService, 
-                  price: String(editingService.price),
-                  duration: editingService.duration ? String(editingService.duration) : '30',
-                }
+                ? {
+                    ...editingService,
+                    price: String(editingService.price),
+                    duration: editingService.duration
+                      ? String(editingService.duration)
+                      : '30',
+                  }
                 : undefined
             }
             onSuccess={() => setEditingService(null)}
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deletingService}
+        onOpenChange={() => setDeletingService(null)}>
+        <AlertDialogContent className='bg-card'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
+            <AlertDialogDescription className='text-muted-foreground'>
+              Tem certeza que deseja excluir o serviço "{deletingService?.name}
+              "?
+              <br />
+              <br />
+              Esta ação não pode ser desfeita.
+              {deletingService && (
+                <>
+                  <br />
+                  <br />
+                  <strong>Nota:</strong> Serviços que possuem agendamentos
+                  vinculados não podem ser excluídos.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/80'
+              onClick={() =>
+                deletingService && deleteService.mutate(deletingService.id)
+              }>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -11,6 +11,7 @@ import { ServicesModule } from './services/services.module';
 import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { BranchesModule } from './branches/branches.module';
+import { BranchHoursModule } from './branch-hours/branch-hours.module';
 import { ProductsModule } from './products/products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { FinancialModule } from './financial/financial.module';
@@ -30,6 +31,7 @@ import { PublicModule } from './public/public.module';
     PrismaModule,
     AuthModule,
     BranchesModule,
+    BranchHoursModule,
     RolesModule,
     ProfessionalsModule,
     DashboardModule,

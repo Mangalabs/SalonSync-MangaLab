@@ -45,10 +45,33 @@ function getErrorMessage(error: any): string {
     const status = error.response.status
     const data = error.response.data
 
+    const extractMessage = (data: any): string | null => {
+      if (!data) return null
+
+      if (typeof data.message === 'string') {
+        return data.message
+      }
+
+      if (typeof data.message === 'object' && data.message !== null) {
+        if (typeof data.message.message === 'string') {
+          return data.message.message
+        }
+        if (typeof data.message.error === 'string') {
+          return data.message.error
+        }
+      }
+
+      if (Array.isArray(data.message)) {
+        return data.message.filter((m) => typeof m === 'string').join(', ')
+      }
+
+      return null
+    }
+
     switch (status) {
       case 400:
         return (
-          data?.message ||
+          extractMessage(data) ||
           'Dados inválidos. Verifique as informações e tente novamente.'
         )
       case 401:
@@ -58,10 +81,13 @@ function getErrorMessage(error: any): string {
       case 404:
         return 'Recurso não encontrado. A página ou dados podem ter sido removidos.'
       case 409:
-        return data?.message || 'Conflito de dados. Verifique as informações.'
+        return (
+          extractMessage(data) || 'Conflito de dados. Verifique as informações.'
+        )
       case 422:
         return (
-          data?.message || 'Dados inválidos. Verifique os campos obrigatórios.'
+          extractMessage(data) ||
+          'Dados inválidos. Verifique os campos obrigatórios.'
         )
       case 429:
         return 'Muitas tentativas. Aguarde um momento e tente novamente.'
@@ -73,7 +99,8 @@ function getErrorMessage(error: any): string {
         return 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.'
       default:
         return (
-          data?.message || `Erro ${status}: Algo deu errado. Tente novamente.`
+          extractMessage(data) ||
+          `Erro ${status}: Algo deu errado. Tente novamente.`
         )
     }
   }
@@ -104,7 +131,7 @@ axios.interceptors.response.use(
 
     error.userMessage = errorMessage
     return Promise.reject(error)
-  },
+  }
 )
 
 export default axios

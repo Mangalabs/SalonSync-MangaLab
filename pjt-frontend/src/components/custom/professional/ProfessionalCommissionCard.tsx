@@ -1,10 +1,20 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { DollarSign, BarChart3, RefreshCw } from 'lucide-react'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import 'dayjs/locale/pt-br'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.locale('pt-br')
+
+const TIMEZONE = 'America/Sao_Paulo'
 
 interface ProfessionalCommissionCardProps {
   professionalId?: string
@@ -28,15 +38,11 @@ export function ProfessionalCommissionCard({
   const { data: monthlyCommission, isFetching: fetchingMonthly } = useQuery({
     queryKey: ['monthly-commission', professionalId, activeBranch?.id],
     queryFn: async () => {
-      const now = new Date()
-      const start = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .split('T')[0]
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        .toISOString()
-        .split('T')[0]
+      const now = dayjs.tz(dayjs(), TIMEZONE)
+      const start = now.startOf('month').format('YYYY-MM-DD')
+      const end = now.endOf('month').format('YYYY-MM-DD')
       const res = await axios.get(
-        `/api/professionals/${professionalId}/commission?startDate=${start}&endDate=${end}`,
+        `/api/professionals/${professionalId}/commission?startDate=${start}&endDate=${end}`
       )
       return res.data
     },
@@ -47,9 +53,9 @@ export function ProfessionalCommissionCard({
   const { data: dailyCommission, isFetching: fetchingDaily } = useQuery({
     queryKey: ['daily-commission', professionalId, activeBranch?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = dayjs.tz(dayjs(), TIMEZONE).format('YYYY-MM-DD')
       const res = await axios.get(
-        `/api/professionals/${professionalId}/commission?startDate=${today}&endDate=${today}`,
+        `/api/professionals/${professionalId}/commission?startDate=${today}&endDate=${today}`
       )
       return res.data
     },
@@ -78,23 +84,24 @@ export function ProfessionalCommissionCard({
   const isLoading = fetchingProfessional || fetchingMonthly || fetchingDaily
 
   const getWeekdayAbbr = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('pt-BR', { weekday: 'short' })
+    return dayjs.tz(dateStr, TIMEZONE).format('ddd')
   }
 
   const getLast7Days = () => {
     const result: any[] = []
-    const today = new Date()
+    const today = dayjs.tz(dayjs(), TIMEZONE)
+
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-      const dateKey = date.toISOString().split('T')[0]
+      const date = today.subtract(i, 'day')
+      const dateKey = date.format('YYYY-MM-DD')
+
       const commissionDay = monthlyCommission?.dailyCommissions?.find(
-        (d: any) => d.date === dateKey,
+        (d: any) => d.date === dateKey
       )
+
       result.push({
         date: dateKey,
-        day: date.getDate(),
+        day: date.date(),
         dayName: getWeekdayAbbr(dateKey),
         commission: commissionDay?.commission || 0,
       })
