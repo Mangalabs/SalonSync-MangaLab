@@ -40,7 +40,7 @@ interface CartItem extends Product {
 
 export default function Sales() {
   const queryClient = useQueryClient()
-  const { user, isAdmin, isProfessional } = useUser()
+  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
   const { activeBranch } = useBranch()
 
   const [carts, setCarts] = useState<{ [branchId: string]: CartItem[] }>({})
@@ -106,14 +106,20 @@ export default function Sales() {
   })
 
   const currentProfessionalId = useMemo(() => {
-    if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
+    if (
+      isProfessional &&
+      !isAdmin &&
+      !canManageOthers &&
+      user?.name &&
+      professionals.length > 0
+    ) {
       const currentProfessional = professionals.find(
         (p: any) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
     return ''
-  }, [isProfessional, isAdmin, user?.name, professionals])
+  }, [isProfessional, isAdmin, canManageOthers, user?.name, professionals])
 
   const getSellerId = () => {
     if (isAdmin) {
@@ -229,8 +235,7 @@ export default function Sales() {
     }
     return (
       <span
-        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}
-      >
+        className={`text-xs px-2 py-1 rounded-full font-medium ${config[status]}`}>
         {product.currentStock} {product.unit}
       </span>
     )
@@ -267,8 +272,7 @@ export default function Sales() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'
-            >
+              className='w-full sm:w-auto px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-input'>
               {categories.map((category) => (
                 <option key={category} value={category}>
                   {category === 'all' ? 'Todas as categorias' : category}
@@ -309,13 +313,11 @@ export default function Sales() {
               filteredProducts.length > 9
                 ? 'max-h-[600px] overflow-y-auto pr-2'
                 : ''
-            }`}
-          >
+            }`}>
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'
-              >
+                className='border border-border rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col bg-card'>
                 <div className='flex items-center justify-between mb-3'>
                   <div className='w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg flex items-center justify-center'>
                     <ShoppingCart className='text-primary w-5 h-5 sm:w-6 sm:h-6' />
@@ -335,8 +337,7 @@ export default function Sales() {
                 </div>
                 <button
                   onClick={() => addToCart(product)}
-                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'
-                >
+                  className='mt-auto w-full bg-muted text-foreground py-2 px-4 rounded-lg font-medium hover:opacity-60 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer'>
                   <ShoppingCart className='w-4 h-4' />
                   Adicionar
                 </button>
@@ -354,8 +355,7 @@ export default function Sales() {
           <div
             className={`space-y-3 mb-4 ${
               cart.length > 5 ? 'max-h-64 overflow-y-auto pr-2' : ''
-            }`}
-          >
+            }`}>
             {cart.length === 0 ? (
               <div className='text-center py-6 sm:py-8 text-muted-foreground'>
                 <ShoppingCart className='w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50' />
@@ -368,8 +368,7 @@ export default function Sales() {
               cart.map((item) => (
                 <div
                   key={item.id}
-                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'
-                >
+                  className='flex items-center justify-between p-3 border border-border rounded-lg gap-2'>
                   <div className='flex-1 min-w-0'>
                     <p className='font-medium text-foreground truncate'>
                       {item.name}
@@ -381,8 +380,7 @@ export default function Sales() {
                   <div className='flex items-center gap-1 sm:gap-2'>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
-                    >
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
                       <Minus className='w-3 h-3' />
                     </button>
                     <span className='w-6 sm:w-8 text-center font-semibold text-sm'>
@@ -390,14 +388,12 @@ export default function Sales() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'
-                    >
+                      className='w-6 h-6 bg-muted rounded-full flex items-center justify-center text-foreground hover:bg-hover cursor-pointer'>
                       <Plus className='w-3 h-3' />
                     </button>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'
-                    >
+                      className='ml-1 sm:ml-2 text-destructive hover:opacity-80 cursor-pointer'>
                       <Trash2 className='w-4 h-4' />
                     </button>
                   </div>
@@ -427,8 +423,7 @@ export default function Sales() {
             <button
               disabled={cart.length === 0}
               onClick={() => createSale.mutate()}
-              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'
-            >
+              className='w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 px-4 rounded-xl font-medium hover:opacity-50 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'>
               <CreditCard className='w-4 h-4' />
               Finalizar Venda
             </button>
@@ -545,8 +540,7 @@ export default function Sales() {
                 <select
                   value={selectedSeller}
                   onChange={(e) => setSelectedSeller(e.target.value)}
-                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-                >
+                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
                   <option value=''>Sem vendedor (sem comissão)</option>
                   {professionals.map((prof: any) => (
                     <option key={prof.id} value={prof.id}>
@@ -586,8 +580,7 @@ export default function Sales() {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
-              >
+                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
                 <option value='CASH'>Dinheiro</option>
                 <option value='CARD'>Cartão</option>
                 <option value='PIX'>PIX</option>

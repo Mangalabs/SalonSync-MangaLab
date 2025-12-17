@@ -18,7 +18,7 @@ export function ProfessionalSelector({
   errors,
   branchId,
 }: ProfessionalSelectorProps) {
-  const { user, isProfessional, isAdmin } = useUser()
+  const { user, isProfessional, isAdmin, canManageOthers } = useUser()
 
   return (
     <div>
@@ -27,7 +27,7 @@ export function ProfessionalSelector({
         name='professionalId'
         control={control}
         render={({ field }) =>
-          isProfessional && !isAdmin ? (
+          isProfessional && !isAdmin && !canManageOthers ? (
             <>
               <Input
                 value={user?.name || ''}

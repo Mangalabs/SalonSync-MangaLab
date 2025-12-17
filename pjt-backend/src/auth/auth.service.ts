@@ -69,6 +69,8 @@ export class AuthService {
         return {
           ...user,
           branchName: professional?.branch?.name,
+          professionalRole: professional?.role,
+          canManageOthers: professional?.role === 'RECEPTIONIST',
         };
       }
 
@@ -131,6 +133,8 @@ export class AuthService {
         return {
           ...user,
           branchName: professional?.branch?.name,
+          professionalRole: professional?.role,
+          canManageOthers: professional?.role === 'RECEPTIONIST',
         };
       }
 
@@ -149,6 +153,7 @@ export class AuthService {
     commissionRate?: number;
     branchId: string;
     workingDays?: number[];
+    canManageOthers?: boolean;
   }) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
@@ -181,7 +186,9 @@ export class AuthService {
     const professional = await this.prisma.professional.create({
       data: {
         name: data.name,
-        role: data.role || 'Profissional',
+        role: data.canManageOthers
+          ? 'RECEPTIONIST'
+          : data.role || 'Profissional',
         branchId: data.branchId,
         commissionRate: data.commissionRate || 0,
         roleId: data.roleId,
@@ -191,7 +198,7 @@ export class AuthService {
     // Criar dias de trabalho se especificados
     if (data.workingDays && data.workingDays.length > 0) {
       await Promise.all(
-        data.workingDays.map(dayOfWeek =>
+        data.workingDays.map((dayOfWeek) =>
           this.prisma.professionalWorkingDay.create({
             data: {
               professionalId: professional.id,
@@ -200,8 +207,8 @@ export class AuthService {
               endTime: '18:00',
               isActive: true,
             },
-          })
-        )
+          }),
+        ),
       );
     }
 

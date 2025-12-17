@@ -123,12 +123,11 @@ export function SchedulingForm({ onSuccess }: { onSuccess: () => void }) {
   const createAppointment = useMutation({
     mutationFn: async (data: FormData) => {
       const scheduledAt = `${data.date} ${data.time}:00`
-      const appointmentDate = new Date(data.date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      appointmentDate.setHours(0, 0, 0, 0)
 
-      const status = appointmentDate <= today ? 'COMPLETED' : 'SCHEDULED'
+      const scheduledDateTime = new Date(`${data.date}T${data.time}:00`)
+      const now = new Date()
+
+      const status = scheduledDateTime <= now ? 'COMPLETED' : 'SCHEDULED'
 
       const config =
         isAdmin && data.branchId
