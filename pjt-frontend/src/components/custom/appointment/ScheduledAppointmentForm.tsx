@@ -1,13 +1,7 @@
 import React, { useState } from 'react'
 import { Save, Clock } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
 
-import { useFormQueries } from '@/hooks/useFormQueries'
-import { useAppointmentForm } from '@/hooks/useAppointmentForm'
-import { useUser } from '@/contexts/UserContext'
-import { useBranch } from '@/contexts/BranchContext'
-import axios from '@/lib/axios'
-
+import { useAppointmentFormSetup } from '@/hooks/useAppointmentFormSetup'
 import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { SchedulingFields } from '@/components/custom/scheduling/SchedulingFields'
 import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
@@ -23,75 +17,32 @@ export function ScheduledAppointmentForm({
   onSuccess,
   initialData,
 }: ScheduledAppointmentFormProps) {
-  const { isAdmin } = useUser()
-  const { activeBranch } = useBranch()
-
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const res = await axios.get('/api/branches')
-      return res.data
-    },
-    enabled: isAdmin,
-  })
-
-  const { professionals } = useFormQueries(
-    undefined,
-    undefined,
-    false,
-    activeBranch?.id
-  )
-  const { form, mutation } = useAppointmentForm(
-    'scheduled',
-    professionals,
-    () => {
-      onSuccess?.()
-    },
-    initialData
-  )
-
   const {
+    form,
     handleSubmit,
     watch,
     setValue,
-    formState: { isSubmitting, errors },
-  } = form
-
-  React.useEffect(() => {
-    if (!isAdmin && activeBranch?.id) {
-      setValue('branchId', activeBranch.id)
-    }
-  }, [isAdmin, activeBranch?.id, setValue])
-
-  const selectedBranchId = watch('branchId')
-  const selectedProfessional = watch('professionalId')
-  const selectedDate = watch('scheduledDate')
-
-  const branchData = useFormQueries(
+    isSubmitting,
+    errors,
+    onSubmit,
+    isAdmin,
+    branches,
+    selectedBranchId,
+    services,
+    clients,
+    professionals: profs,
+    availableSlots,
     selectedProfessional,
     selectedDate,
-    true,
-    selectedBranchId
-  )
-  const {
-    services = [],
-    clients = [],
-    professionals: profs = [],
-    availableSlots = [],
-  } = branchData
-
-  const watchedServices = watch('serviceIds') || []
-  const selectedServices = (Array.isArray(services) ? services : []).filter(
-    (s) => watchedServices.includes(s.id)
-  )
-  const totalPrice = selectedServices.reduce(
-    (acc, s) => acc + (s.price || 0),
-    0
-  )
-
-  const onSubmit = (data: any) => {
-    mutation.mutate(data)
-  }
+    watchedServices,
+    selectedServices,
+    totalPrice,
+  } = useAppointmentFormSetup({
+    type: 'scheduled',
+    onSuccess,
+    initialData,
+    includeAvailableSlots: true,
+  })
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>

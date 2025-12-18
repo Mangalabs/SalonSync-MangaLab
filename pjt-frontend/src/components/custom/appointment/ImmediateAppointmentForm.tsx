@@ -1,13 +1,7 @@
 import React from 'react'
 import { Save } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
 
-import { useFormQueries } from '@/hooks/useFormQueries'
-import { useAppointmentForm } from '@/hooks/useAppointmentForm'
-import { useUser } from '@/contexts/UserContext'
-import { useBranch } from '@/contexts/BranchContext'
-import axios from '@/lib/axios'
-
+import { useAppointmentFormSetup } from '@/hooks/useAppointmentFormSetup'
 import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
 import { BranchSelect } from '@/components/custom/branch/BranchSelect'
@@ -22,67 +16,27 @@ export function ImmediateAppointmentForm({
   onSuccess,
   initialData,
 }: ImmediateAppointmentFormProps) {
-  const { isAdmin } = useUser()
-  const { activeBranch } = useBranch()
-
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const res = await axios.get('/api/branches')
-      return res.data
-    },
-    enabled: isAdmin,
-  })
-
-  const { professionals } = useFormQueries(
-    undefined,
-    undefined,
-    false,
-    activeBranch?.id
-  )
-  const { form, mutation } = useAppointmentForm(
-    'immediate',
-    professionals,
-    () => {
-      onSuccess?.()
-    },
-    initialData
-  )
-
   const {
     handleSubmit,
     watch,
     setValue,
-    formState: { isSubmitting, errors },
-  } = form
-
-  React.useEffect(() => {
-    if (!isAdmin && activeBranch?.id) {
-      setValue('branchId', activeBranch.id)
-    }
-  }, [isAdmin, activeBranch?.id, setValue])
-
-  const selectedBranchId = watch('branchId')
-  const branchData = useFormQueries(
-    undefined,
-    undefined,
-    false,
-    selectedBranchId
-  )
-  const { services = [], clients = [], professionals: profs = [] } = branchData
-
-  const watchedServices = watch('serviceIds') || []
-  const selectedServices = (Array.isArray(services) ? services : []).filter(
-    (s) => watchedServices.includes(s.id)
-  )
-  const totalPrice = selectedServices.reduce(
-    (acc, s) => acc + (s.price || 0),
-    0
-  )
-
-  const onSubmit = (data: any) => {
-    mutation.mutate(data)
-  }
+    isSubmitting,
+    errors,
+    onSubmit,
+    isAdmin,
+    branches,
+    selectedBranchId,
+    services,
+    clients,
+    professionals: profs,
+    watchedServices,
+    selectedServices,
+    totalPrice,
+  } = useAppointmentFormSetup({
+    type: 'immediate',
+    onSuccess,
+    initialData,
+  })
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
