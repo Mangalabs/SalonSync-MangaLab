@@ -39,7 +39,7 @@ interface ProductSaleFormProps {
 
 export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
   const queryClient = useQueryClient()
-  const { user, isAdmin, isProfessional } = useUser()
+  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
   const { activeBranch } = useBranch()
 
   const { data: branches = [] } = useQuery({
@@ -66,7 +66,6 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
   const selectedBranchId = watch('branchId')
 
-  // Log para debug da seleção de filial
   useEffect(() => {}, [selectedBranchId])
 
   const { data: products = [] } = useQuery({
@@ -100,23 +99,28 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
         return []
       }
       const res = await axios.get(
-        `/api/professionals?branchId=${selectedBranchId}`,
+        `/api/professionals?branchId=${selectedBranchId}`
       )
       return res.data
     },
     enabled: !!selectedBranchId,
   })
 
-  // Auto-selecionar profissional se for funcionário (não admin)
   const currentProfessionalId = useMemo(() => {
-    if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
+    if (
+      isProfessional &&
+      !isAdmin &&
+      !canManageOthers &&
+      user?.name &&
+      professionals.length > 0
+    ) {
       const currentProfessional = professionals.find(
-        (p) => p.name === user.name,
+        (p) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
     return ''
-  }, [isProfessional, isAdmin, user?.name, professionals])
+  }, [isProfessional, isAdmin, canManageOthers, user?.name, professionals])
 
   useEffect(() => {
     if (currentProfessionalId) {
@@ -156,14 +160,14 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
           clientName ? ` - Cliente: ${clientName}` : ''
         }${data.notes ? ` - ${data.notes}` : ''}`,
         reference: clientName ? `Cliente: ${clientName}` : undefined,
-        soldById: data.soldById || undefined, // undefined se não selecionado
+        soldById: data.soldById || undefined,
       }
 
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
       const res = await axios.post(
         `/api/products/${data.productId}/adjust`,
         saleData,
-        { headers },
+        { headers }
       )
       return res.data
     },
@@ -187,7 +191,7 @@ export function ProductSaleForm({ onSuccess }: ProductSaleFormProps) {
 
     if (data.quantity > selectedProduct.currentStock) {
       toast.error(
-        `Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`,
+        `Estoque insuficiente. Disponível: ${selectedProduct.currentStock}`
       )
       return
     }

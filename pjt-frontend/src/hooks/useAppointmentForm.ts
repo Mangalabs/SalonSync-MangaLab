@@ -36,7 +36,7 @@ export function useAppointmentForm(
   initialData?: any
 ) {
   const queryClient = useQueryClient()
-  const { user, isProfessional, isAdmin } = useUser()
+  const { user, isProfessional, isAdmin, canManageOthers } = useUser()
   const isScheduled = mode === 'scheduled'
 
   const getDefaultValues = () => {
@@ -92,14 +92,20 @@ export function useAppointmentForm(
   })
 
   const currentProfessionalId = useMemo(() => {
-    if (isProfessional && !isAdmin && user?.name && professionals.length > 0) {
+    if (
+      isProfessional &&
+      !isAdmin &&
+      !canManageOthers &&
+      user?.name &&
+      professionals.length > 0
+    ) {
       const currentProfessional = professionals.find(
         (p) => p.name === user.name
       )
       return currentProfessional?.id || ''
     }
     return ''
-  }, [isProfessional, isAdmin, user?.name, professionals])
+  }, [isProfessional, isAdmin, canManageOthers, user?.name, professionals])
 
   useEffect(() => {
     if (currentProfessionalId) {
@@ -121,9 +127,17 @@ export function useAppointmentForm(
       }
 
       let finalProfessionalId =
-        isProfessional && !isAdmin ? currentProfessionalId : data.professionalId
+        isProfessional && !isAdmin && !canManageOthers
+          ? currentProfessionalId
+          : data.professionalId
 
-      if (isProfessional && !isAdmin && !finalProfessionalId && user?.name) {
+      if (
+        isProfessional &&
+        !isAdmin &&
+        !canManageOthers &&
+        !finalProfessionalId &&
+        user?.name
+      ) {
         const professional = professionals.find((p) => p.name === user.name)
         finalProfessionalId = professional?.id || ''
       }

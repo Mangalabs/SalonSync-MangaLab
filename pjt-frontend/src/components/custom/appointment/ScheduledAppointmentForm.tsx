@@ -1,22 +1,12 @@
 import React, { useState } from 'react'
-import { Search, UserPlus, Save, Clock } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { Save, Clock } from 'lucide-react'
 
-import { useFormQueries } from '@/hooks/useFormQueries'
-import { useAppointmentForm } from '@/hooks/useAppointmentForm'
-import { useUser } from '@/contexts/UserContext'
-import { useBranch } from '@/contexts/BranchContext'
-import axios from '@/lib/axios'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-
-import { ClientForm } from '@/components/custom/client/ClientForm'
+import { useAppointmentFormSetup } from '@/hooks/useAppointmentFormSetup'
+import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { SchedulingFields } from '@/components/custom/scheduling/SchedulingFields'
+import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
+import { BranchSelect } from '@/components/custom/branch/BranchSelect'
+import { SimpleServiceSelector } from '@/components/custom/service/SimpleServiceSelector'
 
 interface ScheduledAppointmentFormProps {
   onSuccess?: () => void
@@ -27,73 +17,32 @@ export function ScheduledAppointmentForm({
   onSuccess,
   initialData,
 }: ScheduledAppointmentFormProps) {
-  const { isAdmin } = useUser()
-  const { activeBranch } = useBranch()
-  const [clientModalOpen, setClientModalOpen] = useState(false)
-  const [clientSearch, setClientSearch] = useState('')
-  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
-
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const res = await axios.get('/api/branches')
-      return res.data
-    },
-    enabled: isAdmin,
-  })
-
-  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
-  const { form, mutation } = useAppointmentForm(
-    'scheduled',
-    professionals,
-    () => {
-      onSuccess?.()
-    },
-    initialData
-  )
-
   const {
+    form,
     handleSubmit,
     watch,
     setValue,
-    formState: { isSubmitting, errors },
-  } = form
-
-  React.useEffect(() => {
-    if (!isAdmin && activeBranch?.id) {
-      setValue('branchId', activeBranch.id)
-    }
-  }, [isAdmin, activeBranch?.id, setValue])
-
-  const selectedBranchId = watch('branchId')
-  const selectedProfessional = watch('professionalId')
-  const selectedDate = watch('scheduledDate')
-
-  const branchData = useFormQueries(
+    isSubmitting,
+    errors,
+    onSubmit,
+    isAdmin,
+    branches,
+    selectedBranchId,
+    services,
+    clients,
+    professionals: profs,
+    availableSlots,
     selectedProfessional,
     selectedDate,
-    true,
-    selectedBranchId
-  )
-  const {
-    services = [],
-    clients = [],
-    professionals: profs = [],
-    availableSlots = [],
-  } = branchData
-
-  const watchedServices = watch('serviceIds') || []
-  const selectedServices = (Array.isArray(services) ? services : []).filter(
-    (s) => watchedServices.includes(s.id)
-  )
-  const totalPrice = selectedServices.reduce(
-    (acc, s) => acc + (s.price || 0),
-    0
-  )
-
-  const onSubmit = (data: any) => {
-    mutation.mutate(data)
-  }
+    watchedServices,
+    selectedServices,
+    totalPrice,
+  } = useAppointmentFormSetup({
+    type: 'scheduled',
+    onSuccess,
+    initialData,
+    includeAvailableSlots: true,
+  })
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
@@ -103,140 +52,51 @@ export function ScheduledAppointmentForm({
         </h3>
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           {isAdmin && (
-            <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
-                Filial
-              </label>
-              <select
-                value={selectedBranchId || ''}
-                onChange={(e) => {
-                  setValue('branchId', e.target.value)
-                  setValue('professionalId', '')
-                  setValue('clientId', '')
-                  setValue('serviceIds', [])
-                }}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                <option value=''>Selecione uma filial</option>
-                {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-              {errors.branchId && (
-                <p className='text-xs text-destructive mt-1'>
-                  {errors.branchId.message}
-                </p>
-              )}
-            </div>
+            <BranchSelect
+              id='scheduled-branch-select'
+              value={selectedBranchId || ''}
+              onChange={(branchId) => setValue('branchId', branchId)}
+              branches={branches}
+              error={errors.branchId?.message as string}
+              onBranchChange={() => {
+                setValue('professionalId', '')
+                setValue('clientId', '')
+                setValue('serviceIds', [])
+              }}
+            />
           )}
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
-                Cliente
-              </label>
-              <div className='relative'>
-                <div className='relative'>
-                  <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
-                  <input
-                    type='text'
-                    placeholder='Buscar cliente...'
-                    value={(() => {
-                      const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
-                      return selectedClient ? selectedClient.name : clientSearch
-                    })()}
-                    onChange={(e) => {
-                      setClientSearch(e.target.value)
-                      setClientDropdownOpen(true)
-                      if (!e.target.value) setValue('clientId', '')
-                    }}
-                    onFocus={() => setClientDropdownOpen(true)}
-                    className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'
-                  />
-                </div>
-                {clientDropdownOpen && (
-                  <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
-                    {(() => {
-                      const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
-                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
-                      )
-                      return filteredClients.length === 0 ? (
-                        <div className='p-3 text-sm text-muted-foreground text-center'>
-                          Nenhum cliente encontrado
-                        </div>
-                      ) : (
-                        filteredClients.map((c: any) => (
-                          <button
-                            key={c.id}
-                            type='button'
-                            onClick={() => {
-                              setValue('clientId', c.id)
-                              setClientSearch('')
-                              setClientDropdownOpen(false)
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                setValue('clientId', c.id)
-                                setClientSearch('')
-                                setClientDropdownOpen(false)
-                              }
-                            }}
-                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'
-                          >
-                            {c.name}
-                          </button>
-                        ))
-                      )
-                    })()}
-                  </div>
-                )}
-                {clientDropdownOpen && (
-                  <div 
-                    className='fixed inset-0 z-40'
-                    onClick={() => setClientDropdownOpen(false)}
-                  />
-                )}
-              </div>
-              {errors.clientId && (
-                <p className='text-xs text-destructive mt-1'>
-                  {errors.clientId.message}
-                </p>
+            <ClientSearchInput
+              id='scheduled-client-search'
+              value={watch('clientId') || ''}
+              onChange={(clientId) => setValue('clientId', clientId)}
+              clients={(Array.isArray(clients) ? clients : []).map(
+                (c: any) => ({
+                  id: c.id,
+                  name: c.name,
+                })
               )}
-
-              <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    type='button'
-                    className='mt-2 text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1'>
-                    <UserPlus className='w-4 h-4' />
-                    Novo Cliente
-                  </button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Novo Cliente</DialogTitle>
-                  </DialogHeader>
-                  <ClientForm onSuccess={() => setClientModalOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            </div>
+              error={errors.clientId?.message as string}
+            />
 
             <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
+              <label
+                htmlFor='scheduled-professional-select'
+                className='block text-sm font-medium text-foreground mb-2'>
                 Profissional
               </label>
-              <select
+              <ProfessionalInput
+                id='scheduled-professional-select'
                 value={watch('professionalId') || ''}
-                onChange={(e) => setValue('professionalId', e.target.value)}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                <option value=''>Selecione o profissional</option>
-                {(Array.isArray(profs) ? profs : []).map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setValue('professionalId', value)}
+                professionals={(Array.isArray(profs) ? profs : []).map(
+                  (p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                  })
+                )}
+              />
               {errors.professionalId && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.professionalId.message}
@@ -245,64 +105,18 @@ export function ScheduledAppointmentForm({
             </div>
           </div>
 
-          <div>
-            <label className='block text-sm font-medium text-foreground mb-3'>
-              Serviços
-            </label>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              {(Array.isArray(services) ? services : []).map((service: any) => {
-                const selected = watchedServices.includes(service.id)
-                return (
-                  <div
-                    key={service.id}
-                    onClick={() => {
-                      const newList = selected
-                        ? watchedServices.filter(
-                            (id: string) => id !== service.id
-                          )
-                        : [...watchedServices, service.id]
-                      setValue('serviceIds', newList)
-                    }}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                      selected
-                        ? 'border-secondary bg-muted'
-                        : 'border-border hover:border-secondary hover:bg-muted'
-                    }`}>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center space-x-3'>
-                        <input
-                          type='checkbox'
-                          checked={selected}
-                          onChange={() => {
-                            const newList = selected
-                              ? watchedServices.filter(
-                                  (id: string) => id !== service.id
-                                )
-                              : [...watchedServices, service.id]
-                            setValue('serviceIds', newList)
-                          }}
-                          className='w-4 h-4 text-primary rounded'
-                        />
-                        <div>
-                          <p className='font-medium text-foreground'>
-                            {service.name}
-                          </p>
-                        </div>
-                      </div>
-                      <span className='font-semibold text-primary'>
-                        R$ {service.price.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            {errors.serviceIds && (
-              <p className='text-xs text-destructive mt-1'>
-                {errors.serviceIds.message}
-              </p>
+          <SimpleServiceSelector
+            services={(Array.isArray(services) ? services : []).map(
+              (s: any) => ({
+                id: s.id,
+                name: s.name,
+                price: s.price,
+              })
             )}
-          </div>
+            selectedServiceIds={watchedServices}
+            onChange={(serviceIds) => setValue('serviceIds', serviceIds)}
+            error={errors.serviceIds?.message as string}
+          />
 
           <SchedulingFields
             control={form.control}
@@ -385,7 +199,6 @@ export function ScheduledAppointmentForm({
                         type='button'
                         onClick={() => {
                           setSelectedHour(hour)
-                          // Se só tem :00 disponível, seleciona automaticamente
                           const hourSlots = (
                             Array.isArray(availableSlots) ? availableSlots : []
                           ).filter((slot) => slot.startsWith(hour + ':'))

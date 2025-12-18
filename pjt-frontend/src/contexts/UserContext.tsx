@@ -18,6 +18,8 @@ interface User {
   theme?: ThemeType
   themeMode?: ModeType
   productId?: string
+  professionalRole?: string
+  canManageOthers?: boolean
 }
 
 interface UserContextType {
@@ -25,6 +27,7 @@ interface UserContextType {
   isLoading: boolean
   isAdmin: boolean
   isProfessional: boolean
+  canManageOthers: boolean
   logout: () => void
   update: (newData) => void
 }
@@ -73,6 +76,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
   const isProfessional = user?.role === 'PROFESSIONAL'
+  const canManageOthers = isAdmin || user?.canManageOthers === true
 
   return (
     <UserContext.Provider
@@ -81,6 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAdmin,
         isProfessional,
+        canManageOthers,
         logout,
         update,
       }}>
