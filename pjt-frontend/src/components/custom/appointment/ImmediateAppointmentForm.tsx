@@ -11,6 +11,7 @@ import axios from '@/lib/axios'
 import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
 import { BranchSelect } from '@/components/custom/branch/BranchSelect'
+import { SimpleServiceSelector } from '@/components/custom/service/SimpleServiceSelector'
 
 interface ImmediateAppointmentFormProps {
   onSuccess?: () => void
@@ -162,64 +163,19 @@ export function ImmediateAppointmentForm({
             </select>
           </div>
 
-          <div>
-            <label className='block text-sm font-medium text-foreground mb-3'>
-              Serviços Realizados
-            </label>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              {(Array.isArray(services) ? services : []).map((service: any) => {
-                const selected = watchedServices.includes(service.id)
-                return (
-                  <div
-                    key={service.id}
-                    onClick={() => {
-                      const newList = selected
-                        ? watchedServices.filter(
-                            (id: string) => id !== service.id
-                          )
-                        : [...watchedServices, service.id]
-                      setValue('serviceIds', newList)
-                    }}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                      selected
-                        ? 'border-primary bg-accent/20'
-                        : 'border-border hover:border-primary hover:bg-accent/10'
-                    }`}>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center space-x-3'>
-                        <input
-                          type='checkbox'
-                          checked={selected}
-                          onChange={() => {
-                            const newList = selected
-                              ? watchedServices.filter(
-                                  (id: string) => id !== service.id
-                                )
-                              : [...watchedServices, service.id]
-                            setValue('serviceIds', newList)
-                          }}
-                          className='w-4 h-4 text-primary rounded'
-                        />
-                        <div>
-                          <p className='font-medium text-foreground'>
-                            {service.name}
-                          </p>
-                        </div>
-                      </div>
-                      <span className='font-semibold text-primary'>
-                        R$ {service.price.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            {errors.serviceIds && (
-              <p className='text-xs text-destructive mt-1'>
-                {errors.serviceIds.message}
-              </p>
+          <SimpleServiceSelector
+            services={(Array.isArray(services) ? services : []).map(
+              (s: any) => ({
+                id: s.id,
+                name: s.name,
+                price: s.price,
+              })
             )}
-          </div>
+            selectedServiceIds={watchedServices}
+            onChange={(serviceIds) => setValue('serviceIds', serviceIds)}
+            error={errors.serviceIds?.message as string}
+            label='Serviços Realizados'
+          />
 
           <div className='flex space-x-4'>
             <button

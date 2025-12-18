@@ -96,6 +96,14 @@ export function ClientSearchInput({
           <div
             className='fixed inset-0 z-40'
             onClick={() => setClientDropdownOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setClientDropdownOpen(false)
+              }
+            }}
+            role='button'
+            tabIndex={0}
+            aria-label='Fechar busca de clientes'
           />
         )}
       </div>
