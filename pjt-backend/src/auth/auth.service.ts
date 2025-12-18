@@ -50,21 +50,47 @@ export class AuthService {
     }
 
     if (user.role === 'PROFESSIONAL' && user.name) {
-      const professional = await this.prisma.professional.findFirst({
-        where: { name: user.name },
-        include: {
-          branch: {
-            select: { name: true },
+      const branches = await this.prisma.branch.findMany({
+        where: {
+          professionals: {
+            some: {
+              name: user.name,
+            },
           },
+        },
+        select: {
+          id: true,
+          name: true,
         },
       });
 
-      return {
-        ...user,
-        branchName: professional?.branch?.name,
-        professionalRole: professional?.role,
-        canManageOthers: professional?.role === 'RECEPTIONIST',
-      };
+      if (branches.length > 0) {
+        const professional = await this.prisma.professional.findFirst({
+          where: {
+            name: user.name,
+            branchId: {
+              in: branches.map((b) => b.id),
+            },
+          },
+          include: {
+            branch: {
+              select: { name: true },
+            },
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        });
+
+        if (professional) {
+          return {
+            ...user,
+            branchName: professional.branch.name,
+            professionalRole: professional.role,
+            canManageOthers: professional.role === 'RECEPTIONIST',
+          };
+        }
+      }
     }
 
     return user;
