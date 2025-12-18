@@ -27,7 +27,7 @@ export function ScheduledAppointmentForm({
   onSuccess,
   initialData,
 }: ScheduledAppointmentFormProps) {
-  const { isAdmin } = useUser()
+  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
   const [clientSearch, setClientSearch] = useState('')
@@ -42,7 +42,12 @@ export function ScheduledAppointmentForm({
     enabled: isAdmin,
   })
 
-  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
+  const { professionals } = useFormQueries(
+    undefined,
+    undefined,
+    false,
+    activeBranch?.id
+  )
   const { form, mutation } = useAppointmentForm(
     'scheduled',
     professionals,
@@ -143,7 +148,9 @@ export function ScheduledAppointmentForm({
                     type='text'
                     placeholder='Buscar cliente...'
                     value={(() => {
-                      const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
+                      const selectedClient = (
+                        Array.isArray(clients) ? clients : []
+                      ).find((c: any) => c.id === watch('clientId'))
                       return selectedClient ? selectedClient.name : clientSearch
                     })()}
                     onChange={(e) => {
@@ -158,8 +165,12 @@ export function ScheduledAppointmentForm({
                 {clientDropdownOpen && (
                   <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
                     {(() => {
-                      const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
-                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                      const filteredClients = (
+                        Array.isArray(clients) ? clients : []
+                      ).filter((c: any) =>
+                        c.name
+                          .toLowerCase()
+                          .includes(clientSearch.toLowerCase())
                       )
                       return filteredClients.length === 0 ? (
                         <div className='p-3 text-sm text-muted-foreground text-center'>
@@ -182,8 +193,7 @@ export function ScheduledAppointmentForm({
                                 setClientDropdownOpen(false)
                               }
                             }}
-                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'
-                          >
+                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'>
                             {c.name}
                           </button>
                         ))
@@ -192,7 +202,7 @@ export function ScheduledAppointmentForm({
                   </div>
                 )}
                 {clientDropdownOpen && (
-                  <div 
+                  <div
                     className='fixed inset-0 z-40'
                     onClick={() => setClientDropdownOpen(false)}
                   />
@@ -226,17 +236,26 @@ export function ScheduledAppointmentForm({
               <label className='block text-sm font-medium text-foreground mb-2'>
                 Profissional
               </label>
-              <select
-                value={watch('professionalId') || ''}
-                onChange={(e) => setValue('professionalId', e.target.value)}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                <option value=''>Selecione o profissional</option>
-                {(Array.isArray(profs) ? profs : []).map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              {isProfessional && !isAdmin && !canManageOthers ? (
+                <input
+                  type='text'
+                  value={user?.name || ''}
+                  disabled
+                  className='w-full p-3 border border-border rounded-xl bg-muted text-foreground cursor-not-allowed'
+                />
+              ) : (
+                <select
+                  value={watch('professionalId') || ''}
+                  onChange={(e) => setValue('professionalId', e.target.value)}
+                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
+                  <option value=''>Selecione o profissional</option>
+                  {(Array.isArray(profs) ? profs : []).map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               {errors.professionalId && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.professionalId.message}

@@ -26,7 +26,7 @@ export function ImmediateAppointmentForm({
   onSuccess,
   initialData,
 }: ImmediateAppointmentFormProps) {
-  const { isAdmin } = useUser()
+  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
   const [clientSearch, setClientSearch] = useState('')
@@ -41,14 +41,19 @@ export function ImmediateAppointmentForm({
     enabled: isAdmin,
   })
 
-  const { professionals } = useFormQueries(undefined, undefined, false, activeBranch?.id)
+  const { professionals } = useFormQueries(
+    undefined,
+    undefined,
+    false,
+    activeBranch?.id
+  )
   const { form, mutation } = useAppointmentForm(
     'immediate',
     professionals,
     () => {
       onSuccess?.()
     },
-    initialData,
+    initialData
   )
 
   const {
@@ -69,17 +74,17 @@ export function ImmediateAppointmentForm({
     undefined,
     undefined,
     false,
-    selectedBranchId,
+    selectedBranchId
   )
   const { services = [], clients = [], professionals: profs = [] } = branchData
 
   const watchedServices = watch('serviceIds') || []
   const selectedServices = (Array.isArray(services) ? services : []).filter(
-    (s) => watchedServices.includes(s.id),
+    (s) => watchedServices.includes(s.id)
   )
   const totalPrice = selectedServices.reduce(
     (acc, s) => acc + (s.price || 0),
-    0,
+    0
   )
 
   const onSubmit = (data: any) => {
@@ -136,7 +141,9 @@ export function ImmediateAppointmentForm({
                     type='text'
                     placeholder='Buscar cliente...'
                     value={(() => {
-                      const selectedClient = (Array.isArray(clients) ? clients : []).find((c: any) => c.id === watch('clientId'))
+                      const selectedClient = (
+                        Array.isArray(clients) ? clients : []
+                      ).find((c: any) => c.id === watch('clientId'))
                       return selectedClient ? selectedClient.name : clientSearch
                     })()}
                     onChange={(e) => {
@@ -151,8 +158,12 @@ export function ImmediateAppointmentForm({
                 {clientDropdownOpen && (
                   <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
                     {(() => {
-                      const filteredClients = (Array.isArray(clients) ? clients : []).filter((c: any) => 
-                        c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                      const filteredClients = (
+                        Array.isArray(clients) ? clients : []
+                      ).filter((c: any) =>
+                        c.name
+                          .toLowerCase()
+                          .includes(clientSearch.toLowerCase())
                       )
                       return filteredClients.length === 0 ? (
                         <div className='p-3 text-sm text-muted-foreground text-center'>
@@ -175,8 +186,7 @@ export function ImmediateAppointmentForm({
                                 setClientDropdownOpen(false)
                               }
                             }}
-                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'
-                          >
+                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'>
                             {c.name}
                           </button>
                         ))
@@ -185,7 +195,7 @@ export function ImmediateAppointmentForm({
                   </div>
                 )}
                 {clientDropdownOpen && (
-                  <div 
+                  <div
                     className='fixed inset-0 z-40'
                     onClick={() => setClientDropdownOpen(false)}
                   />
@@ -219,17 +229,26 @@ export function ImmediateAppointmentForm({
               <label className='block text-sm font-medium text-foreground mb-2'>
                 Profissional
               </label>
-              <select
-                value={watch('professionalId') || ''}
-                onChange={(e) => setValue('professionalId', e.target.value)}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
-                <option value=''>Selecione o profissional</option>
-                {(Array.isArray(profs) ? profs : []).map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              {isProfessional && !isAdmin && !canManageOthers ? (
+                <input
+                  type='text'
+                  value={user?.name || ''}
+                  disabled
+                  className='w-full p-3 border border-border rounded-xl bg-muted text-foreground cursor-not-allowed'
+                />
+              ) : (
+                <select
+                  value={watch('professionalId') || ''}
+                  onChange={(e) => setValue('professionalId', e.target.value)}
+                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+                  <option value=''>Selecione o profissional</option>
+                  {(Array.isArray(profs) ? profs : []).map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               {errors.professionalId && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.professionalId.message}
@@ -267,8 +286,8 @@ export function ImmediateAppointmentForm({
                     onClick={() => {
                       const newList = selected
                         ? watchedServices.filter(
-                          (id: string) => id !== service.id,
-                        )
+                            (id: string) => id !== service.id
+                          )
                         : [...watchedServices, service.id]
                       setValue('serviceIds', newList)
                     }}
@@ -285,8 +304,8 @@ export function ImmediateAppointmentForm({
                           onChange={() => {
                             const newList = selected
                               ? watchedServices.filter(
-                                (id: string) => id !== service.id,
-                              )
+                                  (id: string) => id !== service.id
+                                )
                               : [...watchedServices, service.id]
                             setValue('serviceIds', newList)
                           }}
@@ -324,8 +343,8 @@ export function ImmediateAppointmentForm({
                   ? 'Atualizando...'
                   : 'Registrando...'
                 : initialData
-                  ? 'Atualizar Atendimento'
-                  : 'Registrar Atendimento'}
+                ? 'Atualizar Atendimento'
+                : 'Registrar Atendimento'}
             </button>
           </div>
         </form>
