@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Search, UserPlus, Save, Clock } from 'lucide-react'
+import { Save, Clock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { useFormQueries } from '@/hooks/useFormQueries'
@@ -7,17 +7,11 @@ import { useAppointmentForm } from '@/hooks/useAppointmentForm'
 import { useUser } from '@/contexts/UserContext'
 import { useBranch } from '@/contexts/BranchContext'
 import axios from '@/lib/axios'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 
-import { ClientForm } from '@/components/custom/client/ClientForm'
+import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { SchedulingFields } from '@/components/custom/scheduling/SchedulingFields'
 import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
+import { BranchSelect } from '@/components/custom/branch/BranchSelect'
 
 interface ScheduledAppointmentFormProps {
   onSuccess?: () => void
@@ -30,9 +24,6 @@ export function ScheduledAppointmentForm({
 }: ScheduledAppointmentFormProps) {
   const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
-  const [clientModalOpen, setClientModalOpen] = useState(false)
-  const [clientSearch, setClientSearch] = useState('')
-  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
@@ -109,135 +100,33 @@ export function ScheduledAppointmentForm({
         </h3>
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           {isAdmin && (
-            <div>
-              <label
-                htmlFor='scheduled-branch-select'
-                className='block text-sm font-medium text-foreground mb-2'>
-                Filial
-              </label>
-              <select
-                id='scheduled-branch-select'
-                value={selectedBranchId || ''}
-                onChange={(e) => {
-                  setValue('branchId', e.target.value)
-                  setValue('professionalId', '')
-                  setValue('clientId', '')
-                  setValue('serviceIds', [])
-                }}
-                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                <option value=''>Selecione uma filial</option>
-                {branches.map((branch: any) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-              {errors.branchId && (
-                <p className='text-xs text-destructive mt-1'>
-                  {errors.branchId.message}
-                </p>
-              )}
-            </div>
+            <BranchSelect
+              id='scheduled-branch-select'
+              value={selectedBranchId || ''}
+              onChange={(branchId) => setValue('branchId', branchId)}
+              branches={branches}
+              error={errors.branchId?.message as string}
+              onBranchChange={() => {
+                setValue('professionalId', '')
+                setValue('clientId', '')
+                setValue('serviceIds', [])
+              }}
+            />
           )}
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label
-                htmlFor='scheduled-client-search'
-                className='block text-sm font-medium text-foreground mb-2'>
-                Cliente
-              </label>
-              <div className='relative'>
-                <div className='relative'>
-                  <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
-                  <input
-                    id='scheduled-client-search'
-                    type='text'
-                    placeholder='Buscar cliente...'
-                    value={(() => {
-                      const selectedClient = (
-                        Array.isArray(clients) ? clients : []
-                      ).find((c: any) => c.id === watch('clientId'))
-                      return selectedClient ? selectedClient.name : clientSearch
-                    })()}
-                    onChange={(e) => {
-                      setClientSearch(e.target.value)
-                      setClientDropdownOpen(true)
-                      if (!e.target.value) setValue('clientId', '')
-                    }}
-                    onFocus={() => setClientDropdownOpen(true)}
-                    className='w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'
-                  />
-                </div>
-                {clientDropdownOpen && (
-                  <div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto'>
-                    {(() => {
-                      const filteredClients = (
-                        Array.isArray(clients) ? clients : []
-                      ).filter((c: any) =>
-                        c.name
-                          .toLowerCase()
-                          .includes(clientSearch.toLowerCase())
-                      )
-                      return filteredClients.length === 0 ? (
-                        <div className='p-3 text-sm text-muted-foreground text-center'>
-                          Nenhum cliente encontrado
-                        </div>
-                      ) : (
-                        filteredClients.map((c: any) => (
-                          <button
-                            key={c.id}
-                            type='button'
-                            onClick={() => {
-                              setValue('clientId', c.id)
-                              setClientSearch('')
-                              setClientDropdownOpen(false)
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                setValue('clientId', c.id)
-                                setClientSearch('')
-                                setClientDropdownOpen(false)
-                              }
-                            }}
-                            className='w-full text-left p-3 hover:bg-muted cursor-pointer text-sm border-b border-border last:border-b-0'>
-                            {c.name}
-                          </button>
-                        ))
-                      )
-                    })()}
-                  </div>
-                )}
-                {clientDropdownOpen && (
-                  <div
-                    className='fixed inset-0 z-40'
-                    onClick={() => setClientDropdownOpen(false)}
-                  />
-                )}
-              </div>
-              {errors.clientId && (
-                <p className='text-xs text-destructive mt-1'>
-                  {errors.clientId.message}
-                </p>
+            <ClientSearchInput
+              id='scheduled-client-search'
+              value={watch('clientId') || ''}
+              onChange={(clientId) => setValue('clientId', clientId)}
+              clients={(Array.isArray(clients) ? clients : []).map(
+                (c: any) => ({
+                  id: c.id,
+                  name: c.name,
+                })
               )}
-
-              <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    type='button'
-                    className='mt-2 text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1'>
-                    <UserPlus className='w-4 h-4' />
-                    Novo Cliente
-                  </button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Novo Cliente</DialogTitle>
-                  </DialogHeader>
-                  <ClientForm onSuccess={() => setClientModalOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            </div>
+              error={errors.clientId?.message as string}
+            />
 
             <div>
               <label
@@ -404,7 +293,6 @@ export function ScheduledAppointmentForm({
                         type='button'
                         onClick={() => {
                           setSelectedHour(hour)
-                          // Se só tem :00 disponível, seleciona automaticamente
                           const hourSlots = (
                             Array.isArray(availableSlots) ? availableSlots : []
                           ).filter((slot) => slot.startsWith(hour + ':'))

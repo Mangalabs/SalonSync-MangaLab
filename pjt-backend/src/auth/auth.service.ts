@@ -27,57 +27,47 @@ export class AuthService {
   }
 
   async getProfile(token: string) {
-    if (!token) {
-      throw new UnauthorizedException('Token não fornecido');
+    const userId = await this.decodeAndValidateToken(token);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        businessName: true,
+        phone: true,
+        avatar: true,
+        role: true,
+        customerId: true,
+        accountId: true,
+        theme: true,
+        themeMode: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
     }
 
-    try {
-      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
-      const decoded = jwt.verify(token, secret) as { sub: string };
-      const user = await this.prisma.user.findUnique({
-        where: { id: decoded.sub },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          businessName: true,
-          phone: true,
-          avatar: true,
-          role: true,
-          customerId: true,
-          accountId: true,
-          theme: true,
-          themeMode: true,
+    if (user.role === 'PROFESSIONAL' && user.name) {
+      const professional = await this.prisma.professional.findFirst({
+        where: { name: user.name },
+        include: {
+          branch: {
+            select: { name: true },
+          },
         },
       });
 
-      if (!user) {
-        throw new UnauthorizedException('Usuário não encontrado');
-      }
-
-      // Se for PROFESSIONAL, buscar dados da filial
-      if (user.role === 'PROFESSIONAL' && user.name) {
-        const professional = await this.prisma.professional.findFirst({
-          where: { name: user.name },
-          include: {
-            branch: {
-              select: { name: true },
-            },
-          },
-        });
-
-        return {
-          ...user,
-          branchName: professional?.branch?.name,
-          professionalRole: professional?.role,
-          canManageOthers: professional?.role === 'RECEPTIONIST',
-        };
-      }
-
-      return user;
-    } catch (error) {
-      throw new UnauthorizedException('Token inválido');
+      return {
+        ...user,
+        branchName: professional?.branch?.name,
+        professionalRole: professional?.role,
+        canManageOthers: professional?.role === 'RECEPTIONIST',
+      };
     }
+
+    return user;
   }
 
   async updateProfile(
@@ -88,60 +78,48 @@ export class AuthService {
       phone?: string;
     },
   ) {
-    if (!token) {
-      throw new UnauthorizedException('Token não fornecido');
-    }
+    const userId = await this.decodeAndValidateToken(token);
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
 
-    try {
-      const secret = this.config.get<string>('JWT_SECRET') || 'secret';
-      const decoded = jwt.verify(token, secret) as { sub: string };
+    const updateData =
+      currentUser?.role === 'PROFESSIONAL' ? { phone: data.phone } : data;
 
-      const currentUser = await this.prisma.user.findUnique({
-        where: { id: decoded.sub },
-        select: { role: true },
-      });
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        businessName: true,
+        phone: true,
+        avatar: true,
+        role: true,
+      },
+    });
 
-      // Se for PROFESSIONAL, permitir apenas atualizar telefone
-      const updateData =
-        currentUser?.role === 'PROFESSIONAL' ? { phone: data.phone } : data;
-
-      const user = await this.prisma.user.update({
-        where: { id: decoded.sub },
-        data: updateData,
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          businessName: true,
-          phone: true,
-          avatar: true,
-          role: true,
+    if (user.role === 'PROFESSIONAL' && user.name) {
+      const professional = await this.prisma.professional.findFirst({
+        where: { name: user.name },
+        include: {
+          branch: {
+            select: { name: true },
+          },
         },
       });
 
-      // Se for PROFESSIONAL, buscar dados da filial
-      if (user.role === 'PROFESSIONAL' && user.name) {
-        const professional = await this.prisma.professional.findFirst({
-          where: { name: user.name },
-          include: {
-            branch: {
-              select: { name: true },
-            },
-          },
-        });
-
-        return {
-          ...user,
-          branchName: professional?.branch?.name,
-          professionalRole: professional?.role,
-          canManageOthers: professional?.role === 'RECEPTIONIST',
-        };
-      }
-
-      return user;
-    } catch (error) {
-      throw new UnauthorizedException('Token inválido');
+      return {
+        ...user,
+        branchName: professional?.branch?.name,
+        professionalRole: professional?.role,
+        canManageOthers: professional?.role === 'RECEPTIONIST',
+      };
     }
+
+    return user;
   }
 
   async createEmployee(data: {
@@ -173,7 +151,6 @@ export class AuthService {
       },
     });
 
-    // Verificar se a filial existe
     const branch = await this.prisma.branch.findUnique({
       where: { id: data.branchId },
     });
@@ -182,7 +159,6 @@ export class AuthService {
       throw new ConflictException('Filial não encontrada');
     }
 
-    // Criar Professional automaticamente com dias de trabalho
     const professional = await this.prisma.professional.create({
       data: {
         name: data.name,
@@ -195,7 +171,6 @@ export class AuthService {
       },
     });
 
-    // Criar dias de trabalho se especificados
     if (data.workingDays && data.workingDays.length > 0) {
       await Promise.all(
         data.workingDays.map((dayOfWeek) =>
@@ -267,7 +242,6 @@ export class AuthService {
       },
     });
 
-    // Criar filial padrão
     await this.prisma.branch.create({
       data: {
         name: data.branchName || 'Matriz',
@@ -288,5 +262,23 @@ export class AuthService {
   private generateToken(userId: string): string {
     const secret = this.config.get<string>('JWT_SECRET') || 'secret';
     return jwt.sign({ sub: userId }, secret, { expiresIn: '8h' });
+  }
+
+  private getJwtSecret(): string {
+    return this.config.get<string>('JWT_SECRET') || 'secret';
+  }
+
+  private async decodeAndValidateToken(token: string): Promise<string> {
+    if (!token) {
+      throw new UnauthorizedException('Token não fornecido');
+    }
+
+    try {
+      const secret = this.getJwtSecret();
+      const decoded = jwt.verify(token, secret) as { sub: string };
+      return decoded.sub;
+    } catch (error) {
+      throw new UnauthorizedException('Token inválido');
+    }
   }
 }
