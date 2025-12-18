@@ -16,9 +16,10 @@ import {
 } from '@/components/ui/dialog'
 
 import { ClientForm } from '@/components/custom/client/ClientForm'
+import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
 
 export default function NewAppointment() {
-  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
   const [clientSearch, setClientSearch] = useState('')
@@ -116,13 +117,16 @@ export default function NewAppointment() {
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
+              <label
+                htmlFor='client-search'
+                className='block text-sm font-medium text-gray-700 mb-2'>
                 Cliente
               </label>
               <div className='relative'>
                 <div className='relative'>
                   <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
                   <input
+                    id='client-search'
                     type='text'
                     placeholder='Buscar cliente...'
                     value={(() => {
@@ -206,29 +210,23 @@ export default function NewAppointment() {
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
+              <label
+                htmlFor='professional-select'
+                className='block text-sm font-medium text-gray-700 mb-2'>
                 Profissional
               </label>
-              {isProfessional && !isAdmin && !canManageOthers ? (
-                <input
-                  type='text'
-                  value={user?.name || ''}
-                  disabled
-                  className='w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-700 cursor-not-allowed'
-                />
-              ) : (
-                <select
-                  value={watch('professionalId') || ''}
-                  onChange={(e) => setValue('professionalId', e.target.value)}
-                  className='w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50'>
-                  <option value=''>Selecione o profissional</option>
-                  {(Array.isArray(profs) ? profs : []).map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <ProfessionalInput
+                id='professional-select'
+                value={watch('professionalId') || ''}
+                onChange={(value) => setValue('professionalId', value)}
+                professionals={(Array.isArray(profs) ? profs : []).map(
+                  (p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                  })
+                )}
+                className='w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50'
+              />
             </div>
           </div>
 
@@ -291,10 +289,13 @@ export default function NewAppointment() {
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
+              <label
+                htmlFor='scheduled-date'
+                className='block text-sm font-medium text-gray-700 mb-2'>
                 Data
               </label>
               <input
+                id='scheduled-date'
                 type='date'
                 value={watch('scheduledDate') || ''}
                 onChange={(e) => setValue('scheduledDate', e.target.value)}
@@ -302,10 +303,13 @@ export default function NewAppointment() {
               />
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
+              <label
+                htmlFor='scheduled-time'
+                className='block text-sm font-medium text-gray-700 mb-2'>
                 Horário
               </label>
               <select
+                id='scheduled-time'
                 value={watch('scheduledTime') || ''}
                 onChange={(e) => setValue('scheduledTime', e.target.value)}
                 className='w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50'>
@@ -320,10 +324,13 @@ export default function NewAppointment() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-2'>
+            <label
+              htmlFor='appointment-notes'
+              className='block text-sm font-medium text-gray-700 mb-2'>
               Observações
             </label>
             <textarea
+              id='appointment-notes'
               rows={3}
               placeholder='Observações sobre o atendimento...'
               value={watch('notes') || ''}

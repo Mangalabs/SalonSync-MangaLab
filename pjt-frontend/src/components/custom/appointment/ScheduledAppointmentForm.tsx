@@ -17,6 +17,7 @@ import {
 
 import { ClientForm } from '@/components/custom/client/ClientForm'
 import { SchedulingFields } from '@/components/custom/scheduling/SchedulingFields'
+import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
 
 interface ScheduledAppointmentFormProps {
   onSuccess?: () => void
@@ -27,7 +28,7 @@ export function ScheduledAppointmentForm({
   onSuccess,
   initialData,
 }: ScheduledAppointmentFormProps) {
-  const { user, isAdmin, isProfessional, canManageOthers } = useUser()
+  const { isAdmin } = useUser()
   const { activeBranch } = useBranch()
   const [clientModalOpen, setClientModalOpen] = useState(false)
   const [clientSearch, setClientSearch] = useState('')
@@ -109,10 +110,13 @@ export function ScheduledAppointmentForm({
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           {isAdmin && (
             <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
+              <label
+                htmlFor='scheduled-branch-select'
+                className='block text-sm font-medium text-foreground mb-2'>
                 Filial
               </label>
               <select
+                id='scheduled-branch-select'
                 value={selectedBranchId || ''}
                 onChange={(e) => {
                   setValue('branchId', e.target.value)
@@ -138,13 +142,16 @@ export function ScheduledAppointmentForm({
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
+              <label
+                htmlFor='scheduled-client-search'
+                className='block text-sm font-medium text-foreground mb-2'>
                 Cliente
               </label>
               <div className='relative'>
                 <div className='relative'>
                   <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5' />
                   <input
+                    id='scheduled-client-search'
                     type='text'
                     placeholder='Buscar cliente...'
                     value={(() => {
@@ -233,29 +240,22 @@ export function ScheduledAppointmentForm({
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-foreground mb-2'>
+              <label
+                htmlFor='scheduled-professional-select'
+                className='block text-sm font-medium text-foreground mb-2'>
                 Profissional
               </label>
-              {isProfessional && !isAdmin && !canManageOthers ? (
-                <input
-                  type='text'
-                  value={user?.name || ''}
-                  disabled
-                  className='w-full p-3 border border-border rounded-xl bg-muted text-foreground cursor-not-allowed'
-                />
-              ) : (
-                <select
-                  value={watch('professionalId') || ''}
-                  onChange={(e) => setValue('professionalId', e.target.value)}
-                  className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input'>
-                  <option value=''>Selecione o profissional</option>
-                  {(Array.isArray(profs) ? profs : []).map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <ProfessionalInput
+                id='scheduled-professional-select'
+                value={watch('professionalId') || ''}
+                onChange={(value) => setValue('professionalId', value)}
+                professionals={(Array.isArray(profs) ? profs : []).map(
+                  (p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                  })
+                )}
+              />
               {errors.professionalId && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.professionalId.message}
