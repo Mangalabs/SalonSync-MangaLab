@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
+import { EditCompletedAppointmentForm } from '@/components/custom/appointment/EditCompletedAppointmentForm'
 
 interface Appointment {
   id: string
@@ -85,7 +85,7 @@ export default function AppointmentHistory() {
     (apt) =>
       apt &&
       apt.status &&
-      apt.status.toUpperCase() !== 'SCHEDULED' &&
+      apt.status.toUpperCase() === 'COMPLETED' &&
       apt.branchId === activeBranch?.id
   )
 
@@ -310,13 +310,15 @@ export default function AppointmentHistory() {
                     </td>
                     <td className='py-3 px-2 text-sm flex gap-2'>
                       <Button
-                        className='p-2 text-green-600 bg-green-200 hover:bg-green-100 rounded-lg transition-colors cursor-pointer'
-                        onClick={() => setEditingAppointment(appointment)}>
+                        className='p-2 text-blue-600 bg-blue-200 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer'
+                        onClick={() => setEditingAppointment(appointment)}
+                        title='Editar atendimento'>
                         <Edit className='w-4 h-4' />
                       </Button>
                       <Button
                         className='p-2 text-red-600 bg-red-200 hover:bg-red-100 rounded-lg transition-colors cursor-pointer'
-                        onClick={() => setDeletingAppointment(appointment)}>
+                        onClick={() => setDeletingAppointment(appointment)}
+                        title='Cancelar atendimento (reverte estoque e transações)'>
                         <Trash2 className='w-4 h-4' />
                       </Button>
                     </td>
@@ -360,30 +362,25 @@ export default function AppointmentHistory() {
         </div>
       </div>
 
+      {/* Dialog de Edição */}
       <Dialog
         open={!!editingAppointment}
         onOpenChange={() => setEditingAppointment(null)}>
-        <DialogContent className='!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto'>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Editar Atendimento</DialogTitle>
+            <DialogTitle>Editar Atendimento Finalizado</DialogTitle>
           </DialogHeader>
           {editingAppointment && (
-            <ImmediateAppointmentForm
-              initialData={{
-                id: editingAppointment.id,
-                clientId: editingAppointment.client,
-                professionalId: editingAppointment.professional,
-                serviceIds: editingAppointment.services,
-                scheduledAt: `${editingAppointment.date} ${editingAppointment.time}:00`,
-                total: editingAppointment.price.toString(),
-                status: 'COMPLETED',
-              }}
+            <EditCompletedAppointmentForm
+              appointmentId={editingAppointment.id}
               onSuccess={() => setEditingAppointment(null)}
+              onCancel={() => setEditingAppointment(null)}
             />
           )}
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog
         open={!!deletingAppointment}
         onOpenChange={() => setDeletingAppointment(null)}>
@@ -406,9 +403,9 @@ export default function AppointmentHistory() {
                   setDeletingAppointment(null)
                 }
               }}
-              disabled={deleteMutation.isLoading}
-              className='bg-destructive text-destructive-foreground hover:bg-hover'>
-              Excluir
+              disabled={deleteMutation.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'>
+              {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

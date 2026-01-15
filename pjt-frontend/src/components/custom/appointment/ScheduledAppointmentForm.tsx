@@ -11,11 +11,17 @@ import { SimpleServiceSelector } from '@/components/custom/service/SimpleService
 interface ScheduledAppointmentFormProps {
   onSuccess?: () => void
   initialData?: any
+  prefilledData?: {
+    date?: string
+    time?: string
+    professionalId?: string
+  }
 }
 
 export function ScheduledAppointmentForm({
   onSuccess,
   initialData,
+  prefilledData,
 }: ScheduledAppointmentFormProps) {
   const {
     form,
@@ -43,6 +49,20 @@ export function ScheduledAppointmentForm({
     initialData,
     includeAvailableSlots: true,
   })
+
+  React.useEffect(() => {
+    if (prefilledData && !initialData) {
+      if (prefilledData.professionalId) {
+        setValue('professionalId', prefilledData.professionalId)
+      }
+      if (prefilledData.date) {
+        setValue('scheduledDate', prefilledData.date)
+      }
+      if (prefilledData.time) {
+        setValue('scheduledTime', prefilledData.time)
+      }
+    }
+  }, [prefilledData, initialData, setValue])
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>

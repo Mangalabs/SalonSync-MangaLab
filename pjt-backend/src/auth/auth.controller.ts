@@ -40,6 +40,7 @@ export class AuthController {
       role: string;
       roleId?: string;
       commissionRate?: number;
+      productCommissionRate?: number;
       branchId: string;
       workingDays?: number[];
     },

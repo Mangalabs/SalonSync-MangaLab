@@ -1,11 +1,10 @@
 import React from 'react'
-import { Save } from 'lucide-react'
+import { Save, ClipboardList } from 'lucide-react'
 
 import { useAppointmentFormSetup } from '@/hooks/useAppointmentFormSetup'
 import { ClientSearchInput } from '@/components/custom/client/ClientSearchInput'
 import { ProfessionalInput } from '@/components/custom/professional/ProfessionalInput'
 import { BranchSelect } from '@/components/custom/branch/BranchSelect'
-import { SimpleServiceSelector } from '@/components/custom/service/SimpleServiceSelector'
 
 interface ImmediateAppointmentFormProps {
   onSuccess?: () => void
@@ -42,9 +41,7 @@ export function ImmediateAppointmentForm({
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
       <div className='lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border'>
         <h3 className='text-lg font-semibold text-foreground mb-6'>
-          {initialData
-            ? 'Editar Atendimento'
-            : 'Registrar Atendimento Imediato'}
+          Iniciar Nova Comanda
         </h3>
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
           {isAdmin && (
@@ -101,49 +98,13 @@ export function ImmediateAppointmentForm({
             </div>
           </div>
 
-          <div>
-            <label className='block text-sm font-medium text-foreground mb-2'>
-              Método de Pagamento
-            </label>
-            <select
-              value={watch('paymentMethod') || 'CASH'}
-              onChange={(e) => setValue('paymentMethod', e.target.value)}
-              className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
-              <option value='CASH'>Dinheiro</option>
-              <option value='CARD'>Cartão</option>
-              <option value='PIX'>PIX</option>
-              <option value='TRANSFER'>Transferência</option>
-              <option value='OTHER'>Outros</option>
-            </select>
-          </div>
-
-          <SimpleServiceSelector
-            services={(Array.isArray(services) ? services : []).map(
-              (s: any) => ({
-                id: s.id,
-                name: s.name,
-                price: s.price,
-              })
-            )}
-            selectedServiceIds={watchedServices}
-            onChange={(serviceIds) => setValue('serviceIds', serviceIds)}
-            error={errors.serviceIds?.message as string}
-            label='Serviços Realizados'
-          />
-
           <div className='flex space-x-4'>
             <button
               type='submit'
               disabled={isSubmitting}
               className='flex-1 bg-primary text-primary-foreground py-3 px-6 rounded-xl font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2 cursor-pointer'>
-              <Save className='w-4 h-4' />
-              {isSubmitting
-                ? initialData
-                  ? 'Atualizando...'
-                  : 'Registrando...'
-                : initialData
-                ? 'Atualizar Atendimento'
-                : 'Registrar Atendimento'}
+              <ClipboardList className='w-4 h-4' />
+              {isSubmitting ? 'Criando...' : 'Iniciar Comanda'}
             </button>
           </div>
         </form>
@@ -152,35 +113,44 @@ export function ImmediateAppointmentForm({
       <div className='space-y-6'>
         <div className='bg-card rounded-2xl p-6 shadow-sm border border-border'>
           <h4 className='font-semibold text-foreground mb-4'>
-            Resumo do Atendimento
+            Sistema de Comanda
           </h4>
           <div className='space-y-3'>
-            <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Serviços:</span>
-              <span className='font-semibold'>
-                {selectedServices.length} realizados
-              </span>
-            </div>
-            <div className='border-t border-border pt-2'>
-              <div className='flex justify-between'>
-                <span className='font-semibold text-foreground'>Total:</span>
-                <span className='font-bold text-primary text-lg'>
-                  R$ {totalPrice.toFixed(2)}
-                </span>
+            <div className='flex items-start gap-3'>
+              <ClipboardList className='w-5 h-5 text-primary mt-0.5' />
+              <div>
+                <p className='text-sm font-medium text-foreground mb-1'>
+                  Atendimento em Etapas
+                </p>
+                <p className='text-xs text-muted-foreground'>
+                  Crie a comanda agora e adicione serviços/produtos durante o
+                  atendimento
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         <div className='bg-muted rounded-2xl p-6 border border-border'>
-          <h4 className='font-semibold text-foreground mb-2'>
-            {initialData ? 'Edição de Atendimento' : 'Atendimento Imediato'}
-          </h4>
-          <p className='text-sm text-muted-foreground'>
-            {initialData
-              ? 'Edite os dados do atendimento conforme necessário.'
-              : 'Este atendimento será registrado como concluído automaticamente, gerando receita e comissão na data atual.'}
-          </p>
+          <h4 className='font-semibold text-foreground mb-2'>Como Funciona</h4>
+          <ol className='text-sm text-muted-foreground space-y-2'>
+            <li className='flex items-start gap-2'>
+              <span className='font-semibold text-primary'>1.</span>
+              <span>Selecione o cliente e profissional</span>
+            </li>
+            <li className='flex items-start gap-2'>
+              <span className='font-semibold text-primary'>2.</span>
+              <span>Clique em "Iniciar Comanda"</span>
+            </li>
+            <li className='flex items-start gap-2'>
+              <span className='font-semibold text-primary'>3.</span>
+              <span>Adicione serviços e produtos conforme necessário</span>
+            </li>
+            <li className='flex items-start gap-2'>
+              <span className='font-semibold text-primary'>4.</span>
+              <span>Finalize o atendimento com o pagamento</span>
+            </li>
+          </ol>
         </div>
       </div>
     </div>

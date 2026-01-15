@@ -23,12 +23,16 @@ const createEmployeeSchema = z.object({
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
   roleId: z.string().min(1, 'Selecione uma função'),
   branchId: z.string().min(1, 'Selecione uma filial'),
+  commissionRate: z.number().min(0).max(100).optional(),
+  productCommissionRate: z.number().min(0).max(100).optional(),
 })
 
 const editProfessionalSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   roleId: z.string().min(1, 'Selecione uma função'),
   branchId: z.string().min(1, 'Selecione uma filial'),
+  commissionRate: z.number().min(0).max(100).optional(),
+  productCommissionRate: z.number().min(0).max(100).optional(),
 })
 
 type EmployeeFormData = z.infer<typeof createEmployeeSchema>
@@ -83,6 +87,9 @@ export function ProfessionalForm({
       branchId: editingProfessional?.branchId || activeBranch?.id || '',
       name: editingProfessional?.name || '',
       roleId: editingProfessional?.customRole?.id || '',
+      commissionRate: editingProfessional?.commissionRate || undefined,
+      productCommissionRate:
+        editingProfessional?.productCommissionRate || undefined,
     },
   })
 
@@ -93,6 +100,8 @@ export function ProfessionalForm({
           name: data.name,
           roleId: data.roleId,
           workingDays: selectedWorkingDays,
+          commissionRate: data.commissionRate,
+          productCommissionRate: data.productCommissionRate,
         }
         await axios.patch(
           `/api/professionals/${editingProfessional.id}`,
@@ -103,7 +112,12 @@ export function ProfessionalForm({
         const employeeData = {
           ...data,
           role: selectedRole?.title || 'Profissional',
-          commissionRate: selectedRole?.commissionRate || 0,
+          commissionRate:
+            data.commissionRate ?? selectedRole?.commissionRate ?? 0,
+          productCommissionRate:
+            data.productCommissionRate ??
+            selectedRole?.productCommissionRate ??
+            0,
           workingDays: selectedWorkingDays,
         }
         await axios.post('/api/auth/create-employee', employeeData)
@@ -245,6 +259,62 @@ export function ProfessionalForm({
               {errors.roleId.message}
             </p>
           )}
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div>
+          <label className='block text-sm font-medium text-foreground mb-2'>
+            Comissão de Serviços (%)
+          </label>
+          <input
+            type='number'
+            step='0.01'
+            min='0'
+            max='100'
+            {...register('commissionRate', {
+              valueAsNumber: true,
+              setValueAs: (value) =>
+                value === '' ? undefined : parseFloat(value) || undefined,
+            })}
+            className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
+            placeholder='Deixe vazio para usar taxa da função'
+          />
+          {errors.commissionRate && (
+            <p className='text-xs text-destructive mt-1'>
+              {errors.commissionRate.message}
+            </p>
+          )}
+          <p className='text-xs text-muted-foreground mt-1'>
+            Taxa personalizada para comissão de serviços
+          </p>
+        </div>
+
+        <div>
+          <label className='block text-sm font-medium text-foreground mb-2'>
+            Comissão de Produtos (%)
+          </label>
+          <input
+            type='number'
+            step='0.01'
+            min='0'
+            max='100'
+            {...register('productCommissionRate', {
+              valueAsNumber: true,
+              setValueAs: (value) =>
+                value === '' ? undefined : parseFloat(value) || undefined,
+            })}
+            className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
+            placeholder='Deixe vazio para usar taxa da função'
+          />
+          {errors.productCommissionRate && (
+            <p className='text-xs text-destructive mt-1'>
+              {errors.productCommissionRate.message}
+            </p>
+          )}
+          <p className='text-xs text-muted-foreground mt-1'>
+            Taxa personalizada para comissão de produtos
+          </p>
         </div>
       </div>
 

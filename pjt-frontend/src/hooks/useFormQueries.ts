@@ -7,7 +7,7 @@ export function useFormQueries(
   selectedProfessional?: string,
   selectedDate?: string,
   isScheduled?: boolean,
-  branchId?: string,
+  branchId?: string
 ) {
   const { activeBranch } = useBranch()
   const targetBranchId = branchId || activeBranch?.id
@@ -25,7 +25,9 @@ export function useFormQueries(
   const clients = useQuery<{ id: string; name: string }[]>({
     queryKey: ['clients-all', targetBranchId],
     queryFn: async () => {
-      const params = targetBranchId ? `?branchId=${targetBranchId}&limit=9999` : '?limit=9999'
+      const params = targetBranchId
+        ? `?branchId=${targetBranchId}&limit=9999`
+        : '?limit=9999'
       const res = await axios.get(`/api/clients${params}`)
       return res.data.clients || res.data
     },
@@ -60,7 +62,7 @@ export function useFormQueries(
         return []
       }
       const res = await axios.get(
-        `/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`,
+        `/api/appointments/available-slots/${selectedProfessional}/${selectedDate}`
       )
       return res.data
     },

@@ -13,11 +13,13 @@ import {
   Filter,
   X,
   Building2,
+  Play,
 } from 'lucide-react'
 
 import axios from '@/lib/axios'
 import { useBranch } from '@/contexts/BranchContext'
 import { DateTime } from '@/utils/dateTime'
+import { useBranchTimeSlots } from '@/hooks/useBranchTimeSlots'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,8 @@ import { ScheduledAppointmentForm } from '@/components/custom/appointment/Schedu
 import { ImmediateAppointmentForm } from '@/components/custom/appointment/ImmediateAppointmentForm'
 import { AppointmentStatusManager } from '@/components/custom/appointment/AppointmentStatusManager'
 import { QueueView } from '@/components/custom/appointment/QueueView'
+import { CommandDetailsModal } from '@/components/custom/appointment/CommandDetailsModal'
+import { CheckoutModal } from '@/components/custom/appointment/CheckoutModal'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,7 +86,7 @@ const getStatusColor = (status: Appointment['status']) => {
     case 'pending':
       return 'bg-yellow-50 border-yellow-200 text-yellow-700'
     case 'in-progress':
-      return 'bg-purple-50 border-purple-200 text-purple-700'
+      return 'bg-purple-100 border-purple-400 text-purple-800 border-2 shadow-md'
     default:
       return 'bg-gray-50 border-gray-200 text-gray-700'
   }
@@ -121,81 +125,6 @@ const calculateEndTime = (startTime: string, duration: number): string => {
   }
 }
 
-const timeSlots = [
-  '08:00',
-  '08:10',
-  '08:20',
-  '08:30',
-  '08:40',
-  '08:50',
-  '09:00',
-  '09:10',
-  '09:20',
-  '09:30',
-  '09:40',
-  '09:50',
-  '10:00',
-  '10:10',
-  '10:20',
-  '10:30',
-  '10:40',
-  '10:50',
-  '11:00',
-  '11:10',
-  '11:20',
-  '11:30',
-  '11:40',
-  '11:50',
-  '12:00',
-  '12:10',
-  '12:20',
-  '12:30',
-  '12:40',
-  '12:50',
-  '13:00',
-  '13:10',
-  '13:20',
-  '13:30',
-  '13:40',
-  '13:50',
-  '14:00',
-  '14:10',
-  '14:20',
-  '14:30',
-  '14:40',
-  '14:50',
-  '15:00',
-  '15:10',
-  '15:20',
-  '15:30',
-  '15:40',
-  '15:50',
-  '16:00',
-  '16:10',
-  '16:20',
-  '16:30',
-  '16:40',
-  '16:50',
-  '17:00',
-  '17:10',
-  '17:20',
-  '17:30',
-  '17:40',
-  '17:50',
-  '18:00',
-  '18:10',
-  '18:20',
-  '18:30',
-  '18:40',
-  '18:50',
-  '19:00',
-  '19:10',
-  '19:20',
-  '19:30',
-  '19:40',
-  '19:50',
-]
-
 const normalizeDate = (date: Date) => {
   const normalized = DateTime.fromJSDate(date)
   return DateTime.startOf(normalized, 'day').toDate()
@@ -219,12 +148,26 @@ export default function Appointments() {
     normalizeDate(DateTime.now().toDate())
   )
 
+  const { data: timeSlots = [] } = useBranchTimeSlots(selectedDate)
+
   const [filterProfessional, setFilterProfessional] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'confirmed' | 'pending' | 'completed' | 'in-progress'
   >('all')
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null)
+
+  const [selectedCommandId, setSelectedCommandId] = useState<string | null>(
+    null
+  )
+  const [checkoutAppointment, setCheckoutAppointment] =
+    useState<Appointment | null>(null)
+
+  const [prefilledAppointmentData, setPrefilledAppointmentData] = useState<{
+    date?: string
+    time?: string
+    professionalId?: string
+  } | null>(null)
 
   const { data: appointments = [], isLoading: isLoadingAppointments } =
     useQuery({
@@ -259,11 +202,15 @@ export default function Appointments() {
             0
           )
           const serviceNames =
-            services
-              .map((as) => as.service?.name)
-              .filter(Boolean)
-              .join(', ') || 'Serviço'
-          const calculatedEndTime = calculateEndTime(time, totalDuration)
+            services.length > 0
+              ? services
+                  .map((as) => as.service?.name)
+                  .filter(Boolean)
+                  .join(', ')
+              : statusMap[a.status] === 'in-progress'
+              ? 'Aguardando serviços...'
+              : 'Serviço'
+          const calculatedEndTime = calculateEndTime(time, totalDuration || 30)
 
           return {
             id: a.id,
@@ -275,7 +222,7 @@ export default function Appointments() {
             professionalId: a.professional?.id ?? '',
             professional: a.professional?.name ?? 'Profissional',
             time: time,
-            duration: totalDuration,
+            duration: totalDuration || 30, // Duração mínima de 30 minutos para comandas sem serviços
             endTime: calculatedEndTime,
             status: statusMap[a.status] || 'pending',
             color: 'neutral',
@@ -320,6 +267,16 @@ export default function Appointments() {
   const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
       await axios.delete(`/api/appointments/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+    },
+  })
+
+  const startAppointment = useMutation({
+    mutationFn: async (id: string) => {
+      await axios.post(`/api/appointments/${id}/start`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
@@ -391,6 +348,16 @@ export default function Appointments() {
     return moment.format('MMMM [de] YYYY')
   }
 
+  const handleEmptySlotClick = (time: string, professionalId: string) => {
+    const dateStr = selectedDate.toISOString().split('T')[0]
+    setPrefilledAppointmentData({
+      date: dateStr,
+      time: time,
+      professionalId: professionalId,
+    })
+    setShowForm(true)
+  }
+
   const goToToday = () => {
     setSelectedDate(normalizeDate(DateTime.now().toDate()))
   }
@@ -420,7 +387,9 @@ export default function Appointments() {
             </p>
           </div>
 
-          <div className='flex items-center gap-2 p-1 bg-muted rounded-xl flex-shrink-0'>
+          <div
+            className='flex items-center gap-2 p-1 bg-muted rounded-xl flex-shrink-0'
+            style={{ display: 'none' }}>
             <button
               onClick={() => setViewMode('calendar')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
@@ -684,12 +653,21 @@ export default function Appointments() {
                                             justifyContent: 'space-between',
                                           }}
                                           onClick={() =>
-                                            setSelectedAppointment(
-                                              appointmentStarting
-                                            )
+                                            appointmentStarting.status ===
+                                            'in-progress'
+                                              ? setSelectedCommandId(
+                                                  appointmentStarting.id
+                                                )
+                                              : setSelectedAppointment(
+                                                  appointmentStarting
+                                                )
                                           }>
                                           <div className='flex-1 min-w-0'>
-                                            <p className='text-xs truncate'>
+                                            <p className='text-xs truncate flex items-center gap-1'>
+                                              {appointmentStarting.status ===
+                                                'in-progress' && (
+                                                <Clock className='w-3 h-3 flex-shrink-0' />
+                                              )}
                                               {appointmentStarting.client}
                                             </p>
                                             <p className='text-[10px] opacity-75 truncate'>
@@ -762,7 +740,11 @@ export default function Appointments() {
                                   ) : appointmentCovering ? (
                                     <></>
                                   ) : (
-                                    <div className='w-full h-full flex items-center justify-center'>
+                                    <div
+                                      className='w-full h-full flex items-center justify-center cursor-pointer hover:bg-blue-50 transition-colors rounded'
+                                      onClick={() =>
+                                        handleEmptySlotClick(time, prof.id)
+                                      }>
                                       <span className='text-[10px] text-muted-foreground/30'>
                                         —
                                       </span>
@@ -871,6 +853,7 @@ export default function Appointments() {
           setShowForm(open)
           if (!open) {
             setEditingAppointment(null)
+            setPrefilledAppointmentData(null)
           }
         }}>
         <DialogContent className='!w-[95vw] !max-w-[1600px] !h-auto sm:!h-[90vh] !max-h-[95vh] overflow-y-auto'>
@@ -881,6 +864,15 @@ export default function Appointments() {
           </DialogHeader>
           <ScheduledAppointmentForm
             initialData={editingAppointment}
+            prefilledData={
+              !editingAppointment && prefilledAppointmentData
+                ? {
+                    date: prefilledAppointmentData.date,
+                    time: prefilledAppointmentData.time,
+                    professionalId: prefilledAppointmentData.professionalId,
+                  }
+                : undefined
+            }
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ['appointments'] })
               queryClient.invalidateQueries({
@@ -888,6 +880,7 @@ export default function Appointments() {
               })
               setShowForm(false)
               setEditingAppointment(null)
+              setPrefilledAppointmentData(null)
             }}
           />
         </DialogContent>
@@ -954,7 +947,7 @@ export default function Appointments() {
                   setDeletingAppointment(null)
                 }
               }}
-              disabled={deleteAppointment.isLoading}>
+              disabled={deleteAppointment.isPending}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1076,6 +1069,18 @@ export default function Appointments() {
                 Editar
               </Button>
 
+              {selectedAppointment.status === 'pending' && (
+                <Button
+                  className='flex-1 bg-purple-600 hover:bg-purple-700 text-white'
+                  onClick={() => {
+                    startAppointment.mutate(selectedAppointment.id)
+                    setSelectedAppointment(null)
+                  }}>
+                  <Play className='w-4 h-4 mr-2' />
+                  Iniciar Atendimento
+                </Button>
+              )}
+
               {(() => {
                 const appointmentDate = DateTime.startOf(
                   DateTime.fromJSDate(selectedAppointment.scheduledAt),
@@ -1085,7 +1090,8 @@ export default function Appointments() {
                 const canConfirm =
                   (appointmentDate.isSame(today) ||
                     appointmentDate.isBefore(today)) &&
-                  selectedAppointment.status !== 'completed'
+                  selectedAppointment.status !== 'completed' &&
+                  selectedAppointment.status !== 'in-progress'
 
                 if (canConfirm) {
                   return (
@@ -1124,6 +1130,32 @@ export default function Appointments() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedCommandId && (
+        <CommandDetailsModal
+          open={!!selectedCommandId}
+          onClose={() => setSelectedCommandId(null)}
+          appointmentId={selectedCommandId}
+          onCheckout={(appointment: any) => {
+            setCheckoutAppointment(appointment)
+            setSelectedCommandId(null)
+          }}
+        />
+      )}
+
+      {checkoutAppointment && (
+        <CheckoutModal
+          open={!!checkoutAppointment}
+          onClose={() => setCheckoutAppointment(null)}
+          appointment={checkoutAppointment as any}
+          onSuccess={() => {
+            setCheckoutAppointment(null)
+            queryClient.invalidateQueries({ queryKey: ['appointments'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+            queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+          }}
+        />
       )}
     </div>
   )

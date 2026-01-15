@@ -24,6 +24,7 @@ import { ResetPasswordModule } from './resetPassword/resetPassword.module';
 import { PaymentModule } from './payment/paument.module';
 import { FidelityModule } from './fidelity/fidelity.module';
 import { PublicModule } from './public/public.module';
+import { ScheduleBlocksModule } from './schedule-blocks/schedule-blocks.module';
 
 @Module({
   imports: [
@@ -46,10 +47,11 @@ import { PublicModule } from './public/public.module';
     PaymentModule,
     FidelityModule,
     PublicModule,
+    ScheduleBlocksModule,
   ],
   controllers: [AppController],
   providers: [
-    AppService, 
+    AppService,
     BaseDataService,
     {
       provide: APP_INTERCEPTOR,

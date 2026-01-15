@@ -134,9 +134,11 @@ export default function AdminDashboard() {
       )
       .reduce((s, a) => s + +a.total, 0) +
     movements
-      .filter((m) => 
-        m.createdAt?.toString().split('T')[0] === date &&
-        m.type === 'OUT'
+      .filter(
+        (m) =>
+          m.createdAt?.toString().split('T')[0] === date &&
+          m.type === 'OUT' &&
+          !m.reference?.startsWith('Atendimento-') // Ignora movimentos de atendimentos (já contabilizados no total)
       )
       .reduce((s, m) => s + +m.totalCost, 0)
 
@@ -173,7 +175,12 @@ export default function AdminDashboard() {
     })
     movements.forEach((m) => {
       const d = m.createdAt?.toString().split('T')[0]
-      if (totals[d] !== undefined && m.type === 'OUT') {
+      // Ignora movimentos de atendimentos (já contabilizados no total do atendimento)
+      if (
+        totals[d] !== undefined &&
+        m.type === 'OUT' &&
+        !m.reference?.startsWith('Atendimento-')
+      ) {
         totals[d] += +m.totalCost
       }
     })
@@ -268,7 +275,7 @@ export default function AdminDashboard() {
     {
       id: 'register-appointment',
       icon: PlusCircle,
-      label: 'Registrar Atendimento',
+      label: 'Iniciar Atendimento',
       openRegisterForm: true,
       color: 'purple',
     },

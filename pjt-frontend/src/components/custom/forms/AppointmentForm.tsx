@@ -31,23 +31,48 @@ type FormData = z.infer<typeof schema>
 
 interface AppointmentFormProps {
   onSuccess: () => void
+  mode?: 'scheduled' | 'immediate'
+  initialData?: any
+  prefilledData?: {
+    date?: string
+    time?: string
+    professionalId?: string
+  }
 }
 
-export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
+export function AppointmentForm({
+  onSuccess,
+  mode,
+  initialData,
+  prefilledData,
+}: AppointmentFormProps) {
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
   const { isAdmin } = useUser()
   const [clientModalOpen, setClientModalOpen] = React.useState(false)
 
-  const { control, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       branchId: activeBranch?.id || '',
-      professionalId: '',
-      clientId: '',
-      serviceIds: [],
-      scheduledDate: '',
-      scheduledTime: '',
+      professionalId:
+        prefilledData?.professionalId || initialData?.professionalId || '',
+      clientId: initialData?.clientId || '',
+      serviceIds:
+        initialData?.appointmentServices?.map((as: any) => as.service.id) || [],
+      scheduledDate:
+        prefilledData?.date || initialData?.scheduledAt?.split('T')[0] || '',
+      scheduledTime:
+        prefilledData?.time ||
+        initialData?.scheduledAt?.split('T')[1]?.slice(0, 5) ||
+        '',
     },
   })
 
@@ -106,8 +131,12 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
   const { data: availableSlots = [] } = useQuery({
     queryKey: ['available-slots', watchedProfessional, watchedDate],
     queryFn: async () => {
-      if (!watchedProfessional || !watchedDate) {return []}
-      const res = await axios.get(`/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`)
+      if (!watchedProfessional || !watchedDate) {
+        return []
+      }
+      const res = await axios.get(
+        `/api/appointments/available-slots/${watchedProfessional}/${watchedDate}`
+      )
       return res.data
     },
     enabled: !!watchedProfessional && !!watchedDate,
@@ -117,25 +146,32 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
     mutationFn: async (data: FormData) => {
       // Usar horário do Brasil diretamente
       const scheduledAt = `${data.scheduledDate} ${data.scheduledTime}:00`
-      
+
       const appointmentDate = new Date(data.scheduledDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       appointmentDate.setHours(0, 0, 0, 0)
-      
+
       const status = appointmentDate <= today ? 'COMPLETED' : 'SCHEDULED'
-      
-      const config = isAdmin && data.branchId ? {
-        headers: { 'x-branch-id': data.branchId },
-      } : {}
-      
-      await axios.post('/api/appointments', {
-        professionalId: data.professionalId,
-        clientId: data.clientId,
-        serviceIds: data.serviceIds,
-        scheduledAt,
-        status,
-      }, config)
+
+      const config =
+        isAdmin && data.branchId
+          ? {
+              headers: { 'x-branch-id': data.branchId },
+            }
+          : {}
+
+      await axios.post(
+        '/api/appointments',
+        {
+          professionalId: data.professionalId,
+          clientId: data.clientId,
+          serviceIds: data.serviceIds,
+          scheduledAt,
+          status,
+        },
+        config
+      )
     },
     onSuccess: () => {
       toast.success('Agendamento criado com sucesso!')
@@ -157,21 +193,20 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       {isAdmin && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className='block text-sm font-medium text-foreground mb-2'>
             Filial
           </label>
           <Controller
-            name="branchId"
+            name='branchId'
             control={control}
             render={({ field }) => (
               <select
                 {...field}
-                className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              >
-                <option value="">Selecione a filial...</option>
+                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+                <option value=''>Selecione a filial...</option>
                 {branches.map((branch: any) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
@@ -181,45 +216,48 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
             )}
           />
           {errors.branchId && (
-            <p className="text-xs text-destructive mt-1">{errors.branchId.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.branchId.message}
+            </p>
           )}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className='block text-sm font-medium text-foreground mb-2'>
           Data
         </label>
         <Controller
-          name="scheduledDate"
+          name='scheduledDate'
           control={control}
           render={({ field }) => (
             <input
-              type="date"
+              type='date'
               {...field}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+              className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'
             />
           )}
         />
         {errors.scheduledDate && (
-          <p className="text-xs text-destructive mt-1">{errors.scheduledDate.message}</p>
+          <p className='text-xs text-destructive mt-1'>
+            {errors.scheduledDate.message}
+          </p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className='block text-sm font-medium text-foreground mb-2'>
           Profissional
         </label>
         <Controller
-          name="professionalId"
+          name='professionalId'
           control={control}
           render={({ field }) => (
             <select
               {...field}
-              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            >
-              <option value="">Selecione um profissional...</option>
+              className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+              <option value=''>Selecione um profissional...</option>
               {professionals.map((p: any) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -229,24 +267,25 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
           )}
         />
         {errors.professionalId && (
-          <p className="text-xs text-destructive mt-1">{errors.professionalId.message}</p>
+          <p className='text-xs text-destructive mt-1'>
+            {errors.professionalId.message}
+          </p>
         )}
       </div>
 
       {availableSlots.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className='block text-sm font-medium text-foreground mb-2'>
             Horário
           </label>
           <Controller
-            name="scheduledTime"
+            name='scheduledTime'
             control={control}
             render={({ field }) => (
               <select
                 {...field}
-                className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              >
-                <option value="">Selecione um horário...</option>
+                className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+                <option value=''>Selecione um horário...</option>
                 {availableSlots.map((slot: string) => (
                   <option key={slot} value={slot}>
                     {slot}
@@ -256,27 +295,28 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
             )}
           />
           {errors.scheduledTime && (
-            <p className="text-xs text-destructive mt-1">{errors.scheduledTime.message}</p>
+            <p className='text-xs text-destructive mt-1'>
+              {errors.scheduledTime.message}
+            </p>
           )}
         </div>
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-foreground">
+        <div className='flex items-center justify-between mb-2'>
+          <label className='block text-sm font-medium text-foreground'>
             Cliente
           </label>
           <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
             <DialogTrigger asChild>
               <button
-                type="button"
-                className="text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1"
-              >
-                <UserPlus className="w-4 h-4" />
+                type='button'
+                className='text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1'>
+                <UserPlus className='w-4 h-4' />
                 Novo Cliente
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card">
+            <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto bg-card'>
               <DialogHeader>
                 <DialogTitle>Novo Cliente</DialogTitle>
               </DialogHeader>
@@ -285,14 +325,13 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
           </Dialog>
         </div>
         <Controller
-          name="clientId"
+          name='clientId'
           control={control}
           render={({ field }) => (
             <select
               {...field}
-              className="w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-            >
-              <option value="">Selecione um cliente...</option>
+              className='w-full p-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground'>
+              <option value=''>Selecione um cliente...</option>
               {clients.map((c: any) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -302,32 +341,34 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
           )}
         />
         {errors.clientId && (
-          <p className="text-xs text-destructive mt-1">{errors.clientId.message}</p>
+          <p className='text-xs text-destructive mt-1'>
+            {errors.clientId.message}
+          </p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className='block text-sm font-medium text-foreground mb-2'>
           Serviços
         </label>
         <Controller
-          name="serviceIds"
+          name='serviceIds'
           control={control}
           render={({ field }) => (
-            <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-xl p-3">
+            <div className='space-y-2 max-h-40 overflow-y-auto border border-border rounded-xl p-3'>
               {services.map((s: any) => (
-                <div key={s.id} className="flex items-center space-x-2">
+                <div key={s.id} className='flex items-center space-x-2'>
                   <input
-                    type="checkbox"
+                    type='checkbox'
                     checked={field.value.includes(s.id)}
                     onChange={(e) => {
                       const set = new Set(field.value)
                       e.target.checked ? set.add(s.id) : set.delete(s.id)
                       field.onChange(Array.from(set))
                     }}
-                    className="w-4 h-4 text-primary rounded"
+                    className='w-4 h-4 text-primary rounded'
                   />
-                  <span className="text-sm text-foreground">
+                  <span className='text-sm text-foreground'>
                     {s.name} - R$ {Number(s.price).toFixed(2)}
                   </span>
                 </div>
@@ -336,21 +377,22 @@ export function AppointmentForm({ onSuccess }: AppointmentFormProps) {
           )}
         />
         {errors.serviceIds && (
-          <p className="text-xs text-destructive mt-1">{errors.serviceIds.message}</p>
+          <p className='text-xs text-destructive mt-1'>
+            {errors.serviceIds.message}
+          </p>
         )}
       </div>
 
       {total > 0 && (
-        <div className="font-semibold text-sm bg-muted p-3 rounded-xl">
+        <div className='font-semibold text-sm bg-muted p-3 rounded-xl'>
           Total: R$ {total.toFixed(2)}
         </div>
       )}
 
       <button
-        type="submit"
+        type='submit'
         disabled={isSubmitting}
-        className="w-full p-3 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity cursor-pointer"
-      >
+        className='w-full p-3 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity cursor-pointer'>
         {isSubmitting ? 'Salvando...' : 'Agendar'}
       </button>
     </form>

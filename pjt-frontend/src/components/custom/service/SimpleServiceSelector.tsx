@@ -70,7 +70,10 @@ export function SimpleServiceSelector({
                   </div>
                 </div>
                 <span className='font-semibold text-primary'>
-                  R$ {service.price.toFixed(2)}
+                  R${' '}
+                  {typeof service.price === 'number'
+                    ? service.price.toFixed(2)
+                    : parseFloat(service.price || '0').toFixed(2)}
                 </span>
               </div>
             </div>

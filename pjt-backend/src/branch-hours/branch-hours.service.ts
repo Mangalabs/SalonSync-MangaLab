@@ -51,7 +51,7 @@ export class BranchHoursService {
     // Garantir que todos os dias da semana existam
     const allDays: any[] = [];
     for (let day = 0; day <= 6; day++) {
-      const existing = hours.find(h => h.dayOfWeek === day);
+      const existing = hours.find((h) => h.dayOfWeek === day);
       if (existing) {
         allDays.push(existing);
       } else {
@@ -76,7 +76,7 @@ export class BranchHoursService {
 
   async updateMultiple(branchId: string, hoursData: CreateBranchHoursDto[]) {
     const results: any[] = [];
-    
+
     for (const dto of hoursData) {
       const result = await this.createOrUpdate(branchId, dto);
       results.push(result);
@@ -104,7 +104,11 @@ export class BranchHoursService {
     });
   }
 
-  async isOpen(branchId: string, dayOfWeek: number, time: string): Promise<boolean> {
+  async isOpen(
+    branchId: string,
+    dayOfWeek: number,
+    time: string,
+  ): Promise<boolean> {
     const hours = await this.prisma.branchHours.findUnique({
       where: {
         branchId_dayOfWeek: {
@@ -131,7 +135,7 @@ export class BranchHoursService {
     if (hours.lunchStartTime && hours.lunchEndTime) {
       const lunchStartMinutes = this.timeToMinutes(hours.lunchStartTime);
       const lunchEndMinutes = this.timeToMinutes(hours.lunchEndTime);
-      
+
       if (timeMinutes >= lunchStartMinutes && timeMinutes <= lunchEndMinutes) {
         return false;
       }
@@ -143,5 +147,59 @@ export class BranchHoursService {
   private timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  async getTimeSlots(branchId: string, dayOfWeek: number): Promise<string[]> {
+    const hours = await this.prisma.branchHours.findUnique({
+      where: {
+        branchId_dayOfWeek: {
+          branchId,
+          dayOfWeek,
+        },
+      },
+    });
+
+    // Se não houver configuração ou estiver fechado, retornar array vazio
+    if (!hours || !hours.isOpen) {
+      return [];
+    }
+
+    const slots: string[] = [];
+    const startMinutes = this.timeToMinutes(hours.startTime);
+    let endMinutes = this.timeToMinutes(hours.endTime);
+
+    // Corrigir horários que passam da meia-noite (00:00 = próximo dia)
+    if (endMinutes === 0) {
+      endMinutes = 24 * 60; // Meia-noite = 1440 minutos
+    } else if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60; // Adicionar 24 horas se endTime < startTime
+    }
+
+    const lunchStart = hours.lunchStartTime
+      ? this.timeToMinutes(hours.lunchStartTime)
+      : null;
+    const lunchEnd = hours.lunchEndTime
+      ? this.timeToMinutes(hours.lunchEndTime)
+      : null;
+
+    // Gerar slots de 10 em 10 minutos
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += 10) {
+      // Pular horário de almoço se configurado
+      if (
+        lunchStart !== null &&
+        lunchEnd !== null &&
+        minutes >= lunchStart &&
+        minutes < lunchEnd
+      ) {
+        continue;
+      }
+
+      const hour = Math.floor(minutes / 60) % 24; // Módulo 24 para horários após meia-noite
+      const minute = minutes % 60;
+      const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      slots.push(timeSlot);
+    }
+
+    return slots;
   }
 }
