@@ -105,10 +105,7 @@ export default function ProfessionalDashboard() {
     period: periodAppointments,
   }
 
-  const {
-    data: allProfessionals,
-    isLoading: professionalLoading,
-  } = useQuery({
+  const { data: allProfessionals, isLoading: professionalLoading } = useQuery({
     queryKey: ['professionals', activeBranch?.id],
     queryFn: async () => {
       const res = await axios.get('/api/professionals')
@@ -120,8 +117,6 @@ export default function ProfessionalDashboard() {
   const professionalInfo = allProfessionals?.find(
     (p: any) => p.name?.toLowerCase() === user?.name?.toLowerCase()
   )
-
-
 
   const isProfessional = !!professionalInfo && professionalInfo !== null
 
@@ -136,8 +131,6 @@ export default function ProfessionalDashboard() {
     endDate,
     isProfessional && !!professionalInfo?.id && !!activeBranch
   )
-
-
 
   const isLoading = commissionLoading || professionalLoading
   const error = commissionError
@@ -310,7 +303,7 @@ export default function ProfessionalDashboard() {
     {
       id: 'register-appointment',
       icon: PlusCircle,
-      label: 'Registrar Atendimento',
+      label: 'Iniciar Atendimento',
       openRegisterForm: true,
       color: 'purple',
     },
@@ -349,7 +342,9 @@ export default function ProfessionalDashboard() {
           </h1>
           <p className='text-sm md:text-base text-muted-foreground'>
             {activeBranch?.name} • {getPeriodLabel()}
-            {(user?.role === 'ADMIN' || user?.role === 'OWNER' || !isProfessional) &&
+            {(user?.role === 'ADMIN' ||
+              user?.role === 'OWNER' ||
+              !isProfessional) &&
               ' • Visão Geral'}
           </p>
         </div>
@@ -364,7 +359,9 @@ export default function ProfessionalDashboard() {
               disabled={commissionLoading}
               className='flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50'
               title='Atualizar dados de comissão'>
-              <RefreshCw className={`w-4 h-4 ${commissionLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${commissionLoading ? 'animate-spin' : ''}`}
+              />
               Atualizar
             </button>
           )}
@@ -429,12 +426,12 @@ export default function ProfessionalDashboard() {
             />
             <StatsCard
               title='Receita Gerada'
-              value={formatCurrency(
-                commissionData?.summary?.totalRevenue || 0
-              )}
-              change={`${
-                professionalInfo?.commissionRate || 0
-              }% taxa`}
+              value={formatCurrency(commissionData?.summary?.totalRevenue || 0)}
+              change={`${professionalInfo?.commissionRate || 0}% serviços${
+                professionalInfo?.productCommissionRate
+                  ? ` • ${professionalInfo?.productCommissionRate}% produtos`
+                  : ''
+              }`}
               changeType='neutral'
               icon={TrendingUp}
               iconColor='blue'
@@ -445,7 +442,10 @@ export default function ProfessionalDashboard() {
             <StatsCard
               title='Receita Total'
               value={formatCurrency(
-                completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0)
+                completedAppointments.reduce(
+                  (sum: number, apt: any) => sum + Number(apt.total),
+                  0
+                )
               )}
               change={`${completedAppointments.length} atendimentos`}
               changeType='neutral'
@@ -456,7 +456,10 @@ export default function ProfessionalDashboard() {
               title='Ticket Médio'
               value={formatCurrency(
                 completedAppointments.length > 0
-                  ? completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) / completedAppointments.length
+                  ? completedAppointments.reduce(
+                      (sum: number, apt: any) => sum + Number(apt.total),
+                      0
+                    ) / completedAppointments.length
                   : 0
               )}
               change='Visão geral'
@@ -718,8 +721,10 @@ export default function ProfessionalDashboard() {
                 <div className='text-2xl font-bold text-blue-600'>
                   {completedAppointments.length > 0
                     ? (
-                        completedAppointments.reduce((sum: number, apt: any) => sum + Number(apt.total), 0) /
-                        completedAppointments.length
+                        completedAppointments.reduce(
+                          (sum: number, apt: any) => sum + Number(apt.total),
+                          0
+                        ) / completedAppointments.length
                       ).toFixed(0)
                     : 0}
                 </div>
@@ -764,7 +769,7 @@ export default function ProfessionalDashboard() {
         onOpenChange={(open) => setShowRegisterForm(open)}>
         <DialogContent className='!w-[95vw] !max-w-[1600px] !h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Registrar Atendimento</DialogTitle>
+            <DialogTitle>Iniciar Atendimento</DialogTitle>
           </DialogHeader>
           <ImmediateAppointmentForm
             onSuccess={() => {

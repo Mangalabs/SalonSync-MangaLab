@@ -15,7 +15,7 @@ import { useBranch } from '@/contexts/BranchContext'
 
 interface ScheduledAppointment {
   id: string
-  professional: { name: string } | null
+  professional: { name: string; id?: string } | null
   client: { name: string }
   appointmentServices: {
     service: { name: string; price: number }
@@ -25,11 +25,13 @@ interface ScheduledAppointment {
   status: string
 }
 
+interface ScheduledAppointmentCardProps {
+  appointment: ScheduledAppointment
+}
+
 export function ScheduledAppointmentCard({
   appointment,
-}: {
-  appointment: ScheduledAppointment
-}) {
+}: ScheduledAppointmentCardProps) {
   const queryClient = useQueryClient()
   const { activeBranch } = useBranch()
 
@@ -49,7 +51,7 @@ export function ScheduledAppointmentCard({
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Erro ao confirmar agendamento',
+        error.response?.data?.message || 'Erro ao confirmar agendamento'
       )
     },
   })
@@ -66,7 +68,7 @@ export function ScheduledAppointmentCard({
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Erro ao cancelar agendamento',
+        error.response?.data?.message || 'Erro ao cancelar agendamento'
       )
     },
   })
@@ -82,12 +84,12 @@ export function ScheduledAppointmentCard({
 
   return (
     <div
-      className={`border rounded-lg shadow-sm ${
+      className={`border rounded-lg shadow-sm transition-all ${
         isPast
           ? 'border-red-200 bg-red-50'
           : isToday
-            ? 'border-blue-200 bg-blue-50'
-            : 'bg-white'
+          ? 'border-blue-200 bg-blue-50'
+          : 'bg-white'
       }`}>
       <div className='p-3 md:p-4 pb-2 md:pb-3'>
         <div className='flex justify-between items-start gap-2'>
@@ -100,8 +102,8 @@ export function ScheduledAppointmentCard({
               isPast
                 ? 'bg-red-100 text-red-800'
                 : isToday
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-800'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-gray-100 text-gray-800'
             }`}>
             {isPast ? 'Atrasado' : isToday ? 'Hoje' : 'Agendado'}
           </span>
@@ -154,7 +156,10 @@ export function ScheduledAppointmentCard({
             <Button
               size='sm'
               variant='outline'
-              onClick={() => cancelMutation.mutate()}
+              onClick={(e) => {
+                e.stopPropagation()
+                cancelMutation.mutate()
+              }}
               disabled={cancelMutation.isPending}
               className='text-red-600 hover:text-red-700 text-xs sm:text-sm h-8'>
               <XCircle className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
@@ -163,7 +168,10 @@ export function ScheduledAppointmentCard({
             {canConfirm && (
               <Button
                 size='sm'
-                onClick={() => confirmMutation.mutate()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  confirmMutation.mutate()
+                }}
                 disabled={confirmMutation.isPending}
                 className='bg-[#D4AF37] hover:bg-[#B8941F] text-[#1A1A1A] text-xs sm:text-sm h-8'>
                 <CheckCircle className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />

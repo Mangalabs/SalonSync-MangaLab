@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Star,
   X,
+  BarChart3,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useState } from 'react'
@@ -88,6 +89,12 @@ const menuSections = [
     title: 'Gestão',
     items: [
       {
+        to: '/dashboard/my-panel',
+        icon: BarChart3,
+        label: 'Meu Painel',
+        roles: ['PROFESSIONAL'],
+      },
+      {
         to: '/dashboard/financial',
         icon: TrendingUp,
         label: 'Financeiro',
@@ -129,7 +136,9 @@ const getNavItems = (userRole: string, productId: string) =>
         return true
       }
 
-      const hasAccessByProduct = item.products ? item.products?.includes(productId) : true
+      const hasAccessByProduct = item.products
+        ? item.products?.includes(productId)
+        : true
 
       return item.roles.includes(userRole) && hasAccessByProduct
     }),
@@ -138,8 +147,7 @@ const getNavItems = (userRole: string, productId: string) =>
 const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
   <div
     className='border-b flex items-center justify-between bg-secondary'
-    style={{ borderColor: 'var(--color-sidebar-border)' }}
-  >
+    style={{ borderColor: 'var(--color-sidebar-border)' }}>
     <div className='flex items-center mx-auto p-4'>
       <img
         src='/salonSync-icon.png'
@@ -153,8 +161,7 @@ const SidebarHeader = ({ onClose }: { onClose?: () => void }) => (
         size='sm'
         onClick={onClose}
         className='p-1'
-        style={{ color: 'var(--color-text-secondary)' }}
-      >
+        style={{ color: 'var(--color-text-secondary)' }}>
         <X size={20} />
       </Button>
     )}
@@ -172,8 +179,7 @@ const NavItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
       key={label}
       onClick={onClick}
       className={`${baseClass} ${gradientHover}`}
-      style={{ color: 'var(--color-text-secondary)' }}
-    >
+      style={{ color: 'var(--color-text-secondary)' }}>
       <Icon className='w-5 h-5' />
       <span>{label}</span>
     </button>
@@ -190,8 +196,7 @@ const NavItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
             : gradientHover
         }`
       }
-      style={{ color: 'var(--color-text-secondary)' }}
-    >
+      style={{ color: 'var(--color-text-secondary)' }}>
       <Icon className='w-5 h-5' />
       <span>{label}</span>
     </NavLink>
@@ -222,8 +227,7 @@ export function Sidebar() {
               <div key={idx} className='mb-4'>
                 <div
                   className='text-xs font-semibold uppercase tracking-wider mb-1 px-4'
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
+                  style={{ color: 'var(--color-text-secondary)' }}>
                   {section.title}
                 </div>
                 <div className='space-y-1'>
@@ -236,7 +240,7 @@ export function Sidebar() {
                   ))}
                 </div>
               </div>
-            ),
+            )
         )}
       </nav>
     </>
@@ -249,8 +253,7 @@ export function Sidebar() {
           isOpen
             ? 'opacity-100 pointer-events-auto'
             : 'opacity-0 pointer-events-none'
-        }`}
-      >
+        }`}>
         <div className='absolute inset-0' onClick={close} />
         <aside
           className={`absolute left-0 top-0 w-64 h-full flex flex-col transform transition-transform duration-300 ${
@@ -261,8 +264,7 @@ export function Sidebar() {
             color: 'var(--color-sidebar-foreground)',
             borderRight: '1px solid var(--color-sidebar-border)',
             boxShadow: '0 2px 10px var(--color-shadow)',
-          }}
-        >
+          }}>
           <SidebarContent />
         </aside>
       </div>
@@ -274,8 +276,7 @@ export function Sidebar() {
           color: 'var(--color-sidebar-foreground)',
           borderRight: '1px solid var(--color-sidebar-border)',
           boxShadow: '0 2px 10px var(--color-shadow)',
-        }}
-      >
+        }}>
         <SidebarContent />
       </aside>
 

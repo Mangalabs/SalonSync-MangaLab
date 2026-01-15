@@ -13,8 +13,9 @@ const createSchema = (isAdmin: boolean, isScheduled: boolean) => {
   const baseSchema = {
     professionalId: z.string().min(1, 'Selecione um profissional'),
     clientId: z.string().min(1, 'Selecione um cliente'),
-    serviceIds: z.array(z.string()).min(1, 'Selecione ao menos um serviço'),
-    ...(!isScheduled && { paymentMethod: z.string().optional() }),
+    serviceIds: isScheduled
+      ? z.array(z.string()).min(1, 'Selecione ao menos um serviço')
+      : z.array(z.string()).optional(),
     ...(isAdmin && { branchId: z.string().min(1, 'Selecione uma filial') }),
   }
 
@@ -48,9 +49,6 @@ export function useAppointmentForm(
         serviceIds:
           initialData.appointmentServices?.map((as: any) => as.service.id) ||
           [],
-        ...(!isScheduled && {
-          paymentMethod: initialData.paymentMethod || 'CASH',
-        }),
         ...(isScheduled && {
           scheduledDate:
             typeof initialData.scheduledAt === 'string'
@@ -81,7 +79,6 @@ export function useAppointmentForm(
           professionalId: '',
           clientId: '',
           serviceIds: [],
-          paymentMethod: 'CASH',
           ...(isAdmin && { branchId: '' }),
         }
   }
@@ -122,10 +119,32 @@ export function useAppointmentForm(
         scheduledAt = `${data.scheduledDate} ${data.scheduledTime}:00`
         status = 'PENDING'
       } else {
-        scheduledAt = DateTime.now().format('YYYY-MM-DD HH:mm:ss')
-        status = 'COMPLETED'
-      }
+        // Para comandas (IN_PROGRESS), usar hora local de São Paulo
+        const now = DateTime.now()
+        const currentMinutes = now.minute()
+        const currentHour = now.hour()
 
+        // Arredondar minutos para múltiplo de 10 mais próximo
+        const roundedMinutes = Math.round(currentMinutes / 10) * 10
+
+        // Ajustar hora se minutos arredondados >= 60
+        let finalHour = currentHour
+        let finalMinutes = roundedMinutes
+
+        if (roundedMinutes >= 60) {
+          finalHour = currentHour + 1
+          finalMinutes = 0
+        }
+
+        // Formatar no formato local (sem timezone)
+        scheduledAt = now
+          .hour(finalHour)
+          .minute(finalMinutes)
+          .second(0)
+          .format('YYYY-MM-DD HH:mm:ss')
+
+        status = 'IN_PROGRESS'
+      }
       let finalProfessionalId =
         isProfessional && !isAdmin && !canManageOthers
           ? currentProfessionalId
@@ -145,10 +164,9 @@ export function useAppointmentForm(
       const payload = {
         clientId: data.clientId,
         professionalId: finalProfessionalId,
-        serviceIds: data.serviceIds,
+        serviceIds: data.serviceIds || [],
         scheduledAt,
         status,
-        ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
       }
 
       const headers = data.branchId ? { 'x-branch-id': data.branchId } : {}
@@ -186,7 +204,7 @@ export function useAppointmentForm(
       )
 
       const action = initialData ? 'atualizado' : 'criado'
-      const type = isScheduled ? 'Agendamento' : 'Atendimento'
+      const type = isScheduled ? 'Agendamento' : 'Comanda'
       toast.success(`${type} ${action} com sucesso!`)
       onSuccess()
     },

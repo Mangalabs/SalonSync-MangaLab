@@ -155,6 +155,7 @@ export class AuthService {
     role: string;
     roleId?: string;
     commissionRate?: number;
+    productCommissionRate?: number;
     branchId: string;
     workingDays?: number[];
     canManageOthers?: boolean;
@@ -193,6 +194,7 @@ export class AuthService {
           : data.role || 'Profissional',
         branchId: data.branchId,
         commissionRate: data.commissionRate || 0,
+        productCommissionRate: data.productCommissionRate || 0,
         roleId: data.roleId,
       },
     });

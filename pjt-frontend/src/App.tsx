@@ -29,6 +29,7 @@ import NewAppointment from './components/pages/NewAppointments'
 import Help from './components/pages/Help'
 import Sales from './components/pages/Sales'
 import BookingPage from './pages/booking/BookingPage'
+import MyPanel from './pages/MyPanel'
 
 export default function App() {
   return (
@@ -155,6 +156,16 @@ export default function App() {
                   element={
                     <RoleGuard allowedRoles={['ADMIN', 'PROFESSIONAL']}>
                       <Fidelity />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path='my-panel'
+                  element={
+                    <RoleGuard allowedRoles={['PROFESSIONAL']}>
+                      <SubscriptionGuard>
+                        <MyPanel />
+                      </SubscriptionGuard>
                     </RoleGuard>
                   }
                 />

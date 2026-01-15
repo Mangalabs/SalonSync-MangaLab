@@ -363,6 +363,10 @@ export class ProfessionalsService extends BaseDataService {
       where: {
         professionalId: id,
         branchId: (professional as any).branchId,
+        scheduledAt: {
+          gte: startDate,
+          lte: endDate,
+        },
       },
       select: {
         id: true,
@@ -389,17 +393,59 @@ export class ProfessionalsService extends BaseDataService {
             service: true,
           },
         },
+        appointmentProducts: {
+          include: {
+            product: true,
+          },
+        },
       },
     });
 
+    // Buscar transações de comissão já criadas no checkout
+    const commissionTransactions =
+      await this.prisma.financialTransaction.findMany({
+        where: {
+          branchId: (professional as any).branchId,
+          type: 'EXPENSE',
+          description: {
+            contains: `Comissão: ${professional.name}`,
+          },
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      });
+
     const commissionRate =
       Number((professional as any).commissionRate || 0) / 100;
+    const productCommissionRate =
+      Number((professional as any).productCommissionRate || 0) / 100;
 
     const dailyCommissions = appointments.reduce(
       (acc, appointment) => {
         const date = appointment.scheduledAt.toISOString().split('T')[0];
-        const total = Number(appointment.total);
-        const commission = total * commissionRate;
+
+        // Calcular receita de serviços
+        const servicesRevenue =
+          appointment.appointmentServices?.reduce(
+            (sum, as) => sum + Number(as.service.price),
+            0,
+          ) || 0;
+
+        // Calcular receita de produtos
+        const productsRevenue =
+          appointment.appointmentProducts?.reduce(
+            (sum, ap) => sum + Number(ap.total),
+            0,
+          ) || 0;
+
+        const totalRevenue = servicesRevenue + productsRevenue;
+
+        // Calcular comissões
+        const serviceCommission = servicesRevenue * commissionRate;
+        const productCommission = productsRevenue * productCommissionRate;
+        const totalCommission = serviceCommission + productCommission;
 
         if (!acc[date]) {
           acc[date] = {
@@ -411,8 +457,8 @@ export class ProfessionalsService extends BaseDataService {
         }
 
         acc[date].appointments += 1;
-        acc[date].revenue += total;
-        acc[date].commission += commission;
+        acc[date].revenue += totalRevenue;
+        acc[date].commission += totalCommission;
 
         return acc;
       },
@@ -427,51 +473,53 @@ export class ProfessionalsService extends BaseDataService {
       >,
     );
 
-    const productCommissions = await this.prisma.financialTransaction.findMany({
-      where: {
-        branchId: (professional as any).branchId,
-        type: 'EXPENSE',
-        description: {
-          contains: `Comissão venda: ${professional.name}`,
-        },
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    });
-
-    const totalProductCommissions = productCommissions.reduce(
-      (sum, commission) => sum + Number(commission.amount),
-      0,
-    );
-
     const totalAppointments = appointments.length;
-    const totalRevenue = appointments.reduce(
-      (sum, apt) => sum + Number(apt.total),
+    const totalRevenue = appointments.reduce((sum, apt) => {
+      const servicesRevenue =
+        apt.appointmentServices?.reduce(
+          (sum, as) => sum + Number(as.service.price),
+          0,
+        ) || 0;
+      const productsRevenue =
+        apt.appointmentProducts?.reduce(
+          (sum, ap) => sum + Number(ap.total),
+          0,
+        ) || 0;
+      return sum + servicesRevenue + productsRevenue;
+    }, 0);
+
+    // Calcular totais separadamente para serviços e produtos
+    const servicesTotal = appointments.reduce(
+      (sum, apt) =>
+        sum +
+        (apt.appointmentServices?.reduce(
+          (s, as) => s + Number(as.service.price),
+          0,
+        ) || 0),
       0,
     );
-    const appointmentCommissions = totalRevenue * commissionRate;
-    const totalCommission = appointmentCommissions + totalProductCommissions;
 
-    productCommissions.forEach((commission) => {
-      const date = commission.date.toISOString().split('T')[0];
-      if (!dailyCommissions[date]) {
-        dailyCommissions[date] = {
-          date,
-          appointments: 0,
-          revenue: 0,
-          commission: 0,
-        };
-      }
-      dailyCommissions[date].commission += Number(commission.amount);
-    });
+    const productsTotal = appointments.reduce(
+      (sum, apt) =>
+        sum +
+        (apt.appointmentProducts?.reduce((s, ap) => s + Number(ap.total), 0) ||
+          0),
+      0,
+    );
+
+    // Calcular comissões corretamente
+    const appointmentCommissions = servicesTotal * commissionRate;
+    const productCommissions = productsTotal * productCommissionRate;
+    const totalCommission = appointmentCommissions + productCommissions;
 
     return {
       professional: {
         id: professional.id,
         name: professional.name,
         commissionRate: Number((professional as any).commissionRate || 0),
+        productCommissionRate: Number(
+          (professional as any).productCommissionRate || 0,
+        ),
       },
       period: {
         startDate: startDate.toISOString().split('T')[0],
@@ -482,8 +530,11 @@ export class ProfessionalsService extends BaseDataService {
         totalRevenue,
         totalCommission,
         appointmentCommissions,
-        productCommissions: totalProductCommissions,
-        productSalesCount: productCommissions.length,
+        productCommissions,
+        productSalesCount: appointments.filter(
+          (apt) =>
+            apt.appointmentProducts && apt.appointmentProducts.length > 0,
+        ).length,
       },
       dailyCommissions: Object.values(dailyCommissions).sort((a, b) =>
         a.date.localeCompare(b.date),

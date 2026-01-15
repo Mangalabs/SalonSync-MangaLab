@@ -14,6 +14,9 @@ import { AppointmentsService } from './appointments.service';
 import { QueueService } from './queue.service';
 import { Appointment } from '@prisma/client';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { AddServicesDto } from './dto/add-services.dto';
+import { AddProductsDto } from './dto/add-products.dto';
+import { CheckoutAppointmentDto } from './dto/checkout-appointment.dto';
 import { AuthenticatedRequest } from '@/common/middleware/auth.middleware';
 
 @ApiTags('appointments')
@@ -32,10 +35,17 @@ export class AppointmentsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Appointment> {
     const targetBranchId = req.headers['x-branch-id'] as string;
+
+    // Tratar scheduledAt como horário de São Paulo
+    // Se vier como "2026-01-14 15:30:00", adicionar indicador de timezone
+    const scheduledAtStr = body.scheduledAt.includes('T')
+      ? body.scheduledAt
+      : body.scheduledAt.replace(' ', 'T') + '-03:00';
+
     return this.apptService.create(
       {
         ...body,
-        scheduledAt: new Date(body.scheduledAt),
+        scheduledAt: new Date(scheduledAtStr),
         status: (body.status as any) || 'PENDING',
       },
       {
@@ -136,19 +146,6 @@ export class AppointmentsController {
     return this.apptService.cancelAppointment(id);
   }
 
-  @Post('fix-historical')
-  @ApiOperation({ summary: 'Corrigir atendimentos históricos' })
-  @ApiResponse({
-    status: 200,
-    description: 'Atendimentos históricos corrigidos com sucesso',
-  })
-  async fixHistoricalAppointments(): Promise<{
-    fixed: number;
-    message: string;
-  }> {
-    return this.apptService.fixHistoricalAppointments();
-  }
-
   @Post('remove-duplicates')
   @ApiOperation({ summary: 'Remover transações duplicadas' })
   @ApiResponse({
@@ -175,11 +172,17 @@ export class AppointmentsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Appointment> {
     const targetBranchId = req.headers['x-branch-id'] as string;
+
+    // Tratar scheduledAt como horário de São Paulo
+    const scheduledAtStr = body.scheduledAt.includes('T')
+      ? body.scheduledAt
+      : body.scheduledAt.replace(' ', 'T') + '-03:00';
+
     return this.apptService.update(
       id,
       {
         ...body,
-        scheduledAt: new Date(body.scheduledAt),
+        scheduledAt: new Date(scheduledAtStr),
         status: (body.status as any) || 'PENDING',
       },
       {
@@ -188,6 +191,68 @@ export class AppointmentsController {
         branchId: req.user.branchId,
       },
       targetBranchId,
+    );
+  }
+
+  // ==================== ENDPOINTS DE GERENCIAMENTO DE COMANDA ====================
+
+  @Post(':id/start')
+  @ApiOperation({ summary: 'Iniciar atendimento (PENDING → IN_PROGRESS)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Atendimento iniciado com sucesso',
+  })
+  startAppointment(@Param('id') id: string): Promise<Appointment> {
+    return this.apptService.startAppointment(id);
+  }
+
+  @Patch(':id/services')
+  @ApiOperation({ summary: 'Adicionar ou remover serviços da comanda' })
+  @ApiResponse({
+    status: 200,
+    description: 'Serviços atualizados com sucesso',
+  })
+  manageServices(
+    @Param('id') id: string,
+    @Body() body: AddServicesDto & { action: 'add' | 'remove' },
+  ): Promise<Appointment> {
+    if (body.action === 'remove') {
+      return this.apptService.removeServices(id, body.serviceIds);
+    }
+    return this.apptService.addServices(id, body.serviceIds);
+  }
+
+  @Patch(':id/products')
+  @ApiOperation({ summary: 'Adicionar ou remover produtos da comanda' })
+  @ApiResponse({
+    status: 200,
+    description: 'Produtos atualizados com sucesso',
+  })
+  manageProducts(
+    @Param('id') id: string,
+    @Body() body: AddProductsDto & { action: 'add' | 'remove' },
+  ): Promise<Appointment> {
+    if (body.action === 'remove') {
+      const productIds = body.products.map((p) => p.productId);
+      return this.apptService.removeProducts(id, productIds);
+    }
+    return this.apptService.addProducts(id, body.products);
+  }
+
+  @Post(':id/checkout')
+  @ApiOperation({ summary: 'Finalizar comanda (checkout)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Checkout realizado com sucesso',
+  })
+  checkout(
+    @Param('id') id: string,
+    @Body() body: CheckoutAppointmentDto,
+  ): Promise<Appointment> {
+    return this.apptService.checkoutAppointment(
+      id,
+      body.paymentMethod,
+      body.notes,
     );
   }
 }

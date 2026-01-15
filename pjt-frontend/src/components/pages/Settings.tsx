@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Sun,
   Moon,
+  Clock,
 } from 'lucide-react'
 
 import axios from '@/lib/axios'
@@ -22,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { SubscriptionManagement } from '@/components/custom/management/SubscriptionManagement'
 import { BranchManagement } from '@/components/custom/branch/BranchManagement'
 import { BookingLinkGenerator } from '@/components/custom/BookingLinkGenerator'
+import { BranchHoursModal } from '@/components/custom/BranchHoursModal'
 import { useUser } from '@/contexts/UserContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import {
@@ -61,6 +63,7 @@ export default function Settings() {
   const queryClient = useQueryClient()
   const { isAdmin } = useUser()
   const [resetSuccess, setResetSuccess] = useState(false)
+  const [hoursModalOpen, setHoursModalOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -234,6 +237,34 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Horários de Funcionamento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2 text-card-foreground'>
+            <Clock className='h-5 w-5' />
+            Horários de Funcionamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className='text-sm text-muted-foreground mb-4'>
+            Configure os horários de abertura e fechamento da filial ativa para
+            cada dia da semana. Estes horários serão usados para gerar os
+            horários disponíveis no calendário de agendamentos.
+          </p>
+          <Button
+            onClick={() => setHoursModalOpen(true)}
+            className='bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2'>
+            <Clock className='w-4 h-4' />
+            Personalizar Horários
+          </Button>
+        </CardContent>
+      </Card>
+
+      <BranchHoursModal
+        open={hoursModalOpen}
+        onOpenChange={setHoursModalOpen}
+      />
+
       <BookingLinkGenerator />
 
       {isAdmin && (
@@ -292,7 +323,7 @@ export default function Settings() {
                   return (
                     <div
                       key={themeOption.value}
-                      onClick={() => setTheme(themeOption.value)}
+                      onClick={() => setTheme(themeOption.value as 'neutro')}
                       className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
                         theme === themeOption.value
                           ? 'border-primary bg-primary/10'

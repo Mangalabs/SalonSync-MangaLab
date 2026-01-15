@@ -60,6 +60,12 @@ export function AppointmentTable({
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
   const [editingAppointment, setEditingAppointment] =
     useState<RawAppointment | null>(null)
+  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false)
+  const [prefilledData, setPrefilledData] = useState<{
+    date?: string
+    time?: string
+    professionalId?: string
+  }>({})
   const { activeBranch } = useBranch()
 
   const { data: rawData = [], isLoading } = useQuery<RawAppointment[]>({
@@ -128,7 +134,7 @@ export function AppointmentTable({
 
     if (selectedProfessional !== 'all') {
       filtered = filtered.filter(
-        (apt) => apt.professional?.name === selectedProfessional,
+        (apt) => apt.professional?.name === selectedProfessional
       )
     }
 
@@ -139,14 +145,14 @@ export function AppointmentTable({
     if (selectedService !== 'all') {
       filtered = filtered.filter((apt) =>
         apt.appointmentServices.some(
-          (as) => as.service.name === selectedService,
-        ),
+          (as) => as.service.name === selectedService
+        )
       )
     }
 
     if (dateFilter) {
       filtered = filtered.filter(
-        (apt) => apt.scheduledAt && apt.scheduledAt.split('T')[0] === dateFilter,
+        (apt) => apt.scheduledAt && apt.scheduledAt.split('T')[0] === dateFilter
       )
     }
 
@@ -159,6 +165,15 @@ export function AppointmentTable({
     dateFilter,
   ])
 
+  const handleCardClick = (
+    date: string,
+    time: string,
+    professionalId?: string
+  ) => {
+    setPrefilledData({ date, time, professionalId })
+    setIsNewAppointmentOpen(true)
+  }
+
   const groupedData = useMemo(
     () =>
       filteredAppointments.reduce((acc, apt) => {
@@ -166,7 +181,7 @@ export function AppointmentTable({
           apt.professional?.name || 'Profissional removido'
         const date = new Date(apt.scheduledAt)
         const monthKey = `${date.getFullYear()}-${String(
-          date.getMonth() + 1,
+          date.getMonth() + 1
         ).padStart(2, '0')}`
         const monthName = date.toLocaleDateString('pt-BR', {
           year: 'numeric',
@@ -190,7 +205,7 @@ export function AppointmentTable({
 
         return acc
       }, {} as Record<string, { months: Record<string, { name: string; appointments: any[]; total: number }> }>),
-    [filteredAppointments],
+    [filteredAppointments]
   )
 
   const toggleMonth = (monthKey: string) => {
@@ -251,7 +266,7 @@ export function AppointmentTable({
               .sort(
                 (a, b) =>
                   new Date(a.scheduledAt).getTime() -
-                  new Date(b.scheduledAt).getTime(),
+                  new Date(b.scheduledAt).getTime()
               )
               .map((appointment) => (
                 <ScheduledAppointmentCard
@@ -406,17 +421,17 @@ export function AppointmentTable({
                             </span>
                           </div>
                           {expandedMonths.has(
-                            `${professionalName}-${monthKey}`,
+                            `${professionalName}-${monthKey}`
                           ) ? (
-                              <ChevronDown className='h-4 w-4' />
-                            ) : (
-                              <ChevronRight className='h-4 w-4' />
-                            )}
+                            <ChevronDown className='h-4 w-4' />
+                          ) : (
+                            <ChevronRight className='h-4 w-4' />
+                          )}
                         </div>
                       </Button>
 
                       {expandedMonths.has(
-                        `${professionalName}-${monthKey}`,
+                        `${professionalName}-${monthKey}`
                       ) && (
                         <div className='border-t p-4 space-y-3'>
                           {monthData.appointments.map((apt) => (
@@ -426,7 +441,7 @@ export function AppointmentTable({
                               <div className='flex justify-between items-start mb-2'>
                                 <div className='text-sm font-medium'>
                                   {new Date(apt.scheduledAt).toLocaleDateString(
-                                    'pt-BR',
+                                    'pt-BR'
                                   )}{' '}
                                   às{' '}
                                   {new Date(apt.scheduledAt).toLocaleTimeString(
@@ -434,7 +449,7 @@ export function AppointmentTable({
                                     {
                                       hour: '2-digit',
                                       minute: '2-digit',
-                                    },
+                                    }
                                   )}
                                 </div>
                                 <div className='flex items-center gap-2'>
@@ -475,7 +490,7 @@ export function AppointmentTable({
                   ))}
               </div>
             </div>
-          ),
+          )
         )
       )}
 
@@ -497,6 +512,24 @@ export function AppointmentTable({
               onSuccess={() => setEditingAppointment(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isNewAppointmentOpen}
+        onOpenChange={setIsNewAppointmentOpen}>
+        <DialogContent className='max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Novo Agendamento</DialogTitle>
+          </DialogHeader>
+          <AppointmentForm
+            mode='scheduled'
+            prefilledData={prefilledData}
+            onSuccess={() => {
+              setIsNewAppointmentOpen(false)
+              setPrefilledData({})
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
